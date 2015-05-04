@@ -5,3 +5,4 @@
 """Basic features for biometric recognition"""
 
 from .Extractor import Extractor
+from .Linearize import Linearize
