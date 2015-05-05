@@ -13,12 +13,14 @@ import numpy
 import bob.io.base.test_utils
 import bob.io.image
 import bob.bio.base
+from . import utils
 
 from nose.plugins.skip import SkipTest
 
 import pkg_resources
 
-regenerate_reference = True
+regenerate_reference = False
+
 
 
 dummy_dir = pkg_resources.resource_filename('bob.bio.base', 'test/dummy')
@@ -62,14 +64,7 @@ def _verify(parameters, test_dir, sub_dir, ref_modifier="", score_modifier=('sco
     shutil.rmtree(test_dir)
 
 
-def grid_available():
-  try:
-    import gridtk
-  except ImportError:
-    raise SkipTest("Skipping test since gridtk is not available")
-
-
-def test_faceverify_local():
+def test_verify_local():
   test_dir = tempfile.mkdtemp(prefix='frltest_')
   # define dummy parameters
   parameters = [
@@ -87,7 +82,8 @@ def test_faceverify_local():
 
   _verify(parameters, test_dir, 'test_local')
 
-def test_faceverify_resources():
+
+def test_verify_resources():
   test_dir = tempfile.mkdtemp(prefix='frltest_')
   # define dummy parameters
   parameters = [
@@ -106,7 +102,7 @@ def test_faceverify_resources():
   _verify(parameters, test_dir, 'test_resource')
 
 
-def test_faceverify_commandline():
+def test_verify_commandline():
   test_dir = tempfile.mkdtemp(prefix='frltest_')
   # define dummy parameters
   parameters = [
@@ -125,72 +121,91 @@ def test_faceverify_commandline():
   _verify(parameters, test_dir, 'test_commandline')
 
 
-"""
-def test01c_faceverify_parallel(self):
-  self.grid_available()
+@utils.grid_available
+def test_verify_parallel():
   test_dir = tempfile.mkdtemp(prefix='frltest_')
   test_database = os.path.join(test_dir, "database.sql3")
 
   # define dummy parameters
   parameters = [
-      '-d', os.path.join(base_dir, 'scripts', 'atnt_Test.py'),
-      '-p', 'face-crop',
-      '-f', 'facereclib.features.Eigenface(subspace_dimension', '=', '100)',
-      '-t', 'facereclib.tools.Dummy()',
+      '-d', os.path.join(dummy_dir, 'database.py'),
+      '-p', 'dummy',
+      '-e', 'bob.bio.base.test.dummy.extractor.DummyExtractor()',
+      '-a', 'dummy',
       '--zt-norm',
-      '-b', 'test_c',
+      '-s', 'test_parallel',
       '--temp-directory', test_dir,
-      '--user-directory', test_dir,
-      '-g', 'facereclib.utils.GridParameters(grid = "local", number_of_parallel_processes = 2, scheduler_sleep_time = 0.1)', '-G', test_database, '--run-local-scheduler'
+      '--result-directory', test_dir,
+      '-g', 'bob.bio.base.grid.Grid(grid = "local", number_of_parallel_processes = 2, scheduler_sleep_time = 0.1)', '-G', test_database, '--run-local-scheduler', '-R',
+      '--import', 'bob.io.image'
   ]
 
-  print (facereclib.utils.command_line(parameters))
+  print (bob.bio.base.tools.command_line(parameters))
 
-  self.__face_verify__(parameters, test_dir, 'test_c')
+  _verify(parameters, test_dir, 'test_parallel')
 
 
-def test01d_faceverify_compressed(self):
+def test_verify_compressed():
   test_dir = tempfile.mkdtemp(prefix='frltest_')
   # define dummy parameters
   parameters = [
-      '-d', os.path.join(base_dir, 'scripts', 'atnt_Test.py'),
-      '-p', 'face-crop',
-      '-f', 'facereclib.features.Eigenface(subspace_dimension', '=', '100)',
-      '-t', 'facereclib.tools.Dummy()',
+      '-d', 'dummy',
+      '-p', 'dummy',
+      '-e', 'dummy',
+      '-a', 'dummy',
       '--zt-norm',
-      '-b', 'test_d',
+      '-s', 'test_compressed',
       '--temp-directory', test_dir,
-      '--user-directory', test_dir,
+      '--result-directory', test_dir,
       '--write-compressed-score-files'
   ]
 
-  print (facereclib.utils.command_line(parameters))
+  print (bob.bio.base.tools.command_line(parameters))
 
-  self.__face_verify__(parameters, test_dir, 'test_d', score_modifier=('scores', '.tar.bz2'))
+  _verify(parameters, test_dir, 'test_compressed', score_modifier=('scores', '.tar.bz2'))
 
 
-def test01m_faceverify_calibrate(self):
+def test_verify_calibrate():
   test_dir = tempfile.mkdtemp(prefix='frltest_')
   # define dummy parameters
   parameters = [
-      '-d', os.path.join(base_dir, 'scripts', 'atnt_Test.py'),
-      '-p', os.path.join(config_dir, 'preprocessing', 'face_crop.py'),
-      '-f', os.path.join(config_dir, 'features', 'eigenfaces.py'),
-      '-t', os.path.join(config_dir, 'tools', 'dummy.py'),
+      '-d', 'dummy',
+      '-p', 'dummy',
+      '-e', 'dummy',
+      '-a', 'dummy',
       '--zt-norm',
-      '-b', 'test',
+      '-s', 'test_calibrate',
       '--temp-directory', test_dir,
-      '--user-directory', test_dir,
+      '--result-directory', test_dir,
       '--calibrate-scores'
   ]
 
-  print (facereclib.utils.command_line(parameters))
+  print (bob.bio.base.tools.command_line(parameters))
 
-  # check that the calibrated scores are as expected
-  self.__face_verify__(parameters, test_dir, 'test', '-calibrated', score_modifier=('calibrated', ''))
+  _verify(parameters, test_dir, 'test_calibrate', '-calibrated', score_modifier=('calibrated', ''))
 
 
-def test01x_faceverify_filelist(self):
+def test_verify_fileset():
+  test_dir = tempfile.mkdtemp(prefix='frltest_')
+  # define dummy parameters
+  parameters = [
+      '-d', os.path.join(dummy_dir, 'database.py'),
+      '-p', 'dummy',
+      '-e', 'bob.bio.base.test.dummy.extractor.DummyExtractor()',
+      '-a', 'dummy',
+      '--zt-norm',
+      '-s', 'test_fileset',
+      '--temp-directory', test_dir,
+      '--result-directory', test_dir
+  ]
+
+  print (bob.bio.base.tools.command_line(parameters))
+
+  _verify(parameters, test_dir, 'test_fileset', ref_modifier="-fileset")
+
+
+
+def test_verify_filelist():
   try:
     import bob.db.verification.filelist
   except ImportError:
@@ -198,202 +213,49 @@ def test01x_faceverify_filelist(self):
   test_dir = tempfile.mkdtemp(prefix='frltest_')
   # define dummy parameters
   parameters = [
-      '-d', os.path.join(base_dir, 'databases', 'atnt_fl', 'atnt_fl_database.py'),
-#        '--protocol', 'None',
-      '-p', os.path.join(config_dir, 'preprocessing', 'face_crop.py'),
-      '-f', os.path.join(config_dir, 'features', 'eigenfaces.py'),
-      '-t', os.path.join(config_dir, 'tools', 'dummy.py'),
+      '-d', os.path.join(dummy_dir, 'filelist.py'),
+      '-p', 'dummy',
+      '-e', 'dummy',
+      '-a', 'dummy',
       '--zt-norm',
-      '-b', 'test_x',
+      '-s', 'test_filelist',
       '--temp-directory', test_dir,
-      '--user-directory', test_dir
+      '--result-directory', test_dir
   ]
 
-  print (facereclib.utils.command_line(parameters))
+  print (bob.bio.base.tools.command_line(parameters))
 
-  from facereclib.script.faceverify import main
-  main([sys.argv[0]] + parameters)
-
-  # assert that the score file exists
-  score_files = (os.path.join(test_dir, 'test_x', 'scores', 'nonorm', 'scores-dev'), os.path.join(test_dir, 'test_x', 'scores', 'ztnorm', 'scores-dev'))
-  self.assertTrue(os.path.exists(score_files[0]))
-  self.assertTrue(os.path.exists(score_files[1]))
-
-  # assert that the scores are are identical
-  reference_files = (os.path.join(base_dir, 'scripts', 'scores-nonorm-dev'), os.path.join(base_dir, 'scripts', 'scores-ztnorm-dev'))
-
-  for i in (0,1):
-
-    a1, b1 = bob.measure.load.split_four_column(score_files[i])
-    a2, b2 = bob.measure.load.split_four_column(reference_files[i])
-
-    a1 = sorted(a1); a2 = sorted(a2); b1 = sorted(b1); b2 = sorted(b2)
-
-    for i in range(len(a1)):
-      self.assertAlmostEqual(a1[i], a2[i], 6)
-    for i in range(len(b1)):
-      self.assertAlmostEqual(b1[i], b2[i], 6)
-
-  shutil.rmtree(test_dir)
-
-
-
-def test02_faceverify_grid(self):
-  self.grid_available()
-  test_dir = tempfile.mkdtemp(prefix='frltest_')
-  # define dummy parameters including the dry-run
-  parameters = [
-      sys.argv[0],
-      '-d', os.path.join(base_dir, 'scripts', 'atnt_Test.py'),
-      '-p', 'face-crop',
-      '-f', 'eigenfaces',
-      '-t', os.path.join(config_dir, 'tools', 'dummy.py'),
-      '-g', 'grid',
-      '--zt-norm',
-      '--dry-run',
-      '--user-directory', test_dir,
-      '-b', 'dummy'
-  ]
-
-  print (facereclib.utils.command_line(parameters))
-
-  # run the test; should not execute anything...
-  from facereclib.script.faceverify import main
-  main(parameters)
-  shutil.rmtree(test_dir)
-
-
-def test03_faceverify_lfw_local(self):
-  # try to import the lfw database
   try:
-    facereclib.utils.resources.load_resource('lfw','database')
-  except Exception as e:
-    raise SkipTest("The resource for database 'lfw' could not be loaded; probably you didn't define the 'bob.db.lfw' in your *buildout.cfg*. Here is the import error: '%s'" % e)
+    from bob.bio.base.script.verify import main
+    main([sys.argv[0]] + parameters)
 
-  test_dir = tempfile.mkdtemp(prefix='frltest_')
-  # define dummy parameters
-  parameters = [
-      sys.argv[0],
-      '-p', 'face-crop',
-      '-f', 'eigenfaces',
-      '-t', os.path.join(config_dir, 'tools', 'dummy.py'),
-      '--dry-run',
-      '--user-directory', test_dir,
-      '-b', 'dummy'
-  ]
+    # assert that the score file exists
+    score_files = [os.path.join(test_dir, 'test_filelist', 'None', norm, 'scores-dev') for norm in ('nonorm', 'ztnorm')]
+    assert os.path.exists(score_files[0]), "Score file %s does not exist" % score_files[0]
+    assert os.path.exists(score_files[1]), "Score file %s does not exist" % score_files[1]
 
-  print (facereclib.utils.command_line(parameters))
+    # assert that the scores are are identical (might be in a different order, though
+    reference_files = [os.path.join(data_dir, 'scores-%s-dev' % norm) for norm in ('nonorm', 'ztnorm')]
 
-  # run the test; should not execute anything...
-  from facereclib.script.faceverify_lfw import main
-  main(parameters)
-  shutil.rmtree(test_dir)
+    for i in (0,1):
+      # load scores
+      a1, b1 = bob.measure.load.split_four_column(score_files[i])
+      a2, b2 = bob.measure.load.split_four_column(reference_files[i])
+      # sort scores
+      a1 = sorted(a1); a2 = sorted(a2); b1 = sorted(b1); b2 = sorted(b2)
 
+      # assert that scores are almost equal
+      for i in range(len(a1)):
+        abs(a1[i] - a2[i]) < 1e-6
+      for i in range(len(b1)):
+        abs(b1[i] - b2[i]) < 1e-6
 
-def test04_faceverify_lfw_grid(self):
-  self.grid_available()
-  # try to import the lfw database
-  try:
-    facereclib.utils.resources.load_resource('lfw','database')
-  except Exception as e:
-    raise SkipTest("The resource for database 'lfw' could not be loaded; probably you didn't define the 'bob.db.lfw' in your *buildout.cfg*. Here is the import error: '%s'" % e)
-
-  test_dir = tempfile.mkdtemp(prefix='frltest_')
-  # define dummy parameters
-  parameters = [
-      sys.argv[0],
-      '-p', 'face-crop',
-      '-f', 'eigenfaces',
-      '-t', os.path.join(config_dir, 'tools', 'dummy.py'),
-      '-g', 'grid',
-      '--dry-run',
-      '--user-directory', test_dir,
-      '-b', 'dummy'
-  ]
-
-  print (facereclib.utils.command_line(parameters))
-
-  # run the test; should not execute anything...
-  from facereclib.script.faceverify_lfw import main
-  main(parameters)
-  shutil.rmtree(test_dir)
+  finally:
+    shutil.rmtree(test_dir)
 
 
-def test05_faceverify_gbu_local(self):
-  # try to import the gbu database
-  try:
-    facereclib.utils.resources.load_resource('gbu','database')
-  except Exception as e:
-    raise SkipTest("The resource for database 'gbu' could not be loaded; probably you didn't define the 'bob.db.gbu' in your *buildout.cfg*. Here is the import error: '%s'" % e)
 
-  test_dir = tempfile.mkdtemp(prefix='frltest_')
-  # define dummy parameters
-  parameters = [
-      sys.argv[0],
-      '-p', 'face-crop',
-      '-f', 'eigenfaces',
-      '-t', os.path.join(config_dir, 'tools', 'dummy.py'),
-      '--dry-run',
-      '--user-directory', test_dir,
-      '-b', 'dummy'
-  ]
-
-  print (facereclib.utils.command_line(parameters))
-
-  # run the test; should not execute anything...
-  from facereclib.script.faceverify_gbu import main
-  main(parameters)
-  shutil.rmtree(test_dir)
-
-
-def test06_faceverify_gbu_grid(self):
-  self.grid_available()
-  # try to import the gbu database
-  try:
-    facereclib.utils.resources.load_resource('gbu','database')
-  except Exception as e:
-    raise SkipTest("The resource for database 'gbu' could not be loaded; probably you didn't define the 'bob.db.gbu' in your *buildout.cfg*. Here is the import error: '%s'" % e)
-
-  test_dir = tempfile.mkdtemp(prefix='frltest_')
-  # define dummy parameters
-  parameters = [
-      sys.argv[0],
-      '-p', 'face-crop',
-      '-f', 'eigenfaces',
-      '-t', os.path.join(config_dir, 'tools', 'dummy.py'),
-      '-g', 'grid',
-      '--dry-run',
-      '--user-directory', test_dir,
-      '-b', 'dummy'
-  ]
-
-  print (facereclib.utils.command_line(parameters))
-
-  # run the test; should not execute anything...
-  from facereclib.script.faceverify_gbu import main
-  main(parameters)
-  shutil.rmtree(test_dir)
-
-
-def test10_faceverify_file_set(self):
-  test_dir = tempfile.mkdtemp(prefix='frltest_')
-  # define dummy parameters
-  parameters = [
-      '-d', os.path.join(base_dir, 'scripts', 'fileset_Test.py'),
-      '-p', os.path.join(config_dir, 'preprocessing', 'face_crop.py'),
-      '-f', os.path.join(config_dir, 'features', 'eigenfaces.py'),
-      '-t', os.path.join(config_dir, 'tools', 'dummy.py'),
-      '--zt-norm',
-      '-b', 'test',
-      '--temp-directory', test_dir,
-      '--user-directory', test_dir
-  ]
-
-  print (facereclib.utils.command_line(parameters))
-
-  self.__face_verify__(parameters, test_dir, 'test', ref_modifier="-fileset")
-
-
+"""
 def test11_baselines_api(self):
   self.grid_available()
   # test that all of the baselines would execute

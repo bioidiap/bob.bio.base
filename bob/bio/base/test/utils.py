@@ -19,6 +19,9 @@
 
 import numpy
 import os
+import functools
+from nose.plugins.skip import SkipTest
+
 
 import logging
 logger = logging.getLogger("bob.bio.base")
@@ -36,6 +39,17 @@ def random_training_set_by_id(shape, count = 50, minimum = 0, maximum = 1):
   for i in range(count):
     train_set.append([numpy.random.random(shape) * (maximum - minimum) + minimum for j in range(count)])
   return train_set
+
+def grid_available(test):
+  '''Decorator to check if the gridtk is present, before running the test'''
+  @functools.wraps(test)
+  def wrapper(*args, **kwargs):
+    try:
+      import gridtk
+      return test(*args, **kwargs)
+    except ImportError:
+      raise SkipTest("Skipping test since gridtk is not available")
+  return wrapper
 
 
 atnt_default_directory = os.environ['ATNT_DATABASE_DIRECTORY'] if 'ATNT_DATABASE_DIRECTORY' in os.environ else "/idiap/group/biometric/databases/orl/"

@@ -1,16 +1,18 @@
-import bob.bio.base
 import scipy.spatial
+import bob.io.base
+
+from bob.bio.base.algorithm import Algorithm
 
 _data = [5., 6., 7., 8., 9.]
 
-class DummyAlgorithm (bob.bio.base.algorithm.Algorithm):
+class DummyAlgorithm (Algorithm):
   """This class is used to test all the possible functions of the tool chain, but it does basically nothing."""
 
   def __init__(self):
     """Generates a test value that is read and written"""
 
     # call base class constructor registering that this tool performs everything.
-    bob.bio.base.algorithm.Algorithm.__init__(
+    Algorithm.__init__(
         self,
         performs_projection = True,
         use_projected_features_for_enrollment = True,

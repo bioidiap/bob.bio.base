@@ -34,7 +34,7 @@ def parse_arguments(command_line_parameters, exclude_resources_from = []):
       skips = ['preprocessing', 'extractor-training', 'extraction', 'projector-training', 'projection', 'enroller-training', 'enrollment', 'score-computation', 'concatenation', 'calibration'])
 
 
-def add_jobs(args):
+def add_jobs(args, submitter = None):
   """Adds all (desired) jobs of the tool chain to the grid, or to the local list to be executed."""
 
   # collect the job ids
@@ -50,8 +50,8 @@ def add_jobs(args):
     if args.grid is None:
       jobs_to_execute.append(('preprocess',))
     else:
-      job_ids['preprocessing'] = self.submit_grid_job(
-              'preprocess',
+      job_ids['preprocessing'] = submitter.submit(
+              '--sub-task preprocess',
               number_of_parallel_jobs = args.grid.number_of_preprocessing_jobs,
               dependencies = deps,
               **args.grid.preprocessing_queue)
@@ -62,8 +62,8 @@ def add_jobs(args):
     if args.grid is None:
       jobs_to_execute.append(('train-extractor',))
     else:
-      job_ids['extractor-training'] = self.submit_grid_job(
-              'train-extractor',
+      job_ids['extractor-training'] = submitter.submit(
+              '--sub-task train-extractor',
               name = 'train-f',
               dependencies = deps,
               **args.grid.training_queue)
@@ -74,8 +74,8 @@ def add_jobs(args):
     if args.grid is None:
       jobs_to_execute.append(('extract',))
     else:
-      job_ids['extraction'] = self.submit_grid_job(
-              'extract',
+      job_ids['extraction'] = submitter.submit(
+              '--sub-task extract',
               number_of_parallel_jobs = args.grid.number_of_extraction_jobs,
               dependencies = deps,
               **args.grid.extraction_queue)
@@ -86,8 +86,8 @@ def add_jobs(args):
     if args.grid is None:
       jobs_to_execute.append(('train-projector',))
     else:
-      job_ids['projector_training'] = self.submit_grid_job(
-              'train-projector',
+      job_ids['projector_training'] = submitter.submit(
+              '--sub-task train-projector',
               name="train-p",
               dependencies = deps,
               **args.grid.training_queue)
@@ -98,8 +98,8 @@ def add_jobs(args):
     if args.grid is None:
       jobs_to_execute.append(('project',))
     else:
-      job_ids['projection'] = self.submit_grid_job(
-              'project',
+      job_ids['projection'] = submitter.submit(
+              '--sub-task project',
               number_of_parallel_jobs = args.grid.number_of_projection_jobs,
               dependencies = deps,
               **args.grid.projection_queue)
@@ -110,8 +110,8 @@ def add_jobs(args):
     if args.grid is None:
       jobs_to_execute.append(('train-enroller',))
     else:
-      job_ids['enroller_training'] = self.submit_grid_job(
-              'train-enroller',
+      job_ids['enroller_training'] = submitter.submit(
+              '--sub-task train-enroller',
               name = "train-e",
               dependencies = deps,
               **args.grid.training_queue)
@@ -129,8 +129,8 @@ def add_jobs(args):
       if args.grid is None:
         jobs_to_execute.append(('enroll', group, 'N'))
       else:
-        job_ids['enroll_%s_N'%group] = self.submit_grid_job(
-                'enroll --group %s --model-type N'%group,
+        job_ids['enroll_%s_N'%group] = submitter.submit(
+                '--sub-task enroll --group %s --model-type N'%group,
                 name = "enr-N-%s"%group,
                 number_of_parallel_jobs = args.grid.number_of_enrollment_jobs,
                 dependencies = deps,
@@ -141,8 +141,8 @@ def add_jobs(args):
         if args.grid is None:
           jobs_to_execute.append(('enroll', group, 'T'))
         else:
-          job_ids['enroll_%s_T'%group] = self.submit_grid_job(
-                  'enroll --group %s --model-type T'%group,
+          job_ids['enroll_%s_T'%group] = submitter.submit(
+                  '--sub-task enroll --group %s --model-type T'%group,
                   name = "enr-T-%s"%group,
                   number_of_parallel_jobs = args.grid.number_of_enrollment_jobs,
                   dependencies = deps,
@@ -154,8 +154,8 @@ def add_jobs(args):
       if args.grid is None:
         jobs_to_execute.append(('compute-scores', group, None, 'A'))
       else:
-        job_ids['score_%s_A'%group] = self.submit_grid_job(
-                'compute-scores --group %s --score-type A'%group,
+        job_ids['score_%s_A'%group] = submitter.submit(
+                '--sub-task compute-scores --group %s --score-type A'%group,
                 name = "score-A-%s"%group,
                 number_of_parallel_jobs = args.grid.number_of_scoring_jobs,
                 dependencies = enroll_deps_n[group],
@@ -169,22 +169,22 @@ def add_jobs(args):
           jobs_to_execute.append(('compute-scores', group, None, 'D'))
           jobs_to_execute.append(('compute-scores', group, None, 'Z'))
         else:
-          job_ids['score_%s_B'%group] = self.submit_grid_job(
-                  'compute-scores --group %s --score-type B'%group,
+          job_ids['score_%s_B'%group] = submitter.submit(
+                  '--sub-task compute-scores --group %s --score-type B'%group,
                   name = "score-B-%s"%group,
                   number_of_parallel_jobs = args.grid.number_of_scoring_jobs,
                   dependencies = enroll_deps_n[group],
                   **args.grid.scoring_queue)
 
-          job_ids['score_%s_C'%group] = self.submit_grid_job(
-                  'compute-scores --group %s --score-type C'%group,
+          job_ids['score_%s_C'%group] = submitter.submit(
+                  '--sub-task compute-scores --group %s --score-type C'%group,
                   name = "score-C-%s"%group,
                   number_of_parallel_jobs = args.grid.number_of_scoring_jobs,
                   dependencies = enroll_deps_t[group],
                   **args.grid.scoring_queue)
 
-          job_ids['score_%s_D'%group] = self.submit_grid_job(
-                  'compute-scores --group %s --score-type D'%group,
+          job_ids['score_%s_D'%group] = submitter.submit(
+                  '--sub-task compute-scores --group %s --score-type D'%group,
                   name = "score-D-%s"%group,
                   number_of_parallel_jobs = args.grid.number_of_scoring_jobs,
                   dependencies = enroll_deps_t[group],
@@ -192,8 +192,8 @@ def add_jobs(args):
 
           # compute zt-norm
           score_deps[group] = [job_ids['score_%s_A'%group], job_ids['score_%s_B'%group], job_ids['score_%s_C'%group], job_ids['score_%s_D'%group]]
-          job_ids['score_%s_Z'%group] = self.submit_grid_job(
-                  'compute-scores --group %s --score-type Z'%group,
+          job_ids['score_%s_Z'%group] = submitter.submit(
+                  '--sub-task compute-scores --group %s --score-type Z'%group,
                   name = "score-Z-%s"%group,
                   dependencies = score_deps[group])
           concat_deps[group].extend([job_ids['score_%s_B'%group], job_ids['score_%s_C'%group], job_ids['score_%s_D'%group], job_ids['score_%s_Z'%group]])
@@ -205,8 +205,8 @@ def add_jobs(args):
       if args.grid is None:
         jobs_to_execute.append(('concatenate', group))
       else:
-        job_ids['concat_%s'%group] = self.submit_grid_job(
-                'concatenate --group %s'%group,
+        job_ids['concat_%s'%group] = submitter.submit(
+                '--sub-task concatenate --group %s'%group,
                 name = "concat-%s"%group,
                 dependencies = concat_deps[group])
 
@@ -216,8 +216,8 @@ def add_jobs(args):
       jobs_to_execute.append(('calibrate',))
     else:
       calib_deps = [job_ids['concat_%s'%g] for g in args.groups if 'concat_%s'%g in job_ids]
-      job_ids['calibrate'] = self.submit_grid_job(
-              'calibrate',
+      job_ids['calibrate'] = submitter.submit(
+              '--sub-task calibrate',
               dependencies = calib_deps)
 
 
@@ -230,7 +230,8 @@ def add_jobs(args):
 
 
 def execute(args):
-  """Run the desired job of the ZT tool chain that is specified on command line."""
+  """Run the desired job of the tool chain that is specified on command line.
+  This job might be executed either in the grid, or locally."""
   # the file selector object
   fs = tools.FileSelector.instance()
 
@@ -341,12 +342,11 @@ def execute(args):
   # Test if the keyword was processed
   else:
     return False
-    raise ValueError("The given subtask '%s' could not be processed. THIS IS A BUG. Please report this to the authors." % args.sub_task)
   return True
 
 
 
-def verify(args, command_line_parameters, external_dependencies = [], external_fake_job_id = 0):
+def verify(args, command_line_parameters, external_fake_job_id = 0):
   """This is the main entry point for computing verification experiments.
   You just have to specify configurations for any of the steps of the toolchain, which are:
   -- the database
@@ -362,17 +362,28 @@ def verify(args, command_line_parameters, external_dependencies = [], external_f
   # as the main entry point, check whether the sub-task is specified
   if args.sub_task is not None:
     # execute the desired sub-task
-    execute_grid_job(args)
+    execute(args)
     return {}
   else:
     # add jobs
-    retval = add_jobs(args)
+    submitter = tools.GridSubmission(args, command_line_parameters, first_fake_job_id = 0) if args.grid else None
+    retval = add_jobs(args, submitter)
     tools.write_info(args, command_line_parameters)
 
-    if args.grid:
-      pass
+    if args.grid is not None:
+      if args.grid.is_local() and args.run_local_scheduler:
+        if args.dry_run:
+          print ("Would have started the local scheduler to run the experiments with parallel jobs")
+        else:
+          # start the jman local deamon
+          submitter.execute_local()
+        return {}
+
+      else:
+        # return job ids as a dictionary
+        return retval
     else:
-      # not in a grid, use default tool chain sequentially
+      # not in a grid, execute tool chain sequentially
       if args.timer:
         logger.info("- Timer: Starting timer")
         start_time = os.times()
@@ -394,35 +405,6 @@ def verify(args, command_line_parameters, external_dependencies = [], external_f
           print ("Elapsed", t ,"time:", end_time[index] - start_time[index], "seconds")
 
       return {}
-
-  """
-  else:
-    # no other parameter given, so deploy new jobs
-
-    # get the name of this file
-    this_file = __file__
-    if this_file[-1] == 'c':
-      this_file = this_file[0:-1]
-
-    executor.write_info(command_line_parameters)
-
-    # initialize the executor to submit the jobs to the grid
-    executor.set_common_parameters(calling_file = this_file, parameters = command_line_parameters, fake_job_id = external_fake_job_id)
-
-    # add the jobs
-    job_ids = executor.add_jobs_to_grid(external_dependencies)
-
-    if executor.m_grid.is_local() and args.run_local_scheduler:
-      if args.dry_run:
-        print ("Would have started the local scheduler to finally run the experiments with parallel jobs")
-      else:
-        # start the jman local deamon
-        executor.execute_local_deamon()
-      return {}
-
-    else:
-      return job_ids
-  """
 
 def main(command_line_parameters = sys.argv):
   """Executes the main function"""

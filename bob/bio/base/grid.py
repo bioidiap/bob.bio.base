@@ -32,7 +32,7 @@ PREDEFINED_QUEUES = {
   'Week'        : {'queue' : 'q1wm', 'memfree' : '32G', 'pe_opt' : 'pe_mth 4', 'hvmem' : '8G'}
 }
 
-class GridParameters:
+class Grid:
   """This class is defining the options that are required to submit parallel jobs to the SGE grid.
   """
 

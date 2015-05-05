@@ -140,7 +140,7 @@ def _scores_b(algorithm, model_ids, group, force):
     # test if the file is already there
     score_file = fs.b_file(model_id, group)
     if utils.check_file(score_file, force):
-      Logger.warn("Score file '%s' already exists.", score_file)
+      logger.warn("Score file '%s' already exists.", score_file)
     else:
       model = algorithm.read_model(fs.model_file(model_id, group))
       b = _scores(algorithm, model, z_probe_files)
@@ -399,11 +399,12 @@ def calibrate(norms = ['nonorm', 'ztnorm'], groups = ['dev', 'eval'], prior = 0.
       logger.info(" - Calibration: calibrating scores from '%s' to '%s'", score_file, calibrated_file)
 
       # iterate through the score file and calibrate scores
-      scores = _open_to_read(score_file)
+      scores = bob.measure.load.four_column(_open_to_read(score_file))
+
       f = _open_to_write(calibrated_file, write_compressed)
 
       for line in scores:
-        assert len(line) == 4
+        assert len(line) == 4, "The line %s of score file %s cannot be interpreted" % (line, score_file)
         calibrated_score = llr_machine([line[3]])
         f.write('%s %s %s %3.8f\n' % (line[0], line[1], line[2], calibrated_score[0]))
       _close_written(calibrated_file, f, write_compressed)

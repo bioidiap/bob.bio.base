@@ -1,19 +1,21 @@
-import bob.bio.base
 import numpy
+import bob.io.base
+
+from bob.bio.base.extractor import Extractor
 
 _data = [0., 1., 2., 3., 4.]
 
-class DummyExtractor (bob.bio.base.extractor.Extractor):
+class DummyExtractor (Extractor):
   def __init__(self):
-    bob.bio.base.extractor.Extractor.__init__(self, requires_training=True)
+    Extractor.__init__(self, requires_training=True)
     self.model = False
 
   def train(self, train_data, extractor_file):
     assert isinstance(train_data, list)
-    bob.bio.base.save(_data, extractor_file)
+    bob.io.base.save(_data, extractor_file)
 
   def load(self, extractor_file):
-    data = bob.bio.base.load(extractor_file)
+    data = bob.io.base.load(extractor_file)
     assert (_data == data).all()
     self.model = True
 

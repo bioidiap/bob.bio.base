@@ -1,6 +1,9 @@
 import os
 import tempfile, tarfile
 
+import logging
+logger = logging.getLogger("bob.bio.base")
+
 import bob.io.base
 
 def check_file(filename, force, expected_file_size = 1):

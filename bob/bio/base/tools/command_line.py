@@ -80,6 +80,8 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
       help = 'Name of the directory (relative to --result-directory) where to write the results to')
   sub_dir_group.add_argument('--zt-directories', metavar = 'DIR', nargs = 5, default = ['zt_norm_A', 'zt_norm_B', 'zt_norm_C', 'zt_norm_D', 'zt_norm_D_sameValue'],
       help = 'Name of the directories (of --temp-directory) where to write the ZT-norm values; only used with --zt-norm')
+  sub_dir_group.add_argument('--grid-log-directory', metavar = 'DIR', default = 'grid_tk_logs',
+      help = 'Name of the directory (relative to --temp-directory) where to log files are written; only used with --grid')
 
   flag_group = parser.add_argument_group('\nFlags that change the behavior of the experiment')
   bob.core.log.add_command_line_option(flag_group)
@@ -97,6 +99,8 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
       help = 'Measure and report the time required by the execution of the tool chain (only on local machine)')
   flag_group.add_argument('-L', '--run-local-scheduler', action='store_true',
       help = 'Starts the local scheduler after submitting the jobs to the local queue (by default, local jobs must be started by hand, e.g., using ./bin/jman --local -vv run-scheduler -x)')
+  flag_group.add_argument('-N', '--nice', type=int, default=10,
+      help = 'Runs the local scheduler with the given nice value')
   flag_group.add_argument('-c', '--calibrate-scores', action='store_true',
       help = 'Performs score calibration after the scores are computed.')
   flag_group.add_argument('-z', '--zt-norm', action='store_true',
@@ -111,21 +115,6 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
     'flag' : flag_group
   }
 
-
-def zt_options(parsers):
-  """Adds options for ZT score normalization to the parsers."""
-
-  #######################################################################################
-  #################### sub-tasks being executed by this script ##########################
-  parser.add_argument('--sub-task',
-      choices = ('preprocess', 'train-extractor', 'extract', 'train-projector', 'project', 'train-enroller', 'enroll', 'compute-scores', 'concatenate', 'calibrate'),
-      help = argparse.SUPPRESS) #'Executes a subtask (FOR INTERNAL USE ONLY!!!)'
-  parser.add_argument('--model-type', choices = ['N', 'T'],
-      help = argparse.SUPPRESS) #'Which type of models to generate (Normal or TModels)'
-  parser.add_argument('--score-type', choices = ['A', 'B', 'C', 'D', 'Z'],
-      help = argparse.SUPPRESS) #'The type of scores that should be computed'
-  parser.add_argument('--group',
-      help = argparse.SUPPRESS) #'The group for which the current action should be performed'
 
 
 def initialize(parsers, command_line_parameters = None, skips = []):
@@ -157,6 +146,10 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   if args.timer is not None and not len(args.timer):
     args.timer = ('real', 'system', 'user')
 
+  # set base directories
+  args.temp_directory = os.path.join(args.temp_directory, args.sub_directory)
+  args.result_directory = os.path.join(args.result_directory, args.sub_directory)
+
   # load configuration resources
   args.database = load_resource(' '.join(args.database), 'database', imports = args.imports)
   args.preprocessor = load_resource(' '.join(args.preprocessor), 'preprocessor', imports = args.imports)
@@ -164,15 +157,13 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   args.algorithm = load_resource(' '.join(args.algorithm), 'algorithm', imports = args.imports)
   if args.grid is not None:
     args.grid = load_resource(' '.join(args.grid), 'grid', imports = args.imports)
+    args.grid_log_dir = os.path.join(args.temp_directory, args.grid_log_directory)
 
   # protocol command line override
   if args.protocol is not None:
     args.database.protocol = args.protocol
 
   protocol = 'None' if args.database.protocol is None else args.database.protocol
-
-  args.temp_directory = os.path.join(args.temp_directory, args.sub_directory)
-  args.result_directory = os.path.join(args.result_directory, args.sub_directory)
 
   # result files
   args.info_file = os.path.join(args.result_directory, protocol, args.experiment_info_file)
@@ -196,7 +187,7 @@ def initialize(parsers, command_line_parameters = None, skips = []):
     model_directories = [os.path.join(args.temp_directory, protocol, m) for m in args.model_directories],
     score_directories = [os.path.join(args.temp_directory, protocol, z) for z in args.score_directories],
     zt_score_directories = [os.path.join(args.result_directory, protocol, s) for s in args.zt_directories],
-    compressed_extension = 'tar.bz2' if args.write_compressed_score_files else '',
+    compressed_extension = '.tar.bz2' if args.write_compressed_score_files else '',
     default_extension = '.hdf5',
   )
 
