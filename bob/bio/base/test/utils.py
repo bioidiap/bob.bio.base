@@ -26,19 +26,26 @@ from nose.plugins.skip import SkipTest
 import logging
 logger = logging.getLogger("bob.bio.base")
 
-def random_training_set(shape, count, minimum = 0, maximum = 1):
+
+def random_array(shape, minimum = 0, maximum = 1, seed = 42):
+  # generate a random sequence of features
+  numpy.random.seed(seed)
+  return numpy.random.random(shape) * (maximum - minimum) + minimum
+
+def random_training_set(shape, count, minimum = 0, maximum = 1, seed = 42):
   """Returns a random training set with the given shape and the given number of elements."""
   # generate a random sequence of features
-  numpy.random.seed(42)
+  numpy.random.seed(seed)
   return [numpy.random.random(shape) * (maximum - minimum) + minimum for i in range(count)]
 
-def random_training_set_by_id(shape, count = 50, minimum = 0, maximum = 1):
+def random_training_set_by_id(shape, count = 50, minimum = 0, maximum = 1, seed = 42):
   # generate a random sequence of features
-  numpy.random.seed(42)
+  numpy.random.seed(seed)
   train_set = []
   for i in range(count):
     train_set.append([numpy.random.random(shape) * (maximum - minimum) + minimum for j in range(count)])
   return train_set
+
 
 def grid_available(test):
   '''Decorator to check if the gridtk is present, before running the test'''

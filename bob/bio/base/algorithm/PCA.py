@@ -39,84 +39,85 @@ class PCA (Algorithm):
         **kwargs
     )
 
-    self.m_subspace_dim = subspace_dimension
-    self.m_machine = None
-    self.m_distance_function = distance_function
-    self.m_factor = -1. if is_distance_function else 1.
-    self.m_uses_variances = uses_variances
+    self.subspace_dim = subspace_dimension
+    self.machine = None
+    self.distance_function = distance_function
+    self.factor = -1. if is_distance_function else 1.
+    self.uses_variances = uses_variances
+
+
+  def _check_feature(self, feature):
+    """Checks that the features are apropriate"""
+    if not isinstance(feature, numpy.ndarray) or len(feature.shape) != 1:
+      raise ValueError("The given feature is not appropriate")
 
 
   def train_projector(self, training_features, projector_file):
     """Generates the PCA covariance matrix"""
-    # Initializes the data
-    data = numpy.vstack([feature.flatten() for feature in training_features])
+    # Assure that all data are 1D
+    [self._check_feature(feature) for feature in training_features]
 
+    # Initializes the data
+    data = numpy.vstack(training_features)
     logger.info("  -> Training LinearMachine using PCA")
     t = bob.learn.linear.PCATrainer()
-    self.m_machine, self.m_variances = t.train(data)
+    self.machine, self.variances = t.train(data)
     # For re-shaping, we need to copy...
-    self.m_variances = self.m_variances.copy()
+    self.variances = self.variances.copy()
 
     # compute variance percentage, if desired
-    if isinstance(self.m_subspace_dim, float):
-      cummulated = numpy.cumsum(self.m_variances) / numpy.sum(self.m_variances)
+    if isinstance(self.subspace_dim, float):
+      cummulated = numpy.cumsum(self.variances) / numpy.sum(self.variances)
       for index in range(len(cummulated)):
-        if cummulated[index] > self.m_subspace_dim:
-          self.m_subspace_dim = index
+        if cummulated[index] > self.subspace_dim:
+          self.subspace_dim = index
           break
-      self.m_subspace_dim = index
-
-    logger.info("    ... Keeping %d PCA dimensions", self.m_subspace_dim)
-
+      self.subspace_dim = index
+    logger.info("    ... Keeping %d PCA dimensions", self.subspace_dim)
     # re-shape machine
-    self.m_machine.resize(self.m_machine.shape[0], self.m_subspace_dim)
-    self.m_variances.resize(self.m_subspace_dim)
+    self.machine.resize(self.machine.shape[0], self.subspace_dim)
+    self.variances.resize(self.subspace_dim)
 
     f = bob.io.base.HDF5File(projector_file, "w")
-    f.set("Eigenvalues", self.m_variances)
+    f.set("Eigenvalues", self.variances)
     f.create_group("Machine")
     f.cd("/Machine")
-    self.m_machine.save(f)
+    self.machine.save(f)
 
 
   def load_projector(self, projector_file):
     """Reads the PCA projection matrix from file"""
     # read PCA projector
     f = bob.io.base.HDF5File(projector_file)
-    self.m_variances = f.read("Eigenvalues")
+    self.variances = f.read("Eigenvalues")
     f.cd("/Machine")
-    self.m_machine = bob.learn.linear.Machine(f)
-    # Allocates an array for the projected data
-    self.m_projected_feature = numpy.ndarray(self.m_machine.shape[1], numpy.float64)
+    self.machine = bob.learn.linear.Machine(f)
+
 
   def project(self, feature):
     """Projects the data using the stored covariance matrix"""
+    self._check_feature(feature)
     # Projects the data
-    self.m_machine(feature, self.m_projected_feature)
-    # return the projected data
-    return self.m_projected_feature
+    return self.machine(feature)
+
 
   def enroll(self, enroll_features):
-    """Enrolls the model by computing an average of the given input vectors"""
+    """Enrolls the model by storing all given input vectors"""
+    [self._check_feature(feature) for feature in enroll_features]
     assert len(enroll_features)
     # just store all the features
-    model = numpy.zeros((len(enroll_features), enroll_features[0].shape[0]), numpy.float64)
-    for n, feature in enumerate(enroll_features):
-      model[n,:] += feature[:]
-
-    # return enrolled model
-    return model
+    return numpy.vstack(enroll_features)
 
 
   def score(self, model, probe):
-    """Computes the distance of the model to the probe using the distance function taken from the config file"""
+    """Computes the distance of the model to the probe using the distance function"""
     # return the negative distance (as a similarity measure)
     if len(model.shape) == 2:
       # we have multiple models, so we use the multiple model scoring
       return self.score_for_multiple_models(model, probe)
-    elif self.m_uses_variances:
+    elif self.uses_variances:
       # single model, single probe (multiple probes have already been handled)
-      return self.m_factor * self.m_distance_function(model, probe, self.m_variances)
+      return self.factor * self.distance_function(model, probe, self.variances)
     else:
       # single model, single probe (multiple probes have already been handled)
-      return self.m_factor * self.m_distance_function(model, probe)
+      return self.factor * self.distance_function(model, probe)
