@@ -157,7 +157,7 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   args.algorithm = load_resource(' '.join(args.algorithm), 'algorithm', imports = args.imports)
   if args.grid is not None:
     args.grid = load_resource(' '.join(args.grid), 'grid', imports = args.imports)
-    args.grid_log_dir = os.path.join(args.temp_directory, args.grid_log_directory)
+  args.grid_log_directory = os.path.join(args.temp_directory, args.grid_log_directory)
 
   # protocol command line override
   if args.protocol is not None:

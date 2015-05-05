@@ -33,9 +33,20 @@ def indices(list_to_split, number_of_parallel_jobs, task_id=None):
 
 
 class GridSubmission:
-  def __init__(self, args, command_line_parameters, executable = './bin/verify.py', first_fake_job_id = 0):
-    assert os.path.isfile(executable)
+  def __init__(self, args, command_line_parameters, executable = 'verify.py', first_fake_job_id = 0):
     assert isinstance(args.grid, Grid)
+    # find, where jman and the executable are installed
+    import bob.extension
+
+    jmans = bob.extension.find_executable('jman', prefixes = ['bin'])
+    if not len(jmans):
+      raise IOError("Could not find the 'jman' executable. Have you installed GridTK?")
+    executables = bob.extension.find_executable(executable, prefixes = ['bin'])
+    if not len(executables):
+      raise IOError("Could not find the '%s' executable." % executable)
+    jman, executable = jmans[0], executables[0]
+    assert os.path.isfile(jman) and os.path.isfile(executable)
+
     self.args = args
     self.command_line = [p for p in command_line_parameters[1:] if not p.startswith('--skip') and p not in ('-q', '--dry-run', '-o', '--execute-only')]
     self.executable = executable
@@ -45,7 +56,7 @@ class GridSubmission:
     # setup logger
     bob.core.log.set_verbosity_level(bob.core.log.setup("gridtk"), args.verbose)
     Manager = gridtk.local.JobManagerLocal if args.grid.is_local() else gridtk.sge.JobManagerSGE
-    self.job_manager = Manager(database = args.gridtk_db_file)
+    self.job_manager = Manager(database = args.gridtk_db_file, wrapper_script=jman)
     self.submitted_job_ids = []
 
   def submit(self, command, number_of_parallel_jobs = 1, dependencies=[], name = None, **kwargs):
