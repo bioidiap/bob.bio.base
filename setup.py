@@ -123,6 +123,7 @@ setup(
         'pca               = bob.bio.base.config.algorithm.pca:algorithm',
         'lda               = bob.bio.base.config.algorithm.lda:algorithm',
         'pca+lda           = bob.bio.base.config.algorithm.lda:algorithm',
+        'bic               = bob.bio.base.config.algorithm.bic:algorithm',
       ],
    },
 

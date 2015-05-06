@@ -209,6 +209,76 @@ def test_lda():
     if os.path.exists(temp_file): os.remove(temp_file)
 
 
+
+def test_bic():
+  temp_file = bob.io.base.test_utils.temporary_filename()
+  # assure that the configurations are loadable
+  bic1 = bob.bio.base.load_resource("bic", "algorithm")
+  assert isinstance(bic1, bob.bio.base.algorithm.BIC)
+  assert isinstance(bic1, bob.bio.base.algorithm.Algorithm)
+
+  assert not bic1.performs_projection
+  assert not bic1.requires_projector_training
+  assert not bic1.use_projected_features_for_enrollment
+  assert bic1.requires_enroller_training
+
+
+  # create random training set
+  train_set = utils.random_training_set_by_id(200, count=10, minimum=0., maximum=255.)
+  # train the enroller
+  bic2 = bob.bio.base.algorithm.BIC(numpy.subtract, 100, (5,7))
+  reference_file = pkg_resources.resource_filename('bob.bio.base.test', 'data/bic_enroller.hdf5')
+  try:
+    # train enroller
+    bic2.train_enroller(train_set, temp_file)
+    assert os.path.exists(temp_file)
+
+    if regenerate_refs: shutil.copy(temp_file, reference_file)
+
+    # check projection matrix
+    bic1.load_enroller(reference_file)
+    bic2.load_enroller(temp_file)
+
+    assert bic1.bic_machine.is_similar_to(bic2.bic_machine)
+  finally:
+    if os.path.exists(temp_file): os.remove(temp_file)
+
+  # enroll model from random features
+  enroll = utils.random_training_set(200, 5, 0., 255., seed=21)
+  model = bic1.enroll(enroll)
+  _compare(model, pkg_resources.resource_filename('bob.bio.base.test', 'data/bic_model.hdf5'), bic1.write_model, bic1.read_model)
+
+  # compare model with probe
+  probe = utils.random_array(200, 0., 255., seed=84)
+  reference_score = 0.04994252
+  assert abs(bic1.score(model, probe) - reference_score) < 1e-5, "The scores differ: %3.8f, %3.8f" % (bic1.score(model, probe), reference_score)
+  assert abs(bic1.score_for_multiple_probes(model, [probe, probe]) - reference_score) < 1e-5
+
+  # the same for the IEC
+  bic3 = bob.bio.base.algorithm.BIC(numpy.subtract, 100)
+  reference_file = pkg_resources.resource_filename('bob.bio.base.test', 'data/iec_enroller.hdf5')
+  try:
+    # train enroller
+    bic3.train_enroller(train_set, temp_file)
+    assert os.path.exists(temp_file)
+
+    if regenerate_refs: shutil.copy(temp_file, reference_file)
+
+    # check projection matrix
+    bic1.load_enroller(reference_file)
+    bic3.load_enroller(temp_file)
+
+    assert bic1.bic_machine.is_similar_to(bic3.bic_machine)
+  finally:
+    if os.path.exists(temp_file): os.remove(temp_file)
+
+  # compare model with probe
+  probe = utils.random_array(200, 0., 255., seed=84)
+  reference_score = 0.18119139
+  assert abs(bic1.score(model, probe) - reference_score) < 1e-5, "The scores differ: %3.8f, %3.8f" % (bic1.score(model, probe), reference_score)
+  assert abs(bic1.score_for_multiple_probes(model, [probe, probe]) - reference_score) < 1e-5
+
+
 """
   def test01_gabor_jet(self):
     # read input
@@ -277,59 +347,6 @@ def test_lda():
 
 
 
-  def test05_bic(self):
-    # read input
-    feature = facereclib.utils.load(self.input_dir('linearize.hdf5'))
-    # check that the config file is readable
-    tool = self.config('bic')
-    self.assertTrue(isinstance(tool, facereclib.tools.BIC))
-
-    # here, we use a reduced complexity for test purposes
-    tool = facereclib.tools.BIC(numpy.subtract, 100, (5,7))
-    self.assertFalse(tool.performs_projection)
-    self.assertTrue(tool.requires_enroller_training)
-
-    # train the enroller
-    t = tempfile.mkstemp('bic.hdf5', prefix='frltest_')[1]
-    tool.train_enroller(facereclib.utils.tests.random_training_set_by_id(feature.shape, count=10, minimum=0., maximum=255.), t)
-    if regenerate_refs:
-      import shutil
-      shutil.copy2(t, self.reference_dir('bic_enroller.hdf5'))
-
-    # load the projector file
-    tool.load_enroller(self.reference_dir('bic_enroller.hdf5'))
-    # compare the resulting machines
-    new_machine = bob.learn.linear.BICMachine(bob.io.base.HDF5File(t))
-    self.assertTrue(tool.m_bic_machine.is_similar_to(new_machine))
-    os.remove(t)
-
-    # enroll model
-    model = tool.enroll([feature])
-    self.compare(model, 'bic_model.hdf5')
-
-    # score and compare to the weird reference score ...
-    sim = tool.score(model, feature)
-    self.assertAlmostEqual(sim, 0.31276072)
-
-    # now, test without PCA
-    tool = facereclib.tools.BIC(numpy.subtract, 100)
-    # train the enroller
-    t = tempfile.mkstemp('iec.hdf5', prefix='frltest_')[1]
-    tool.train_enroller(facereclib.utils.tests.random_training_set_by_id(feature.shape, count=10, minimum=0., maximum=255.), t)
-    if regenerate_refs:
-      import shutil
-      shutil.copy2(t, self.reference_dir('iec_enroller.hdf5'))
-
-    # load the projector file
-    tool.load_enroller(self.reference_dir('iec_enroller.hdf5'))
-    # compare the resulting machines
-    new_machine = bob.learn.linear.BICMachine(bob.io.base.HDF5File(t))
-    self.assertTrue(tool.m_bic_machine.is_similar_to(new_machine))
-    os.remove(t)
-
-    # score and compare to the weird reference score ...
-    sim = tool.score(model, feature)
-    self.assertAlmostEqual(sim, 0.4070329180)
 
 
   def test06_gmm(self):
