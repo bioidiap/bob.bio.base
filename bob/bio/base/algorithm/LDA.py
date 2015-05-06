@@ -54,10 +54,13 @@ class LDA (Algorithm):
     self.uses_variances = uses_variances
 
 
-  def _check_feature(self, feature):
+  def _check_feature(self, feature, projected=False):
     """Checks that the features are appropriate"""
     if not isinstance(feature, numpy.ndarray) or len(feature.shape) != 1 or feature.dtype != numpy.float64:
       raise ValueError("The given feature is not appropriate")
+    index = 1 if projected else 0
+    if self.machine is not None and feature.shape[0] != self.machine.shape[index]:
+      raise ValueError("The given feature is expected to have %d elements, but it has %d" % (self.machine.shape[index], feature.shape[0]))
 
 
   def _arrange_data(self, training_files):
@@ -164,13 +167,14 @@ class LDA (Algorithm):
   def enroll(self, enroll_features):
     """Enrolls the model by storing all given input vectors"""
     assert len(enroll_features)
-    [self._check_feature(feature) for feature in enroll_features]
+    [self._check_feature(feature, True) for feature in enroll_features]
     # just store all the features
     return numpy.vstack(enroll_features)
 
 
   def score(self, model, probe):
     """Computes the distance of the model to the probe using the distance function"""
+    self._check_feature(probe, True)
     # return the negative distance (as a similarity measure)
     if len(model.shape) == 2:
       # we have multiple models, so we use the multiple model scoring

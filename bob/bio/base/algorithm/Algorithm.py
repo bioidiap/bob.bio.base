@@ -49,8 +49,8 @@ class Algorithm:
     self.split_training_features_by_client = split_training_features_by_client
     self.use_projected_features_for_enrollment = performs_projection and use_projected_features_for_enrollment
     self.requires_enroller_training = requires_enroller_training
-    self.m_model_fusion_function = utils.score_fusion_strategy(multiple_model_scoring)
-    self.m_probe_fusion_function = utils.score_fusion_strategy(multiple_probe_scoring)
+    self.model_fusion_function = utils.score_fusion_strategy(multiple_model_scoring)
+    self.probe_fusion_function = utils.score_fusion_strategy(multiple_probe_scoring)
     self._kwargs = kwargs
     self._kwargs.update({'multiple_model_scoring':multiple_model_scoring, 'multiple_probe_scoring':multiple_probe_scoring})
 
@@ -80,9 +80,9 @@ class Algorithm:
     and fuses the scores using the fusion method specified in the constructor of this class.
     Usually this function is called from derived class 'score' functions."""
     if isinstance(models, list):
-      return self.m_model_fusion_function([self.score(model, probe) for model in models])
+      return self.model_fusion_function([self.score(model, probe) for model in models])
     elif isinstance(models, numpy.ndarray):
-      return self.m_model_fusion_function([self.score(models[i,:], probe) for i in range(models.shape[0])])
+      return self.model_fusion_function([self.score(models[i,:], probe) for i in range(models.shape[0])])
     else:
       raise ValueError("The model does not have the desired format (list, array, ...)")
 
@@ -92,7 +92,7 @@ class Algorithm:
     In this base class implementation, it computes the scores for each probe file using the 'score' method,
     and fuses the scores using the fusion method specified in the constructor of this class."""
     if isinstance(probes, list):
-      return self.m_probe_fusion_function([self.score(model, probe) for probe in probes])
+      return self.probe_fusion_function([self.score(model, probe) for probe in probes])
     else:
       # only one probe feature -> use the default scoring function
       return self.score(model, probes)
