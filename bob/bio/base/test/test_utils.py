@@ -2,6 +2,7 @@ import bob.bio.base
 import bob.learn.linear
 import pkg_resources
 import os
+import numpy
 
 import bob.io.base.test_utils
 
@@ -59,3 +60,24 @@ def test_io():
     # cleanup
     if os.path.exists(filename):
       os.remove(filename)
+
+def test_sampling():
+  # test selection of elements
+  indices = bob.bio.base.selected_indices(100, 10)
+  assert indices == range(5, 100, 10)
+
+  indices = bob.bio.base.selected_indices(100, 300)
+  assert indices == range(100)
+
+  indices = bob.bio.base.selected_indices(100, None)
+  assert indices == range(100)
+
+  array = numpy.arange(100)
+  elements = bob.bio.base.selected_elements(array, 10)
+  assert (elements - numpy.arange(5, 100, 10) == 0.).all()
+
+  elements = bob.bio.base.selected_elements(array, 200)
+  assert (elements - numpy.arange(100) == 0.).all()
+
+  elements = bob.bio.base.selected_elements(array, None)
+  assert (elements - numpy.arange(100) == 0.).all()
