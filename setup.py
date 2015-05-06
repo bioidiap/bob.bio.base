@@ -121,6 +121,8 @@ setup(
       'bob.bio.algorithm': [
         'dummy             = bob.bio.base.test.dummy.algorithm:algorithm', # for test purposes only
         'pca               = bob.bio.base.config.algorithm.pca:algorithm',
+        'lda               = bob.bio.base.config.algorithm.lda:algorithm',
+        'pca+lda           = bob.bio.base.config.algorithm.lda:algorithm',
       ],
    },
 

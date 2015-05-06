@@ -33,6 +33,8 @@ import sys
 _mac_os = sys.platform == 'darwin'
 
 
+import scipy.spatial
+
 import bob.io.base
 import bob.learn.linear
 import bob.io.base.test_utils
@@ -101,7 +103,7 @@ def test_pca():
       assert numpy.allclose(pca1.machine.weights[:,i], pca2.machine.weights[:,i], atol=1e-5) or numpy.allclose(pca1.machine.weights[:,i], - pca2.machine.weights[:,i], atol=1e-5)
 
   finally:
-    os.remove(temp_file)
+    if os.path.exists(temp_file): os.remove(temp_file)
 
   # generate and project random feature
   feature = utils.random_array(200, 0., 255., seed=84)
@@ -120,7 +122,6 @@ def test_pca():
   assert abs(pca1.score(model, probe) - reference_score) < 1e-5, "The scores differ: %3.8f, %3.8f" % (pca1.score(model, probe), reference_score)
   assert abs(pca1.score_for_multiple_probes(model, [probe, probe]) - reference_score) < 1e-5
 
-
   # test the calculation of the subspace dimension based on percentage of variance
   pca3 = bob.bio.base.algorithm.PCA(.9)
   try:
@@ -131,7 +132,81 @@ def test_pca():
     pca3.load_projector(temp_file)
     assert pca3.machine.shape[1] == 140
   finally:
-    os.remove(temp_file)
+    if os.path.exists(temp_file): os.remove(temp_file)
+
+
+def test_lda():
+  temp_file = bob.io.base.test_utils.temporary_filename()
+  # assure that the configurations are loadable
+  lda1 = bob.bio.base.load_resource("lda", "algorithm")
+  assert isinstance(lda1, bob.bio.base.algorithm.LDA)
+  assert isinstance(lda1, bob.bio.base.algorithm.Algorithm)
+  lda2 = bob.bio.base.load_resource("pca+lda", "algorithm")
+  assert isinstance(lda2, bob.bio.base.algorithm.LDA)
+  assert isinstance(lda2, bob.bio.base.algorithm.Algorithm)
+
+  assert lda1.performs_projection
+  assert lda1.requires_projector_training
+  assert lda1.use_projected_features_for_enrollment
+  assert lda1.split_training_features_by_client
+  assert not lda1.requires_enroller_training
+
+  # generate a smaller PCA subspcae
+  lda3 = bob.bio.base.algorithm.LDA(5, 10, scipy.spatial.distance.seuclidean, True, True)
+
+  # create random training set
+  train_set = utils.random_training_set_by_id(200, count=20, minimum=0., maximum=255.)
+  # train the projector
+  reference_file = pkg_resources.resource_filename('bob.bio.base.test', 'data/lda_projector.hdf5')
+  try:
+    # train projector
+    lda3.train_projector(train_set, temp_file)
+    assert os.path.exists(temp_file)
+
+    if regenerate_refs: shutil.copy(temp_file, reference_file)
+
+    # check projection matrix
+    lda1.load_projector(reference_file)
+    lda3.load_projector(temp_file)
+
+    assert numpy.allclose(lda1.variances, lda3.variances, atol=1e-5)
+    assert lda3.machine.shape == (200, 5)
+    assert lda1.machine.shape == lda3.machine.shape
+    # ... rotation direction might change, hence either the sum or the difference should be 0
+    for i in range(5):
+      assert numpy.allclose(lda1.machine.weights[:,i], lda3.machine.weights[:,i], atol=1e-5) or numpy.allclose(lda1.machine.weights[:,i], - lda3.machine.weights[:,i], atol=1e-5)
+
+  finally:
+    if os.path.exists(temp_file): os.remove(temp_file)
+
+  # generate and project random feature
+  feature = utils.random_array(200, 0., 255., seed=84)
+  projected = lda1.project(feature)
+  assert projected.shape == (5,)
+  _compare(projected, pkg_resources.resource_filename('bob.bio.base.test', 'data/lda_projected.hdf5'), lda1.write_feature, lda1.read_feature)
+
+  # enroll model from random features
+  enroll = utils.random_training_set(5, 5, 0., 255., seed=21)
+  model = lda1.enroll(enroll)
+  _compare(model, pkg_resources.resource_filename('bob.bio.base.test', 'data/lda_model.hdf5'), lda1.write_model, lda1.read_model)
+
+  # compare model with probe
+  probe = lda1.read_probe(pkg_resources.resource_filename('bob.bio.base.test', 'data/lda_projected.hdf5'))
+  reference_score = -233.30450012
+  assert abs(lda1.score(model, probe) - reference_score) < 1e-5, "The scores differ: %3.8f, %3.8f" % (lda1.score(model, probe), reference_score)
+  assert abs(lda1.score_for_multiple_probes(model, [probe, probe]) - reference_score) < 1e-5
+
+  # test the calculation of the subspace dimension based on percentage of variance
+  lda4 = bob.bio.base.algorithm.LDA(pca_subspace_dimension=.9)
+  try:
+    # train projector
+    lda4.train_projector(train_set, temp_file)
+    assert os.path.exists(temp_file)
+    assert lda4.pca_subspace == 132
+    lda4.load_projector(temp_file)
+    assert lda4.machine.shape[1] == 19
+  finally:
+    if os.path.exists(temp_file): os.remove(temp_file)
 
 
 """
@@ -200,72 +275,6 @@ def test_pca():
 
 
 
-  def test04_lda(self):
-    # read input
-    feature = facereclib.utils.load(self.input_dir('linearize.hdf5'))
-    # assure that the config file is loadable
-    tool = self.config('lda')
-    self.assertTrue(isinstance(tool, facereclib.tools.LDA))
-    # assure that the config file is loadable
-    tool = self.config('pca+lda')
-    self.assertTrue(isinstance(tool, facereclib.tools.LDA))
-
-    # here we use a reduced tool, using the scaled Euclidean distance (mahalanobis) from scipy
-    import scipy.spatial
-    tool = facereclib.tools.LDA(5, 10, scipy.spatial.distance.seuclidean, True, True)
-    self.assertTrue(tool.performs_projection)
-    self.assertTrue(tool.requires_projector_training)
-    self.assertTrue(tool.use_projected_features_for_enrollment)
-    self.assertTrue(tool.split_training_features_by_client)
-
-    # train the projector
-    t = tempfile.mkstemp('pca+lda.hdf5', prefix='frltest_')[1]
-    tool.train_projector(facereclib.utils.tests.random_training_set_by_id(feature.shape, count=20, minimum=0., maximum=255.), t)
-    if regenerate_refs:
-      import shutil
-      shutil.copy2(t, self.reference_dir('pca+lda_projector.hdf5'))
-
-    # load the projector file
-    tool.load_projector(self.reference_dir('pca+lda_projector.hdf5'))
-    # compare the resulting machines
-    f = bob.io.base.HDF5File(t)
-    new_variances = f.read("Eigenvalues")
-    f.cd("/Machine")
-    new_machine = bob.learn.linear.Machine(f)
-    del f
-    self.assertEqual(tool.m_machine.shape, new_machine.shape)
-    self.assertTrue(numpy.abs(tool.m_variances - new_variances < 1e-5).all())
-    # ... rotation direction might change, hence either the sum or the difference should be 0
-    for i in range(5):
-      self.assertTrue(numpy.abs(tool.m_machine.weights[:,i] - new_machine.weights[:,i] < 1e-5).all() or numpy.abs(tool.m_machine.weights[:,i] + new_machine.weights[:,i] < 1e-5).all())
-    os.remove(t)
-
-    # project feature
-    projected = tool.project(feature)
-    self.compare(projected, 'pca+lda_feature.hdf5')
-    self.assertTrue(len(projected.shape) == 1)
-
-    # enroll model
-    model = tool.enroll([projected])
-    self.compare(model, 'pca+lda_model.hdf5')
-    self.assertTrue(model.shape == (1,5))
-
-    # score
-    sim = tool.score(model, projected)
-    self.assertAlmostEqual(sim, 0.)
-
-    # test the calculation of the subspace dimension based on percentage of variance,
-    # and the usage of a different way to compute the final score in case of multiple features per model
-    tool = facereclib.tools.LDA(5, .9, multiple_model_scoring = 'median')
-    tool.train_projector(facereclib.utils.tests.random_training_set_by_id(feature.shape, count=20, minimum=0., maximum=255.), t)
-    self.assertEqual(tool.m_pca_subspace, 334)
-    tool.load_projector(t)
-    os.remove(t)
-    projected = tool.project(feature)
-    model = tool.enroll([projected, projected])
-    self.assertTrue(model.shape == (2,5))
-    self.assertAlmostEqual(tool.score(model, projected), 0.)
-    self.assertAlmostEqual(tool.score_for_multiple_probes(model, [projected, projected]), 0.)
 
 
   def test05_bic(self):

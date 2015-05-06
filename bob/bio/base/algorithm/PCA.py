@@ -47,8 +47,8 @@ class PCA (Algorithm):
 
 
   def _check_feature(self, feature):
-    """Checks that the features are apropriate"""
-    if not isinstance(feature, numpy.ndarray) or len(feature.shape) != 1:
+    """Checks that the features are appropriate"""
+    if not isinstance(feature, numpy.ndarray) or len(feature.shape) != 1 or feature.dtype != numpy.float64:
       raise ValueError("The given feature is not appropriate")
 
 
@@ -103,8 +103,8 @@ class PCA (Algorithm):
 
   def enroll(self, enroll_features):
     """Enrolls the model by storing all given input vectors"""
-    [self._check_feature(feature) for feature in enroll_features]
     assert len(enroll_features)
+    [self._check_feature(feature) for feature in enroll_features]
     # just store all the features
     return numpy.vstack(enroll_features)
 
