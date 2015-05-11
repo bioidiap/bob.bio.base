@@ -45,7 +45,7 @@ def open_compressed(filename, open_flag = 'r', compression_type='bz2'):
   In any case, the opened HDF5File is returned, which needs to be closed using the close_compressed() function.
   """
   # create temporary HDF5 file name
-  hdf5_file_name = tempfile.mkstemp('.hdf5', 'frl_')[1]
+  hdf5_file_name = tempfile.mkstemp('.hdf5', 'bob_')[1]
 
   if open_flag == 'r':
     # extract the HDF5 file from the given file name into a temporary file name

@@ -23,8 +23,7 @@ def preprocess(preprocessor, groups=None, indices=None, force=False):
   else:
     index_range = range(len(data_files))
 
-  bob.io.base.create_directories_safe(fs.preprocessed_directory)
-  logger.info("- Preprocessing: processing %d data files from directory '%s' to directory '%s'", len(index_range), fs.original_directory, fs.preprocessed_directory)
+  logger.info("- Preprocessing: processing %d data files from directory '%s' to directory '%s'", len(index_range), fs.directories['original'], fs.directories['preprocessed'])
 
   # read annotation files
   annotation_list = fs.annotation_list(groups=groups)

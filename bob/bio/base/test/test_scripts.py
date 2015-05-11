@@ -65,7 +65,7 @@ def _verify(parameters, test_dir, sub_dir, ref_modifier="", score_modifier=('sco
 
 
 def test_verify_local():
-  test_dir = tempfile.mkdtemp(prefix='frltest_')
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
   # define dummy parameters
   parameters = [
       '-d', os.path.join(dummy_dir, 'database.py'),
@@ -84,7 +84,7 @@ def test_verify_local():
 
 
 def test_verify_resources():
-  test_dir = tempfile.mkdtemp(prefix='frltest_')
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
   # define dummy parameters
   parameters = [
       '-d', 'dummy',
@@ -103,7 +103,7 @@ def test_verify_resources():
 
 
 def test_verify_commandline():
-  test_dir = tempfile.mkdtemp(prefix='frltest_')
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
   # define dummy parameters
   parameters = [
       '-d', 'bob.bio.base.test.dummy.database.DummyDatabase()',
@@ -123,7 +123,7 @@ def test_verify_commandline():
 
 @utils.grid_available
 def test_verify_parallel():
-  test_dir = tempfile.mkdtemp(prefix='frltest_')
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
   test_database = os.path.join(test_dir, "submitted.sql3")
 
   # define dummy parameters
@@ -146,7 +146,7 @@ def test_verify_parallel():
 
 
 def test_verify_compressed():
-  test_dir = tempfile.mkdtemp(prefix='frltest_')
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
   # define dummy parameters
   parameters = [
       '-d', 'dummy',
@@ -166,7 +166,7 @@ def test_verify_compressed():
 
 
 def test_verify_calibrate():
-  test_dir = tempfile.mkdtemp(prefix='frltest_')
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
   # define dummy parameters
   parameters = [
       '-d', 'dummy',
@@ -186,7 +186,7 @@ def test_verify_calibrate():
 
 
 def test_verify_fileset():
-  test_dir = tempfile.mkdtemp(prefix='frltest_')
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
   # define dummy parameters
   parameters = [
       '-d', os.path.join(dummy_dir, 'database.py'),
@@ -210,7 +210,7 @@ def test_verify_filelist():
     import bob.db.verification.filelist
   except ImportError:
     raise SkipTest("Skipping test since bob.db.verification.filelist is not available")
-  test_dir = tempfile.mkdtemp(prefix='frltest_')
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
   # define dummy parameters
   parameters = [
       '-d', os.path.join(dummy_dir, 'filelist.py'),
@@ -280,7 +280,7 @@ def test11_baselines_api(self):
 
 def test15_evaluate(self):
   # tests our 'evaluate' script using the reference files
-  test_dir = tempfile.mkdtemp(prefix='frltest_')
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
   reference_files = ('scores-nonorm-dev', 'scores-ztnorm-dev')
   plots = [os.path.join(test_dir, '%s.pdf')%f for f in ['roc', 'cmc', 'det']]
   parameters = [
@@ -305,7 +305,7 @@ def test15_evaluate(self):
 
 def test16_collect_results(self):
   # simply test that the collect_results script works
-  test_dir = tempfile.mkdtemp(prefix='frltest_')
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
   from facereclib.script.collect_results import main
   main(['--directory', test_dir, '--sort', '--sort-key', 'dir', '--criterion', 'FAR', '--self-test'])
   os.rmdir(test_dir)
@@ -313,7 +313,7 @@ def test16_collect_results(self):
 
 def test21_parameter_script(self):
   self.grid_available()
-  test_dir = tempfile.mkdtemp(prefix='frltest_')
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
   # tests that the parameter_test.py script works properly
 
   # first test without grid option

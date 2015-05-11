@@ -45,7 +45,7 @@ def extract(extractor, preprocessor, groups=None, indices = None, force=False):
   else:
     index_range = range(len(data_files))
 
-  logger.info("- Extraction: extracting %d features from directory '%s' to directory '%s'", len(index_range), fs.preprocessed_directory, fs.extracted_directory)
+  logger.info("- Extraction: extracting %d features from directory '%s' to directory '%s'", len(index_range), fs.directories['preprocessed'], fs.directories['extracted'])
   for i in index_range:
     data_file = str(data_files[i])
     feature_file = str(feature_files[i])

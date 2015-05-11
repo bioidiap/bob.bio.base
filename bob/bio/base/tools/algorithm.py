@@ -53,7 +53,7 @@ def project(algorithm, extractor, groups = None, indices = None, force=False):
     else:
       index_range = range(len(feature_files))
 
-    logger.info("- Projection: projecting %d features from directory '%s' to directory '%s'", len(index_range), fs.extracted_directory, fs.projected_directory)
+    logger.info("- Projection: projecting %d features from directory '%s' to directory '%s'", len(index_range), fs.directories['extracted'], fs.directories['projected'])
     # extract the features
     for i in index_range:
       feature_file = str(feature_files[i])

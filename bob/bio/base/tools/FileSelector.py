@@ -27,18 +27,22 @@ class FileSelector:
 
     """Initialize the file selector object with the current configuration."""
     self.database = database
-    self.original_directory = database.original_directory
-    self.preprocessed_directory = preprocessed_directory
     self.extractor_file = extractor_file
-    self.extracted_directory = extracted_directory
     self.projector_file = projector_file
-    self.projected_directory = projected_directory
     self.enroller_file = enroller_file
+
     self.model_directories = model_directories
     self.score_directories = score_directories
     self.zt_score_directories = zt_score_directories
     self.default_extension = default_extension
     self.compressed_extension = compressed_extension
+
+    self.directories = {
+      'original'     : database.original_directory,
+      'preprocessed' : preprocessed_directory,
+      'extracted'    : extracted_directory,
+      'projected'    : projected_directory
+    }
 
 
   def uses_probe_file_sets(self):
@@ -47,13 +51,9 @@ class FileSelector:
 
   def get_paths(self, files, directory_type = None):
     """Returns the list of file names for the given list of File objects."""
-    if directory_type == 'preprocessed':
-      directory = self.preprocessed_directory
-    elif directory_type == 'extracted':
-      directory = self.extracted_directory
-    elif directory_type == 'projected':
-      directory = self.projected_directory
-    else:
+    try:
+      directory = self.directories[directory_type]
+    except KeyError:
       raise ValueError("The given directory type '%s' is not supported." % directory_type)
 
     return self.database.file_names(files, directory, self.default_extension)
