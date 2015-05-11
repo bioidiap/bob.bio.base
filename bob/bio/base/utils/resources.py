@@ -89,7 +89,7 @@ def load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_distr
     else:
       # TODO: extract current package name and use this one, if possible
 
-      # Now: check if there are only two entry points, and one is from the facereclib, then use the other one
+      # Now: check if there are only two entry points, and one is from the bob.bio.base, then use the other one
       index = -1
       if preferred_distribution:
         for i,p in enumerate(entry_points):
@@ -141,11 +141,11 @@ def read_file_resource(resource, keyword):
   else:
     # TODO: extract current package name and use this one, if possible
 
-    # Now: check if there are only two entry points, and one is from the facereclib, then use the other one
+    # Now: check if there are only two entry points, and one is from the bob.bio.base, then use the other one
     index = -1
     if len(entry_points) == 2:
-      if entry_points[0].dist.project_name == 'facereclib': index = 1
-      elif entry_points[1].dist.project_name == 'facereclib': index = 0
+      if entry_points[0].dist.project_name == 'bob.bio.base': index = 1
+      elif entry_points[1].dist.project_name == 'bob.bio.base': index = 0
 
     if index != -1:
       logger.info("RESOURCES: Using the resource '%s' from '%s', and ignoring the one from '%s'" %(resource, entry_points[index].module_name, entry_points[1-index].module_name))
@@ -168,7 +168,7 @@ def list_resources(keyword, strip=['dummy']):
   entry_points = _get_entry_points(keyword, strip)
   last_dist = None
   retval = ""
-  for entry_point in entry_points:
+  for entry_point in sorted(entry_points):
     if last_dist != str(entry_point.dist):
       retval += "\n- %s: \n" % str(entry_point.dist)
       last_dist = str(entry_point.dist)

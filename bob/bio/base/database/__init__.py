@@ -1,3 +1,5 @@
+from .utils import File, FileSet
+
 from .Database import Database, DatabaseZT
 from .DatabaseBob import DatabaseBob, DatabaseBobZT
 from .DatabaseFileList import DatabaseFileList

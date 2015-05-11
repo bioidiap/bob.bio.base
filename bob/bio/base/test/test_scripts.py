@@ -124,7 +124,7 @@ def test_verify_commandline():
 @utils.grid_available
 def test_verify_parallel():
   test_dir = tempfile.mkdtemp(prefix='frltest_')
-  test_database = os.path.join(test_dir, "database.sql3")
+  test_database = os.path.join(test_dir, "submitted.sql3")
 
   # define dummy parameters
   parameters = [

@@ -1,14 +1,14 @@
 import bob.db.atnt
 import os
 
-from bob.bio.base.database import DatabaseBob, DatabaseBobZT
+from bob.bio.base.database import DatabaseBob, DatabaseBobZT, FileSet
 from bob.bio.base.test.utils import atnt_database_directory
 
 class FileSetDatabase (DatabaseBobZT):
 
   def __init__(self):
     # call base class constructor with useful parameters
-    facereclib.databases.DatabaseBobZT.__init__(
+    DatabaseBobZT.__init__(
         self,
         database = bob.db.atnt.Database(
             original_directory = atnt_database_directory(),
@@ -29,7 +29,7 @@ class FileSetDatabase (DatabaseBobZT):
     file_sets = []
     for client_files in files:
       # generate file set for each client
-      file_set = facereclib.databases.FileSet(client_files[0].client_id, client_files[0].client_id, client_files[0].path)
+      file_set = FileSet(client_files[0].client_id, client_files[0].client_id, client_files[0].path)
       file_set.files = client_files
       file_sets.append(file_set)
     return file_sets

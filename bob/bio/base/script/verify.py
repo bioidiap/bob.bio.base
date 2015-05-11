@@ -86,12 +86,12 @@ def add_jobs(args, submitter = None):
     if args.grid is None:
       jobs_to_execute.append(('train-projector',))
     else:
-      job_ids['projector_training'] = submitter.submit(
+      job_ids['projector-training'] = submitter.submit(
               '--sub-task train-projector',
               name="train-p",
               dependencies = deps,
               **args.grid.training_queue)
-      deps.append(job_ids['projector_training'])
+      deps.append(job_ids['projector-training'])
 
   # feature projection
   if not args.skip_projection and args.algorithm.performs_projection:
@@ -110,12 +110,12 @@ def add_jobs(args, submitter = None):
     if args.grid is None:
       jobs_to_execute.append(('train-enroller',))
     else:
-      job_ids['enroller_training'] = submitter.submit(
+      job_ids['enroller-training'] = submitter.submit(
               '--sub-task train-enroller',
               name = "train-e",
               dependencies = deps,
               **args.grid.training_queue)
-      deps.append(job_ids['enroller_training'])
+      deps.append(job_ids['enroller-training'])
 
   # enroll models
   enroll_deps_n = {}
@@ -129,38 +129,38 @@ def add_jobs(args, submitter = None):
       if args.grid is None:
         jobs_to_execute.append(('enroll', group, 'N'))
       else:
-        job_ids['enroll_%s_N'%group] = submitter.submit(
+        job_ids['enroll-%s-N'%group] = submitter.submit(
                 '--sub-task enroll --group %s --model-type N'%group,
                 name = "enr-N-%s"%group,
                 number_of_parallel_jobs = args.grid.number_of_enrollment_jobs,
                 dependencies = deps,
                 **args.grid.enrollment_queue)
-        enroll_deps_n[group].append(job_ids['enroll_%s_N'%group])
+        enroll_deps_n[group].append(job_ids['enroll-%s-N'%group])
 
       if args.zt_norm:
         if args.grid is None:
           jobs_to_execute.append(('enroll', group, 'T'))
         else:
-          job_ids['enroll_%s_T'%group] = submitter.submit(
+          job_ids['enroll-%s-T'%group] = submitter.submit(
                   '--sub-task enroll --group %s --model-type T'%group,
                   name = "enr-T-%s"%group,
                   number_of_parallel_jobs = args.grid.number_of_enrollment_jobs,
                   dependencies = deps,
                   **args.grid.enrollment_queue)
-          enroll_deps_t[group].append(job_ids['enroll_%s_T'%group])
+          enroll_deps_t[group].append(job_ids['enroll-%s-T'%group])
 
     # compute A,B,C, and D scores
     if not args.skip_score_computation:
       if args.grid is None:
         jobs_to_execute.append(('compute-scores', group, None, 'A'))
       else:
-        job_ids['score_%s_A'%group] = submitter.submit(
+        job_ids['score-%s-A'%group] = submitter.submit(
                 '--sub-task compute-scores --group %s --score-type A'%group,
                 name = "score-A-%s"%group,
                 number_of_parallel_jobs = args.grid.number_of_scoring_jobs,
                 dependencies = enroll_deps_n[group],
                 **args.grid.scoring_queue)
-        concat_deps[group] = [job_ids['score_%s_A'%group]]
+        concat_deps[group] = [job_ids['score-%s-A'%group]]
 
       if args.zt_norm:
         if args.grid is None:
@@ -169,21 +169,21 @@ def add_jobs(args, submitter = None):
           jobs_to_execute.append(('compute-scores', group, None, 'D'))
           jobs_to_execute.append(('compute-scores', group, None, 'Z'))
         else:
-          job_ids['score_%s_B'%group] = submitter.submit(
+          job_ids['score-%s-B'%group] = submitter.submit(
                   '--sub-task compute-scores --group %s --score-type B'%group,
                   name = "score-B-%s"%group,
                   number_of_parallel_jobs = args.grid.number_of_scoring_jobs,
                   dependencies = enroll_deps_n[group],
                   **args.grid.scoring_queue)
 
-          job_ids['score_%s_C'%group] = submitter.submit(
+          job_ids['score-%s-C'%group] = submitter.submit(
                   '--sub-task compute-scores --group %s --score-type C'%group,
                   name = "score-C-%s"%group,
                   number_of_parallel_jobs = args.grid.number_of_scoring_jobs,
                   dependencies = enroll_deps_t[group],
                   **args.grid.scoring_queue)
 
-          job_ids['score_%s_D'%group] = submitter.submit(
+          job_ids['score-%s-D'%group] = submitter.submit(
                   '--sub-task compute-scores --group %s --score-type D'%group,
                   name = "score-D-%s"%group,
                   number_of_parallel_jobs = args.grid.number_of_scoring_jobs,
@@ -191,12 +191,12 @@ def add_jobs(args, submitter = None):
                   **args.grid.scoring_queue)
 
           # compute zt-norm
-          score_deps[group] = [job_ids['score_%s_A'%group], job_ids['score_%s_B'%group], job_ids['score_%s_C'%group], job_ids['score_%s_D'%group]]
-          job_ids['score_%s_Z'%group] = submitter.submit(
+          score_deps[group] = [job_ids['score-%s-A'%group], job_ids['score-%s-B'%group], job_ids['score-%s-C'%group], job_ids['score-%s-D'%group]]
+          job_ids['score-%s-Z'%group] = submitter.submit(
                   '--sub-task compute-scores --group %s --score-type Z'%group,
                   name = "score-Z-%s"%group,
                   dependencies = score_deps[group])
-          concat_deps[group].extend([job_ids['score_%s_B'%group], job_ids['score_%s_C'%group], job_ids['score_%s_D'%group], job_ids['score_%s_Z'%group]])
+          concat_deps[group].extend([job_ids['score-%s-B'%group], job_ids['score-%s-C'%group], job_ids['score-%s-D'%group], job_ids['score-%s-Z'%group]])
     else:
       concat_deps[group] = []
 
@@ -205,7 +205,7 @@ def add_jobs(args, submitter = None):
       if args.grid is None:
         jobs_to_execute.append(('concatenate', group))
       else:
-        job_ids['concat_%s'%group] = submitter.submit(
+        job_ids['concat-%s'%group] = submitter.submit(
                 '--sub-task concatenate --group %s'%group,
                 name = "concat-%s"%group,
                 dependencies = concat_deps[group])
@@ -215,7 +215,7 @@ def add_jobs(args, submitter = None):
     if args.grid is None:
       jobs_to_execute.append(('calibrate',))
     else:
-      calib_deps = [job_ids['concat_%s'%g] for g in args.groups if 'concat_%s'%g in job_ids]
+      calib_deps = [job_ids['concat-%s'%g] for g in args.groups if 'concat-%s'%g in job_ids]
       job_ids['calibrate'] = submitter.submit(
               '--sub-task calibrate',
               dependencies = calib_deps)
@@ -362,7 +362,8 @@ def verify(args, command_line_parameters, external_fake_job_id = 0):
   # as the main entry point, check whether the sub-task is specified
   if args.sub_task is not None:
     # execute the desired sub-task
-    execute(args)
+    if not execute(args):
+      raise ValueError("The specified --sub-task '%s' is not known to the system" % args.sub_task)
     return {}
   else:
     # add jobs
@@ -394,7 +395,8 @@ def verify(args, command_line_parameters, external_fake_job_id = 0):
         args.group = None if len(job) <= 1 else job[1]
         args.model_type = None if len(job) <= 2 else job[2]
         args.score_type = None if len(job) <= 3 else job[3]
-        execute(args)
+        if not execute(args):
+          raise ValueError("The current --sub-task '%s' is not known to the system" % args.sub_task)
 
       if args.timer:
         end_time = os.times()

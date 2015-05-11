@@ -125,6 +125,12 @@ setup(
         'pca+lda           = bob.bio.base.config.algorithm.lda:algorithm',
         'bic               = bob.bio.base.config.algorithm.bic:algorithm',
       ],
+
+      'bob.bio.grid': [
+        'local-p4          = bob.bio.base.config.grid.local:grid',
+        'local-p8          = bob.bio.base.config.grid.local:grid_p8',
+        'local-p16         = bob.bio.base.config.grid.local:grid_p16'
+      ],
    },
 
     # Classifiers are important if you plan to distribute this package through
