@@ -193,8 +193,8 @@ def initialize(parsers, command_line_parameters = None, skips = []):
     extracted_directory = os.path.join(args.temp_directory, extractor_sub_dir, args.extracted_directory),
     projected_directory = os.path.join(args.temp_directory, projector_sub_dir, args.projected_directory),
     model_directories = [os.path.join(args.temp_directory, protocol, m) for m in args.model_directories],
-    score_directories = [os.path.join(args.temp_directory, protocol, z) for z in args.score_directories],
-    zt_score_directories = [os.path.join(args.result_directory, protocol, s) for s in args.zt_directories],
+    score_directories = [os.path.join(args.result_directory, protocol, z) for z in args.score_directories],
+    zt_score_directories = [os.path.join(args.temp_directory, protocol, s) for s in args.zt_directories],
     compressed_extension = '.tar.bz2' if args.write_compressed_score_files else '',
     default_extension = '.hdf5',
   )
