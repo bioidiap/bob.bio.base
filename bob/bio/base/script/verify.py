@@ -235,6 +235,17 @@ def execute(args):
   # the file selector object
   fs = tools.FileSelector.instance()
 
+  if args.dry_run:
+    # Don't actually run the experiment, but just print out, what we would have done
+    parameters = ""
+    if args.group is not None: parameters += "group='%s' " % args.group
+    if args.model_type is not None: parameters += "and model-type='%s' " % args.model_type
+    if args.score_type is not None: parameters += "and score-type='%s' " % args.score_type
+    print ("Would have executed task '%s' with %s" % (args.sub_task, parameters if parameters else "no parameters"))
+    # return True as we pretend to have executed the task
+    return True
+
+
   # preprocess the data
   if args.sub_task == 'preprocess':
     tools.preprocess(

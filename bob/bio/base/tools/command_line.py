@@ -50,10 +50,10 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
   results = "/idiap/user/%s/database-name/sub-directory" % os.environ["USER"] if is_idiap else "results"
 
   dir_group = parser.add_argument_group('\nDirectories that can be changed according to your requirements')
-  dir_group.add_argument('-T', '--temp-directory', metavar = 'DIR', default = temp,
-      help = 'The directory for temporary files.')
-  dir_group.add_argument('-U', '--result-directory', metavar = 'DIR', default = results,
-      help = 'The directory for resulting score files.')
+  dir_group.add_argument('-T', '--temp-directory', metavar = 'DIR',
+      help = 'The directory for temporary files, default is: %s.' % temp)
+  dir_group.add_argument('-U', '--result-directory', metavar = 'DIR',
+      help = 'The directory for resulting score files, default is: %s.' % results)
 
   file_group = parser.add_argument_group('\nName (maybe including a path relative to the --temp-directory, if not specified otherwise) of files that will be generated. Note that not all files will be used by all algorithms')
   file_group.add_argument('--extractor-file', metavar = 'FILE', default = 'Extractor.hdf5',
@@ -146,10 +146,6 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   if args.timer is not None and not len(args.timer):
     args.timer = ('real', 'system', 'user')
 
-  # set base directories
-  args.temp_directory = os.path.join(args.temp_directory, args.sub_directory)
-  args.result_directory = os.path.join(args.result_directory, args.sub_directory)
-
   # load configuration resources
   args.database = load_resource(' '.join(args.database), 'database', imports = args.imports)
   args.preprocessor = load_resource(' '.join(args.preprocessor), 'preprocessor', imports = args.imports)
@@ -157,7 +153,19 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   args.algorithm = load_resource(' '.join(args.algorithm), 'algorithm', imports = args.imports)
   if args.grid is not None:
     args.grid = load_resource(' '.join(args.grid), 'grid', imports = args.imports)
+
+  # set base directories
+  is_idiap = os.path.isdir("/idiap")
+  if args.temp_directory is None:
+    args.temp_directory = "/idiap/temp/%s/%s" % (os.environ["USER"], args.database.name) if is_idiap else "temp"
+  if args.result_directory is None:
+    args.result_directory = "/idiap/user/%s/%s" % (os.environ["USER"], args.database.name) if is_idiap else "results"
+
+  args.temp_directory = os.path.join(args.temp_directory, args.sub_directory)
+  args.result_directory = os.path.join(args.result_directory, args.sub_directory)
   args.grid_log_directory = os.path.join(args.temp_directory, args.grid_log_directory)
+
+
 
   # protocol command line override
   if args.protocol is not None:
