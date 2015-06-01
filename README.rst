@@ -1,28 +1,55 @@
-Example buildout environment
-============================
+.. vim: set fileencoding=utf-8 :
+.. Andre Anjos <andre.anjos@idiap.ch>
+.. Thu 30 Jan 08:46:53 2014 CET
 
-This simple example demonstrates how to wrap Bob-based scripts on buildout
-environments. This may be useful for homework assignments, tests or as a way to
-distribute code to reproduce your publication. In summary, if you need to give
-out code to others, we recommend you do it following this template so your code
-can be tested, documented and run in an orderly fashion.
+.. image:: http://img.shields.io/badge/docs-stable-yellow.png
+   :target: http://pythonhosted.org/bob.bio.base/index.html
+.. image:: http://img.shields.io/badge/docs-latest-orange.png
+   :target: https://www.idiap.ch/software/bob/docs/latest/bioidiap/bob.bio.base/master/index.html
+.. image:: http://travis-ci.org/bioidiap/bob.bio.base.svg?branch=master
+   :target: https://travis-ci.org/bioidiap/bob.bio.base?branch=master
+.. image:: https://coveralls.io/repos/bioidiap/bob.bio.base/badge.png?branch=master
+   :target: https://coveralls.io/r/bioidiap/bob.bio.base?branch=master
+.. image:: https://img.shields.io/badge/github-master-0000c0.png
+   :target: https://github.com/bioidiap/bob.bio.base/tree/master
+.. image:: http://img.shields.io/pypi/v/bob.bio.base.png
+   :target: https://pypi.python.org/pypi/bob.bio.base
+.. image:: http://img.shields.io/pypi/dm/bob.bio.base.png
+   :target: https://pypi.python.org/pypi/bob.bio.base
+
+==================================================
+ Scripts to run biometric recognition experiments
+==================================================
+
+This package contains basic functionality to run biometric recognition experiments.
+It provides a generic ``./bin/verify.py`` script that takes several parameters, including:
+
+* A database and its evaluation protocol
+* A data preprocessing algorithm
+* A feature extraction algorithm
+* A biometric recognition algorithm
+
+All these steps of the biometric recognition system are given as configuration files.
+
+In this base class implementation, only a few algorithms (such as PCA, LDA, PLDA, BIC) are implemented, while most algorithms that are more specialized are provided by other packages, which are usually in the ``bob.bio`` namespace, such as:
+
+* `bob.bio.face <http://pypi.python.org/pypi/bob.bio.face>`_ for face recognition databases, features and algorithms
+* `bob.bio.speaker <http://pypi.python.org/pypi/bob.bio.speaker>`_ for speaker recognition recognition databases, features and algorithms
+* `bob.bio.gmm <http://pypi.python.org/pypi/bob.bio.gmm>`_ for Gaussian-Mixture-model-based algorithms
+* `bob.bio.video <http://pypi.python.org/pypi/bob.bio.video>`_ for video-based databases and algorithms
+
+
+Additionally, a generic script ``./bin/evaluate.py`` is provided that can generate several types of plots (such as ROC, DET and CMC curves) and compute several measures (such as HTER, Cllr) to evaluate your experiments.
 
 Installation
 ------------
+To install this package -- alone or together with other `Packages of Bob <https://github.com/idiap/bob/wiki/Packages>`_ -- please read the `Installation Instructions <https://github.com/idiap/bob/wiki/Installation>`_.
+For Bob_ to be able to work properly, some dependent packages are required to be installed.
+Please make sure that you have read the `Dependencies <https://github.com/idiap/bob/wiki/Dependencies>`_ for your operating system.
 
-.. note::
+Documentation
+-------------
+For further documentation on this package, please read the `Stable Version <http://pythonhosted.org/bob.bio.base/index.html>`_ or the `Latest Version <https://www.idiap.ch/software/bob/docs/latest/bioidiap/bob.bio.base/master/index.html>`_ of the documentation.
+For a list of tutorials on this or the other packages ob Bob_, or information on submitting issues, asking questions and starting discussions, please visit its website.
 
-  To follow these instructions locally you will need a local copy of this
-  package. For that, you can use the github tarball API to download the package::
-
-    $ wget --no-check-certificate https://github.com/idiap/bob.project.example/tarball/master -O- | tar xz
-    $ mv idiap-bob.project* bob.project.example
-
-Documentation and Further Information
--------------------------------------
-
-Please refer to the latest Bob user guide, accessing from the `Bob website
-<http://idiap.github.com/bob/>`_ for how to create your own packages based on
-this example. In particular, the Section entitled `Organize Your Work in
-Satellite Packages <http://www.idiap.ch/software/bob/docs/releases/last/sphinx/html/OrganizeYourCode.html>`_
-contains details on how to setup, build and roll out your code.
+.. _bob: https://www.idiap.ch/software/bob
