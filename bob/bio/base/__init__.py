@@ -9,12 +9,9 @@ from . import grid # only one file, not complete directory
 from . import script
 from . import test
 
-
-
 def get_config():
   """Returns a string containing the configuration information.
   """
-
   import bob.extension
   return bob.extension.get_config(__name__)
 
