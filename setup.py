@@ -33,7 +33,11 @@
 # allows you to test your package with new python dependencies w/o requiring
 # administrative interventions.
 
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, dist
+dist.Distribution(dict(setup_requires=['bob.extension']))
+
+from bob.extension.utils import load_requirements
+install_requires = load_requirements()
 
 # The only thing we do in this file is to call the setup() function with all
 # parameters that define our package.
@@ -64,9 +68,7 @@ setup(
     # on the current system will be installed locally and only visible to the
     # scripts of this package. Don't worry - You won't need administrative
     # privileges when using buildout.
-    install_requires = [
-      'setuptools',
-    ],
+    install_requires = install_requires,
 
     # Your project should be called something like 'bob.<foo>' or
     # 'bob.<foo>.<bar>'. To implement this correctly and still get all your
@@ -122,7 +124,9 @@ setup(
         'dummy             = bob.bio.base.test.dummy.algorithm:algorithm', # for test purposes only
         'pca               = bob.bio.base.config.algorithm.pca:algorithm',
         'lda               = bob.bio.base.config.algorithm.lda:algorithm',
-        'pca+lda           = bob.bio.base.config.algorithm.lda:algorithm',
+        'pca+lda           = bob.bio.base.config.algorithm.pca_lda:algorithm',
+        'plda              = bob.bio.base.config.algorithm.plda:algorithm',
+        'pca+plda          = bob.bio.base.config.algorithm.pca_plda:algorithm',
         'bic               = bob.bio.base.config.algorithm.bic:algorithm',
       ],
 
