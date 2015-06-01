@@ -18,7 +18,7 @@ before_install:
 - pip install --find-links https://www.idiap.ch/software/bob/wheels/travis/ --use-wheel --pre -r requirements.txt coveralls
 install:
 - python bootstrap-buildout.py
-- ./bin/buildout
+- ./bin/buildout buildout:develop=. buildout:extensions=bob.buildout buildout:auto-checkout=
 script:
 - ./bin/python -c 'import pkg_resources; from bob.bio.base import get_config; print(get_config())'
 - ./bin/coverage run --source=bob.bio.base ./bin/nosetests -sv
