@@ -22,6 +22,22 @@ def test_resources():
   assert isinstance (cls, bob.bio.base.algorithm.PCA)
 
 
+def test_grid():
+  # try to load the grid configurations
+  g = bob.bio.base.load_resource("grid", "grid")
+  assert not g.is_local()
+
+  g = bob.bio.base.load_resource("local-p4", "grid")
+  assert g.is_local()
+  assert g.number_of_parallel_processes == 4
+  g = bob.bio.base.load_resource("local-p8", "grid")
+  assert g.is_local()
+  assert g.number_of_parallel_processes == 8
+  g = bob.bio.base.load_resource("local-p16", "grid")
+  assert g.is_local()
+  assert g.number_of_parallel_processes == 16
+
+
 def test_io():
   # Test that bob.bio.base.load and save works as expected
   filename = bob.io.base.test_utils.temporary_filename()
@@ -64,13 +80,13 @@ def test_io():
 def test_sampling():
   # test selection of elements
   indices = bob.bio.base.selected_indices(100, 10)
-  assert indices == range(5, 100, 10)
+  assert indices == list(range(5, 100, 10))
 
   indices = bob.bio.base.selected_indices(100, 300)
-  assert indices == range(100)
+  assert indices == list(range(100))
 
   indices = bob.bio.base.selected_indices(100, None)
-  assert indices == range(100)
+  assert indices == list(range(100))
 
   array = numpy.arange(100)
   elements = bob.bio.base.selected_elements(array, 10)

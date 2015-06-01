@@ -133,7 +133,8 @@ setup(
       'bob.bio.grid': [
         'local-p4          = bob.bio.base.config.grid.local:grid',
         'local-p8          = bob.bio.base.config.grid.local:grid_p8',
-        'local-p16         = bob.bio.base.config.grid.local:grid_p16'
+        'local-p16         = bob.bio.base.config.grid.local:grid_p16',
+        'grid              = bob.bio.base.config.grid.grid:grid'
       ],
    },
 
