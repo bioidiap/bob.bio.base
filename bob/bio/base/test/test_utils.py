@@ -83,10 +83,10 @@ def test_sampling():
   assert indices == list(range(5, 100, 10))
 
   indices = bob.bio.base.selected_indices(100, 300)
-  assert indices == list(range(100))
+  assert indices == range(100)
 
   indices = bob.bio.base.selected_indices(100, None)
-  assert indices == list(range(100))
+  assert indices == range(100)
 
   array = numpy.arange(100)
   elements = bob.bio.base.selected_elements(array, 10)
