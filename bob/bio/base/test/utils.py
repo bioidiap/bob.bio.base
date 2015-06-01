@@ -79,9 +79,8 @@ def atnt_database_directory():
 
   atnt_downloaded_directory = tempfile.mkdtemp(prefix='atnt_db_')
   db_url = "http://www.cl.cam.ac.uk/Research/DTG/attarchive/pub/data/att_faces.zip"
-  from .logger import warn
-  warn("Downloading the AT&T database from '%s' to '%s' ..." % (db_url, atnt_downloaded_directory))
-  warn("To avoid this, please download the database manually, extract the data and set the ATNT_DATABASE_DIRECTORY environment variable to this directory.")
+  logger.warn("Downloading the AT&T database from '%s' to '%s' ...", db_url, atnt_downloaded_directory)
+  logger.warn("To avoid this, please download the database manually, extract the data and set the ATNT_DATABASE_DIRECTORY environment variable to this directory.")
 
   # to avoid re-downloading in parallel test execution
   os.environ['ATNT_DATABASE_DIRECTORY'] = atnt_downloaded_directory
