@@ -29,7 +29,7 @@ import numpy, math
 import os
 
 # matplotlib stuff
-import matplotlib
+import matplotlib; matplotlib.use('pdf') #avoids TkInter threaded start
 from matplotlib import pyplot
 from matplotlib.backends.backend_pdf import PdfPages
 
