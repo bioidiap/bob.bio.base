@@ -178,9 +178,9 @@ def initialize(parsers, command_line_parameters = None, skips = []):
 
   # sub-directorues that depend on the database
   extractor_sub_dir = protocol if args.database.training_depends_on_protocol and args.extractor.requires_training else '.'
-  projector_sub_dir = protocol if args.database.training_depends_on_protocol and args.algorithm.requires_projector_training else '.'
-  enroller_sub_dir = protocol if args.database.training_depends_on_protocol and args.algorithm.requires_enroller_training else '.'
-  model_sub_dir = protocol if args.database.models_depend_on_protocol else '.'
+  projector_sub_dir = protocol if args.database.training_depends_on_protocol and args.algorithm.requires_projector_training else extractor_sub_dir
+  enroller_sub_dir = protocol if args.database.training_depends_on_protocol and args.algorithm.requires_enroller_training else projector_sub_dir
+  model_sub_dir = protocol if args.database.models_depend_on_protocol else enroller_sub_dir
 
   # initialize the file selector
   FileSelector.create(
