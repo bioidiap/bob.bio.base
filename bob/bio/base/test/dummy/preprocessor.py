@@ -1,7 +1,7 @@
 from bob.bio.base.preprocessor import Preprocessor
 
 class DummyPreprocessor (Preprocessor):
-  def __init__(self):
+  def __init__(self, **kwargs):
     Preprocessor.__init__(self)
 
   def __call__(self, data, annotation):

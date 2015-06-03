@@ -8,7 +8,7 @@ _data = [5., 6., 7., 8., 9.]
 class DummyAlgorithm (Algorithm):
   """This class is used to test all the possible functions of the tool chain, but it does basically nothing."""
 
-  def __init__(self):
+  def __init__(self, **kwargs):
     """Generates a test value that is read and written"""
 
     # call base class constructor registering that this tool performs everything.

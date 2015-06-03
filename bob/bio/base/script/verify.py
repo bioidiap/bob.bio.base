@@ -378,7 +378,7 @@ def verify(args, command_line_parameters, external_fake_job_id = 0):
     return {}
   else:
     # add jobs
-    submitter = tools.GridSubmission(args, command_line_parameters, first_fake_job_id = 0) if args.grid else None
+    submitter = tools.GridSubmission(args, command_line_parameters, first_fake_job_id = external_fake_job_id) if args.grid else None
     retval = add_jobs(args, submitter)
     tools.write_info(args, command_line_parameters)
 

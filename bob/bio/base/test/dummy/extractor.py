@@ -6,7 +6,7 @@ from bob.bio.base.extractor import Extractor
 _data = [0., 1., 2., 3., 4.]
 
 class DummyExtractor (Extractor):
-  def __init__(self):
+  def __init__(self, **kwargs):
     Extractor.__init__(self, requires_training=True)
     self.model = False
 

@@ -136,7 +136,7 @@ def test_verify_parallel():
       '-s', 'test_parallel',
       '--temp-directory', test_dir,
       '--result-directory', test_dir,
-      '-g', 'bob.bio.base.grid.Grid(grid = "local", number_of_parallel_processes = 2, scheduler_sleep_time = 0.1)', '-G', test_database, '--run-local-scheduler', '-R',
+      '-g', 'bob.bio.base.grid.Grid(grid = "local", number_of_parallel_processes = 2, scheduler_sleep_time = 0.1)', '-G', test_database, '--run-local-scheduler', '--stop-on-failure',
       '--import', 'bob.io.image'
   ]
 
@@ -279,31 +279,10 @@ def test_evaluate():
   os.rmdir(test_dir)
 
 
+
+
+
 """
-def test11_baselines_api(self):
-  self.grid_available()
-  # test that all of the baselines would execute
-  from facereclib.script.baselines import available_databases, all_algorithms, main
-
-  for database in available_databases:
-    parameters = [sys.argv[0], '-d', database, '--dry-run']
-    main(parameters)
-    parameters.append('-g')
-    main(parameters)
-    parameters.extend(['-e', 'HTER'])
-    main(parameters)
-
-  for algorithm in all_algorithms:
-    parameters = [sys.argv[0], '-a', algorithm, '--dry-run']
-    main(parameters)
-    parameters.append('-g')
-    main(parameters)
-    parameters.extend(['-e', 'HTER'])
-    main(parameters)
-
-
-
-
 def test16_collect_results(self):
   # simply test that the collect_results script works
   test_dir = tempfile.mkdtemp(prefix='bobtest_')
@@ -311,52 +290,75 @@ def test16_collect_results(self):
   main(['--directory', test_dir, '--sort', '--sort-key', 'dir', '--criterion', 'FAR', '--self-test'])
   os.rmdir(test_dir)
 
+"""
 
-def test21_parameter_script(self):
-  self.grid_available()
+@utils.grid_available
+def test_grid_search():
   test_dir = tempfile.mkdtemp(prefix='bobtest_')
   # tests that the parameter_test.py script works properly
 
-  # first test without grid option
-  parameters = [
-      sys.argv[0],
-      '-c', os.path.join(base_dir, 'scripts', 'parameter_Test.py'),
-      '-d', os.path.join(base_dir, 'scripts', 'atnt_Test.py'),
-      '-f', 'lgbphs',
-      '-b', 'test_p',
-      '-s', '.',
-      '-T', test_dir,
-      '-R', test_dir,
-      '--', '--dry-run',
-  ]
-  from facereclib.script.parameter_test import main
-  main(parameters)
+  try:
+    # first test without grid option
+    parameters = [
+        sys.argv[0],
+        '-c', os.path.join(dummy_dir, 'grid_search.py'),
+        '-d', 'dummy',
+        '-e', 'dummy',
+        '-s', 'test_grid_search',
+        '-T', test_dir,
+        '-R', test_dir,
+        '--', '--dry-run',
+    ]
+    from bob.bio.base.script.grid_search import main
+    main(parameters)
 
-  # number of jobs should be 12
-  self.assertEqual(facereclib.script.parameter_test.task_count, 12)
-  # but no job in the grid
-  self.assertEqual(facereclib.script.parameter_test.job_count, 0)
+    # number of jobs should be 12
+    assert bob.bio.base.script.grid_search.task_count == 6
+    # but no job in the grid
+    assert bob.bio.base.script.grid_search.job_count == 0
 
-  # now, in the grid...
-  parameters = [
-      sys.argv[0],
-      '-c', os.path.join(base_dir, 'scripts', 'parameter_Test.py'),
-      '-d', os.path.join(base_dir, 'scripts', 'atnt_Test.py'),
-      '-f', 'lgbphs',
-      '-b', 'test_p',
-      '-i', '.',
-      '-s', '.',
-      '-T', test_dir,
-      '-R', test_dir,
-      '-g', 'grid',
-      '--', '--dry-run',
-  ]
-  main(parameters)
+    # now, in the grid...
+    parameters = [
+        sys.argv[0],
+        '-c', os.path.join(dummy_dir, 'grid_search.py'),
+        '-d', 'dummy',
+        '-s', 'test_grid_search',
+        '-i', '.',
+        '-G', test_dir,
+        '-T', test_dir,
+        '-R', test_dir,
+        '-w', 'Job.txt',
+        '-g', 'grid',
+        '--', '--dry-run',
+    ]
+    main(parameters)
 
-  # number of jobs should be 12
-  self.assertEqual(facereclib.script.parameter_test.task_count, 12)
-  # number of jobs in the grid: 36 (including best possible re-use of files; minus preprocessing)
-  self.assertEqual(facereclib.script.parameter_test.job_count, 36)
+    # number of jobs should be 12
+    assert bob.bio.base.script.grid_search.task_count == 6
+    # number of jobs in the grid: 36 (including best possible re-use of files; minus preprocessing)
+    assert bob.bio.base.script.grid_search.job_count == 30
 
-  shutil.rmtree(test_dir)
-"""
+    # and now, finally run locally
+    parameters = [
+        sys.argv[0],
+        '-c', os.path.join(dummy_dir, 'grid_search.py'),
+        '-d', 'dummy',
+        '-s', 'test_grid_search',
+        '-G', test_dir,
+        '-T', test_dir,
+        '-R', test_dir,
+        '-w', 'Job.txt',
+        '-l', '4', '-L', '-1', '-vv',
+        '--', '--imports', 'bob.io.image',
+        '--dry-run'
+    ]
+    main(parameters)
+
+    # number of jobs should be 12
+    assert bob.bio.base.script.grid_search.task_count == 6
+    # number of jobs in the grid: 36 (including best possible re-use of files; minus preprocessing)
+    assert bob.bio.base.script.grid_search.job_count == 0
+
+
+  finally:
+    shutil.rmtree(test_dir)

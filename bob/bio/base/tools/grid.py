@@ -56,7 +56,7 @@ class GridSubmission:
     # setup logger
     bob.core.log.set_verbosity_level(bob.core.log.setup("gridtk"), args.verbose)
     Manager = gridtk.local.JobManagerLocal if args.grid.is_local() else gridtk.sge.JobManagerSGE
-    self.job_manager = Manager(database = args.gridtk_db_file, wrapper_script=jman)
+    self.job_manager = Manager(database = args.gridtk_database_file, wrapper_script=jman)
     self.submitted_job_ids = []
 
   def submit(self, command, number_of_parallel_jobs = 1, dependencies=[], name = None, **kwargs):
@@ -89,7 +89,7 @@ class GridSubmission:
           array = array,
           dependencies = dependencies,
           log_dir = log_dir,
-          stop_on_failure = self.args.delete_dependent_jobs_on_failure,
+          stop_on_failure = self.args.stop_on_failure,
           **kwargs
       )
       logger.info("submitted: job '%s' with id '%d' and dependencies '%s'" % (name, job_id, dependencies))

@@ -136,7 +136,7 @@ class BIC (Algorithm):
 
   def read_probe(self, probe_file):
     """Loads the probe feature from file, using the ``load_function`` specified in the constructor."""
-    return self.load_function(bob.io.base.HDF5File(probe_file))
+    return self.read_function(bob.io.base.HDF5File(probe_file))
 
 
   def score(self, model, probe):

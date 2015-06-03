@@ -106,6 +106,7 @@ setup(
         'verify.py         = bob.bio.base.script.verify:main',
         'resources.py      = bob.bio.base.script.resources:main',
         'evaluate.py       = bob.bio.base.script.evaluate:main',
+        'grid_search.py    = bob.bio.base.script.grid_search:main',
       ],
 
       'bob.bio.database': [

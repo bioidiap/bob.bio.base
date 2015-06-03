@@ -52,7 +52,7 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
   dir_group = parser.add_argument_group('\nDirectories that can be changed according to your requirements')
   dir_group.add_argument('-T', '--temp-directory', metavar = 'DIR',
       help = 'The directory for temporary files, default is: %s.' % temp)
-  dir_group.add_argument('-U', '--result-directory', metavar = 'DIR',
+  dir_group.add_argument('-R', '--result-directory', metavar = 'DIR',
       help = 'The directory for resulting score files, default is: %s.' % results)
 
   file_group = parser.add_argument_group('\nName (maybe including a path relative to the --temp-directory, if not specified otherwise) of files that will be generated. Note that not all files will be used by all algorithms')
@@ -62,7 +62,7 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
       help = 'Name of the file to write the feature projector into.')
   file_group.add_argument('--enroller-file' , metavar = 'FILE', default = 'Enroller.hdf5',
       help = 'Name of the file to write the model enroller into.')
-  file_group.add_argument('-G', '--gridtk-db-file', metavar = 'FILE', default = 'submitted.sql3',
+  file_group.add_argument('-G', '--gridtk-database-file', metavar = 'FILE', default = 'submitted.sql3',
       help = 'The database file in which the submitted jobs will be written; relative to the current directory (only valid with the --grid option).')
   file_group.add_argument('--experiment-info-file', metavar = 'FILE', default = 'Experiment.info',
       help = 'The file where the configuration of all parts of the experiments are written; relative to te --result-directory.')
@@ -80,7 +80,7 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
       help = 'Name of the directory (relative to --result-directory) where to write the results to')
   sub_dir_group.add_argument('--zt-directories', metavar = 'DIR', nargs = 5, default = ['zt_norm_A', 'zt_norm_B', 'zt_norm_C', 'zt_norm_D', 'zt_norm_D_sameValue'],
       help = 'Name of the directories (of --temp-directory) where to write the ZT-norm values; only used with --zt-norm')
-  sub_dir_group.add_argument('--grid-log-directory', metavar = 'DIR', default = 'grid_tk_logs',
+  sub_dir_group.add_argument('--grid-log-directory', metavar = 'DIR', default = 'gridtk_logs',
       help = 'Name of the directory (relative to --temp-directory) where to log files are written; only used with --grid')
 
   flag_group = parser.add_argument_group('\nFlags that change the behavior of the experiment')
@@ -91,8 +91,8 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
       help = 'Force to erase former data if already exist')
   flag_group.add_argument('-Z', '--write-compressed-score-files', action='store_true',
       help = 'Writes score files which are compressed with tar.bz2.')
-  flag_group.add_argument('-R', '--delete-dependent-jobs-on-failure', action='store_true',
-      help = 'Try to recursively delete the dependent jobs from the SGE grid queue, when a job failed')
+  flag_group.add_argument('-S', '--stop-on-failure', action='store_true',
+      help = 'Try to recursively stop the dependent jobs from the SGE grid queue, when a job failed')
   flag_group.add_argument('-X', '--external-dependencies', type=int, default = [], nargs='+',
       help = 'The jobs submitted to the grid have dependencies on the given job ids.')
   flag_group.add_argument('-D', '--timer', choices=('real', 'system', 'user'), nargs = '*',
@@ -181,6 +181,45 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   projector_sub_dir = protocol if args.database.training_depends_on_protocol and args.algorithm.requires_projector_training else extractor_sub_dir
   enroller_sub_dir = protocol if args.database.training_depends_on_protocol and args.algorithm.requires_enroller_training else projector_sub_dir
   model_sub_dir = protocol if args.database.models_depend_on_protocol else enroller_sub_dir
+
+
+  # IDIAP-Private directories, which should be automatically replaced
+  if is_idiap:
+    images = {
+      'ARFACE'      : "/idiap/resource/database/AR_Face/images",
+      'ATNT'        : "/idiap/group/biometric/databases/orl",
+      'BANCA'       : "/idiap/group/biometric/databases/banca/english/images/images",
+      'CAS-PEAL'    : "/idiap/resource/database/CAS-PEAL",
+      'FRGC'        : "/idiap/resource/database/frgc/FRGC-2.0-dist",
+      'MBGC-V1'     : "/idiap/resource/database/MBGC-V1",
+      'LFW'         : "/idiap/resource/database/lfw/all_images_aligned_with_funneling",
+      'MOBIO_IMAGE' : "/idiap/resource/database/mobio/IMAGES_PNG",
+      'MULTI-PIE_IMAGE' : "/idiap/resource/database/Multi-Pie/data",
+      'SC_FACE'     : "/idiap/group/biometric/databases/scface/images",
+      'XM2VTS'      : "/idiap/resource/database/xm2vtsdb/images",
+    }
+
+    annotations = {
+      'MOBIO_ANNOTATION'     : "/idiap/resource/database/mobio/IMAGE_ANNOTATIONS",
+      'MULTI-PIE_ANNOTATION' : "/idiap/group/biometric/annotations/multipie",
+    }
+
+    try:
+      for d in images:
+        if args.database.original_directory == "[YOUR_%s_DIRECTORY]" % d:
+          args.database.original_directory = images[d]
+          args.database.database.original_directory = images[d]
+    except AttributeError:
+      pass
+
+    try:
+      for d in annotations:
+        if args.database.annotation_directory == "[YOUR_%s_DIRECTORY]" % d:
+          args.database.annotation_directory = annotations[d]
+          args.database.database.annotation_directory = annotations[d]
+    except AttributeError:
+      pass
+
 
   # initialize the file selector
   FileSelector.create(

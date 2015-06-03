@@ -112,7 +112,7 @@ def _scores_a(algorithm, model_ids, group, compute_zt_norm, force, write_compres
       current_probe_objects = fs.probe_objects_for_model(model_id, group)
       model = algorithm.read_model(fs.model_file(model_id, group))
       # get the probe files
-      current_probe_files = fs.get_paths(current_probe_objects, 'projected' if algorithm.performs_projection else 'features')
+      current_probe_files = fs.get_paths(current_probe_objects, 'projected' if algorithm.performs_projection else 'extracted')
       # compute scores
       a = _scores(algorithm, model, current_probe_files)
 
@@ -131,7 +131,7 @@ def _scores_b(algorithm, model_ids, group, force):
 
   # probe files:
   z_probe_objects = fs.z_probe_objects(group)
-  z_probe_files = fs.get_paths(z_probe_objects, 'projected' if algorithm.performs_projection else 'features')
+  z_probe_files = fs.get_paths(z_probe_objects, 'projected' if algorithm.performs_projection else 'extracted')
 
   logger.info("- Scoring: computing score matrix B for group '%s'", group)
 
