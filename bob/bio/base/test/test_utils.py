@@ -26,6 +26,8 @@ def test_grid():
   # try to load the grid configurations
   g = bob.bio.base.load_resource("grid", "grid")
   assert not g.is_local()
+  g = bob.bio.base.load_resource("demanding", "grid")
+  assert not g.is_local()
 
   g = bob.bio.base.load_resource("local-p4", "grid")
   assert g.is_local()

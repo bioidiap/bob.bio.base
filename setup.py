@@ -33,10 +33,10 @@
 # allows you to test your package with new python dependencies w/o requiring
 # administrative interventions.
 
-from setuptools import setup, find_packages, dist
+from setuptools import setup, dist
 dist.Distribution(dict(setup_requires=['bob.extension']))
 
-from bob.extension.utils import load_requirements
+from bob.extension.utils import load_requirements, find_packages
 install_requires = load_requirements()
 
 # The only thing we do in this file is to call the setup() function with all
@@ -105,6 +105,7 @@ setup(
       'console_scripts' : [
         'verify.py         = bob.bio.base.script.verify:main',
         'resources.py      = bob.bio.base.script.resources:main',
+        'evaluate.py       = bob.bio.base.script.evaluate:main',
       ],
 
       'bob.bio.database': [
@@ -134,7 +135,8 @@ setup(
         'local-p4          = bob.bio.base.config.grid.local:grid',
         'local-p8          = bob.bio.base.config.grid.local:grid_p8',
         'local-p16         = bob.bio.base.config.grid.local:grid_p16',
-        'grid              = bob.bio.base.config.grid.grid:grid'
+        'grid              = bob.bio.base.config.grid.grid:grid',
+        'demanding         = bob.bio.base.config.grid.demanding:grid',
       ],
    },
 
