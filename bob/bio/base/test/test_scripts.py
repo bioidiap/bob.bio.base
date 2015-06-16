@@ -5,7 +5,6 @@ from __future__ import print_function
 import bob.measure
 
 import os
-import sys
 import shutil
 import tempfile
 import numpy
@@ -29,7 +28,7 @@ data_dir = pkg_resources.resource_filename('bob.bio.base', 'test/data')
 def _verify(parameters, test_dir, sub_dir, ref_modifier="", score_modifier=('scores','')):
   from bob.bio.base.script.verify import main
   try:
-    main([sys.argv[0]] + parameters)
+    main(parameters)
 
     # assert that the score file exists
     score_files = [os.path.join(test_dir, sub_dir, 'Default', norm, '%s-dev%s'%score_modifier) for norm in ('nonorm',  'ztnorm')]
@@ -227,7 +226,7 @@ def test_verify_filelist():
 
   try:
     from bob.bio.base.script.verify import main
-    main([sys.argv[0]] + parameters)
+    main(parameters)
 
     # assert that the score file exists
     score_files = [os.path.join(test_dir, 'test_filelist', 'None', norm, 'scores-dev') for norm in ('nonorm', 'ztnorm')]
@@ -300,7 +299,6 @@ def test_grid_search():
   try:
     # first test without grid option
     parameters = [
-        sys.argv[0],
         '-c', os.path.join(dummy_dir, 'grid_search.py'),
         '-d', 'dummy',
         '-e', 'dummy',
@@ -319,7 +317,6 @@ def test_grid_search():
 
     # now, in the grid...
     parameters = [
-        sys.argv[0],
         '-c', os.path.join(dummy_dir, 'grid_search.py'),
         '-d', 'dummy',
         '-s', 'test_grid_search',
@@ -340,7 +337,6 @@ def test_grid_search():
 
     # and now, finally run locally
     parameters = [
-        sys.argv[0],
         '-c', os.path.join(dummy_dir, 'grid_search.py'),
         '-d', 'dummy',
         '-s', 'test_grid_search',
@@ -359,6 +355,96 @@ def test_grid_search():
     # number of jobs in the grid: 36 (including best possible re-use of files; minus preprocessing)
     assert bob.bio.base.script.grid_search.job_count == 0
 
+  finally:
+    shutil.rmtree(test_dir)
+
+
+def test_scripts():
+  # Tests the bin/preprocess.py, bin/extract.py, bin/enroll.py and bin/score.py scripts
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
+  data_file = os.path.join(test_dir, "data.hdf5")
+  annotation_file = os.path.join(test_dir, "annotatations.txt")
+  preprocessed_file = os.path.join(test_dir, "preprocessed.hdf5")
+  preprocessed_image = os.path.join(test_dir, "preprocessed.png")
+  extractor_file = os.path.join(test_dir, "extractor.hdf5")
+  extracted_file = os.path.join(test_dir, "extracted.hdf5")
+  projector_file = os.path.join(test_dir, "projector.hdf5")
+  enroller_file = os.path.join(test_dir, "enroller.hdf5")
+  model_file = os.path.join(test_dir, "model.hdf5")
+
+  # tests that the parameter_test.py script works properly
+  try:
+    # create test data
+    test_data = utils.random_array((20,20), 0., 255., seed=84)
+    test_data[0,0] = 0.
+    test_data[19,19] = 255.
+    bob.io.base.save(test_data, data_file)
+    with open(annotation_file, 'w') as a:
+      a.write("leye 100 200\nreye 100 100")
+
+    extractor = bob.bio.base.load_resource("dummy", "extractor")
+    extractor.train([], extractor_file)
+
+    algorithm = bob.bio.base.load_resource("dummy", "algorithm")
+    algorithm.train_projector([], projector_file)
+    algorithm.train_enroller([], enroller_file)
+
+    from bob.bio.base.script.preprocess import main as preprocess
+    from bob.bio.base.script.extract import main as extract
+    from bob.bio.base.script.enroll import main as enroll
+    from bob.bio.base.script.score import main as score
+
+    # preprocessing
+    parameters = [
+        '-i', data_file,
+        '-a', annotation_file,
+        '-p', 'dummy',
+        '-o', preprocessed_file,
+        '-c', preprocessed_image
+    ]
+    preprocess(parameters)
+
+    assert os.path.isfile(preprocessed_file)
+    assert os.path.isfile(preprocessed_image)
+    assert numpy.allclose(bob.io.base.load(preprocessed_file), test_data)
+    assert numpy.allclose(bob.io.base.load(preprocessed_image), test_data, rtol=1., atol=1.)
+
+    # feature extraction
+    parameters = [
+        '-i', preprocessed_file,
+        '-p', 'dummy',
+        '-e', 'dummy',
+        '-E', extractor_file,
+        '-o', extracted_file,
+    ]
+    extract(parameters)
+
+    assert os.path.isfile(extracted_file)
+    assert numpy.allclose(bob.io.base.load(extracted_file), test_data.flatten())
+
+    # enrollment
+    parameters = [
+        '-i', extracted_file, extracted_file,
+        '-e', 'dummy',
+        '-a', 'dummy',
+        '-P', projector_file,
+        '-E', enroller_file,
+        '-o', model_file
+    ]
+    enroll(parameters)
+
+    assert os.path.isfile(model_file)
+    assert numpy.allclose(bob.io.base.load(model_file), test_data.flatten())
+
+    # scoring
+    parameters = [
+        '-m', model_file, model_file,
+        '-p', extracted_file, extracted_file,
+        '-a', 'dummy',
+        '-P', projector_file,
+        '-E', enroller_file,
+    ]
+    score(parameters)
 
   finally:
     shutil.rmtree(test_dir)

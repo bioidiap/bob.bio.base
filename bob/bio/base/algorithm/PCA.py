@@ -14,7 +14,7 @@ import logging
 logger = logging.getLogger("bob.bio.base")
 
 class PCA (Algorithm):
-  """Tool for computing eigenfaces"""
+  """Performs PCA on the given data"""
 
   def __init__(
       self,

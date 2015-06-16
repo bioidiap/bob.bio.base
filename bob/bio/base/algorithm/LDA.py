@@ -14,7 +14,7 @@ import logging
 logger = logging.getLogger("bob.bio.base")
 
 class LDA (Algorithm):
-  """Tool for computing linear discriminant analysis (so-called Fisher faces)"""
+  """Computes linear discriminant analysis"""
 
   def __init__(
       self,

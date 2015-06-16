@@ -25,11 +25,11 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
   config_group.add_argument('-d', '--database', metavar = 'x', nargs = '+', required = True,
       help = 'Database and the protocol; registered databases are: %s' % resource_keys('database', exclude_resources_from))
   config_group.add_argument('-p', '--preprocessor', metavar = 'x', nargs = '+', required = True,
-      help = 'Image preprocessing; registered preprocessors are: %s' % resource_keys('preprocessor', exclude_resources_from))
+      help = 'Data preprocessing; registered preprocessors are: %s' % resource_keys('preprocessor', exclude_resources_from))
   config_group.add_argument('-e', '--extractor', metavar = 'x', nargs = '+', required = True,
       help = 'Feature extraction; registered feature extractors are: %s' % resource_keys('extractor', exclude_resources_from))
   config_group.add_argument('-a', '--algorithm', metavar = 'x', nargs = '+', required = True,
-      help = 'Face recognition; registered face recognition algorithms are: %s' % resource_keys('algorithm', exclude_resources_from))
+      help = 'Biometric recognition; registered algorithms are: %s' % resource_keys('algorithm', exclude_resources_from))
   config_group.add_argument('-g', '--grid', metavar = 'x', nargs = '+',
       help = 'Configuration for the grid setup; if not specified, the commands are executed sequentially on the local machine.')
   config_group.add_argument('--imports', metavar = 'LIB', nargs = '+', default = ['bob.bio.base'],
@@ -249,22 +249,6 @@ def groups(args):
   return groups
 
 
-def write_info(args, command_line_parameters):
-  # write configuration
-  try:
-    bob.io.base.create_directories_safe(os.path.dirname(args.info_file))
-    f = open(args.info_file, 'w')
-    f.write("Command line:\n")
-    f.write(" ".join(command_line_parameters) + "\n\n")
-    f.write("Configuration:\n")
-    f.write("Database:\n%s\n\n" % args.database)
-    f.write("Preprocessing:\n%s\n\n" % args.preprocessor)
-    f.write("Feature Extraction:\n%s\n\n" % args.extractor)
-    f.write("Algorithm:\n%s\n\n" % args.algorithm)
-  except IOError:
-    logger.error("Could not write the experimental setup into file '%s'", args.info_file)
-
-
 def command_line(cmdline):
   """Converts the given options to a string that can be executed on command line."""
   c = ""
@@ -274,3 +258,19 @@ def command_line(cmdline):
     else:
       c += "'%s' " % cmd
   return c
+
+
+def write_info(args, command_line_parameters, executable):
+  # write configuration
+  try:
+    bob.io.base.create_directories_safe(os.path.dirname(args.info_file))
+    f = open(args.info_file, 'w')
+    f.write("Command line:\n")
+    f.write(command_line([executable] + command_line_parameters) + "\n\n")
+    f.write("Configuration:\n")
+    f.write("Database:\n%s\n\n" % args.database)
+    f.write("Preprocessing:\n%s\n\n" % args.preprocessor)
+    f.write("Feature Extraction:\n%s\n\n" % args.extractor)
+    f.write("Algorithm:\n%s\n\n" % args.algorithm)
+  except IOError:
+    logger.error("Could not write the experimental setup into file '%s'", args.info_file)

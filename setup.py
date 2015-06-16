@@ -107,6 +107,10 @@ setup(
         'resources.py      = bob.bio.base.script.resources:main',
         'evaluate.py       = bob.bio.base.script.evaluate:main',
         'grid_search.py    = bob.bio.base.script.grid_search:main',
+        'preprocess.py     = bob.bio.base.script.preprocess:main',
+        'extract.py        = bob.bio.base.script.extract:main',
+        'enroll.py         = bob.bio.base.script.enroll:main',
+        'score.py          = bob.bio.base.script.score:main',
       ],
 
       'bob.bio.database': [

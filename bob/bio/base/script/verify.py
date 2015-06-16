@@ -34,7 +34,7 @@ def parse_arguments(command_line_parameters, exclude_resources_from = []):
       skips = ['preprocessing', 'extractor-training', 'extraction', 'projector-training', 'projection', 'enroller-training', 'enrollment', 'score-computation', 'concatenation', 'calibration'])
 
 
-def add_jobs(args, submitter = None):
+def add_jobs(args, submitter):
   """Adds all (desired) jobs of the tool chain to the grid, or to the local list to be executed."""
 
   # collect the job ids
@@ -378,9 +378,9 @@ def verify(args, command_line_parameters, external_fake_job_id = 0):
     return {}
   else:
     # add jobs
-    submitter = tools.GridSubmission(args, command_line_parameters, first_fake_job_id = external_fake_job_id) if args.grid else None
+    submitter = tools.GridSubmission(args, command_line_parameters, first_fake_job_id = external_fake_job_id)
     retval = add_jobs(args, submitter)
-    tools.write_info(args, command_line_parameters)
+    tools.write_info(args, command_line_parameters, submitter.executable)
 
     if args.grid is not None:
       if args.grid.is_local() and args.run_local_scheduler:
@@ -419,11 +419,11 @@ def verify(args, command_line_parameters, external_fake_job_id = 0):
 
       return {}
 
-def main(command_line_parameters = sys.argv):
+def main(command_line_parameters = None):
   """Executes the main function"""
   try:
     # do the command line parsing
-    args = parse_arguments(command_line_parameters[1:])
+    args = parse_arguments(command_line_parameters)
 
     # perform face verification test
     verify(args, command_line_parameters)

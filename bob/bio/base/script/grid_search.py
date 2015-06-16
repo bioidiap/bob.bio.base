@@ -18,7 +18,7 @@ global configuration
 global place_holder_key
 # the extracted command line arguments
 global args
-# the job ids as returned by the call to the faceverify function
+# the job ids as returned by the call to the verify function
 global job_ids
 # first fake job id (useful for the --dry-run option)
 global fake_job_id
@@ -74,7 +74,7 @@ def command_line_options(command_line_parameters):
       help = 'Split the gridtk databases after the following level -1 - never split; 0 - preprocess; 1 - extract; 2 -- project; 3 -- enroll; 4 -- score;')
 
   parser.add_argument('-x', '--executable',
-      help = '(optional) The executable to be executed instead of facereclib/script/faceverify.py (taken *always* from the facereclib, not from the bin directory)')
+      help = '(optional) The executable to be executed instead of bob/bio/base/verify.py (taken *always* from bob.bio.base, not from the bin directory)')
 
   parser.add_argument('-R', '--result-directory', default = os.path.join("/idiap/user", os.environ["USER"]),
       help = 'The directory where to write the resulting score files to.')
@@ -101,7 +101,7 @@ def command_line_options(command_line_parameters):
       help = 'Use the given variable instead of the "replace" keyword in the configuration file')
 
   parser.add_argument('parameters', nargs = argparse.REMAINDER,
-      help = "Parameters directly passed to the face verify script. Use -- to separate this parameters from the parameters of this script. See 'bin/verify.py --help' for a complete list of options.")
+      help = "Parameters directly passed to the verify script. Use -- to separate this parameters from the parameters of this script. See 'bin/verify.py --help' for a complete list of options.")
 
   bob.core.log.add_command_line_option(parser)
 
@@ -168,7 +168,7 @@ def replace(string, replacements):
 
 
 def create_command_line(replacements):
-  """Creates the parameters for the function call that will be given to the faceverify script."""
+  """Creates the parameters for the function call that will be given to the verify script."""
   # get the values to be replaced with
   values = {}
   for key in configuration.replace:
@@ -200,7 +200,7 @@ dependency_keys  = ['DUMMY', 'preprocess', 'extract', 'project', 'enroll']
 
 
 def directory_parameters(directories):
-  """This function generates the faceverify parameters that define the directories, where the data is stored.
+  """This function generates the verify parameters that define the directories, where the data is stored.
   The directories are set such that data is reused whenever possible, but disjoint if needed."""
   def _join_dirs(index, subdir):
     # collect sub-directories
@@ -318,7 +318,7 @@ def execute_dependent_task(command_line, directories, dependency_level):
         if args.verbose:
           print ("Would have executed job", utils.command_line(command_line))
       else:
-        # execute the face verification experiment
+        # execute the verification experiment
         global fake_job_id
         new_job_ids = verify.verify(verif_args, command_line, external_fake_job_id = fake_job_id)
     else:
@@ -379,7 +379,7 @@ def create_recursive(replace_dict, step_index, directories, dependency_level, ke
           new_dependency_level = step_index
 
 
-def main(command_line_parameters = sys.argv):
+def main(command_line_parameters = None):
   """Main entry point for the parameter test. Try --help to see the parameters that can be specified."""
 
   global task_count, job_count, job_ids, score_directories
@@ -388,7 +388,7 @@ def main(command_line_parameters = sys.argv):
   job_ids = {}
   score_directories = []
 
-  command_line_options(command_line_parameters[1:])
+  command_line_options(command_line_parameters)
 
   global configuration, place_holder_key
   configuration = utils.read_config_file(args.configuration_file)
