@@ -48,6 +48,7 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
   is_idiap = os.path.isdir("/idiap")
   temp = "/idiap/temp/%s/database-name/sub-directory" % os.environ["USER"] if is_idiap else "temp"
   results = "/idiap/user/%s/database-name/sub-directory" % os.environ["USER"] if is_idiap else "results"
+  database_replacement = "/idiap/home/%s/.bob_bio_databases.txt" % os.environ["USER"] if is_idiap else "/home/%s/.bob_bio_databases.txt" % os.environ["USER"]
 
   dir_group = parser.add_argument_group('\nDirectories that can be changed according to your requirements')
   dir_group.add_argument('-T', '--temp-directory', metavar = 'DIR',
@@ -66,6 +67,8 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
       help = 'The database file in which the submitted jobs will be written; relative to the current directory (only valid with the --grid option).')
   file_group.add_argument('--experiment-info-file', metavar = 'FILE', default = 'Experiment.info',
       help = 'The file where the configuration of all parts of the experiments are written; relative to te --result-directory.')
+  file_group.add_argument('--database-directories-file', metavar = 'FILE', default = database_replacement,
+      help = 'An optional file, where database directories are stored (to avoid changing the database configurations)')
 
   sub_dir_group = parser.add_argument_group('\nSubdirectories of certain parts of the tool chain. You can specify directories in case you want to reuse parts of the experiments (e.g. extracted features) in other experiments. Please note that these directories are relative to the --temp-directory, but you can also specify absolute paths')
   sub_dir_group.add_argument('--preprocessed-directory', metavar = 'DIR', default = 'preprocessed',
@@ -183,40 +186,30 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   model_sub_dir = protocol if args.database.models_depend_on_protocol else enroller_sub_dir
 
 
-  # IDIAP-Private directories, which should be automatically replaced
-  if is_idiap:
-    images = {
-      'ARFACE'      : "/idiap/resource/database/AR_Face/images",
-      'ATNT'        : "/idiap/group/biometric/databases/orl",
-      'BANCA'       : "/idiap/group/biometric/databases/banca/english/images/images",
-      'CAS-PEAL'    : "/idiap/resource/database/CAS-PEAL",
-      'FRGC'        : "/idiap/resource/database/frgc/FRGC-2.0-dist",
-      'MBGC-V1'     : "/idiap/resource/database/MBGC-V1",
-      'LFW'         : "/idiap/resource/database/lfw/all_images_aligned_with_funneling",
-      'MOBIO_IMAGE' : "/idiap/resource/database/mobio/IMAGES_PNG",
-      'MULTI-PIE_IMAGE' : "/idiap/resource/database/Multi-Pie/data",
-      'SC_FACE'     : "/idiap/group/biometric/databases/scface/images",
-      'XM2VTS'      : "/idiap/resource/database/xm2vtsdb/images",
-    }
-
-    annotations = {
-      'MOBIO_ANNOTATION'     : "/idiap/resource/database/mobio/IMAGE_ANNOTATIONS",
-      'MULTI-PIE_ANNOTATION' : "/idiap/group/biometric/annotations/multipie",
-    }
+  # Database directories, which should be automatically replaced
+  if os.path.exists(args.database_directories_file):
+    #
+    replacements = {}
+    with open(args.database_directories_file) as f:
+      for line in f:
+        if line.strip() and not line.startswith("#"):
+          splits = line.split("=")
+          assert len(splits) == 2
+          replacements[splits[0].strip()] = splits[1].strip()
 
     try:
-      for d in images:
-        if args.database.original_directory == "[YOUR_%s_DIRECTORY]" % d:
-          args.database.original_directory = images[d]
-          args.database.database.original_directory = images[d]
+      for d in replacements:
+        if args.database.original_directory == d:
+          args.database.original_directory = replacements[d]
+          args.database.database.original_directory = replacements[d]
     except AttributeError:
       pass
 
     try:
-      for d in annotations:
-        if args.database.annotation_directory == "[YOUR_%s_DIRECTORY]" % d:
-          args.database.annotation_directory = annotations[d]
-          args.database.database.annotation_directory = annotations[d]
+      for d in replacements:
+        if args.database.annotation_directory == d:
+          args.database.annotation_directory = replacements[d]
+          args.database.database.annotation_directory = replacements[d]
     except AttributeError:
       pass
 
@@ -261,6 +254,8 @@ def command_line(cmdline):
 
 
 def write_info(args, command_line_parameters, executable):
+  if command_line_parameters is None:
+    command_line_parameters = sys.argv[1:]
   # write configuration
   try:
     bob.io.base.create_directories_safe(os.path.dirname(args.info_file))

@@ -59,7 +59,7 @@ def read_config_file(filename, keyword = None):
 
 def _get_entry_points(keyword, strip = []):
   """Returns the list of entry points for registered resources with the given keyword."""
-  return  [entry_point for entry_point in pkg_resources.iter_entry_points('bob.bio.' + keyword) if entry_point.name not in strip]
+  return  [entry_point for entry_point in pkg_resources.iter_entry_points('bob.bio.' + keyword) if not entry_point.name.startswith(tuple(strip))]
 
 
 def load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_distribution = None):
@@ -152,6 +152,12 @@ def read_file_resource(resource, keyword):
       return entry_points[index].load()
     else:
       raise ImportError("Under the desired name '%s', there are multiple entry points defined: %s" %(resource, [entry_point.module_name for entry_point in entry_points]))
+
+
+def extensions(keywords=valid_keywords):
+  """Returns a list of packages that define extensions using the given keywords, which default to all keywords."""
+  entry_points = [entry_point for keyword in keywords for entry_point in _get_entry_points(keyword)]
+  return sorted(list(set(entry_point.dist.project_name for entry_point in entry_points)))
 
 
 def resource_keys(keyword, exclude_packages=[], strip=['dummy']):

@@ -21,6 +21,11 @@ def test_resources():
   cls = bob.bio.base.load_resource("bob.bio.base.algorithm.PCA(10, distance_function=scipy.spatial.distance.euclidean)", "algorithm", imports=['bob.bio.base', 'scipy.spatial'])
   assert isinstance (cls, bob.bio.base.algorithm.PCA)
 
+  # get list of extensions
+  extensions = bob.bio.base.extensions()
+  assert isinstance(extensions, list)
+  assert 'bob.bio.base' in extensions
+
 
 def test_grid():
   # try to load the grid configurations

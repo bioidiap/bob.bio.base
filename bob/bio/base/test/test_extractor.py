@@ -28,7 +28,8 @@ def test_linearize():
     assert (extracted == extracted2).all()
 
   finally:
-    os.remove(filename)
+    if os.path.exists(filename):
+      os.remove(filename)
 
   # extract with dtype
   extractor = bob.bio.base.extractor.Linearize(dtype=numpy.complex128)
