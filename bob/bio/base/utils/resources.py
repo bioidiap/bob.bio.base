@@ -174,13 +174,15 @@ def list_resources(keyword, strip=['dummy']):
   entry_points = _get_entry_points(keyword, strip)
   last_dist = None
   retval = ""
+  length = max(len(entry_point.name) for entry_point in entry_points)
+
   for entry_point in sorted(entry_points):
     if last_dist != str(entry_point.dist):
       retval += "\n- %s: \n" % str(entry_point.dist)
       last_dist = str(entry_point.dist)
 
     if len(entry_point.attrs):
-      retval += "  + %s  --> %s: %s\n" % (entry_point.name, entry_point.module_name, entry_point.attrs[0])
+      retval += "  + %s --> %s: %s\n" % (entry_point.name + " "*(length - len(entry_point.name)), entry_point.module_name, entry_point.attrs[0])
     else:
-      retval += "  + %s  --> %s\n" % (entry_point.name, entry_point.module_name)
+      retval += "  + %s --> %s\n" % (entry_point.name + " "*(length - len(entry_point.name)), entry_point.module_name)
   return retval

@@ -37,6 +37,9 @@ class GridSubmission:
     # find, where the executable is installed
     import bob.extension
 
+    if command_line_parameters is None:
+      command_line_parameters = sys.argv[1:]
+
     executables = bob.extension.find_executable(executable, prefixes = ['bin'])
     if not len(executables):
       raise IOError("Could not find the '%s' executable." % executable)

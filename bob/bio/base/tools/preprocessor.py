@@ -34,7 +34,7 @@ def preprocess(preprocessor, groups=None, indices=None, force=False):
 
     # check for existence
     if not utils.check_file(preprocessed_data_file, force, 1000):
-      file_name = str(data_files[i])
+      file_name = data_files[i]
       data = preprocessor.read_original_data(file_name)
 
       # get the annotations; might be None
