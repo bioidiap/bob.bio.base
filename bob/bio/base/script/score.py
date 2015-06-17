@@ -48,13 +48,14 @@ def main(command_line_parameters=None):
       raise ValueError("The desired algorithm requires a pre-trained enroller file, but it was not specified")
     algorithm.load_enroller(args.enroller_file)
 
+  models, probes = {}, {}
   logger.debug("Loading %d models", len(args.model_files))
-  models = {m : algorithm.read_model(m) for m in args.model_files}
+  for m in args.model_files: models[m] = algorithm.read_model(m)
   logger.debug("Loading %d probes", len(args.probe_files))
-  probes = {p : algorithm.read_probe(p) for p in args.probe_files}
+  for p in args.probe_files: probes[p] = algorithm.read_probe(p)
   if algorithm.performs_projection:
     logger.debug("Projecting %d probes", len(args.probe_files))
-    probes = {p : algorithm.project(probes[p]) for p in probes}
+    for p in probes: probes[p] = algorithm.project(probes[p])
 
   logger.info("Computing scores")
   for p in args.probe_files:
