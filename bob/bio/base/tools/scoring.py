@@ -43,7 +43,7 @@ def _open_to_read(score_file):
   """check for the existence of the normal and the compressed version of the file, and calls bob.measure.load.open_file for the existing one."""
   if not os.path.exists(score_file):
     score_file += '.tar.bz2'
-    if not os.path.exist(score_file):
+    if not os.path.exists(score_file):
       f.close()
       os.remove(output)
       raise IOError("The score file '%s' cannot be found. Aborting!" % score_file)
