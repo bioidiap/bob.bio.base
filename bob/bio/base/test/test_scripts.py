@@ -278,18 +278,16 @@ def test_evaluate():
   os.rmdir(test_dir)
 
 
-
-
-
-"""
-def test16_collect_results(self):
+def test_collect_results():
   # simply test that the collect_results script works
   test_dir = tempfile.mkdtemp(prefix='bobtest_')
-  from facereclib.script.collect_results import main
-  main(['--directory', test_dir, '--sort', '--sort-key', 'dir', '--criterion', 'FAR', '--self-test'])
-  os.rmdir(test_dir)
+  try:
+    from facereclib.script.collect_results import main
+    main(['--directory', test_dir, '--sort', '--sort-key', 'dir', '--criterion', 'FAR', '--self-test'])
+  finally:
+    if os.path.exists(test_dir):
+      os.rmdir(test_dir)
 
-"""
 
 @utils.grid_available
 def test_grid_search():

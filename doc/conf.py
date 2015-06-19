@@ -58,7 +58,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Bob Example Project'
+project = u'Bobs interface for running biometric recognition experiments'
 import time
 copyright = u'%s, Idiap Research Institute' % time.strftime('%Y')
 
@@ -187,7 +187,7 @@ html_favicon = ''
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'bob_example_project_doc'
+htmlhelp_basename = 'bob_bio_base_doc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -201,7 +201,7 @@ latex_font_size = '10pt'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'bob_example_project.tex', u'Bob',
+  ('index', 'bob_bio_base.tex', u'Bob',
    u'Biometrics Group, Idiap Research Institute', 'manual'),
 ]
 
@@ -236,7 +236,7 @@ rst_epilog = ''
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'bob.example.project', u'Bob Example Project Documentation', [u'Idiap Research Institute'], 1)
+    ('index', 'bob.bio.base', u'Base tools to run biometric recognition experiments', [u'Idiap Research Institute'], 1)
 ]
 
 # Default processing flags for sphinx
@@ -246,7 +246,7 @@ autodoc_default_flags = ['members', 'undoc-members', 'inherited-members', 'show-
 
 # For inter-documentation mapping:
 from bob.extension.utils import link_documentation
-intersphinx_mapping = link_documentation(['python', 'numpy', 'bob.io.base', 'bob.db.verification.utils'])
+intersphinx_mapping = link_documentation(['python', 'numpy', 'bob.io.base', 'bob.db.verification.utils', 'bob.bio.face', 'bob.bio.speaker', 'bob.bio.gmm', 'bob.bio.video', 'bob.bio.csu'])
 
 
 def setup(app):
