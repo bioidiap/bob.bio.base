@@ -282,7 +282,7 @@ def test_collect_results():
   # simply test that the collect_results script works
   test_dir = tempfile.mkdtemp(prefix='bobtest_')
   try:
-    from facereclib.script.collect_results import main
+    from bob.bio.base.script.collect_results import main
     main(['--directory', test_dir, '--sort', '--sort-key', 'dir', '--criterion', 'FAR', '--self-test'])
   finally:
     if os.path.exists(test_dir):
