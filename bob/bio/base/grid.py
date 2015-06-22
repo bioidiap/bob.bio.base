@@ -106,3 +106,6 @@ class Grid:
   def is_local(self):
     """Returns whether this grid setup should use the local submission or the SGE grid."""
     return self.grid_type == 'local'
+
+# gets sphinx autodoc done right - don't remove it
+__all__ = [_ for _ in dir() if not _.startswith('_')]

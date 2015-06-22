@@ -3,7 +3,7 @@ from __future__ import print_function
 import sys
 import os
 import math
-from ..grid import Grid
+from .. import grid
 from .command_line import command_line
 
 import bob.core
@@ -48,7 +48,7 @@ class GridSubmission:
     self.executable = executable
 
     if args.grid is not None:
-      assert isinstance(args.grid, Grid)
+      assert isinstance(args.grid, grid.Grid)
 
       # find, where jman is installed
       jmans = bob.extension.find_executable('jman', prefixes = ['bin'])

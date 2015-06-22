@@ -174,7 +174,7 @@ def list_resources(keyword, strip=['dummy']):
   entry_points = _get_entry_points(keyword, strip)
   last_dist = None
   retval = ""
-  length = max(len(entry_point.name) for entry_point in entry_points)
+  length = max(len(entry_point.name) for entry_point in entry_points) if entry_points else 1
 
   for entry_point in sorted(entry_points):
     if last_dist != str(entry_point.dist):
@@ -198,7 +198,6 @@ def database_directories(strip=['dummy'], replacements = None):
       db = load_resource(entry_point.name, 'database')
       db.replace_directories(replacements)
       dirs[entry_point.name] = [db.original_directory]
-#      import ipdb; ipdb.set_trace()
       if db.annotation_directory is not None:
         dirs[entry_point.name].append(db.annotation_directory)
     except (AttributeError, ValueError):

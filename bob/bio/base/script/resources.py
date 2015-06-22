@@ -39,7 +39,7 @@ def resources():
 
 def databases():
   import argparse
-  database_replacement = "/idiap/home/%s/.bob_bio_databases.txt" % os.environ["USER"] if os.path.isdir("/idiap") else "/home/%s/.bob_bio_databases.txt" % os.environ["USER"]
+  database_replacement = "%s/.bob_bio_databases.txt" % os.environ["HOME"]
 
   parser = argparse.ArgumentParser(description="Prints a list of directories for registered databases", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument('-D', '--database-directories-file', metavar = 'FILE', default = database_replacement, help = 'The file, where database directories are stored (to avoid changing the database configurations)')

@@ -5,7 +5,7 @@ import sys
 import bob.core
 logger = bob.core.log.setup("bob.bio.base")
 
-from ..utils import load_resource, resource_keys
+from .. import utils
 from . import FileSelector
 
 """Execute biometric recognition algorithms on a certain biometric database.
@@ -23,13 +23,13 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
   ############## options that are required to be specified #######################
   config_group = parser.add_argument_group('\nParameters defining the experiment. Most of these parameters can be a registered resource, a configuration file, or even a string that defines a newly created object')
   config_group.add_argument('-d', '--database', metavar = 'x', nargs = '+', required = True,
-      help = 'Database and the protocol; registered databases are: %s' % resource_keys('database', exclude_resources_from))
+      help = 'Database and the protocol; registered databases are: %s' % utils.resource_keys('database', exclude_resources_from))
   config_group.add_argument('-p', '--preprocessor', metavar = 'x', nargs = '+', required = True,
-      help = 'Data preprocessing; registered preprocessors are: %s' % resource_keys('preprocessor', exclude_resources_from))
+      help = 'Data preprocessing; registered preprocessors are: %s' % utils.resource_keys('preprocessor', exclude_resources_from))
   config_group.add_argument('-e', '--extractor', metavar = 'x', nargs = '+', required = True,
-      help = 'Feature extraction; registered feature extractors are: %s' % resource_keys('extractor', exclude_resources_from))
+      help = 'Feature extraction; registered feature extractors are: %s' % utils.resource_keys('extractor', exclude_resources_from))
   config_group.add_argument('-a', '--algorithm', metavar = 'x', nargs = '+', required = True,
-      help = 'Biometric recognition; registered algorithms are: %s' % resource_keys('algorithm', exclude_resources_from))
+      help = 'Biometric recognition; registered algorithms are: %s' % utils.resource_keys('algorithm', exclude_resources_from))
   config_group.add_argument('-g', '--grid', metavar = 'x', nargs = '+',
       help = 'Configuration for the grid setup; if not specified, the commands are executed sequentially on the local machine.')
   config_group.add_argument('--imports', metavar = 'LIB', nargs = '+', default = ['bob.bio.base'],
@@ -48,7 +48,7 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
   is_idiap = os.path.isdir("/idiap")
   temp = "/idiap/temp/%s/database-name/sub-directory" % os.environ["USER"] if is_idiap else "temp"
   results = "/idiap/user/%s/database-name/sub-directory" % os.environ["USER"] if is_idiap else "results"
-  database_replacement = "/idiap/home/%s/.bob_bio_databases.txt" % os.environ["USER"] if is_idiap else "/home/%s/.bob_bio_databases.txt" % os.environ["USER"]
+  database_replacement = "%s/.bob_bio_databases.txt" % os.environ["HOME"]
 
   dir_group = parser.add_argument_group('\nDirectories that can be changed according to your requirements')
   dir_group.add_argument('-T', '--temp-directory', metavar = 'DIR',
@@ -150,12 +150,12 @@ def initialize(parsers, command_line_parameters = None, skips = []):
     args.timer = ('real', 'system', 'user')
 
   # load configuration resources
-  args.database = load_resource(' '.join(args.database), 'database', imports = args.imports)
-  args.preprocessor = load_resource(' '.join(args.preprocessor), 'preprocessor', imports = args.imports)
-  args.extractor = load_resource(' '.join(args.extractor), 'extractor', imports = args.imports)
-  args.algorithm = load_resource(' '.join(args.algorithm), 'algorithm', imports = args.imports)
+  args.database = utils.load_resource(' '.join(args.database), 'database', imports = args.imports)
+  args.preprocessor = utils.load_resource(' '.join(args.preprocessor), 'preprocessor', imports = args.imports)
+  args.extractor = utils.load_resource(' '.join(args.extractor), 'extractor', imports = args.imports)
+  args.algorithm = utils.load_resource(' '.join(args.algorithm), 'algorithm', imports = args.imports)
   if args.grid is not None:
-    args.grid = load_resource(' '.join(args.grid), 'grid', imports = args.imports)
+    args.grid = utils.load_resource(' '.join(args.grid), 'grid', imports = args.imports)
 
   # set base directories
   is_idiap = os.path.isdir("/idiap")
@@ -237,8 +237,8 @@ def write_info(args, command_line_parameters, executable):
     f.write(command_line([executable] + command_line_parameters) + "\n\n")
     f.write("Configuration:\n")
     f.write("Database:\n%s\n\n" % args.database)
-    f.write("Preprocessing:\n%s\n\n" % args.preprocessor)
-    f.write("Feature Extraction:\n%s\n\n" % args.extractor)
+    f.write("Preprocessor:\n%s\n\n" % args.preprocessor)
+    f.write("Extractor:\n%s\n\n" % args.extractor)
     f.write("Algorithm:\n%s\n\n" % args.algorithm)
   except IOError:
     logger.error("Could not write the experimental setup into file '%s'", args.info_file)
