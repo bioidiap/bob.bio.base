@@ -1,4 +1,5 @@
 from .Database import Database, DatabaseZT
+import os
 
 class DatabaseBob (Database):
   """This class can be used whenever you have a database that follows the default Bob database interface."""
@@ -51,6 +52,10 @@ class DatabaseBob (Database):
 
     self.database = database
     self.original_directory = database.original_directory
+    try:
+      self.annotation_directory = database.annotation_directory
+    except AttributeError:
+      pass
 
     self.all_files_options = all_files_options
     self.extractor_training_options = extractor_training_options
@@ -71,6 +76,36 @@ class DatabaseBob (Database):
     if self.enroller_training_options: params += ", enroller_training_options=%s"%self.enroller_training_options
 
     return "%s(%s)" % (str(self.__class__), params)
+
+
+  def replace_directories(self, replacements = None):
+    """This function replaces the original_directory and the annotation_directory with the directories read from the given replacement file."""
+    if replacements is None:
+      return
+    if isinstance(replacements, str):
+      if not os.path.exists(replacements):
+        return
+      # Open the database replacement file and reads its content
+      with open(replacements) as f:
+        replacements = {}
+        for line in f:
+          if line.strip() and not line.startswith("#"):
+            splits = line.split("=")
+            assert len(splits) == 2
+            replacements[splits[0].strip()] = splits[1].strip()
+
+    assert isinstance(replacements, dict)
+
+    if self.original_directory in replacements:
+      self.original_directory = replacements[self.original_directory]
+      self.database.original_directory = replacements[self.database.original_directory]
+
+    try:
+      if self.annotation_directory in replacements:
+        self.annotation_directory = replacements[self.annotation_directory]
+        self.database.annotation_directory = replacements[self.database.annotation_directory]
+    except AttributeError:
+      pass
 
 
   def uses_probe_file_sets(self):

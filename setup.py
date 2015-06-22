@@ -104,7 +104,8 @@ setup(
       # scripts should be declared using this entry:
       'console_scripts' : [
         'verify.py         = bob.bio.base.script.verify:main',
-        'resources.py      = bob.bio.base.script.resources:main',
+        'resources.py      = bob.bio.base.script.resources:resources',
+        'databases.py      = bob.bio.base.script.resources:databases',
         'evaluate.py       = bob.bio.base.script.evaluate:main',
         'collect_results.py = bob.bio.base.script.collect_results:main',
         'grid_search.py    = bob.bio.base.script.grid_search:main',

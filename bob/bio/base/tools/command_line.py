@@ -67,7 +67,7 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
       help = 'The database file in which the submitted jobs will be written; relative to the current directory (only valid with the --grid option).')
   file_group.add_argument('--experiment-info-file', metavar = 'FILE', default = 'Experiment.info',
       help = 'The file where the configuration of all parts of the experiments are written; relative to te --result-directory.')
-  file_group.add_argument('--database-directories-file', metavar = 'FILE', default = database_replacement,
+  file_group.add_argument('-D', '--database-directories-file', metavar = 'FILE', default = database_replacement,
       help = 'An optional file, where database directories are stored (to avoid changing the database configurations)')
 
   sub_dir_group = parser.add_argument_group('\nSubdirectories of certain parts of the tool chain. You can specify directories in case you want to reuse parts of the experiments (e.g. extracted features) in other experiments. Please note that these directories are relative to the --temp-directory, but you can also specify absolute paths')
@@ -98,7 +98,7 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
       help = 'Try to recursively stop the dependent jobs from the SGE grid queue, when a job failed')
   flag_group.add_argument('-X', '--external-dependencies', type=int, default = [], nargs='+',
       help = 'The jobs submitted to the grid have dependencies on the given job ids.')
-  flag_group.add_argument('-D', '--timer', choices=('real', 'system', 'user'), nargs = '*',
+  flag_group.add_argument('-B', '--timer', choices=('real', 'system', 'user'), nargs = '*',
       help = 'Measure and report the time required by the execution of the tool chain (only on local machine)')
   flag_group.add_argument('-L', '--run-local-scheduler', action='store_true',
       help = 'Starts the local scheduler after submitting the jobs to the local queue (by default, local jobs must be started by hand, e.g., using ./bin/jman --local -vv run-scheduler -x)')
@@ -169,7 +169,6 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   args.grid_log_directory = os.path.join(args.temp_directory, args.grid_log_directory)
 
 
-
   # protocol command line override
   if args.protocol is not None:
     args.database.protocol = args.protocol
@@ -185,34 +184,8 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   enroller_sub_dir = protocol if args.database.training_depends_on_protocol and args.algorithm.requires_enroller_training else projector_sub_dir
   model_sub_dir = protocol if args.database.models_depend_on_protocol else enroller_sub_dir
 
-
   # Database directories, which should be automatically replaced
-  if os.path.exists(args.database_directories_file):
-    #
-    replacements = {}
-    with open(args.database_directories_file) as f:
-      for line in f:
-        if line.strip() and not line.startswith("#"):
-          splits = line.split("=")
-          assert len(splits) == 2
-          replacements[splits[0].strip()] = splits[1].strip()
-
-    try:
-      for d in replacements:
-        if args.database.original_directory == d:
-          args.database.original_directory = replacements[d]
-          args.database.database.original_directory = replacements[d]
-    except AttributeError:
-      pass
-
-    try:
-      for d in replacements:
-        if args.database.annotation_directory == d:
-          args.database.annotation_directory = replacements[d]
-          args.database.database.annotation_directory = replacements[d]
-    except AttributeError:
-      pass
-
+  args.database.replace_directories(args.database_directories_file)
 
   # initialize the file selector
   FileSelector.create(

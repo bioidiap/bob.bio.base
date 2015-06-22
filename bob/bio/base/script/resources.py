@@ -2,8 +2,9 @@
 
 from __future__ import print_function
 import bob.bio.base
+import os
 
-def main():
+def resources():
 
   import argparse
   parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -35,3 +36,23 @@ def main():
     print (bob.bio.base.list_resources('grid'))
 
   print()
+
+def databases():
+  import argparse
+  database_replacement = "/idiap/home/%s/.bob_bio_databases.txt" % os.environ["USER"] if os.path.isdir("/idiap") else "/home/%s/.bob_bio_databases.txt" % os.environ["USER"]
+
+  parser = argparse.ArgumentParser(description="Prints a list of directories for registered databases", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+  parser.add_argument('-D', '--database-directories-file', metavar = 'FILE', default = database_replacement, help = 'The file, where database directories are stored (to avoid changing the database configurations)')
+
+  args = parser.parse_args()
+
+  # get registered databases
+  databases = bob.bio.base.utils.resources.database_directories(replacements=args.database_directories_file)
+
+  # print directories for all databases
+  for d in sorted(databases):
+    print ("\n%s:" % d)
+
+    print ("Original data: %s" % databases[d][0])
+    if len(databases[d]) > 1:
+      print ("Annotations: %s" % databases[d][1])

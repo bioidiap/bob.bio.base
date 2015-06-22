@@ -186,3 +186,22 @@ def list_resources(keyword, strip=['dummy']):
     else:
       retval += "  + %s --> %s\n" % (entry_point.name + " "*(length - len(entry_point.name)), entry_point.module_name)
   return retval
+
+
+def database_directories(strip=['dummy'], replacements = None):
+  """Returns a dictionary of original directories for all registered databases."""
+  entry_points = _get_entry_points('database', strip)
+
+  dirs = {}
+  for entry_point in sorted(entry_points):
+    try:
+      db = load_resource(entry_point.name, 'database')
+      db.replace_directories(replacements)
+      dirs[entry_point.name] = [db.original_directory]
+#      import ipdb; ipdb.set_trace()
+      if db.annotation_directory is not None:
+        dirs[entry_point.name].append(db.annotation_directory)
+    except (AttributeError, ValueError):
+      pass
+
+  return dirs
