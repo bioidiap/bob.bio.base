@@ -31,14 +31,14 @@ class Extractor:
 
   requires_training : bool
     Set this flag to ``True`` if your feature extractor needs to be trained.
-    In that case, please override the :py:func:`train` and :py:func:`load` methods
+    In that case, please override the :py:meth:`train` and :py:meth:`load` methods
 
   split_training_data_by_client : bool
     Set this flag to ``True`` if your feature extractor requires the training data to be split by clients.
     Ignored, if ``requires_training`` is ``False``
 
   kwargs : ``key=value`` pairs
-    A list of keyword arguments to be written in the :py:func:`__str__` function.
+    A list of keyword arguments to be written in the :py:meth:`__str__` function.
   """
 
   def __init__(
@@ -103,7 +103,7 @@ class Extractor:
     **Keyword Arguments:**
 
     feature : object
-      The extracted feature, i.e., what is returned from :py:func:`__call__`.
+      The extracted feature, i.e., what is returned from :py:meth:`__call__`.
 
     feature_file : str or :py:class:`bob.io.base.HDF5File`
       The file open for writing, or the name of the file to write.
@@ -131,7 +131,7 @@ class Extractor:
 
   def load(self, extractor_file):
     """Loads the parameters required for feature extraction from the extractor file.
-    This function usually is only useful in combination with the :py:func:`train` function.
+    This function usually is only useful in combination with the :py:meth:`train` function.
     In this base class implementation, it does nothing.
 
     **Keyword Arguments:**
@@ -156,6 +156,6 @@ class Extractor:
 
     extractor_file : str
       The file to write.
-      This file should be readable with the :py:func:`load` function.
+      This file should be readable with the :py:meth:`load` function.
     """
     raise NotImplementedError("Please overwrite this function in your derived class, or unset the 'requires_training' option in the constructor.")

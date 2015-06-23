@@ -173,13 +173,11 @@ class DatabaseBob (Database):
 
     step : one of ``('train_extractor', 'train_projector', 'train_enroller')`` or ``None``
       The step for which the training data should be returned.
-      Might be ignored in derived class implementations.
 
     arrange_by_client : bool
       Should the training files be arranged by client?
-
-      .. note::
-         You can use :py:func:`arrange_by_client` in derived class implementations to arrange the files.
+      If set to ``True``, training files will be returned in [[:py:class:`bob.db.verification.utils.File`]], where each sub-list contains the files of a single client.
+      Otherwise, all files will be stored in a simple [:py:class:`bob.db.verification.utils.File`].
 
     **Returns:**
 
@@ -381,7 +379,7 @@ class DatabaseBobZT (DatabaseBob, DatabaseZT):
     The database instance (such as a :py:class:`bob.db.mobio.Database`) that provides the actual interface, see :ref:`verification_databases` for a list.
 
   z_probe_options : dict
-    Dictionary of options passed to the :py:meth:`bob.db.verification.utils.ZTDatabase.z_objects` database query when retrieving files for Z-probing.
+    Dictionary of options passed to the :py:meth:`bob.db.verification.utils.ZTDatabase.z_probe_files` database query when retrieving files for Z-probing.
 
   kwargs : ``key=value`` pairs
     The arguments of the :py:class:`DatabaseBob` base class constructor.
@@ -472,7 +470,7 @@ class DatabaseBobZT (DatabaseBob, DatabaseZT):
     """z_probe_files(group = 'dev') -> files
 
     Returns a list of probe files used to compute the Z-Norm, respecting the current protocol.
-    The Z-probe files can be limited using the ``z_probe_options`` in the query to :py:meth:`bob.db.verification.utils.ZTDatabase.zobjects`
+    The Z-probe files can be limited using the ``z_probe_options`` in the query to :py:meth:`bob.db.verification.utils.ZTDatabase.z_probe_files`
 
     **Keyword Arguments:**
 
@@ -504,5 +502,5 @@ class DatabaseBobZT (DatabaseBob, DatabaseZT):
     files : [:py:class:`FileSet`] or similar
       The unique list of file sets used to compute the Z-norm.
     """
-    file_sets = self.database.z_probf_file_sets(protocol = self.protocol, groups = group, **self.z_probe_options)
+    file_sets = self.database.z_probe_file_sets(protocol = self.protocol, groups = group, **self.z_probe_options)
     return self.sort(file_sets)

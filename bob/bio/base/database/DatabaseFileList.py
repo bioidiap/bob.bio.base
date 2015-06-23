@@ -21,7 +21,7 @@
 from .DatabaseBob import DatabaseBobZT
 
 class DatabaseFileList (DatabaseBobZT):
-  """This class should be used whenever you have an :py:class:`bob.db.verification.filelist.Database``."""
+  """This class should be used whenever you have an :py:class:`bob.db.verification.filelist.Database`."""
 
   def __init__(
       self,

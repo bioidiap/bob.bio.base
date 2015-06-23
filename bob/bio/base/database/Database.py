@@ -263,7 +263,7 @@ class Database:
       Should the training files be arranged by client?
 
       .. note::
-         You can use :py:func:`arrange_by_client` in derived class implementations to arrange the files.
+         You can use :py:meth:`arrange_by_client` in derived class implementations to arrange the files.
 
     **Returns:**
 
@@ -412,7 +412,7 @@ class DatabaseZT (Database):
 
   def client_id_from_t_model_id(self, t_model_id, group = 'dev'):
     """Returns the client id for the given T-Norm model id.
-    In this base class implementation, we just use the :py:func:`client_id_from_model_id` function.
+    In this base class implementation, we just use the :py:meth:`client_id_from_model_id` function.
     Overload this function if you need another behavior.
 
     **Keyword Arguments:**

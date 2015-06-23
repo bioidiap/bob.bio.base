@@ -33,7 +33,7 @@ class Algorithm:
 
   performs_projection : bool
     Set to ``True`` if your derived algorithm performs a projection.
-    Also implement the :py:func:`project` function, and the :py:func:`load_projector` if necessary.
+    Also implement the :py:meth:`project` function, and the :py:meth:`load_projector` if necessary.
 
   requires_projector_training : bool
     Only valid, when ``performs_projection = True``.
@@ -41,12 +41,12 @@ class Algorithm:
 
   split_training_features_by_client : bool
     Only valid, when ``performs_projection = True`` and ``requires_projector_training = True``.
-    If set to ``True``, the :py:func:`train_projector` function will receive a double list (a list of lists) of data (sorted by identity).
-    Otherwise, the :py:func:`train_projector` function will receive data in a single list.
+    If set to ``True``, the :py:meth:`train_projector` function will receive a double list (a list of lists) of data (sorted by identity).
+    Otherwise, the :py:meth:`train_projector` function will receive data in a single list.
 
   use_projected_features_for_enrollment : bool
     Only valid, when ``performs_projection = True``.
-    If set to false, the enrollment is performed using the original features, otherwise the features projected using the :py:func:`project` function are used for model enrollment.
+    If set to false, the enrollment is performed using the original features, otherwise the features projected using the :py:meth:`project` function are used for model enrollment.
 
   requires_enroller_training : bool
     Set this flag to ``True``, when the enroller requires specialized training.
@@ -61,7 +61,7 @@ class Algorithm:
     See :py:func:`bob.bio.base.score_fusion_strategy` for possible values.
 
   kwargs : ``key=value`` pairs
-    A list of keyword arguments to be written in the :py:func:`__str__` function.
+    A list of keyword arguments to be written in the :py:meth:`__str__` function.
 
   """
 
@@ -106,7 +106,7 @@ class Algorithm:
 
     This function will project the given feature.
     It must be overwritten by derived classes, as soon as ``performs_projection = True`` was set in the constructor.
-    It is assured that the :py:func:`load_projector` was called once before the ``project`` function is executed.
+    It is assured that the :py:meth:`load_projector` was called once before the ``project`` function is executed.
 
     **Keyword Arguments:**
 
@@ -117,7 +117,7 @@ class Algorithm:
 
     projected : object
       The projected features.
-      Must be writable with the :py:func:`write_feature` function and readable with the :py:func:`read_feature` function.
+      Must be writable with the :py:meth:`write_feature` function and readable with the :py:meth:`read_feature` function.
 
     """
     raise NotImplementedError("Please overwrite this function in your derived class")
@@ -138,7 +138,7 @@ class Algorithm:
 
     model : object
       The model enrolled from the ``enroll_features``.
-      Must be writable with the :py:func:`write_model` function and readable with the :py:func:`read_model` function.
+      Must be writable with the :py:meth:`write_model` function and readable with the :py:meth:`read_model` function.
 
     """
     raise NotImplementedError("Please overwrite this function in your derived class")
@@ -154,11 +154,11 @@ class Algorithm:
 
     model : object
       The model to compare the probe with.
-      The ``model`` was read using the :py:func:`read_model` function.
+      The ``model`` was read using the :py:meth:`read_model` function.
 
     probe : object
       The probe object to compare the model with.
-      The ``probe`` was read using the :py:func:`read_probe` function.
+      The ``probe`` was read using the :py:meth:`read_probe` function.
 
     **Returns:**
 
@@ -173,9 +173,9 @@ class Algorithm:
     """score_for_multiple_models(models, probe) -> score
 
     This function computes the score between the given model list and the given probe.
-    In this base class implementation, it computes the scores for each model using the :py:func:`score` method,
+    In this base class implementation, it computes the scores for each model using the :py:meth:`score` method,
     and fuses the scores using the fusion method specified in the constructor of this class.
-    Usually this function is called from derived class :py:func:`score` functions.
+    Usually this function is called from derived class :py:meth:`score` functions.
 
     **Keyword Arguments:**
 
@@ -202,7 +202,7 @@ class Algorithm:
     """score_for_multiple_probes(model, probes) -> score
 
     This function computes the score between the given model and the given probe files.
-    In this base class implementation, it computes the scores for each probe file using the :py:func:`score` method,
+    In this base class implementation, it computes the scores for each probe file using the :py:meth:`score` method,
     and fuses the scores using the fusion method specified in the constructor of this class.
 
     **Keyword Arguments:**
@@ -244,7 +244,7 @@ class Algorithm:
     **Keyword Arguments:**
 
     feature : object
-      A feature as returned by the :py:func:`project` function, which should be written.
+      A feature as returned by the :py:meth:`project` function, which should be written.
 
     feature_file : str or :py:class:`bob.io.base.HDF5File`
       The file open for writing, or the file name to write to.
@@ -287,7 +287,7 @@ class Algorithm:
     **Keyword Arguments:**
 
     model : object
-      A model as returned by the :py:func:`enroll` function, which should be written.
+      A model as returned by the :py:meth:`enroll` function, which should be written.
 
     model_file : str or :py:class:`bob.io.base.HDF5File`
       The file open for writing, or the file name to write to.
@@ -321,7 +321,7 @@ class Algorithm:
 
     Reads the probe feature from file.
     By default, the probe feature is identical to the projected feature.
-    Hence, this base class implementation simply calls :py:func:`read_feature`.
+    Hence, this base class implementation simply calls :py:meth:`read_feature`.
 
     If your algorithm requires different behavior, please overwrite this function.
 
@@ -353,14 +353,14 @@ class Algorithm:
 
     projector_file : str
       The file to write.
-      This file should be readable with the :py:func:`load_projector` function.
+      This file should be readable with the :py:meth:`load_projector` function.
     """
     raise NotImplementedError("Please overwrite this function in your derived class, or unset the 'requires_projector_training' option in the constructor.")
 
 
   def load_projector(self, projector_file):
     """Loads the parameters required for feature projection from file.
-    This function usually is useful in combination with the :py:func:`train_projector` function.
+    This function usually is useful in combination with the :py:meth:`train_projector` function.
     In this base class implementation, it does nothing.
 
     Please register `performs_projection = True` in the constructor to enable this function.
@@ -386,14 +386,14 @@ class Algorithm:
 
     enroller_file : str
       The file to write.
-      This file should be readable with the :py:func:`load_enroller` function.
+      This file should be readable with the :py:meth:`load_enroller` function.
     """
 
 
   def load_enroller(self, enroller_file):
     """Loads the parameters required for model enrollment from file.
-    This function usually is only useful in combination with the :py:func:`train_enroller` function.
-    This function is always called **after** calling :py:func:`load_projector`.
+    This function usually is only useful in combination with the :py:meth:`train_enroller` function.
+    This function is always called **after** calling :py:meth:`load_projector`.
     In this base class implementation, it does nothing.
 
     **Keyword Arguments:**

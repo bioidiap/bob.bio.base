@@ -35,11 +35,11 @@ PREDEFINED_QUEUES = {
 class Grid:
   """This class is defining the options that are required to submit parallel jobs to the SGE grid, or jobs to the local queue.
 
-  If the given ``grid`` is ``'sge'`` (the default), this configuration is set up to submit algorithms to the SGE grid.
+  If the given ``grid_type`` is ``'sge'`` (the default), this configuration is set up to submit algorithms to the SGE grid.
   In this setup, specific SGE queues can be specified for different steps of the tool chain, and different numbers of parallel processes can be specified for each step.
   Currently, only the SGE at Idiap_ is tested and supported, for other SGE's we do not assure compatibility.
 
-  If the given ``grid`` is ``'local'``, this configuration is set up to run using a local scheduler on a single machine.
+  If the given ``grid_type`` is ``'local'``, this configuration is set up to run using a local scheduler on a single machine.
   In this case, only the ``number_of_parallel_processes`` and ``scheduler_sleep_time`` options will be taken into account.
 
   **Keyword Parameters:**
@@ -49,15 +49,16 @@ class Grid:
     Currently, only sge and local submissions are supported.
 
   number_of_preprocessing_jobs, number_of_extraction_jobs, number_of_projection_jobs, number_of_enrollment_jobs, number_of_scoring_jobs : int
-    Only valid if ``grid = 'sge'``.
+    Only valid if ``grid_type = 'sge'``.
     The number of parallel processes that should be executed for preprocessing, extraction, projection, enrollment or scoring.
 
   training_queue, preprocessing_queue, extraction_queue, projection_queue, enrollment_queue, scoring_queue : str or dict
+    Only valid if ``grid_type = 'sge'``.
     SGE queues that should be used for training, preprocessing, extraction, projection, enrollment or scoring.
     The queue can be defined using a dictionary of keywords that will directly passed to the :py:func:`gridtk.tools.qsub` function, or one of our :py:data:`PREDEFINED_QUEUES`, which are adapted for Idiap_.
 
   number_of_parallel_processes : int
-    Only valid if ``grid = 'local'``.
+    Only valid if ``grid_type = 'local'``.
     The number of parallel processes, with which the preprocessing, extraction, projection, enrollment and scoring should be executed.
 
   scheduler_sleep_time : float
@@ -123,7 +124,7 @@ class Grid:
     This helper function translates the given queue parameters to grid options.
     When the given ``params`` are a dictionary already, they are simply returned.
     If ``params`` is a string, the :py:data:`PREDEFINED_QUEUES` are indexed with them.
-    If ``params`` is ``None``, or the :py:attr:`grid_type` is ``'local'``, an empty dictionary is returned.
+    If ``params`` is ``None``, or the ``grid_type`` is ``'local'``, an empty dictionary is returned.
     """
     if self.is_local():
       return {}

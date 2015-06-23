@@ -30,7 +30,7 @@ class Preprocessor:
   **Keyword Arguments:**
 
   kwargs : ``key=value`` pairs
-    A list of keyword arguments to be written in the :py:func:`__str__` function.
+    A list of keyword arguments to be written in the :py:meth:`__str__` function.
   """
 
   def __init__(self, **kwargs):
@@ -108,7 +108,7 @@ class Preprocessor:
     **Keyword Arguments:**
 
     data : object
-      The preprocessed data, i.e., what is returned from :py:func:`__call__`.
+      The preprocessed data, i.e., what is returned from :py:meth:`__call__`.
 
     data_file : str or :py:class:`bob.io.base.HDF5File`
       The file open for writing, or the name of the file to write.
