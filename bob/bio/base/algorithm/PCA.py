@@ -125,3 +125,7 @@ class PCA (Algorithm):
     else:
       # single model, single probe (multiple probes have already been handled)
       return self.factor * self.distance_function(model, probe)
+
+  # re-define unused functions, just so that they do not get documented
+  def train_enroller(): raise NotImplementedError()
+  def load_enroller(): raise NotImplementedError()

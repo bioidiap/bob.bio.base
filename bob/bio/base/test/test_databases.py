@@ -51,7 +51,7 @@ def test_verification_filelist():
   _check_files(db1.enroll_files(model_id=22), db2.enroll_files(model_id='22'))
   _check_files(db1.probe_files(model_id=22), db2.probe_files(model_id='22'))
 
-  _check_files(db1.t_enroll_files(model_id=22), db2.t_enroll_files(model_id='22'))
+  _check_files(db1.t_enroll_files(t_model_id=22), db2.t_enroll_files(t_model_id='22'))
   _check_files(db1.z_probe_files(), db2.z_probe_files())
 
   f1 = db1.all_files()[0]

@@ -25,7 +25,6 @@ class LDA (Algorithm):
       uses_variances = False,
       **kwargs  # parameters directly sent to the base class
   ):
-    """Initializes the LDA tool with the given configuration"""
 
     # call base class constructor and register that the LDA tool performs projection and need the training features split by client
     Algorithm.__init__(
@@ -185,3 +184,7 @@ class LDA (Algorithm):
     else:
       # single model, single probe (multiple probes have already been handled)
       return self.factor * self.distance_function(model, probe)
+
+  # re-define unused functions, just so that they do not get documented
+  def train_enroller(): raise NotImplementedError()
+  def load_enroller(): raise NotImplementedError()

@@ -24,6 +24,45 @@ from .. import utils
 class Algorithm:
   """This is the base class for all biometric recognition algorithms.
   It defines the minimum requirements for all derived algorithm classes.
+
+  Call the constructor in derived class implementations.
+  If your derived algorithm performs feature projection, please register this here.
+  If it needs training for the projector or the enroller, please set this here, too.
+
+  **Keyword Arguments:**
+
+  performs_projection : bool
+    Set to ``True`` if your derived algorithm performs a projection.
+    Also implement the :py:func:`project` function, and the :py:func:`load_projector` if necessary.
+
+  requires_projector_training : bool
+    Only valid, when ``performs_projection = True``.
+    Set this flag to ``False``, when the projection is applied, but the projector does not need to be trained.
+
+  split_training_features_by_client : bool
+    Only valid, when ``performs_projection = True`` and ``requires_projector_training = True``.
+    If set to ``True``, the :py:func:`train_projector` function will receive a double list (a list of lists) of data (sorted by identity).
+    Otherwise, the :py:func:`train_projector` function will receive data in a single list.
+
+  use_projected_features_for_enrollment : bool
+    Only valid, when ``performs_projection = True``.
+    If set to false, the enrollment is performed using the original features, otherwise the features projected using the :py:func:`project` function are used for model enrollment.
+
+  requires_enroller_training : bool
+    Set this flag to ``True``, when the enroller requires specialized training.
+    Which kind of features are used for training depends on the ``use_projected_features_for_enrollment`` flag.
+
+  multiple_model_scoring : str or ``None``
+    The way, scores are fused when multiple features are stored in a one model.
+    See :py:func:`bob.bio.base.score_fusion_strategy` for possible values.
+
+  multiple_probe_scoring : str or ``None``
+    The way, scores are fused when multiple probes are available.
+    See :py:func:`bob.bio.base.score_fusion_strategy` for possible values.
+
+  kwargs : ``key=value`` pairs
+    A list of keyword arguments to be written in the :py:func:`__str__` function.
+
   """
 
   def __init__(
@@ -38,12 +77,6 @@ class Algorithm:
       multiple_probe_scoring = 'average', # by default, compute the average between the model and several probes
       **kwargs                            # parameters from the derived class that should be reported in the __str__() function
   ):
-    """Initializes the Tool.
-    Call this constructor in derived class implementations.
-    If your derived tool performs feature projection, please register this here.
-    If it needs training for the projector or the enroller, please set this here, too.
-    """
-
     self.performs_projection = performs_projection
     self.requires_projector_training = performs_projection and requires_projector_training
     self.split_training_features_by_client = split_training_features_by_client
@@ -56,29 +89,107 @@ class Algorithm:
 
 
   def __str__(self):
-    """This function returns all parameters of this class (and its derived class)."""
+    """__str__() -> info
+
+    This function returns all parameters of this class (and its derived class).
+
+    **Returns:**
+
+    info : str
+      A string containing the full information of all parameters of this (and the derived) class.
+    """
     return "%s(%s)" % (str(self.__class__), ", ".join(["%s=%s" % (key, value) for key,value in self._kwargs.items() if value is not None]))
 
 
+  def project(self, feature):
+    """project(feature) -> projected
+
+    This function will project the given feature.
+    It must be overwritten by derived classes, as soon as ``performs_projection = True`` was set in the constructor.
+    It is assured that the :py:func:`load_projector` was called once before the ``project`` function is executed.
+
+    **Keyword Arguments:**
+
+    feature : object
+      The feature to be projected.
+
+    **Returns:**
+
+    projected : object
+      The projected features.
+      Must be writable with the :py:func:`write_feature` function and readable with the :py:func:`read_feature` function.
+
+    """
+    raise NotImplementedError("Please overwrite this function in your derived class")
+
+
   def enroll(self, enroll_features):
-    """This function will enroll and return the model from the given list of features.
+    """enroll(enroll_features) -> model
+
+    This function will enroll and return the model from the given list of features.
     It must be overwritten by derived classes.
+
+    **Keyword Arguments:**
+
+    enroll_features : [object]
+      A list of features used for the enrollment of one model.
+
+    **Returns:**
+
+    model : object
+      The model enrolled from the ``enroll_features``.
+      Must be writable with the :py:func:`write_model` function and readable with the :py:func:`read_model` function.
+
     """
     raise NotImplementedError("Please overwrite this function in your derived class")
 
 
   def score(self, model, probe):
-    """This function will compute the score between the given model and probe.
+    """score(model, probe) -> score
+
+    This function will compute the score between the given model and probe.
     It must be overwritten by derived classes.
+
+    **Keyword Arguments:**
+
+    model : object
+      The model to compare the probe with.
+      The ``model`` was read using the :py:func:`read_model` function.
+
+    probe : object
+      The probe object to compare the model with.
+      The ``probe`` was read using the :py:func:`read_probe` function.
+
+    **Returns:**
+
+    score : float
+      A similarity between ``model`` and ``probe``.
+      Higher values define higher similarities.
     """
     raise NotImplementedError("Please overwrite this function in your derived class")
 
 
   def score_for_multiple_models(self, models, probe):
-    """This function computes the score between the given model list and the given probe.
-    In this base class implementation, it computes the scores for each model using the 'score' method,
+    """score_for_multiple_models(models, probe) -> score
+
+    This function computes the score between the given model list and the given probe.
+    In this base class implementation, it computes the scores for each model using the :py:func:`score` method,
     and fuses the scores using the fusion method specified in the constructor of this class.
-    Usually this function is called from derived class 'score' functions."""
+    Usually this function is called from derived class :py:func:`score` functions.
+
+    **Keyword Arguments:**
+
+    models : [object]
+      A list of model objects.
+
+    probe : object
+      The probe object to compare the models with.
+
+    **Returns:**
+
+    score : float
+      The fused similarity between the given ``models`` and the ``probe``.
+    """
     if isinstance(models, list):
       return self.model_fusion_function([self.score(model, probe) for model in models])
     elif isinstance(models, numpy.ndarray):
@@ -88,9 +199,25 @@ class Algorithm:
 
 
   def score_for_multiple_probes(self, model, probes):
-    """This function computes the score between the given model and the given probe files.
-    In this base class implementation, it computes the scores for each probe file using the 'score' method,
-    and fuses the scores using the fusion method specified in the constructor of this class."""
+    """score_for_multiple_probes(model, probes) -> score
+
+    This function computes the score between the given model and the given probe files.
+    In this base class implementation, it computes the scores for each probe file using the :py:func:`score` method,
+    and fuses the scores using the fusion method specified in the constructor of this class.
+
+    **Keyword Arguments:**
+
+    model : object
+      A model object to compare the probes with.
+
+    probes : [object]
+      The list of probe object to compare the models with.
+
+    **Returns:**
+
+    score : float
+      The fused similarity between the given ``model`` and the ``probes``.
+    """
     if isinstance(probes, list):
       return self.probe_fusion_function([self.score(model, probe) for probe in probes])
     else:
@@ -106,55 +233,107 @@ class Algorithm:
     """Saves the given *projected* feature to a file with the given name.
     In this base class implementation:
 
-    - If the given feature has a 'save' attribute, it calls feature.save(bob.io.base.HDF5File(feature_file), 'w').
+    - If the given feature has a ``save`` attribute, it calls ``feature.save(bob.io.base.HDF5File(feature_file), 'w')``.
       In this case, the given feature_file might be either a file name or a bob.io.base.HDF5File.
-    - Otherwise, it uses bob.io.base.save to do that.
+    - Otherwise, it uses :py:func:`bob.io.base.save` to do that.
 
     If you have a different format, please overwrite this function.
 
     Please register 'performs_projection = True' in the constructor to enable this function.
+
+    **Keyword Arguments:**
+
+    feature : object
+      A feature as returned by the :py:func:`project` function, which should be written.
+
+    feature_file : str or :py:class:`bob.io.base.HDF5File`
+      The file open for writing, or the file name to write to.
     """
     utils.save(feature, feature_file)
 
 
   def read_feature(self, feature_file):
-    """Reads the *projected* feature from file.
-    In this base class implementation, it uses bob.io.base.load to do that.
+    """read_feature(feature_file) -> feature
+
+    Reads the *projected* feature from file.
+    In this base class implementation, it uses :py:func:`bob.io.base.load` to do that.
     If you have different format, please overwrite this function.
 
-    Please register 'performs_projection = True' in the constructor to enable this function.
+    Please register ``performs_projection = True`` in the constructor to enable this function.
+
+    **Keyword Arguments:**
+
+    feature_file : str or :py:class:`bob.io.base.HDF5File`
+      The file open for reading, or the file name to read from.
+
+    **Returns:**
+
+    feature : object
+      The feature that was read from file.
     """
     return utils.load(feature_file)
 
 
   def write_model(self, model, model_file):
-    """Saves the enrolled model to the given file.
+    """Writes the enrolled model to the given file.
     In this base class implementation:
 
-    - If the given model has a 'save' attribute, it calls model.save(bob.io.base.HDF5File(model_file), 'w').
-      In this case, the given model_file might be either a file name or a bob.io.base.HDF5File.
-    - Otherwise, it uses bob.io.base.save to do that.
+    - If the given model has a 'save' attribute, it calls ``model.save(bob.io.base.HDF5File(model_file), 'w')``.
+      In this case, the given model_file might be either a file name or a :py:class:`bob.io.base.HDF5File`.
+    - Otherwise, it uses :py:func:`bob.io.base.save` to do that.
 
     If you have a different format, please overwrite this function.
+
+    **Keyword Arguments:**
+
+    model : object
+      A model as returned by the :py:func:`enroll` function, which should be written.
+
+    model_file : str or :py:class:`bob.io.base.HDF5File`
+      The file open for writing, or the file name to write to.
     """
     utils.save(model, model_file)
 
 
   def read_model(self, model_file):
-    """Loads the enrolled model from file.
-    In this base class implementation, it uses bob.io.base.load to do that.
+    """read_model(model_file) -> model
+
+    Loads the enrolled model from file.
+    In this base class implementation, it uses :py:func:`bob.io.base.load` to do that.
 
     If you have a different format, please overwrite this function.
+
+    **Keyword Arguments:**
+
+    model_file : str or :py:class:`bob.io.base.HDF5File`
+      The file open for reading, or the file name to read from.
+
+    **Returns:**
+
+    model : object
+      The model that was read from file.
     """
     return utils.load(model_file)
 
 
   def read_probe(self, probe_file):
-    """Reads the probe feature from file.
-    By default, the probe feature is identical to the projected feature.
-    Hence, this base class implementation simply calls self.read_feature(...).
+    """read_probe(probe_file) -> probe
 
-    If your tool requires different behavior, please overwrite this function.
+    Reads the probe feature from file.
+    By default, the probe feature is identical to the projected feature.
+    Hence, this base class implementation simply calls :py:func:`read_feature`.
+
+    If your algorithm requires different behavior, please overwrite this function.
+
+    **Keyword Arguments:**
+
+    probe_file : str or :py:class:`bob.io.base.HDF5File`
+      The file open for reading, or the file name to read from.
+
+    **Returns:**
+
+    probe : object
+      The probe that was read from file.
     """
     return self.read_feature(probe_file)
 
@@ -163,22 +342,33 @@ class Algorithm:
   def train_projector(self, training_features, projector_file):
     """This function can be overwritten to train the feature projector.
     If you do this, please also register the function by calling this base class constructor
-    and enabling the training by 'requires_projector_training = True'.
+    and enabling the training by ``requires_projector_training = True``.
 
-    The training function gets two parameters:
+    **Keyword Arguments:**
 
-    - training_features: A list of *extracted* features that can be used for training the extractor.
-    - projector_file: The file to write. This file should be readable with the 'load_projector' function (see above).
+    training_features : [object] or [[object]]
+      A list of *extracted* features that can be used for training the projector.
+      Features will be provided in a single list, if ``split_training_features_by_client = False`` was specified in the constructor,
+      otherwise the features will be split into lists, each of which contains the features of a single (training-)client.
+
+    projector_file : str
+      The file to write.
+      This file should be readable with the :py:func:`load_projector` function.
     """
     raise NotImplementedError("Please overwrite this function in your derived class, or unset the 'requires_projector_training' option in the constructor.")
 
 
   def load_projector(self, projector_file):
     """Loads the parameters required for feature projection from file.
-    This function usually is only useful in combination with the 'train_projector' function (see above).
+    This function usually is useful in combination with the :py:func:`train_projector` function.
     In this base class implementation, it does nothing.
 
-    Please register 'performs_projection = True' in the constructor to enable this function.
+    Please register `performs_projection = True` in the constructor to enable this function.
+
+    **Keyword Arguments:**
+
+    projector_file : str
+      The file to read the projector from.
     """
     pass
 
@@ -186,19 +376,29 @@ class Algorithm:
   def train_enroller(self, training_features, enroller_file):
     """This function can be overwritten to train the model enroller.
     If you do this, please also register the function by calling this base class constructor
-    and enabling the training by 'require_enroller_training = True'.
+    and enabling the training by ``require_enroller_training = True``.
 
-    The training function gets two parameters:
+    **Keyword Arguments:**
 
-    - training_features: A dictionary of *extracted* or *projected* features, which are sorted by clients, that can be used for training the extractor.
-    - enroller_file: The file to write. This file should be readable with the 'load_enroller' function (see above).
+    training_features : [object] or [[object]]
+      A list of *extracted* features that can be used for training the projector.
+      Features will be split into lists, each of which contains the features of a single (training-)client.
+
+    enroller_file : str
+      The file to write.
+      This file should be readable with the :py:func:`load_enroller` function.
     """
 
 
   def load_enroller(self, enroller_file):
     """Loads the parameters required for model enrollment from file.
-    This function usually is only useful in combination with the 'train_enroller' function (see above).
-    This function is always called AFTER calling the 'load_projector'.
+    This function usually is only useful in combination with the :py:func:`train_enroller` function.
+    This function is always called **after** calling :py:func:`load_projector`.
     In this base class implementation, it does nothing.
+
+    **Keyword Arguments:**
+
+    enroller_file : str
+      The file to read the enroller from.
     """
     pass

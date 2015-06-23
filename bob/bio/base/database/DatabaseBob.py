@@ -1,8 +1,36 @@
 from .Database import Database, DatabaseZT
 import os
 
+import bob.db.verification.utils
+
 class DatabaseBob (Database):
-  """This class can be used whenever you have a database that follows the default Bob database interface."""
+  """This class can be used whenever you have a database that follows the Bob verification database interface, which is defined in :py:class:`bob.db.verification.utils.Database`
+
+  **Keyword Parameter:**
+
+  database : derivative of :py:class:`bob.db.verification.utils.Database`
+    The database instance (such as a :py:class:`bob.db.atnt.Database`) that provides the actual interface, see :ref:`verification_databases` for a list.
+
+  all_files_options : dict
+    Dictionary of options passed to the :py:meth:`bob.db.verification.utils.Database.objects` database query when retrieving all data.
+
+  extractor_training_options : dict
+    Dictionary of options passed to the :py:meth:`bob.db.verification.utils.Database.objects` database query used to retrieve the files for the extractor training.
+
+  projector_training_options : dict
+    Dictionary of options passed to the :py:meth:`bob.db.verification.utils.Database.objects` database query used to retrieve the files for the projector training.
+
+  enroller_training_options : dict
+    Dictionary of options passed to the :py:meth:`bob.db.verification.utils.Database.objects` database query used to retrieve the files for the enroller training.
+
+  check_original_files_for_existence : bool
+    Enables to test for the original data files when querying the database.
+
+  kwargs : ``key=value`` pairs
+    The arguments of the :py:class:`Database` base class constructor.
+
+    .. note:: Usually, the ``name``, ``protocol``, ``training_depends_on_protocol`` and ``models_depend_on_protocol`` keyword parameters of the base class constructor need to be specified.
+  """
 
   def __init__(
       self,
@@ -14,41 +42,13 @@ class DatabaseBob (Database):
       check_original_files_for_existence = False,
       **kwargs  # The default parameters of the base class
   ):
-    """
-    Parameters of the constructor of this database:
-
-    database : derivative of :py:class:`bob.db.verification.utils.Database`
-      the bob.db.___ database that provides the actual interface, see :ref:`verification_databases` for a list.
-
-    image_directory
-      The directory where the original images are stored.
-
-    image_extension
-      The file extension of the original images.
-
-    all_files_options
-      Options passed to the database query used to retrieve all data.
-
-    extractor_training_options
-      Options passed to the database query used to retrieve the images for the extractor training.
-
-    projector_training_options
-      Options passed to the database query used to retrieve the images for the projector training.
-
-    enroller_training_options
-      Options passed to the database query used to retrieve the images for the enroller training.
-
-    check_original_files_for_existence
-      Enables the test for the original data files when querying the database.
-
-    kwargs
-      The arguments of the base class
-    """
 
     Database.__init__(
         self,
         **kwargs
     )
+
+    assert isinstance(database, bob.db.verification.utils.Database), "Only databases derived from bob.db.verification.utils.Database are supported by this interface. Please implement your own bob.bio.base.database.Database interface."
 
     self.database = database
     self.original_directory = database.original_directory
@@ -67,7 +67,15 @@ class DatabaseBob (Database):
 
 
   def __str__(self):
-    """This function returns a string containing all parameters of this class (and its derived class)."""
+    """__str__() -> info
+
+    This function returns all parameters of this class (and its derived class).
+
+    **Returns:**
+
+    info : str
+      A string containing the full information of all parameters of this (and the derived) class.
+    """
     params = ", ".join(["%s=%s" % (key, value) for key, value in self._kwargs.items()])
     params += ", original_directory=%s, original_extension=%s" % (self.original_directory, self.original_extension)
     if self.all_files_options: params += ", all_files_options=%s"%self.all_files_options
@@ -79,7 +87,29 @@ class DatabaseBob (Database):
 
 
   def replace_directories(self, replacements = None):
-    """This function replaces the original_directory and the annotation_directory with the directories read from the given replacement file."""
+    """This helper function replaces the ``original_directory`` and the ``annotation_directory`` of the database with the directories read from the given replacement file.
+
+    This function is provided for convenience, so that the database configuration files do not need to be modified.
+    Instead, this function uses the given dictionary of replacements to change the original directory and the original extension (if given).
+
+    The given ``replacements`` can be of type ``dict``, including all replacements, or a file name (as a ``str``), in which case the file is read.
+    The structure of the file should be:
+
+    .. code-block:: text
+
+       # Comments starting with # and empty lines are ignored
+
+       [YOUR_..._DATA_DIRECTORY] = /path/to/your/data
+       [YOUR_..._ANNOTATION_DIRECTORY] = /path/to/your/annotations
+
+    If no annotation files are available (e.g. when they are stored inside the ``database``), the annotation directory can be left out.
+
+    **Keyword Parameter:**
+
+    replacements : dict or str
+      A dictionary with replacements, or a name of a file to read the dictionary from.
+      If the file name does not exist, no directories are replaced.
+    """
     if replacements is None:
       return
     if isinstance(replacements, str):
@@ -110,17 +140,52 @@ class DatabaseBob (Database):
 
   def uses_probe_file_sets(self):
     """Defines if, for the current protocol, the database uses several probe files to generate a score."""
-    return self.protocol != 'None' and self.database.provides_file_set_for_protocol(self.protocol)
+    return self.database.provides_file_set_for_protocol(self.protocol)
 
 
   def all_files(self, groups = None):
-    """Returns all File objects of the database for the current protocol. If the current protocol is 'None' (a string), None (NoneType) will be used instead"""
-    files = self.database.objects(protocol = self.protocol if self.protocol != 'None' else None, groups = groups, **self.all_files_options)
-    return self.sort(files)
+    """all_files(groups=None) -> files
+
+    Returns all files of the database, respecting the current protocol.
+    The files can be limited using the ``all_files_options`` in the constructor.
+
+    **Keyword Arguments:**
+
+    groups : some of ``('world', 'dev', 'eval')`` or ``None``
+      The groups to get the data for.
+      If ``None``, data for all groups is returned.
+
+    **Returns:**
+
+    files : [:py:class:`bob.db.verification.utils.File`]
+      The sorted and unique list of all files of the database.
+    """
+    return self.sort(self.database.objects(protocol = self.protocol, groups = groups, **self.all_files_options))
 
 
   def training_files(self, step = None, arrange_by_client = False):
-    """Returns all training File objects of the database for the current protocol."""
+    """training_files(step = None, arrange_by_client = False) -> files
+
+    Returns all training files for the given step, and arranges them by client, if desired, respecting the current protocol.
+    The files for the steps can be limited using the ``..._training_options`` defined in the constructor.
+
+    **Keyword Arguments:**
+
+    step : one of ``('train_extractor', 'train_projector', 'train_enroller')`` or ``None``
+      The step for which the training data should be returned.
+      Might be ignored in derived class implementations.
+
+    arrange_by_client : bool
+      Should the training files be arranged by client?
+
+      .. note::
+         You can use :py:func:`arrange_by_client` in derived class implementations to arrange the files.
+
+    **Returns:**
+
+    files : [:py:class:`bob.db.verification.utils.File`] or [[:py:class:`bob.db.verification.utils.File`]]
+      The (arranged) list of files used for the training of the given step.
+    """
     if step is None:
       training_options = self.all_files_options
     elif step == 'train_extractor':
@@ -139,34 +204,104 @@ class DatabaseBob (Database):
       return files
 
   def test_files(self, groups = ['dev']):
-    """Returns the test files (i.e., enrollment and probe files) for the given groups."""
+    """test_files(groups = ['dev']) -> files
+
+    Returns all test files (i.e., files used for enrollment and probing) for the given groups, respecting the current protocol.
+    The files for the steps can be limited using the ``all_files_options`` defined in the constructor.
+
+    **Keyword Arguments:**
+
+    groups : some of ``('dev', 'eval')``
+      The groups to get the data for.
+
+    **Returns:**
+
+    files : [:py:class:`bob.db.verification.utils.File`]
+      The sorted and unique list of test files of the database.
+    """
     return self.sort(self.database.test_files(protocol = self.protocol, groups = groups, **self.all_files_options))
 
   def model_ids(self, group = 'dev'):
-    """Returns the model ids for the given group and the current protocol."""
-    if hasattr(self.database, 'model_ids'):
-      return sorted(self.database.model_ids(protocol = self.protocol, groups = group))
-    else:
-      return sorted([model.id for model in self.database.models(protocol = self.protocol, groups = group)])
+    """model_ids(group = 'dev') -> ids
+
+    Returns a list of model ids for the given group, respecting the current protocol.
+
+    **Keyword Arguments:**
+
+    group : one of ``('dev', 'eval')``
+      The group to get the model ids for.
+
+    **Returns:**
+
+    ids : [int] or [str]
+      The list of (unique) model ids for the given group.
+    """
+    return sorted(self.database.model_ids(protocol = self.protocol, groups = group))
 
 
   def client_id_from_model_id(self, model_id, group = 'dev'):
-    """Returns the client id for the given model id."""
-    if hasattr(self.database, 'get_client_id_from_model_id'):
-      return self.database.get_client_id_from_model_id(model_id)
-    else:
-      return model_id
+    """client_id_from_model_id(model_id, group = 'dev') -> client_id
+
+    Uses :py:meth:`bob.db.verification.utils.Database.get_client_id_from_model_id` to retrieve the client id for the given model id.
+
+    **Keyword Arguments:**
+
+    model_id : int or str
+      A unique ID that identifies the model for the client.
+
+    group : one of ``('dev', 'eval')``
+      The group to get the client ids for.
+
+    **Returns:**
+
+    client_id : [int] or [str]
+      A unique ID that identifies the client, to which the model belongs.
+    """
+    return self.database.get_client_id_from_model_id(model_id)
 
 
   def enroll_files(self, model_id, group = 'dev'):
-    """Returns the list of enrollment File objects for the given model id."""
-    files = self.database.objects(protocol = self.protocol, groups = group, model_ids = (model_id,), purposes = 'enroll', **self.all_files_options)
-    return self.sort(files)
+    """enroll_files(model_id, group = 'dev') -> files
+
+    Returns a list of File objects that should be used to enroll the model with the given model id from the given group, respecting the current protocol.
+
+    **Keyword Arguments:**
+
+    model_id : int or str
+      A unique ID that identifies the model.
+
+    group : one of ``('dev', 'eval')``
+      The group to get the enrollment files for.
+
+    **Returns:**
+
+    files : [:py:class:`bob.db.verification.utils.File`]
+      The list of files used for to enroll the model with the given model id.
+    """
+    return self.sort(self.database.objects(protocol = self.protocol, groups = group, model_ids = (model_id,), purposes = 'enroll', **self.all_files_options))
 
 
   def probe_files(self, model_id = None, group = 'dev'):
-    """Returns the list of probe File objects (for the given model id, if given)."""
-    if model_id:
+    """probe_files(model_id = None, group = 'dev') -> files
+
+    Returns a list of probe File objects, respecting the current protocol.
+    If a ``model_id`` is specified, only the probe files that should be compared with the given model id are returned (for most databases, these are all probe files of the given group).
+    Otherwise, all probe files of the given group are returned.
+
+    **Keyword Arguments:**
+
+    model_id : int or str or ``None``
+      A unique ID that identifies the model.
+
+    group : one of ``('dev', 'eval')``
+      The group to get the enrollment files for.
+
+    **Returns:**
+
+    files : [:py:class:`bob.db.verification.utils.File`]
+      The list of files used for to probe the model with the given model id.
+    """
+    if model_id is not None:
       files = self.database.objects(protocol = self.protocol, groups = group, model_ids = (model_id,), purposes = 'probe', **self.all_files_options)
     else:
       files = self.database.objects(protocol = self.protocol, groups = group, purposes = 'probe', **self.all_files_options)
@@ -174,7 +309,24 @@ class DatabaseBob (Database):
 
 
   def probe_file_sets(self, model_id = None, group = 'dev'):
-    """Returns the list of probe File objects (for the given model id, if given)."""
+    """probe_file_sets(model_id = None, group = 'dev') -> files
+
+    Returns a list of probe FileSet objects, respecting the current protocol.
+    If a ``model_id`` is specified, only the probe files that should be compared with the given model id are returned (for most databases, these are all probe files of the given group).
+    Otherwise, all probe files of the given group are returned.
+
+    **Keyword Arguments:**
+
+    model_id : int or str or ``None``
+      A unique ID that identifies the model.
+
+    group : one of ``('dev', 'eval')``
+      The group to get the enrollment files for.
+
+    **Returns:**
+
+    files : [:py:class:`FileSet`] or something similar
+      The list of file sets used to probe the model with the given model id."""
     if model_id:
       file_sets = self.database.object_sets(protocol = self.protocol, groups = group, model_ids = (model_id,), purposes = 'probe', **self.all_files_options)
     else:
@@ -183,63 +335,174 @@ class DatabaseBob (Database):
 
 
   def annotations(self, file):
-    """Returns the annotations for the given File object, if available."""
+    """annotations(file) -> annots
+
+    Returns the annotations for the given File object, if available.
+
+    **Keyword Parameters:**
+
+    file : :py:class:`bob.db.verification.utils.File`
+      The file for which annotations should be returned.
+
+    **Returns:**
+
+    annots : dict or None
+      The annotations for the file, if available.
+    """
     return self.database.annotations(file)
 
 
   def original_file_names(self, files):
-    """Returns the full path of the original data of the given File objects."""
+    """original_file_names(files) -> paths
+
+    Returns the full path of the original data of the given File objects, as returned by :py:meth:`bob.db.verification.utils.Database.original_file_names`.
+
+    **Keyword Parameters:**
+
+    files : [:py:class:`bob.db.verification.utils.File`]
+      The list of file object to retrieve the original data file names for.
+
+    **Returns:**
+
+    paths : [str] or [[str]]
+      The paths extracted for the files, in the same order.
+      If this database provides file sets, a list of lists of file names is returned, one sub-list for each file set.
+    """
     return self.database.original_file_names(files, self.check_existence)
 
 
 
 class DatabaseBobZT (DatabaseBob, DatabaseZT):
-  """This class can be used whenever you have a database that follows the default Bob database interface defining file lists for ZT score normalization."""
+  """This class can be used whenever you have a database that follows the Bob ZT-norm verification database interface, which is defined in :py:class:`bob.db.verification.utils.ZTDatabase`.
+
+  **Keyword Parameters:**
+
+  database : derivative of :py:class:`bob.db.verification.utils.ZTDatabase`
+    The database instance (such as a :py:class:`bob.db.mobio.Database`) that provides the actual interface, see :ref:`verification_databases` for a list.
+
+  z_probe_options : dict
+    Dictionary of options passed to the :py:meth:`bob.db.verification.utils.ZTDatabase.z_objects` database query when retrieving files for Z-probing.
+
+  kwargs : ``key=value`` pairs
+    The arguments of the :py:class:`DatabaseBob` base class constructor.
+
+    .. note:: Usually, the ``name``, ``protocol``, ``training_depends_on_protocol`` and ``models_depend_on_protocol`` keyword parameters of the :py:class:`Database` base class constructor need to be specified.
+  """
 
   def __init__(
       self,
+      database,
       z_probe_options = {}, # Limit the z-probes
       **kwargs
   ):
+#    assert isinstance(database, bob.db.verification.utils.ZTDatabase) // fails in tests
     # call base class constructor, passing all the parameters to it
-    DatabaseBob.__init__(self, z_probe_options = z_probe_options, **kwargs)
+    DatabaseBob.__init__(self, database = database, z_probe_options = z_probe_options, **kwargs)
 
-    self.m_z_probe_options = z_probe_options
+    self.z_probe_options = z_probe_options
 
 
   def all_files(self, groups = ['dev']):
-    """Returns all File objects of the database for the current protocol. If the current protocol is 'None' (a string), None (NoneType) will be used instead"""
-    files = self.database.objects(protocol = self.protocol if self.protocol != 'None' else None, groups = groups, **self.all_files_options)
+    """all_files(groups=None) -> files
+
+    Returns all files of the database, including those for ZT norm, respecting the current protocol.
+    The files can be limited using the ``all_files_options`` and the the ``z_probe_options`` in the constructor.
+
+    **Keyword Arguments:**
+
+    groups : some of ``('world', 'dev', 'eval')`` or ``None``
+      The groups to get the data for.
+      If ``None``, data for all groups is returned.
+
+    **Returns:**
+
+    files : [:py:class:`bob.db.verification.utils.File`]
+      The sorted and unique list of all files of the database.
+    """
+    files = self.database.objects(protocol = self.protocol, groups = groups, **self.all_files_options)
 
     # add all files that belong to the ZT-norm
     for group in groups:
       if group == 'world': continue
-      files += self.database.tobjects(protocol = self.protocol if self.protocol != 'None' else None, groups = group, model_ids = None)
-      files += self.database.zobjects(protocol = self.protocol if self.protocol != 'None' else None, groups = group, **self.m_z_probe_options)
+      files += self.database.tobjects(protocol = self.protocol, groups = group, model_ids = None)
+      files += self.database.zobjects(protocol = self.protocol, groups = group, **self.z_probe_options)
     return self.sort(files)
 
 
   def t_model_ids(self, group = 'dev'):
-    """Returns the T-Norm model ids for the given group and the current protocol."""
-    if hasattr(self.database, 'tmodel_ids'):
-      return sorted(self.database.tmodel_ids(protocol = self.protocol, groups = group))
-    else:
-      return sorted([model.id for model in self.database.tmodels(protocol = self.protocol, groups = group)])
+    """t_model_ids(group = 'dev') -> ids
+
+    Returns a list of model ids of T-Norm models for the given group, respecting the current protocol.
+
+    **Keyword Arguments:**
+
+    group : one of ``('dev', 'eval')``
+      The group to get the model ids for.
+
+    **Returns:**
+
+    ids : [int] or [str]
+      The list of (unique) model ids for T-Norm models of the given group.
+    """
+    return sorted(self.database.t_model_ids(protocol = self.protocol, groups = group))
 
 
-  def t_enroll_files(self, model_id, group = 'dev'):
-    """Returns the list of enrollment File objects for the given T-Norm model id."""
-    files = self.database.tobjects(protocol = self.protocol, groups = group, model_ids = (model_id,))
-    return self.sort(files)
+  def t_enroll_files(self, t_model_id, group = 'dev'):
+    """t_enroll_files(t_model_id, group = 'dev') -> files
+
+    Returns a list of File objects that should be used to enroll the T-Norm model with the given model id from the given group, respecting the current protocol.
+
+    **Keyword Arguments:**
+
+    t_model_id : int or str
+      A unique ID that identifies the model.
+
+    group : one of ``('dev', 'eval')``
+      The group to get the enrollment files for.
+
+    **Returns:**
+
+    files : [:py:class:`bob.db.verification.utils.File`]
+      The sorted list of files used for to enroll the model with the given model id.
+    """
+    return self.sort(self.database.t_enroll_files(protocol = self.protocol, groups = group, model_id = t_model_id))
 
 
   def z_probe_files(self, group = 'dev'):
-    """Returns the list of Z-probe File objects."""
-    files = self.database.zobjects(protocol = self.protocol, groups = group, **self.m_z_probe_options)
+    """z_probe_files(group = 'dev') -> files
+
+    Returns a list of probe files used to compute the Z-Norm, respecting the current protocol.
+    The Z-probe files can be limited using the ``z_probe_options`` in the query to :py:meth:`bob.db.verification.utils.ZTDatabase.zobjects`
+
+    **Keyword Arguments:**
+
+    group : one of ``('dev', 'eval')``
+      The group to get the Z-norm probe files for.
+
+    **Returns:**
+
+    files : [:py:class:`bob.db.verification.utils.File`]
+      The unique list of files used to compute the Z-norm.
+    """
+    files = self.database.z_probe_files(protocol = self.protocol, groups = group, **self.z_probe_options)
     return self.sort(files)
 
 
   def z_probe_file_sets(self, group = 'dev'):
-    """Returns the list of Z-probe Fileset objects."""
-    file_sets = self.database.zobject_sets(protocol = self.protocol, groups = group, **self.m_z_probe_options)
+    """z_probe_file_sets(group = 'dev') -> files
+
+    Returns a list of probe FileSet objects used to compute the Z-Norm.
+    The Z-probe files can be limited using the ``z_probe_options`` in the query to
+
+    **Keyword Arguments:**
+
+    group : one of ``('dev', 'eval')``
+      The group to get the Z-norm probe files for.
+
+    **Returns:**
+
+    files : [:py:class:`FileSet`] or similar
+      The unique list of file sets used to compute the Z-norm.
+    """
+    file_sets = self.database.z_probf_file_sets(protocol = self.protocol, groups = group, **self.z_probe_options)
     return self.sort(file_sets)

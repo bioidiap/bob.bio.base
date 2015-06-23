@@ -25,15 +25,20 @@ class Extractor:
   """This is the base class for all feature extractors.
   It defines the minimum requirements that a derived feature extractor class need to implement.
 
-  The constructor takes two parameters:
+  If your derived class requires training, please register this here.
+
+  **Keyword Arguments**
 
   requires_training : bool
     Set this flag to ``True`` if your feature extractor needs to be trained.
-    In that case, please override the :py:meth:`train` and :py:meth:`load` methods
+    In that case, please override the :py:func:`train` and :py:func:`load` methods
 
   split_training_data_by_client : bool
     Set this flag to ``True`` if your feature extractor requires the training data to be split by clients.
     Ignored, if ``requires_training`` is ``False``
+
+  kwargs : ``key=value`` pairs
+    A list of keyword arguments to be written in the :py:func:`__str__` function.
   """
 
   def __init__(
@@ -54,15 +59,35 @@ class Extractor:
   ############################################################
 
   def __call__(self, data):
-    """This function will actually perform the feature extraction.
+    """__call__(data) -> feature
+
+    This function will actually perform the feature extraction.
     It must be overwritten by derived classes.
     It takes the (preprocessed) data and returns the features extracted from the data.
+
+    **Keyword Arguments**
+
+    data : object (usually :py:class:`numpy.ndarray`)
+      The *preprocessed* data from which features should be extracted.
+
+    **Returns:**
+
+    feature : object (usually :py:class:`numpy.ndarray`)
+      The extracted feature.
     """
     raise NotImplementedError("Please overwrite this function in your derived class")
 
 
   def __str__(self):
-    """This function returns a string containing all parameters of this class (and its derived class)."""
+    """__str__() -> info
+
+    This function returns all parameters of this class (and its derived class).
+
+    **Returns:**
+
+    info : str
+      A string containing the full information of all parameters of this (and the derived) class.
+    """
     return "%s(%s)" % (str(self.__class__), ", ".join(["%s=%s" % (key, value) for key,value in self._kwargs.items() if value is not None]))
 
 
@@ -74,6 +99,14 @@ class Extractor:
     """Writes the given *extracted* feature to a file with the given name.
     In this base class implementation, we simply use :py:func:`bob.bio.base.save` for that.
     If you have a different format, please overwrite this function.
+
+    **Keyword Arguments:**
+
+    feature : object
+      The extracted feature, i.e., what is returned from :py:func:`__call__`.
+
+    feature_file : str or :py:class:`bob.io.base.HDF5File`
+      The file open for writing, or the name of the file to write.
     """
     utils.save(feature, feature_file)
 
@@ -82,26 +115,47 @@ class Extractor:
     """Reads the *extracted* feature from file.
     In this base class implementation, it uses :py:func:`bob.bio.base.load` to do that.
     If you have different format, please overwrite this function.
+
+    **Keyword Arguments:**
+
+    feature_file : str or :py:class:`bob.io.base.HDF5File`
+      The file open for reading or the name of the file to read from.
+
+    **Returns:**
+
+    feature : object (usually :py:class:`numpy.ndarray`)
+      The feature read from file.
     """
     return utils.load(feature_file)
 
 
   def load(self, extractor_file):
     """Loads the parameters required for feature extraction from the extractor file.
-    This function usually is only useful in combination with the 'train' function (see below).
+    This function usually is only useful in combination with the :py:func:`train` function.
     In this base class implementation, it does nothing.
+
+    **Keyword Arguments:**
+
+    extractor_file : str
+      The file to read the extractor from.
     """
     pass
 
 
-  def train(self, data_list, extractor_file):
+  def train(self, training_data, extractor_file):
     """This function can be overwritten to train the feature extractor.
     If you do this, please also register the function by calling this base class constructor
-    and enabling the training by 'requires_training = True'.
+    and enabling the training by ``requires_training = True``.
 
-    The training function gets two parameters:
+    **Keyword Arguments:**
 
-    - data_list: A list of data that can be used for training the extractor.
-    - extractor_file: The file to write. This file should be readable with the 'load' function (see above).
+    training_data : [object] or [[object]]
+      A list of *preprocessed* data that can be used for training the extractor.
+      Data will be provided in a single list, if ``split_training_features_by_client = False`` was specified in the constructor,
+      otherwise the data will be split into lists, each of which contains the data of a single (training-)client.
+
+    extractor_file : str
+      The file to write.
+      This file should be readable with the :py:func:`load` function.
     """
     raise NotImplementedError("Please overwrite this function in your derived class, or unset the 'requires_training' option in the constructor.")

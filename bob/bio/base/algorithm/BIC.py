@@ -148,3 +148,10 @@ class BIC (Algorithm):
       assert len(diff) == self.bic_machine.input_size
       scores.append(self.bic_machine(diff))
     return self.model_fusion_function(scores)
+
+  # re-define unused functions, just so that they do not get documented
+  def train_projector(): raise NotImplementedError()
+  def load_projector(): raise NotImplementedError()
+  def project(): raise NotImplementedError()
+  def write_feature(): raise NotImplementedError()
+  def read_feature(): raise NotImplementedError()

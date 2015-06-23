@@ -135,7 +135,7 @@ def test_verify_parallel():
       '-s', 'test_parallel',
       '--temp-directory', test_dir,
       '--result-directory', test_dir,
-      '-g', 'bob.bio.base.grid.Grid(grid = "local", number_of_parallel_processes = 2, scheduler_sleep_time = 0.1)', '-G', test_database, '--run-local-scheduler', '--stop-on-failure',
+      '-g', 'bob.bio.base.grid.Grid(grid_type = "local", number_of_parallel_processes = 2, scheduler_sleep_time = 0.1)', '-G', test_database, '--run-local-scheduler', '--stop-on-failure',
       '--import', 'bob.io.image'
   ]
 

@@ -20,9 +20,10 @@ To design a biometric recognition experiment, one has to choose:
 For any of these parts, several different types are implemented in the ``bob.bio`` packages, and basically any combination of the five parts can be executed.
 For each type, several meta-parameters can be tested.
 This results in a nearly infinite amount of possible experiments that can be run using the current setup.
-But it is also possible to use your own database, preprocessing, feature type, or biometric recognition algorithm and test this against the baseline algorithms implemented in the our packages.
+But it is also possible to use your own database, preprocessor, feature extractor, or biometric recognition algorithm and test this against the baseline algorithms implemented in the our packages.
 
-The ``bob.bio`` packages derived from the former `FaceRecLib <http://pypi.python.org/pypi/facereclib>`__, which is herewith outdated.
+.. note::
+   The ``bob.bio`` packages are derived from the former `FaceRecLib <http://pypi.python.org/pypi/facereclib>`__, which is herewith outdated.
 
 This package :py:mod:`bob.bio.base` includes the basic definition of a biometric recognition experiment, as well as a generic script, which can execute the full biometric experiment in a single command line.
 Changing the employed tolls such as the database, protocol, preprocessor, feature extractor or recognition algorithm is as simple as changing a command line parameter.
@@ -50,9 +51,6 @@ Users Guide
    installation
    experiments
    implementation
-   implemented
-   py_api
-..   evaluate
 
 ================
 Reference Manual
@@ -61,11 +59,8 @@ Reference Manual
 .. toctree::
    :maxdepth: 2
 
-   manual_databases
-   manual_preprocessors
-   manual_features
-   manual_tools
-   manual_utils
+   implemented
+   py_api
 
 
 ToDo-List

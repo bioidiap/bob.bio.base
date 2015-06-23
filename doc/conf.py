@@ -242,12 +242,50 @@ man_pages = [
 # Default processing flags for sphinx
 autoclass_content = 'both'
 autodoc_member_order = 'bysource'
-autodoc_default_flags = ['members', 'undoc-members', 'inherited-members', 'show-inheritance']
+autodoc_default_flags = ['members', 'inherited-members', 'show-inheritance']
 
 # For inter-documentation mapping:
 from bob.extension.utils import link_documentation
-intersphinx_mapping = link_documentation(['python', 'numpy', 'bob.io.base', 'bob.db.verification.utils', 'bob.bio.face', 'bob.bio.speaker', 'bob.bio.gmm', 'bob.bio.video', 'bob.bio.csu'])
+intersphinx_mapping = link_documentation(['python', 'numpy', 'bob.io.base', 'bob.db.verification.utils', 'bob.bio.face', 'bob.bio.speaker', 'bob.bio.gmm', 'bob.bio.video', 'bob.bio.csu', 'gridtk'])
 
+
+def skip(app, what, name, obj, skip, options):
+  # Do not skip the __call__ and the __str__ functions as we have special implementations for them.
+  if name in ("__str__", "__call__"):
+    return False
+  return skip
+
+# getting dictionaries printed nicely.
+# see: http://stackoverflow.com/questions/7250659/python-code-to-generate-part-of-sphinx-documentation-is-it-possible/18143318#18143318
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
+
+from sphinx.util.compat import Directive
+from docutils import nodes, statemachine
+
+class ExecDirective(Directive):
+    """Execute the specified python code and insert the output into the document"""
+    has_content = True
+
+    def run(self):
+        oldStdout, sys.stdout = sys.stdout, StringIO()
+
+        tab_width = self.options.get('tab-width', self.state.document.settings.tab_width)
+        source = self.state_machine.input_lines.source(self.lineno - self.state_machine.input_offset - 1)
+
+        try:
+            exec('\n'.join(self.content))
+            text = sys.stdout.getvalue()
+            lines = statemachine.string2lines(text, tab_width, convert_whitespace=True)
+            self.state_machine.insert_input(lines, source)
+            return []
+        except Exception:
+            return [nodes.error(None, nodes.paragraph(text = "Unable to execute python code at %s:%d:" % (os.path.basename(source), self.lineno)), nodes.paragraph(text = str(sys.exc_info()[1])))]
+        finally:
+            sys.stdout = oldStdout
 
 def setup(app):
-  pass
+  app.connect("autodoc-skip-member", skip)
+  app.add_directive('exec', ExecDirective)

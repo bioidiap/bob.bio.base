@@ -142,9 +142,9 @@ class FileSelector:
     """Returns the sorted list of T-Norm-model ids from the given group."""
     return sorted(self.database.t_model_ids(group = group))
 
-  def t_enroll_files(self, model_id, group, directory_type):
+  def t_enroll_files(self, t_model_id, group, directory_type):
     """Returns the list of T-norm model files used for enrollment of the given model_id from the given group."""
-    files = self.database.t_enroll_files(group = group, model_id = model_id)
+    files = self.database.t_enroll_files(group = group, t_model_id = t_model_id)
     return self.get_paths(files, directory_type)
 
   def t_model_file(self, model_id, group):

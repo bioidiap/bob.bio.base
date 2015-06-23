@@ -54,7 +54,7 @@ class DatabaseFileList (DatabaseBobZT):
       if group == 'world': continue
       if self.database.implements_zt(protocol = self.protocol if self.protocol != 'None' else None, groups = group):
         files += self.database.tobjects(protocol = self.protocol if self.protocol != 'None' else None, groups = group, model_ids = None)
-        files += self.database.zobjects(protocol = self.protocol if self.protocol != 'None' else None, groups = group, **self.m_z_probe_options)
+        files += self.database.zobjects(protocol = self.protocol if self.protocol != 'None' else None, groups = group, **self.z_probe_options)
     return self.sort(files)
 
 
@@ -75,7 +75,7 @@ class DatabaseFileList (DatabaseBobZT):
 
   def client_id_from_t_model_id(self, t_model_id, group = 'dev'):
     """Returns the client id for the given T-model id."""
-    return self.database.get_client_id_from_tmodel_id(t_model_id, groups=group, protocol=self.protocol if self.protocol != 'None' else None)
+    return self.database.get_client_id_from_tmodel_id(t_model_id, groups = group, protocol = self.protocol if self.protocol != 'None' else None)
 
 
   def t_model_ids(self, group = 'dev'):

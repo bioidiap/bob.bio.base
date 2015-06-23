@@ -26,6 +26,11 @@ from .. import utils
 class Preprocessor:
   """This is the base class for all preprocessors.
   It defines the minimum requirements for all derived proprocessor classes.
+
+  **Keyword Arguments:**
+
+  kwargs : ``key=value`` pairs
+    A list of keyword arguments to be written in the :py:func:`__str__` function.
   """
 
   def __init__(self, **kwargs):
@@ -37,21 +42,38 @@ class Preprocessor:
 
   # The call function (i.e. the operator() in C++ terms)
   def __call__(self, data, annotations):
-    """This is the call function that you have to overwrite in the derived class.
+    """__call__(data, annotations) -> dara
+
+    This is the call function that you have to overwrite in the derived class.
     The parameters that this function will receive are:
 
+    **Keyword Parameters:**
+
     data : object
-      The data that needs preprocessing, usually a :py:class:`numpy.ndarray`, but might be different
+      The original data that needs preprocessing, usually a :py:class:`numpy.ndarray`, but might be different.
 
     annotations : {} or None
-      The annotations (if any), as a dictionary.
-      The type
+      The annotations (if any)  that belongs to the given ``data``; as a dictionary.
+      The type of the annotation depends on your kind of problem.
+
+    **Returns:**
+
+    data : object
+      The *preprocessed* data, usually a :py:class:`numpy.ndarray`, but might be different.
     """
     raise NotImplementedError("Please overwrite this function in your derived class")
 
 
   def __str__(self):
-    """This function returns a string containing all parameters of this class (and its derived class)."""
+    """__str__() -> info
+
+    This function returns all parameters of this class (and its derived class).
+
+    **Returns:**
+
+    info : str
+      A string containing the full information of all parameters of this (and the derived) class.
+    """
     return "%s(%s)" % (str(self.__class__), ", ".join(["%s=%s" % (key, value) for key,value in self._kwargs.items() if value is not None]))
 
   ############################################################
@@ -59,24 +81,56 @@ class Preprocessor:
   ############################################################
 
   def read_original_data(self, original_file_name):
-    """Reads the *original* data (usually something like an image) from file.
-    In this base class implementation, it uses ``bob.io.base.load`` to do that.
+    """read_original_data(original_file_name) -> data
+
+    Reads the *original* data (usually something like an image) from file.
+    In this base class implementation, it uses :py:func:`bob.io.base.load` to do that.
     If you have different format, please overwrite this function.
+
+    **Keyword Arguments:**
+
+    original_file_name : str
+      The file name to read the original data from.
+
+    **Returns:**
+
+    data : object (usually :py:class:`numpy.ndarray`)
+      The original data read from file.
     """
     return bob.io.base.load(original_file_name)
 
 
   def write_data(self, data, data_file):
     """Writes the given *preprocessed* data to a file with the given name.
-    In this base class implementation, we simply use :py:func:`bob.bio.base.utils.save` for that.
+    In this base class implementation, we simply use :py:func:`bob.bio.base.save` for that.
     If you have a different format (e.g. not images), please overwrite this function.
+
+    **Keyword Arguments:**
+
+    data : object
+      The preprocessed data, i.e., what is returned from :py:func:`__call__`.
+
+    data_file : str or :py:class:`bob.io.base.HDF5File`
+      The file open for writing, or the name of the file to write.
     """
     utils.save(data, data_file)
 
 
   def read_data(self, data_file):
-    """Reads the *preprocessed* data from file.
-    In this base class implementation, it uses :py:func:`bob.bio.base.utils.load` to do that.
+    """read_data(data_file) -> data
+
+    Reads the *preprocessed* data from file.
+    In this base class implementation, it uses :py:func:`bob.bio.base.load` to do that.
     If you have different format, please overwrite this function.
+
+    **Keyword Arguments:**
+
+    data_file : str or :py:class:`bob.io.base.HDF5File`
+      The file open for reading or the name of the file to read from.
+
+    **Returns:**
+
+    data : object (usually :py:class:`numpy.ndarray`)
+      The preprocessed data read from file.
     """
     return utils.load(data_file)

@@ -25,7 +25,7 @@ This will assure that all parameters of the experiments are stored into the ``Ex
 .. note::
    All tools are based on reading, processing and writing files.
    By default, any type of file is allowed to be handled, and file names are provided to the ``read_...`` and ``write_...`` functions as strings.
-   However, some of the extensions -- particularly the :ref:`bob.bio.video <bob.bio.video>` extension -- requires the read and write functions to handle HDF5 files.
+   However, some of the extensions -- particularly the :ref:`bob.bio.video <bob.bio.video>` extension -- requires the read and write functions to handle files of type :py:class:`bob.io.base.HDF5File`.
 
 If you plan to write your own tools, please assure that you are following the following structure.
 
