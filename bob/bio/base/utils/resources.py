@@ -32,13 +32,31 @@ import logging
 logger = logging.getLogger("bob.bio.base")
 
 
+#: Keywords for which resources are defined.
 valid_keywords = ('database', 'preprocessor', 'extractor', 'algorithm', 'grid')
 
-
 def read_config_file(filename, keyword = None):
-  """Use this function to read the given configuration file.
+  """read_config_file(filename, keyword = None) -> config
+
+  Use this function to read the given configuration file.
   If a keyword is specified, only the configuration according to this keyword is returned.
-  Otherwise a dictionary of the configurations read from the configuration file is returned."""
+  Otherwise a dictionary of the configurations read from the configuration file is returned.
+
+  **Parameters:**
+
+  filename : str
+    The name of the configuration file to read.
+
+  keyword : str or ``None``
+    If specified, only the contents of the variable with the given name is returned.
+    If ``None``, the whole configuration is returned (a local namespace)
+
+  **Returns:**
+
+  config : object or namespace
+    If ``keyword`` is specified, the object inside the configuration with the given name is returned.
+    Otherwise, the whole configuration is returned (as a local namespace).
+  """
 
   if not os.path.exists(filename):
     raise IOError("The given configuration file '%s' could not be found" % file)
@@ -62,15 +80,35 @@ def _get_entry_points(keyword, strip = []):
   return  [entry_point for entry_point in pkg_resources.iter_entry_points('bob.bio.' + keyword) if not entry_point.name.startswith(tuple(strip))]
 
 
-def load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_distribution = None):
-  """Loads the given resource that is registered with the given keyword.
+def load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_extension = None):
+  """load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_extension = None) -> resource
+
+  Loads the given resource that is registered with the given keyword.
   The resource can be:
 
-    * a resource as defined in the setup.py
-    * a configuration file
-    * a string defining the construction of an object. If imports are required for the construction of this object, they can be given as list of strings.
+  1. a resource as defined in the setup.py
+  2. a configuration file
+  3. a string defining the construction of an object. If imports are required for the construction of this object, they can be given as list of strings.
 
-  In any case, the resulting resource object is returned.
+  **Parameters:**
+
+  resource : str
+    Any string interpretable as a resource (see above).
+
+  keyword : str
+    A valid resource keyword, can be one of :py:attr:`valid_keywords`.
+
+  imports : [str]
+    A list of strings defining which modules to import, when constructing new objects (option 3).
+
+  preferred_extension : str or ``None``
+    When several resources with the same name are found in different extension (in different ``bob.bio`` packages), this specifies the preferred extension to load the resource from.
+    If not specified, the extension that is **not** ``bob.bio.base`` is selected.
+
+  **Returns:**
+
+  resource : object
+    The resulting resource object is returned, either read from file or resource, or created newly.
   """
 
   # first, look if the resource is a file name
@@ -91,9 +129,9 @@ def load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_distr
 
       # Now: check if there are only two entry points, and one is from the bob.bio.base, then use the other one
       index = -1
-      if preferred_distribution:
+      if preferred_extension:
         for i,p in enumerate(entry_points):
-          if p.dist.project_name == preferred_distribution: index = i
+          if p.dist.project_name == preferred_extension: index = i
 
       if index == -1:
         if len(entry_points) == 2:
@@ -121,41 +159,17 @@ def load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_distr
     raise ImportError("The given command line option '%s' is neither a resource for a '%s', nor an existing configuration file, nor could be interpreted as a command (error: %s)"%(resource, keyword, str(e)))
 
 
-def read_file_resource(resource, keyword):
-  """Treats the given resource as a file and reads its configuration"""
-  # first, look if the resource is a file name
-  if os.path.isfile(resource):
-    # load it without the keyword -> all entries of the resource file are read
-    return read_config_file(resource)
-
-  if keyword not in valid_keywords:
-    raise ValueError("The given keyword '%s' is not valid. Please use one of %s!" % (str(keyword), str(valid_keywords)))
-
-  entry_points = [entry_point for entry_point in _get_entry_points(keyword) if entry_point.name == resource]
-
-  if not len(entry_points):
-    raise ImportError("The given option '%s' is neither a resource, nor an existing configuration file for resource type '%s'"%(resource, keyword))
-
-  if len(entry_points) == 1:
-    return entry_points[0].load()
-  else:
-    # TODO: extract current package name and use this one, if possible
-
-    # Now: check if there are only two entry points, and one is from the bob.bio.base, then use the other one
-    index = -1
-    if len(entry_points) == 2:
-      if entry_points[0].dist.project_name == 'bob.bio.base': index = 1
-      elif entry_points[1].dist.project_name == 'bob.bio.base': index = 0
-
-    if index != -1:
-      logger.info("RESOURCES: Using the resource '%s' from '%s', and ignoring the one from '%s'" %(resource, entry_points[index].module_name, entry_points[1-index].module_name))
-      return entry_points[index].load()
-    else:
-      raise ImportError("Under the desired name '%s', there are multiple entry points defined: %s" %(resource, [entry_point.module_name for entry_point in entry_points]))
-
-
 def extensions(keywords=valid_keywords):
-  """Returns a list of packages that define extensions using the given keywords, which default to all keywords."""
+  """extensions(keywords=valid_keywords) -> extensions
+
+  Returns a list of packages that define extensions using the given keywords.
+
+  **Parameters:**
+
+  keywords : [str]
+    A list of keywords to load entry points for.
+    Defaults to all :py:attr:`valid_keywords`.
+  """
   entry_points = [entry_point for keyword in keywords for entry_point in _get_entry_points(keyword)]
   return sorted(list(set(entry_point.dist.project_name for entry_point in entry_points)))
 

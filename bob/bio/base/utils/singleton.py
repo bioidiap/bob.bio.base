@@ -9,11 +9,19 @@ class Singleton:
 
   To get the singleton instance, use the :py:meth:`instance` method. Trying to use :py:meth:`__call__` will result in a :py:class:`TypeError` being raised.
 
-  Limitations: The decorated class cannot be inherited from.
+  Limitations:
+
+  * The decorated class cannot be inherited from.
+  * The documentation of the decorated class is replaced with the documentation of this class.
   """
 
   def __init__(self, decorated):
     self._decorated = decorated
+    import functools
+    for attr in functools.WRAPPER_ASSIGNMENTS:
+      setattr(self, attr, getattr(decorated, attr))
+    self.__bases__ = []
+
     self._instance = None
 
   def create(self, *args, **kwargs):

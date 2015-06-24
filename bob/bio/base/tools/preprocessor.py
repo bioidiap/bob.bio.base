@@ -7,8 +7,28 @@ logger = logging.getLogger("bob.bio.base")
 from .FileSelector import FileSelector
 from .. import utils
 
-def preprocess(preprocessor, groups=None, indices=None, force=False):
-  """Preprocesses the original data of the database with the given preprocessor."""
+def preprocess(preprocessor, groups = None, indices = None, force = False):
+  """Preprocesses the original data of the database with the given preprocessor.
+
+  The given ``preprocessor`` is used to preprocess all data required for the current experiment.
+  It writes the preprocessed data into the directory specified by the :py:class:`bob.bio.base.tools.FileSelector`.
+  By default, if target files already exist, they are not re-created.
+
+  **Parameters:**
+
+  preprocessor : py:class:`bob.bio.base.preprocessor.Preprocessor` or derived
+    The preprocessor, which should be applied to all data.
+
+  groups : some of ``('world', 'dev', 'eval')`` or ``None``
+    The list of groups, for which the data should be preprocessed.
+
+  indices : (int, int) or None
+    If specified, only the data for the given index range ``range(begin, end)`` should be preprocessed.
+    This is usually given, when parallel threads are executed.
+
+  force : bool
+    If given, files are regenerated, even if they already exist.
+  """
   # the file selector object
   fs = FileSelector.instance()
 
@@ -50,9 +70,28 @@ def preprocess(preprocessor, groups=None, indices=None, force=False):
       preprocessor.write_data(preprocessed_data, preprocessed_data_file)
 
 
-def read_preprocessed_data(file_names, preprocessor, split_by_client=False):
-  """Reads the preprocessed data from ``file_names`` using the given preprocessor.
+def read_preprocessed_data(file_names, preprocessor, split_by_client = False):
+  """read_preprocessed_data(file_names, preprocessor, split_by_client = False) -> preprocessed
+
+  Reads the preprocessed data from ``file_names`` using the given preprocessor.
   If ``split_by_client`` is set to ``True``, it is assumed that the ``file_names`` are already sorted by client.
+
+  **Parameters:**
+
+  file_names : [str] or [[str]]
+    A list of names of files to be read.
+    If ``split_by_client = True``, file names are supposed to be split into groups.
+
+  preprocessor : py:class:`bob.bio.base.preprocessor.Preprocessor` or derived
+    The preprocessor, which can read the preprocessed data.
+
+  split_by_client : bool
+    Indicates if the given ``file_names`` are split into groups.
+
+  **Returns:**
+
+  preprocessed : [object] or [[object]]
+    The list of preprocessed data, in the same order as in the ``file_names``.
   """
   if split_by_client:
     return [[preprocessor.read_data(str(f)) for f in client_files] for client_files in file_names]

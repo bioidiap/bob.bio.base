@@ -42,7 +42,7 @@ class Grid:
   If the given ``grid_type`` is ``'local'``, this configuration is set up to run using a local scheduler on a single machine.
   In this case, only the ``number_of_parallel_processes`` and ``scheduler_sleep_time`` options will be taken into account.
 
-  **Keyword Parameters:**
+  **Parameters:**
 
   grid_type : one of ``('sge', 'local')``
     The type of submission system, which should be used.

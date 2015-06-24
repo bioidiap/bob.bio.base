@@ -44,8 +44,10 @@ In these cases, the according steps are skipped.
 ``bob.bio`` takes care that always the correct files are forwarded to the subsequent steps.
 
 
-Running Experiments
--------------------
+.. _running_part_1:
+
+Running Experiments (part I)
+----------------------------
 
 To run an experiment, we provide a generic script ``./bin/verify.py``, which is highly parametrizable.
 To get a complete list of command line options, please run:
@@ -72,7 +74,7 @@ These five options are:
 
 The first four parameters, i.e., the ``database``, the ``preprocessor``, the ``extractor`` and the ``algorithm`` can be specified in several different ways.
 For the start, we will use only the registered :ref:`Resources <resources>`.
-These resources define the source code that will be used to compute the experiments, as well as all the meta-parameters of the algorithms (which we will call the **configuration**).
+These resources define the source code that will be used to compute the experiments, as well as all the meta-parameters of the algorithms (which we will call the *configuration*).
 To get a list of registered resources, please call:
 
 .. code-block:: sh
@@ -84,7 +86,9 @@ If only ``bob.bio.base`` is installed, no databases and no preprocessors will be
 
 .. note::
    You will also find some ``grid`` resources being listed.
-   These type of resources will be explained :ref:`later <grid>`.
+   These type of resources will be explained :ref:`later <running_in_parallel>`.
+
+Before going into :ref:`more details about the configurations <running_part_2>`, we will provide information about running default experiments.
 
 One command line option, which is not required, but recommended, is the ``--verbose`` option.
 By default, the algorithms are set up to execute quietly, and only errors are reported.
@@ -114,6 +118,7 @@ By default, you can find them in a sub-directory the ``result`` directory, but y
    At Idiap_, the default result directory differs, see ``./bin/verify.py --help`` for your directory.
 
 
+
 Evaluating Experiments
 ----------------------
 
@@ -132,6 +137,8 @@ Please note that there exists another file called ``Experiment.info`` inside the
 This file is a pure text file and contains the complete configuration of the experiment.
 With this configuration it is possible to inspect all default parameters of the algorithms, and even to re-run the exact same experiment.
 
+
+.. _running_in_parallel:
 
 Running in Parallel
 -------------------

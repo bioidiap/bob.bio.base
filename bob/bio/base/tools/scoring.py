@@ -3,7 +3,8 @@ import bob.learn.em
 import bob.learn.linear
 import bob.measure
 import numpy
-import os
+import os, sys
+import tarfile
 
 import logging
 logger = logging.getLogger("bob.bio.base")
@@ -14,8 +15,6 @@ from .. import utils
 
 def _scores(algorithm, model, probes):
   """Compute scores for the given model and a list of probes.
-  If ``preloaded`` is set to ``True``, the ``probes`` are expected to be features,
-  otherwise ``probes`` are considred to be probe file names.
   """
   # the file selector object
   fs = FileSelector.instance()
@@ -40,7 +39,7 @@ def _scores(algorithm, model, probes):
 
 
 def _open_to_read(score_file):
-  """check for the existence of the normal and the compressed version of the file, and calls bob.measure.load.open_file for the existing one."""
+  """Checks for the existence of the normal and the compressed version of the file, and calls :py:func:`bob.measure.load.open_file` for the existing one."""
   if not os.path.exists(score_file):
     score_file += '.tar.bz2'
     if not os.path.exists(score_file):
@@ -51,6 +50,7 @@ def _open_to_read(score_file):
 
 
 def _open_to_write(score_file, write_compressed):
+  """Opens the given score file for writing. If write_compressed is set to ``True``, a file-like structure is returned."""
   bob.io.base.create_directories_safe(os.path.dirname(score_file))
   if write_compressed:
     if sys.version_info[0] <= 2:
@@ -66,11 +66,12 @@ def _open_to_write(score_file, write_compressed):
   return f
 
 def _close_written(score_file, f, write_compressed):
+  """Closes the file f that was opened with :py:func:`_open_to_read`"""
   if write_compressed:
     f.seek(0)
     tarinfo = tarfile.TarInfo(os.path.basename(score_file))
     tarinfo.size = len(f.buf if sys.version_info[0] <= 2 else f.getbuffer())
-    tar = tarfile.open(result_file, 'w')
+    tar = tarfile.open(score_file, 'w')
     tar.addfile(tarinfo, f)
     tar.close()
   # close the file
@@ -78,7 +79,7 @@ def _close_written(score_file, f, write_compressed):
 
 
 def _save_scores(score_file, scores, probe_objects, client_id, write_compressed=False):
-  """Saves the scores into a text file."""
+  """Saves the scores of one model into a text file that can be interpreted by :py:func:`bob.measure.load.split_four_column`."""
   assert len(probe_objects) == scores.shape[1]
 
   # open file for writing
@@ -92,7 +93,7 @@ def _save_scores(score_file, scores, probe_objects, client_id, write_compressed=
 
 
 def _scores_a(algorithm, model_ids, group, compute_zt_norm, force, write_compressed=False):
-  """Computes A scores. For non-ZT-norm, these are the only scores that are actually computed."""
+  """Computes A scores for the models with the given model_ids. If ``compute_zt_norm = False``, these are the only scores that are actually computed."""
   # the file selector object
   fs = FileSelector.instance()
 
@@ -125,7 +126,7 @@ def _scores_a(algorithm, model_ids, group, compute_zt_norm, force, write_compres
 
 
 def _scores_b(algorithm, model_ids, group, force):
-  """Computes B scores."""
+  """Computes B scores for the given model ids."""
   # the file selector object
   fs = FileSelector.instance()
 
@@ -147,7 +148,7 @@ def _scores_b(algorithm, model_ids, group, force):
       bob.io.base.save(b, score_file, True)
 
 def _scores_c(algorithm, t_model_ids, group, force):
-  """Computes C scores."""
+  """Computes C scores for the given t-norm model ids."""
   # the file selector object
   fs = FileSelector.instance()
 
@@ -169,7 +170,7 @@ def _scores_c(algorithm, t_model_ids, group, force):
       bob.io.base.save(c, score_file, True)
 
 def _scores_d(algorithm, t_model_ids, group, force):
-  """Computes D scores."""
+  """Computes D scores for the given t-norm model ids. Both the D matrix and the D-samevalue matrix are written."""
   # the file selector object
   fs = FileSelector.instance()
 
@@ -199,8 +200,40 @@ def _scores_d(algorithm, t_model_ids, group, force):
       bob.io.base.save(d_same_value_tm, same_score_file, True)
 
 
-def compute_scores(algorithm, compute_zt_norm, force = False, indices = None, groups = ['dev', 'eval'], types = ['A', 'B', 'C', 'D']):
-  """Computes the scores for the given groups (by default 'dev' and 'eval')."""
+def compute_scores(algorithm, compute_zt_norm, force = False, indices = None, groups = ['dev', 'eval'], types = ['A', 'B', 'C', 'D'], write_compressed = False):
+  """Computes the scores for the given groups.
+
+  This function computes all scores for the experiment, and writes them to files, one per model.
+  When ``compute_zt_norm`` is enabled, scores are computed for all four matrices, i.e. A: normal scores; B: Z-norm scores; C: T-norm scores; D: ZT-norm scores and ZT-samevalue scores.
+  By default, scores are computed for both groups ``'dev'`` and ``'eval'``.
+
+  **Parameters:**
+
+  algorithm : py:class:`bob.bio.base.algorithm.Algorithm` or derived
+    The algorithm, used for enrolling model and writing them to file.
+
+  force : bool
+    If given, files are regenerated, even if they already exist.
+
+  compute_zt_norm : bool
+    If set to ``True``, also ZT-norm scores are computed.
+
+  indices : (int, int) or None
+    If specified, scores are computed only for the models in the given index range ``range(begin, end)``.
+    This is usually given, when parallel threads are executed.
+
+    .. note:: The probe files are not limited by the ``indices``.
+
+  groups : some of ``('dev', 'eval')``
+    The list of groups, for which scores should be computed.
+
+  types : some of ``['A', 'B', 'C', 'D']``
+    A list of score types to be computed.
+    If ``compute_zt_norm = False``, only the ``'A'`` scores are computed.
+
+  write_compressed : bool
+    If enabled, score files are compressed as ``.tar.bz2`` files.
+  """
   # the file selector object
   fs = FileSelector.instance()
 
@@ -221,7 +254,7 @@ def compute_scores(algorithm, compute_zt_norm, force = False, indices = None, gr
 
     # compute A scores
     if 'A' in types:
-      _scores_a(algorithm, model_ids, group, compute_zt_norm, force)
+      _scores_a(algorithm, model_ids, group, compute_zt_norm, force, write_compressed)
 
     if compute_zt_norm:
       # compute B scores
@@ -300,7 +333,19 @@ def _scores_d_normalize(t_model_ids, group):
 
 
 def zt_norm(groups = ['dev', 'eval'], write_compressed=False):
-  """Computes ZT-Norm using the previously generated A, B, C, and D files"""
+  """Computes ZT-Norm using the previously generated A, B, C, D and D-samevalue matrix files.
+
+  This function computes the ZT-norm scores for all model ids for all desired groups and writes them into files defined by the :py:class:`bob.bio.base.tools.FileSelector`.
+  It loads the A, B, C, D and D-samevalue matrix files that need to be computed beforehand.
+
+  **Parameters:**
+
+  groups : some of ``('dev', 'eval')``
+    The list of groups, for which ZT-norm should be applied.
+
+  write_compressed : bool
+    If enabled, score files are compressed as ``.tar.bz2`` files.
+  """
   # the file selector object
   fs = FileSelector.instance()
 
@@ -338,7 +383,7 @@ def zt_norm(groups = ['dev', 'eval'], write_compressed=False):
 
 
 def _concat(score_files, output, write_compressed):
-
+  """Concatenates a list of score files into a single score file."""
   f = _open_to_write(output, write_compressed)
 
   # Concatenates the scores
@@ -351,7 +396,22 @@ def _concat(score_files, output, write_compressed):
 
 
 def concatenate(compute_zt_norm, groups = ['dev', 'eval'], write_compressed=False):
-  """Concatenates all results into one (or two) score files per group."""
+  """Concatenates all results into one (or two) score files per group.
+
+  Score files, which were generated per model, are concatenated into a single score file, which can be interpreter by :py:func:`bob.measure.load.split_four_column`.
+  The score files are always re-computed, regardless if they exist or not.
+
+  **Parameters:**
+
+  compute_zt_norm : bool
+    If set to ``True``, also score files for ZT-norm are concatenated.
+
+  groups : some of ``('dev', 'eval')``
+    The list of groups, for which score files should be concatenated.
+
+  write_compressed : bool
+    If enabled, concatenated score files are compressed as ``.tar.bz2`` files.
+  """
   # the file selector object
   fs = FileSelector.instance()
   for group in groups:
@@ -369,11 +429,30 @@ def concatenate(compute_zt_norm, groups = ['dev', 'eval'], write_compressed=Fals
       logger.info("- Scoring: wrote score file '%s'", result_file)
 
 
-def calibrate(norms = ['nonorm', 'ztnorm'], groups = ['dev', 'eval'], prior = 0.5, write_compressed=False):
-  """Calibrates the score files by learning a linear calibration from the dev files (first element of the groups) and executing the on all groups, separately for all given norms."""
+def calibrate(compute_zt_norm, groups = ['dev', 'eval'], prior = 0.5, write_compressed = False):
+  """Calibrates the score files by learning a linear calibration from the dev files (first element of the groups) and executing the on all groups.
+
+  This function is intended to compute the calibration parameters on the scores of the development set using the :py:class:`bob.learn.linear.CGLogRegTrainer`.
+  Afterward, both the scores of the development and evaluation sets are calibrated and written to file.
+  For ZT-norm scores, the calibration is performed independently, if enabled.
+  The names of the calibrated score files that should be written are obtained from the :py:class:`bob.bio.base.tools.FileSelector`.
+
+  **Parameters:**
+
+  compute_zt_norm : bool
+    If set to ``True``, also score files for ZT-norm are calibrated.
+
+  groups : some of ``('dev', 'eval')``
+    The list of groups, for which score files should be calibrated.
+    The first of the given groups is used to train the logistic regression parameters, while the calibration is performed for all given groups.
+
+  write_compressed : bool
+    If enabled, calibrated score files are compressed as ``.tar.bz2`` files.
+  """
   # the file selector object
   fs = FileSelector.instance()
   # read score files of the first group (assuming that the first group is 'dev')
+  norms = ['nonorm', 'ztnorm'] if compute_zt_norm else ["nonorm"]
   for norm in norms:
     training_score_file = fs.no_norm_result_file(groups[0]) if norm == 'nonorm' else fs.zt_norm_result_file(groups[0]) if norm == 'ztnorm' else None
 

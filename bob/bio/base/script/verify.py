@@ -324,7 +324,8 @@ def execute(args):
           indices = tools.indices(fs.model_ids(args.group), None if args.grid is None else args.grid.number_of_scoring_jobs),
           groups = [args.group],
           types = [args.score_type],
-          force = args.force)
+          force = args.force,
+          write_compressed = args.write_compressed_score_files)
 
     elif args.score_type in ['C', 'D']:
       tools.compute_scores(
@@ -333,22 +334,27 @@ def execute(args):
           indices = tools.indices(fs.t_model_ids(args.group), None if args.grid is None else args.grid.number_of_scoring_jobs),
           groups = [args.group],
           types = [args.score_type],
-          force = args.force)
+          force = args.force,
+          write_compressed = args.write_compressed_score_files)
 
     else:
-      tools.zt_norm(groups = [args.group])
+      tools.zt_norm(
+          groups = [args.group],
+          write_compressed = args.write_compressed_score_files)
 
   # concatenate
   elif args.sub_task == 'concatenate':
     tools.concatenate(
         args.zt_norm,
-        groups = [args.group])
+        groups = [args.group],
+        write_compressed = args.write_compressed_score_files)
 
   # calibrate scores
   elif args.sub_task == 'calibrate':
     tools.calibrate(
-        norms = ['nonorm', 'ztnorm'] if args.zt_norm else ['nonorm'],
-        groups = args.groups)
+        args.zt_norm,
+        groups = args.groups,
+        write_compressed = args.write_compressed_score_files)
 
   # Test if the keyword was processed
   else:

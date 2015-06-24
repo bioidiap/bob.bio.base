@@ -7,15 +7,36 @@ logger = bob.core.log.setup("bob.bio.base")
 
 from .. import utils
 from . import FileSelector
+from .. import database
 
 """Execute biometric recognition algorithms on a certain biometric database.
 """
 
 def command_line_parser(description=__doc__, exclude_resources_from=[]):
-  """Creates an :py:class:`argparse.ArgumentParser` object that includes the minimum set of command line options.
-  The description can be overwritten, but has a (small) default.
+  """command_line_parser(description=__doc__, exclude_resources_from=[]) -> parsers
+
+  Creates an :py:class:`argparse.ArgumentParser` object that includes the minimum set of command line options (which is not so few).
+  The ``description`` can be overwritten, but has a (small) default.
+
+  Included in the parser, several groups are defined.
+  Each group specifies a set of command line options.
+  For the configurations, registered resources are listed, which can be limited by the ``exclude_resources_from`` list of extensions.
 
   It returns a dictionary, containing the parser object itself (in the ``'main'`` keyword), and a list of command line groups.
+
+  **Parameters:**
+
+  description : str
+    The documentation of the script.
+
+  exclude_resources_from : [str]
+    A list of extension packages, for which resources should not be listed.
+
+  **Returns:**
+
+  parsers : dict
+    A dictionary of parser groups, with the main parser under the 'main' key.
+    Feel free to add more options to any of the parser groups.
   """
   parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter, conflict_handler='resolve')
 
@@ -121,8 +142,34 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
 
 
 def initialize(parsers, command_line_parameters = None, skips = []):
-  """Parses the command line and arranges the arguments accordingly, and returns the arguments.
+  """initialize(parsers, command_line_parameters = None, skips = []) -> args
+
+  Parses the command line and arranges the arguments accordingly.
+  Afterward, it loads the resources for the database, preprocessor, extractor, algorithm and grid (if specified), and stores the results into the returned args.
+
+  This function also initializes the :py:class:`FileSelector` instance by arranging the directories and files according to the command line parameters.
+
   If the ``skips`` are given, an '--execute-only' parameter is added to the parser, according skips are selected.
+
+  **Parameters:**
+
+  parsers : dict
+    The dictionary of command line parsers, as returned from :py:func:`command_line_parser`.
+    Additional arguments might have been added.
+
+  command_line_parameters : [str] or None
+    The command line parameters that should be interpreted.
+    By default, the parameters specified by the user on command line are considered.
+
+  skips : [str]
+    A list of possible ``--skip-...`` options to be added and evaluated automatically.
+
+  **Returns:**
+
+  args : namespace
+    A namespace of arguments as read from the command line.
+
+    .. note:: The database, preprocessor, extractor, algorithm and grid (if specified) are actual instances of the according classes.
   """
 
   # execute-only
@@ -185,7 +232,8 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   model_sub_dir = protocol if args.database.models_depend_on_protocol else enroller_sub_dir
 
   # Database directories, which should be automatically replaced
-  args.database.replace_directories(args.database_directories_file)
+  if isinstance(args.database, database.DatabaseBob):
+    args.database.replace_directories(args.database_directories_file)
 
   # initialize the file selector
   FileSelector.create(
@@ -208,7 +256,21 @@ def initialize(parsers, command_line_parameters = None, skips = []):
 
 
 def groups(args):
-  """Checks the groups, for which the files must be preprocessed, and features must be extracted and projected."""
+  """groups(args) -> groups
+
+  Returns the groups, for which the files must be preprocessed, and features must be extracted and projected.
+  This function should be used in order to eliminate the training files (the ``'world'`` group), when no training is required in this experiment.
+
+  **Parameters:**
+
+  args : namespace
+    The interpreted command line arguments as returned by the :py:func:`initialize` function.
+
+  **Returns:**
+
+  groups : [str]
+    A list of groups, for which data needs to be treated.
+  """
   groups = args.groups[:]
   if args.extractor.requires_training or args.algorithm.requires_projector_training or args.algorithm.requires_enroller_training:
     groups.append('world')
@@ -216,7 +278,21 @@ def groups(args):
 
 
 def command_line(cmdline):
-  """Converts the given options to a string that can be executed on command line."""
+  """command_line(cmdline) -> str
+
+  Converts the given options to a string that can be executed in a terminal.
+  Parameters are enclosed into ``'...'`` quotes so that the command line can interpret them (e.g., if they contain spaces or special characters).
+
+  **Parameters:**
+
+  cmdline : [str]
+    A list of command line options to be converted into a string.
+
+  **Returns:**
+
+  str : str
+    The command line string that can be copy-pasted into the terminal.
+  """
   c = ""
   for cmd in cmdline:
     if cmd[0] in '/-':
@@ -227,6 +303,20 @@ def command_line(cmdline):
 
 
 def write_info(args, command_line_parameters, executable):
+  """Writes information about the current experimental setup into a file specified on command line.
+
+  **Parameters:**
+
+  args : namespace
+    The interpreted command line arguments as returned by the :py:func:`initialize` function.
+
+  command_line_parameters : [str] or ``None``
+    The command line parameters that have been interpreted.
+    If ``None``, the parameters specified by the user on command line are considered.
+
+  executable : str
+    The name of the executable (such as ``'./bin/verify.py'``) that is used to run the experiments.
+  """
   if command_line_parameters is None:
     command_line_parameters = sys.argv[1:]
   # write configuration

@@ -3,7 +3,7 @@ class Database:
   Please use this class as a base class for your database access classes.
   Do not forget to call the constructor of this base class in your derived class.
 
-  **Keyword Arguments:**
+  **Parameters:**
 
   name : str
     A unique name for the database.
@@ -94,7 +94,7 @@ class Database:
     Returns a sorted version of the given list of File's (or other structures that define an 'id' data member).
     The files will be sorted according to their id, and duplicate entries will be removed.
 
-    **Keyword Parameters:**
+    **Parameters:**
 
     files : [:py:class:`File`]
       The list of files to be uniquified and sorted.
@@ -116,7 +116,7 @@ class Database:
     Arranges the given list of files by client id.
     This function returns a list of lists of File's.
 
-    **Keyword Parameters:**
+    **Parameters:**
 
     files : :py:class:`File`
       A list of files that should be split up by :py:attr:`File.client_id`.
@@ -144,7 +144,7 @@ class Database:
     Returns the annotations for the given File object, if available.
     It uses :py:func:`bob.db.verification.utils.read_annotation_file` to load the annotations.
 
-    **Keyword Parameters:**
+    **Parameters:**
 
     file : :py:class:`File`
       The file for which annotations should be returned.
@@ -177,7 +177,7 @@ class Database:
 
     Returns the full path of the given File objects.
 
-    **Keyword Parameters:**
+    **Parameters:**
 
     files : [:py:class:`File`]
       The list of file object to retrieve the file names for.
@@ -207,7 +207,7 @@ class Database:
 
     Returns the full path of the original data of the given File objects.
 
-    **Keyword Parameters:**
+    **Parameters:**
 
     files : [:py:class:`File`]
       The list of file object to retrieve the original data file names for.
@@ -233,7 +233,7 @@ class Database:
     Returns all files of the database.
     This function needs to be implemented in derived class implementations.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     groups : some of ``('world', 'dev', 'eval')`` or ``None``
       The groups to get the data for.
@@ -253,7 +253,7 @@ class Database:
     Returns all training File objects for the given step, and arranges them by client, if desired.
     This function needs to be implemented in derived class implementations.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     step : one of ``('train_extractor', 'train_projector', 'train_enroller')`` or ``None``
       The step for which the training data should be returned.
@@ -279,7 +279,7 @@ class Database:
     Returns a list of model ids for the given group.
     This function needs to be implemented in derived class implementations.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     group : one of ``('dev', 'eval')``
       The group to get the model ids for.
@@ -300,7 +300,7 @@ class Database:
     This function converts the given model id into its according the client id.
     This function needs to be implemented in derived class implementations.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     model_id : int or str
       A unique ID that identifies the model for the client.
@@ -322,7 +322,7 @@ class Database:
     Returns a list of File objects that should be used to enroll the model with the given model id from the given group.
     This function needs to be implemented in derived class implementations.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     model_id : int or str
       A unique ID that identifies the model.
@@ -346,7 +346,7 @@ class Database:
     Otherwise, all probe files of the given group are returned.
     This function needs to be implemented in derived class implementations.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     model_id : int or str or ``None``
       A unique ID that identifies the model.
@@ -370,7 +370,7 @@ class Database:
     Otherwise, all probe files of the given group are returned.
     This function needs to be implemented in derived class implementations, if the :py:meth:`uses_probe_file_sets` returns ``True``.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     model_id : int or str or ``None``
       A unique ID that identifies the model.
@@ -397,7 +397,7 @@ class DatabaseZT (Database):
     Returns a list of model ids of T-Norm models for the given group.
     This function needs to be implemented in derived class implementations.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     group : one of ``('dev', 'eval')``
       The group to get the model ids for.
@@ -411,11 +411,13 @@ class DatabaseZT (Database):
 
 
   def client_id_from_t_model_id(self, t_model_id, group = 'dev'):
-    """Returns the client id for the given T-Norm model id.
+    """client_id_from_t_model_id(t_model_id, group = 'dev') -> client_id
+
+    Returns the client id for the given T-Norm model id.
     In this base class implementation, we just use the :py:meth:`client_id_from_model_id` function.
     Overload this function if you need another behavior.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     t_model_id : int or str
       A unique ID that identifies the T-Norm model.
@@ -436,7 +438,7 @@ class DatabaseZT (Database):
     Returns a list of File objects that should be used to enroll the T-Norm model with the given model id from the given group.
     This function needs to be implemented in derived class implementations.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     t_model_id : int or str
       A unique ID that identifies the model.
@@ -457,7 +459,7 @@ class DatabaseZT (Database):
     Returns a list of probe File objects used to compute the Z-Norm.
     This function needs to be implemented in derived class implementations.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     group : one of ``('dev', 'eval')``
       The group to get the Z-norm probe files for.
@@ -475,7 +477,7 @@ class DatabaseZT (Database):
     Returns a list of probe FileSet objects used to compute the Z-Norm.
     This function needs to be implemented in derived class implementations.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     group : one of ``('dev', 'eval')``
       The group to get the Z-norm probe files for.

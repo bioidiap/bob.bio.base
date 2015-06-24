@@ -36,7 +36,7 @@ class Linearize (Extractor):
 
     Takes data of arbitrary dimensions and linearizes it into a 1D vector; enforcing the data type, if desired.
 
-    **Keyword Parameters:**
+    **Parameters:**
 
     data : :py:class:`numpy.ndarray`
       The preprocessed data to be transformed into one vector.

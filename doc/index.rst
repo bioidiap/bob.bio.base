@@ -51,6 +51,7 @@ Users Guide
    installation
    experiments
    implementation
+   more
 
 ================
 Reference Manual
@@ -62,6 +63,15 @@ Reference Manual
    implemented
    py_api
 
+
+==========
+References
+==========
+
+.. [TP91]    *M. Turk and A. Pentland*. **Eigenfaces for recognition**. Journal of Cognitive Neuroscience, 3(1):71-86, 1991.
+.. [ZKC+98]  *W. Zhao, A. Krishnaswamy, R. Chellappa, D. Swets and J. Weng*. **Discriminant analysis of principal components for face recognition**, pages 73-85. Springer Verlag Berlin, 1998.
+.. [Pri07]   *S. J. D. Prince*. **Probabilistic linear discriminant analysis for inferences about identity**. Proceedings of the International Conference on Computer Vision. 2007.
+.. [ESM+13]  *L. El Shafey, Chris McCool, Roy Wallace and Sébastien Marcel*. **A scalable formulation of probabilistic linear discriminant analysis: applied to face recognition**. IEEE Transactions on Pattern Analysis and Machine Intelligence, 35(7):1788-1794, 7/2013.
 
 ToDo-List
 =========

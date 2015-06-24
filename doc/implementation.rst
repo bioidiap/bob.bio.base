@@ -30,6 +30,8 @@ This will assure that all parameters of the experiments are stored into the ``Ex
 If you plan to write your own tools, please assure that you are following the following structure.
 
 
+.. _preprocessors:
+
 Preprocessors
 ~~~~~~~~~~~~~
 
@@ -56,6 +58,8 @@ When a different IO for the original data is required (for example to read video
 
 * ``read_original_data(filename)``: Reads the original data from file.
 
+
+.. _extractors:
 
 Extractors
 ~~~~~~~~~~
@@ -92,6 +96,8 @@ First, the ``train`` function is overridden:
 Second, this behavior is registered in the ``__init__`` function by calling the base class constructor with more parameters: ``bob.bio.base.extractor.Extractor.__init__(self, requires_training=True, ...)``.
 Given that the training algorithm needs to have the training data split by identity, the ``bob.bio.base.extractor.Extractor.__init__(self, requires_training=True, split_training_images_by_client = True, ...)`` is used instead.
 
+
+.. _algorithms:
 
 Algorithms
 ~~~~~~~~~~
@@ -190,32 +196,22 @@ Furthermore, some of the databases split off some data from the training set, wh
 Finally, most of the databases come with specific annotation files, which define additional information about the data, e.g., hand-labeled eye locations for face images.
 
 
-Generic Databases
-~~~~~~~~~~~~~~~~~
-
-All these different interfaces are concentrated into the :py:class:`bob.bio.base.database.Database` class.
-This database provides a minimum common interface for all databases that can be used by ``bob.bio``.
-
-.. todo::
-   Provide more details about the Database.
-
-If the database provides an interface for ZT score normalization, the :py:class:`bob.bio.base.database.DatabaseZT` is used, which is derived from :py:class:`bob.bio.base.database.Database`.
-
-.. todo::
-   Provide more details about the DatabaseZT.
-
-
 Verification Database Interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For most of the data sets, we rely on the database interfaces from Bob_.
-Particularly, all databases that are derived from the :py:class:`bob.db.verification.utils.Database` (click :ref:`here <verification_databases>` for a list of implemented databases) are supported by
-a special derivation of the databases from above.
-These databases
+Particularly, all databases that are derived from the :py:class:`bob.db.verification.utils.Database` (click :ref:`here <verification_databases>` for a list of implemented databases) are supported by a special derivation of the databases from above.
+For these databases, the special :py:class:`bob.bio.base.database.DatabaseBob` interface is provided, which takes the Bob_ database as parameter.
+Several such databases are defined in the according packages, i.e., :ref:`bob.bio.spear <bob.bio.spear>`, :ref:`bob.bio.face <bob.bio.face>` and :ref:`bob.bio.video <bob.bio.video>`.
+For Bob_'s ZT-norm databases, we provide the :py:class:`bob.bio.base.database.DatabaseBobZT` interface.
 
+Additionally, a generic database interface, which is derived from :py:class:`bob.bio.base.database.DatabaseBobZT`, is the :py:class:`bob.bio.base.database.DatabaseFileList`.
+This database interfaces with the :py:class:`bob.db.verification.filelist.Database`, which is a generic database based on file lists, implementing the :py:class:`bob.db.verification.utils.Database` interface.
+
+Defining your own Database
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you have your own database that you want to execute the recognition experiments on, you should first check if you could use the :ref:`Verifcation FileList Database <bob.db.verification.filelist>` interface by defining appropriate file lists for the training set, the model set, and the probes.
-If you can do this, just write your own configuration file that uses the :py:class:`facereclib.databases.DatabaseFileList` interface (see :ref:`databases` for details).
 In most of the cases, the :py:class:`bob.db.verification.filelist.Database` should be sufficient to run experiments.
 Please refer to the documentation :ref:`Documentation <bob.db.verification.filelist>` of this database for more instructions on how to configure this database.
 
@@ -223,67 +219,92 @@ In case you want to have a more complicated interface to your database, you are 
 In this case, you have to derive your class from the :py:class:`facereclib.databases.Database`, and provide the following functions:
 
 * ``__init__(self, <your-parameters>, **kwargs)``: Constructor of your database interface.
-  Please call the base class constructor, providing all the required parameters (see :ref:`databases`), e.g. by ``facereclib.databases.Database.__init__(self, **kwargs)``.
-* ``all_files(self)``: Returns a list of all :py:class:`facereclib.databases.File` objects of the database.
+  Please call the base class constructor, providing all the required parameters, e.g. by ``bob.bio.base.database.Database.__init__(self, **kwargs)``.
+* ``all_files(self)``: Returns a list of all :py:class:`bob.bio.base.database.File` objects of the database.
   The list needs to be sorted by the file id (you can use the ``self.sort(files)`` function for sorting).
-* ``training_files(self, step, arrange_by_client = False)``: A sorted list of the :py:class:`facereclib.databases.File` objects that is used for training.
-  If ``arrange_by_clients`` is enabled, you might want to use the ``self.arrange_by_client(files)`` function to perform the job.
+* ``training_files(self, step, arrange_by_client = False)``: A sorted list of the :py:class:`bob.bio.base.database.File` objects that is used for training.
+  If ``arrange_by_clients`` is enabled, you might want to use the :py:meth:`bob.bio.base.database.Database.arrange_by_client` function to perform the job.
 * ``model_ids(self, group = 'dev'): The ids for the models (usually, there is only one model per client and, thus, you can simply use the client ids) for the given group.
   Usually, providing ids for the group ``'dev'`` should be sufficient.
 * ``client_id_from_model_id(self, model_id)``: Returns the client id for the given model id.
-* ``enroll_files(self, model_id, group='dev')``: Returns the list of model :py:class:`facereclib.databases.File` objects for the given model id.
+* ``enroll_files(self, model_id, group='dev')``: Returns the list of model :py:class:`bob.bio.base.database.File` objects for the given model id.
 * ``probe_files(self, model_id=None, group='dev')``: Returns the list of probe files, the given model_id should be compared with.
   Usually, all probe files are compared with all model files.
   In this case, you can just ignore the ``model_id``.
   If the ``model_id`` is ``None``, this function is supposed to return *all* probe files for all models of the given group.
 
 Additionally, you can define more lists that can be used for ZT score normalization.
-In this case, derive you class from :py:class:`facereclib.databases.DatabaseZT` instead, and additionally overwrite the following functions:
+In this case, derive you class from :py:class:`bob.bio.base.database.DatabaseZT` instead, and additionally overwrite the following functions:
 
 * ``t_model_ids(self, group = 'dev')``: The ids for the T-Norm models for the given group.
-* ``t_enroll_files(self, model_id, group='dev')``: Returns the list of model :py:class:`facereclib.databases.File` objects for the given T-Norm model id.
-* ``z_probe_files(self, group='dev')``: Returns the list of Z-probe :py:class:`facereclib.databases.File` objects, with which all the models and T-Norm models are compared.
+* ``t_enroll_files(self, model_id, group='dev')``: Returns the list of model :py:class:`bob.bio.base.database.File` objects for the given T-Norm model id.
+* ``z_probe_files(self, group='dev')``: Returns the list of Z-probe :py:class:`bob.bio.base.database.File` objects, with which all the models and T-Norm models are compared.
 
 .. note:
-  For a proper face recognition protocol, the identities from the models and the T-Norm models, as well as the Z-probes should be different.
+   For a proper biometric recognition protocol, the identities from the models and the T-Norm models, as well as the Z-probes should be different.
 
 For some protocols, a single probe consists of several features, see :ref:`algorithms` about strategies how to incorporate several probe files into one score.
 If your database should provide this functionality, please overwrite:
 
 * ``uses_probe_file_sets(self)``: Return ``True`` if the current protocol of the database provides multiple files for one probe.
-* ``probe_file_sets(self, model_id=None, group='dev')``: Returns a list of lists of :py:class:`facereclib.databases.FileSet` objects.
-* ``z_probe_file_sets(self, model_id=None, group='dev')``: Returns a list of lists of Z-probe :py:class:`facereclib.databases.FileSet` objects (only needed if the base class is :py:class:`facereclib.databases.DatabaseZT`).
+* ``probe_file_sets(self, model_id=None, group='dev')``: Returns a list of lists of :py:class:`bob.bio.base.database.FileSet` objects.
+* ``z_probe_file_sets(self, model_id=None, group='dev')``: Returns a list of lists of Z-probe :py:class:`bob.bio.base.database.FileSet` objects (only needed if the base class is :py:class:`bob.bio.base.database.DatabaseZT`).
 
 
 
 .. _configuration-files:
 
-Adding Configuration Files
---------------------------
-After your code is tested, you should provide a configuration file for your algorithm.
-A configuration file basically consists of a constructor call to your new class with a useful (yet not necessarily optimized) set of parameters.
-Depending on your type of contribution, you should write a line like:
+Configuration Files
+-------------------
 
-* ``database = facereclib.databases.<YourDatabase>(<YourParameters>)``
-* ``preprocessor = facereclib.preprocessing.<YourPreprocessor>(<YourParameters>)``
-* ``feature_extractor = facereclib.features.<YourExtractor>(<YourParameters>)``
-* ``tool = facereclib.tools.<YourAlgorithm>(<YourParameters>)``
+One important aspect of the ``bob.bio`` packages is reproducibility.
+To be able to reproduce an experiment, it is required that all parameters of all tools are present.
 
-and save the configuration file into the according sub-directory of `facereclib/configurations <file:../facereclib/configurations>`_.
+In ``bob.bio`` this is achieved by providing these parameters in configuration files.
+In these files, an *instance* of one of the tools is generated, and assigned to a variable with a specific name.
+These variable names are:
+
+* ``database`` for an instance of a (derivation of a) :py:class:`bob.bio.base.database.Database`
+* ``preprocessor`` for an instance of a (derivation of a) :py:class:`bob.bio.base.preprocessor.Preprocessor`
+* ``extractor`` for an instance of a (derivation of a) :py:class:`bob.bio.base.extractor.Extractor`
+* ``algorithm`` for an instance of a (derivation of a) :py:class:`bob.bio.base.algorithm.Algorithm`
+* ``grid`` for an instance of the :py:class:`bob.bio.base.grid.Grid`
+
+For example, the configuration file for a PCA algorithm, which uses 80% of variance and a cosine distance function, could look somewhat like:
+
+.. code-block:: py
+
+   import bob.bio.base
+   import scipy.spatial
+
+   algorithm = bob.bio.base.algorithm.PCA(subspace_dimension = 0.8, distance_function = scipy.spatial.distance.cosine, is_distance_function = True)
+
+Some default configuration files can be found in the ``bob/bio/*/config`` directories of all ``bob.bio`` packages, but you can create configuration files in any directory you like.
+In fact, since all tools have a different keyword, you can define a complete experiment in a single configuration file.
 
 
-.. _register-resources:
+.. _resources:
 
-Registering your Code as a Resource
------------------------------------
-Now, you should be able to register this configuration file as a resource, so that you can use the configuration from above by a simple ``<shortcut>`` of your choice.
-Please open the `setup.py <file:../setup.py>`_ file in the base directory of your satellite package and edit the ``entry_points`` section.
-Depending on your type of algorithm, you have to add:
+Resources
+---------
 
-* ``'facereclib.database': [ '<your-database-shortcut> = <your-database-configuration>.database' ]``
-* ``'facereclib.preprocessor': [ '<your-preprocessor-shortcut> = <your-preprocessor-configuration>.preprocessor' ]``
-* ``'facereclib.feature_extractor': [ '<your-extractor-shortcut> = <your-extractor-configuration>.feature_extractor' ]``
-* ``'facereclib.tool': [ '<your-recognition-algorithm-shortcut> = <your-algorithm-configuration>.tool' ]``
+Finally, some of the configuration files, which sit in the ``bob/bio/*/config`` directories, are registered as *resources*.
+This means that a resource is nothing else than a short name for a registered instance of one of the tools (database, preprocessor, extractor, algorithm or grid configuration) of ``bob.bio``, which has a pre-defined set of parameters.
+
+The process of registering a resource is relatively easy.
+We use the SetupTools_ mechanism of registering so-called entry points in the ``setup.py`` file of the according ``bob.bio`` package.
+Particularly, we use a specific list of entry points, which are:
+
+* ``bob.bio.database`` to register an instance of a (derivation of a) :py:class:`bob.bio.base.database.Database`
+* ``bob.bio.preprocessor`` to register an instance of a (derivation of a) :py:class:`bob.bio.base.preprocessor.Preprocessor`
+* ``bob.bio.extractor`` to register an instance of a (derivation of a) :py:class:`bob.bio.base.extractor.Extractor`
+* ``bob.bio.algorithm`` to register an instance of a (derivation of a) :py:class:`bob.bio.base.algorithm.Algorithm`
+* ``bob.bio.grid`` to register an instance of the :py:class:`bob.bio.base.grid.Grid`
+
+For each of the tools, several resources are defined, which you can list with the ``./bin/resources.py`` command line.
+
+When you want to register your own resource, make sure that your configuration file is importable (usually it is sufficient to have an empty ``__init__.py`` file in the same directory as your configuration file).
+Then, you can simply add a line inside the according ``entry_points`` section of the ``setup.py`` file (you might need to create that section, just follow the example of the ``setup.py`` file that you can find online in the base directory of our `bob.bio.base GitHub page <http://github.com/bioidiap/bob.bio.base>`__).
 
 After re-running ``./bin/buildout``, your new resource should be listed in the output of ``./bin/resources.py``.
 

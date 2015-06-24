@@ -27,7 +27,7 @@ class Extractor:
 
   If your derived class requires training, please register this here.
 
-  **Keyword Arguments**
+  **Parameters**
 
   requires_training : bool
     Set this flag to ``True`` if your feature extractor needs to be trained.
@@ -65,7 +65,7 @@ class Extractor:
     It must be overwritten by derived classes.
     It takes the (preprocessed) data and returns the features extracted from the data.
 
-    **Keyword Arguments**
+    **Parameters**
 
     data : object (usually :py:class:`numpy.ndarray`)
       The *preprocessed* data from which features should be extracted.
@@ -100,7 +100,7 @@ class Extractor:
     In this base class implementation, we simply use :py:func:`bob.bio.base.save` for that.
     If you have a different format, please overwrite this function.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     feature : object
       The extracted feature, i.e., what is returned from :py:meth:`__call__`.
@@ -116,7 +116,7 @@ class Extractor:
     In this base class implementation, it uses :py:func:`bob.bio.base.load` to do that.
     If you have different format, please overwrite this function.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     feature_file : str or :py:class:`bob.io.base.HDF5File`
       The file open for reading or the name of the file to read from.
@@ -134,7 +134,7 @@ class Extractor:
     This function usually is only useful in combination with the :py:meth:`train` function.
     In this base class implementation, it does nothing.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     extractor_file : str
       The file to read the extractor from.
@@ -147,7 +147,7 @@ class Extractor:
     If you do this, please also register the function by calling this base class constructor
     and enabling the training by ``requires_training = True``.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     training_data : [object] or [[object]]
       A list of *preprocessed* data that can be used for training the extractor.

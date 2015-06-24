@@ -1,14 +1,34 @@
-
-
-
 =================================
 Tools implemented in bob.bio.base
 =================================
 
-Databases
----------
+Summary
+-------
 
-.. automodule:: bob.bio.base.database
+Base Classes
+~~~~~~~~~~~~
+
+.. autosummary::
+   bob.bio.base.preprocessor.Preprocessor
+   bob.bio.base.extractor.Extractor
+   bob.bio.base.algorithm.Algorithm
+   bob.bio.base.database.Database
+   bob.bio.base.database.DatabaseZT
+   bob.bio.base.grid.Grid
+
+Implementations
+~~~~~~~~~~~~~~~
+
+.. autosummary::
+   bob.bio.base.extractor.Linearize
+   bob.bio.base.algorithm.PCA
+   bob.bio.base.algorithm.LDA
+   bob.bio.base.algorithm.PLDA
+   bob.bio.base.algorithm.BIC
+   bob.bio.base.database.DatabaseBob
+   bob.bio.base.database.DatabaseBobZT
+   bob.bio.base.database.DatabaseFileList
+
 
 Preprocessors
 -------------
@@ -25,6 +45,10 @@ Algorithms
 
 .. automodule:: bob.bio.base.algorithm
 
+Databases
+---------
+
+.. automodule:: bob.bio.base.database
 
 Grid Configuration
 ------------------

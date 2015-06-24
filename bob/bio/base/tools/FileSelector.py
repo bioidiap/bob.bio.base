@@ -7,7 +7,53 @@ from .. import utils
 
 @utils.Singleton
 class FileSelector:
-  """This class provides shortcuts for selecting different files for different stages of the verification process"""
+  """This class provides shortcuts for selecting different files for different stages of the verification process.
+
+  It communicates with the database and provides lists of file names for all steps of the tool chain.
+
+  .. todo:: Find a way the this class' methods get correctly documented, instead of the :py:class:`bob.bio.base.Singleton` wrapper class.
+
+  **Parameters:**
+
+  database : :py:class:`bob.bio.base.database.Database` or derived
+    The database object that provides the list of files.
+
+  preprocessed_directory : str
+    The directory, where preprocessed data should be written to.
+
+  extractor_file : str
+    The filename, where the extractor should be written to (if any).
+
+  extracted_directory : str
+    The directory, where extracted features should be written to.
+
+  projector_file : str
+    The filename, where the projector should be written to (if any).
+
+  projected_directory : str
+    The directory, where projetced features should be written to (if required).
+
+  enroller_file : str
+    The filename, where the enroller should be written to (if required).
+
+  model_directories : (str, str)
+    The directories, where models and t-norm models should be written to.
+
+  score_directories : (str, str)
+    The directories, where score files for no-norm and ZT-norm should be written to.
+
+  zt_score_directories : (str, str, str, str, str) or ``None``
+    If given, specify the directories, where intermediate score files required to compute the ZT-norm should be written.
+    The 5 directories are for 1: normal scores; 2: Z-scores; 3: T-scores; 4: ZT-scores; 5: ZT-samevalue scores.
+
+  default_extension : str
+    The default extension of all intermediate files.
+
+  compressed_extension : str
+    The extension for writing compressed score files.
+    By default, no compression is performed.
+
+  """
 
   def __init__(
     self,

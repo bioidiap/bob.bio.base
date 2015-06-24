@@ -6,7 +6,7 @@ import bob.db.verification.utils
 class DatabaseBob (Database):
   """This class can be used whenever you have a database that follows the Bob verification database interface, which is defined in :py:class:`bob.db.verification.utils.Database`
 
-  **Keyword Parameter:**
+  **Parameters:**
 
   database : derivative of :py:class:`bob.db.verification.utils.Database`
     The database instance (such as a :py:class:`bob.db.atnt.Database`) that provides the actual interface, see :ref:`verification_databases` for a list.
@@ -104,7 +104,7 @@ class DatabaseBob (Database):
 
     If no annotation files are available (e.g. when they are stored inside the ``database``), the annotation directory can be left out.
 
-    **Keyword Parameter:**
+    **Parameters:**
 
     replacements : dict or str
       A dictionary with replacements, or a name of a file to read the dictionary from.
@@ -149,7 +149,7 @@ class DatabaseBob (Database):
     Returns all files of the database, respecting the current protocol.
     The files can be limited using the ``all_files_options`` in the constructor.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     groups : some of ``('world', 'dev', 'eval')`` or ``None``
       The groups to get the data for.
@@ -169,7 +169,7 @@ class DatabaseBob (Database):
     Returns all training files for the given step, and arranges them by client, if desired, respecting the current protocol.
     The files for the steps can be limited using the ``..._training_options`` defined in the constructor.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     step : one of ``('train_extractor', 'train_projector', 'train_enroller')`` or ``None``
       The step for which the training data should be returned.
@@ -207,7 +207,7 @@ class DatabaseBob (Database):
     Returns all test files (i.e., files used for enrollment and probing) for the given groups, respecting the current protocol.
     The files for the steps can be limited using the ``all_files_options`` defined in the constructor.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     groups : some of ``('dev', 'eval')``
       The groups to get the data for.
@@ -224,7 +224,7 @@ class DatabaseBob (Database):
 
     Returns a list of model ids for the given group, respecting the current protocol.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     group : one of ``('dev', 'eval')``
       The group to get the model ids for.
@@ -242,7 +242,7 @@ class DatabaseBob (Database):
 
     Uses :py:meth:`bob.db.verification.utils.Database.get_client_id_from_model_id` to retrieve the client id for the given model id.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     model_id : int or str
       A unique ID that identifies the model for the client.
@@ -263,7 +263,7 @@ class DatabaseBob (Database):
 
     Returns a list of File objects that should be used to enroll the model with the given model id from the given group, respecting the current protocol.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     model_id : int or str
       A unique ID that identifies the model.
@@ -286,7 +286,7 @@ class DatabaseBob (Database):
     If a ``model_id`` is specified, only the probe files that should be compared with the given model id are returned (for most databases, these are all probe files of the given group).
     Otherwise, all probe files of the given group are returned.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     model_id : int or str or ``None``
       A unique ID that identifies the model.
@@ -313,7 +313,7 @@ class DatabaseBob (Database):
     If a ``model_id`` is specified, only the probe files that should be compared with the given model id are returned (for most databases, these are all probe files of the given group).
     Otherwise, all probe files of the given group are returned.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     model_id : int or str or ``None``
       A unique ID that identifies the model.
@@ -337,7 +337,7 @@ class DatabaseBob (Database):
 
     Returns the annotations for the given File object, if available.
 
-    **Keyword Parameters:**
+    **Parameters:**
 
     file : :py:class:`bob.db.verification.utils.File`
       The file for which annotations should be returned.
@@ -355,7 +355,7 @@ class DatabaseBob (Database):
 
     Returns the full path of the original data of the given File objects, as returned by :py:meth:`bob.db.verification.utils.Database.original_file_names`.
 
-    **Keyword Parameters:**
+    **Parameters:**
 
     files : [:py:class:`bob.db.verification.utils.File`]
       The list of file object to retrieve the original data file names for.
@@ -373,7 +373,7 @@ class DatabaseBob (Database):
 class DatabaseBobZT (DatabaseBob, DatabaseZT):
   """This class can be used whenever you have a database that follows the Bob ZT-norm verification database interface, which is defined in :py:class:`bob.db.verification.utils.ZTDatabase`.
 
-  **Keyword Parameters:**
+  **Parameters:**
 
   database : derivative of :py:class:`bob.db.verification.utils.ZTDatabase`
     The database instance (such as a :py:class:`bob.db.mobio.Database`) that provides the actual interface, see :ref:`verification_databases` for a list.
@@ -406,7 +406,7 @@ class DatabaseBobZT (DatabaseBob, DatabaseZT):
     Returns all files of the database, including those for ZT norm, respecting the current protocol.
     The files can be limited using the ``all_files_options`` and the the ``z_probe_options`` in the constructor.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     groups : some of ``('world', 'dev', 'eval')`` or ``None``
       The groups to get the data for.
@@ -432,7 +432,7 @@ class DatabaseBobZT (DatabaseBob, DatabaseZT):
 
     Returns a list of model ids of T-Norm models for the given group, respecting the current protocol.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     group : one of ``('dev', 'eval')``
       The group to get the model ids for.
@@ -450,7 +450,7 @@ class DatabaseBobZT (DatabaseBob, DatabaseZT):
 
     Returns a list of File objects that should be used to enroll the T-Norm model with the given model id from the given group, respecting the current protocol.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     t_model_id : int or str
       A unique ID that identifies the model.
@@ -472,7 +472,7 @@ class DatabaseBobZT (DatabaseBob, DatabaseZT):
     Returns a list of probe files used to compute the Z-Norm, respecting the current protocol.
     The Z-probe files can be limited using the ``z_probe_options`` in the query to :py:meth:`bob.db.verification.utils.ZTDatabase.z_probe_files`
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     group : one of ``('dev', 'eval')``
       The group to get the Z-norm probe files for.
@@ -492,7 +492,7 @@ class DatabaseBobZT (DatabaseBob, DatabaseZT):
     Returns a list of probe FileSet objects used to compute the Z-Norm.
     The Z-probe files can be limited using the ``z_probe_options`` in the query to
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     group : one of ``('dev', 'eval')``
       The group to get the Z-norm probe files for.

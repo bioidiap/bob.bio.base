@@ -9,99 +9,193 @@ from .extractor import read_features
 from .. import utils
 
 
-def train_projector(algorithm, extractor, force=False):
-  """Train the feature projector with the extracted features of the world group."""
-  if algorithm.requires_projector_training:
-    # the file selector object
-    fs = FileSelector.instance()
+def train_projector(algorithm, extractor, force = False):
+  """Trains the feature projector using extracted features of the ``'world'`` group, if the algorithm requires projector training.
 
-    if utils.check_file(fs.projector_file, force, 1000):
-      logger.info("- Projection: projector '%s' already exists.", fs.projector_file)
+  This function should only be called, when the ``algorithm`` actually requires projector training.
+  The projector of the given ``algorithm`` is trained using extracted features.
+  It writes the projector to the file specified by the :py:class:`bob.bio.base.tools.FileSelector`.
+  By default, if the target file already exist, it is not re-created.
+
+  **Parameters:**
+
+  algorithm : py:class:`bob.bio.base.algorithm.Algorithm` or derived
+    The algorithm, in which the projector should be trained.
+
+  extractor : py:class:`bob.bio.base.extractor.Extractor` or derived
+    The extractor, used for reading the training data.
+
+  force : bool
+    If given, the projector file is regenerated, even if it already exists.
+  """
+  if not algorithm.requires_projector_training:
+    logger.warn("The train_projector function should not have been called, since the algorithm does not need projector training.")
+    return
+
+  # the file selector object
+  fs = FileSelector.instance()
+
+  if utils.check_file(fs.projector_file, force, 1000):
+    logger.info("- Projection: projector '%s' already exists.", fs.projector_file)
+  else:
+    bob.io.base.create_directories_safe(os.path.dirname(fs.projector_file))
+    # train projector
+    logger.info("- Projection: loading training data")
+    train_files = fs.training_list('extracted', 'train_projector', arrange_by_client = algorithm.split_training_features_by_client)
+    train_features = read_features(train_files, extractor, algorithm.split_training_features_by_client)
+    if algorithm.split_training_features_by_client:
+      logger.info("- Projection: training projector '%s' using %d identities: ", fs.projector_file, len(train_files))
     else:
-      bob.io.base.create_directories_safe(os.path.dirname(fs.projector_file))
-      # train projector
-      logger.info("- Projection: loading training data")
-      train_files = fs.training_list('extracted', 'train_projector', arrange_by_client = algorithm.split_training_features_by_client)
-      train_features = read_features(train_files, extractor, algorithm.split_training_features_by_client)
-      if algorithm.split_training_features_by_client:
-        logger.info("- Projection: training projector '%s' using %d identities: ", fs.projector_file, len(train_files))
-      else:
-        logger.info("- Projection: training projector '%s' using %d training files: ", fs.projector_file, len(train_files))
+      logger.info("- Projection: training projector '%s' using %d training files: ", fs.projector_file, len(train_files))
 
-      # perform training
-      algorithm.train_projector(train_features, fs.projector_file)
+    # perform training
+    algorithm.train_projector(train_features, fs.projector_file)
 
 
 
-def project(algorithm, extractor, groups = None, indices = None, force=False):
-  """Projects the features for all files of the database."""
-  # load the projector file
-  if algorithm.performs_projection:
-    # the file selector object
-    fs = FileSelector.instance()
+def project(algorithm, extractor, groups = None, indices = None, force = False):
+  """Projects the features for all files of the database.
 
-    # load the projector
+  The given ``algorithm`` is used to project all features required for the current experiment.
+  It writes the projected data into the directory specified by the :py:class:`bob.bio.base.tools.FileSelector`.
+  By default, if target files already exist, they are not re-created.
+
+  The extractor is only used to load the data in a coherent way.
+
+  **Parameters:**
+
+  algorithm : py:class:`bob.bio.base.algorithm.Algorithm` or derived
+    The algorithm, used for projecting features and writing them to file.
+
+  extractor : py:class:`bob.bio.base.extractor.Extractor` or derived
+    The extractor, used for reading the extracted features, which should be projected.
+
+  groups : some of ``('world', 'dev', 'eval')`` or ``None``
+    The list of groups, for which the data should be projected.
+
+  indices : (int, int) or None
+    If specified, only the features for the given index range ``range(begin, end)`` should be projected.
+    This is usually given, when parallel threads are executed.
+
+  force : bool
+    If given, files are regenerated, even if they already exist.
+  """
+  if not algorithm.performs_projection:
+    logger.warn("The project function should not have been called, since the algorithm does not perform projection.")
+    return
+
+  # the file selector object
+  fs = FileSelector.instance()
+
+  # load the projector
+  algorithm.load_projector(fs.projector_file)
+
+  feature_files = fs.feature_list(groups=groups)
+  projected_files = fs.projected_list(groups=groups)
+
+  # select a subset of indices to iterate
+  if indices != None:
+    index_range = range(indices[0], indices[1])
+    logger.info("- Projection: splitting of index range %s", str(indices))
+  else:
+    index_range = range(len(feature_files))
+
+  logger.info("- Projection: projecting %d features from directory '%s' to directory '%s'", len(index_range), fs.directories['extracted'], fs.directories['projected'])
+  # extract the features
+  for i in index_range:
+    feature_file = str(feature_files[i])
+    projected_file = str(projected_files[i])
+
+    if not utils.check_file(projected_file, force, 1000):
+      # load feature
+      feature = extractor.read_feature(feature_file)
+      # project feature
+      projected = algorithm.project(feature)
+      # write it
+      bob.io.base.create_directories_safe(os.path.dirname(projected_file))
+      algorithm.write_feature(projected, projected_file)
+
+
+
+def train_enroller(algorithm, extractor, force = False):
+  """Trains the model enroller using the extracted or projected features, depending on your setup of the algorithm.
+
+  This function should only be called, when the ``algorithm`` actually requires enroller training.
+  The enroller of the given ``algorithm`` is trained using extracted or projected features.
+  It writes the enroller to the file specified by the :py:class:`bob.bio.base.tools.FileSelector`.
+  By default, if the target file already exist, it is not re-created.
+
+  **Parameters:**
+
+  algorithm : py:class:`bob.bio.base.algorithm.Algorithm` or derived
+    The algorithm, in which the enroller should be trained.
+    It is assured that the projector file is read (if required) before the enroller training is started.
+
+  extractor : py:class:`bob.bio.base.extractor.Extractor` or derived
+    The extractor, used for reading the training data, if unprojected features are used for enroller training.
+
+  force : bool
+    If given, the enroller file is regenerated, even if it already exists.
+  """
+  if not algorithm.requires_enroller_training:
+    logger.warn("The train_enroller function should not have been called, since the algorithm does not need enroller training.")
+    return
+
+  # the file selector object
+  fs = FileSelector.instance()
+
+  if utils.check_file(fs.enroller_file, force, 1000):
+    logger.info("- Enrollment: enroller '%s' already exists.", fs.enroller_file)
+  else:
+    # define the tool that is required to read the features
+    reader = algorithm if algorithm.use_projected_features_for_enrollment else extractor
+    bob.io.base.create_directories_safe(os.path.dirname(fs.enroller_file))
+
+    # first, load the projector
     algorithm.load_projector(fs.projector_file)
 
-    feature_files = fs.feature_list(groups=groups)
-    projected_files = fs.projected_list(groups=groups)
+    # load training data
+    train_files = fs.training_list('projected' if algorithm.use_projected_features_for_enrollment else 'extracted', 'train_enroller', arrange_by_client = True)
+    logger.info("- Enrollment: loading %d enroller training files", len(train_files))
+    train_features = read_features(train_files, reader, True)
 
-    # select a subset of indices to iterate
-    if indices != None:
-      index_range = range(indices[0], indices[1])
-      logger.info("- Projection: splitting of index range %s", str(indices))
-    else:
-      index_range = range(len(feature_files))
-
-    logger.info("- Projection: projecting %d features from directory '%s' to directory '%s'", len(index_range), fs.directories['extracted'], fs.directories['projected'])
-    # extract the features
-    for i in index_range:
-      feature_file = str(feature_files[i])
-      projected_file = str(projected_files[i])
-
-      if not utils.check_file(projected_file, force, 1000):
-        # load feature
-        feature = extractor.read_feature(feature_file)
-        # project feature
-        projected = algorithm.project(feature)
-        # write it
-        bob.io.base.create_directories_safe(os.path.dirname(projected_file))
-        algorithm.write_feature(projected, projected_file)
+    # perform training
+    logger.info("- Enrollment: training enroller '%s' using %d identities: ", fs.enroller_file, len(train_features))
+    algorithm.train_enroller(train_features, fs.enroller_file)
 
 
 
-def train_enroller(algorithm, extractor, force=False):
-  """Trains the model enroller using the extracted or projected features, depending on your setup of the agorithm."""
-  if algorithm.requires_enroller_training:
-    # the file selector object
-    fs = FileSelector.instance()
+def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev', 'eval'], types = ['N', 'T'], force = False):
+  """Enroll the models for the given groups, eventually for both models and T-Norm-models.
+     This function uses the extracted or projected features to compute the models, depending on your setup of the given ``algorithm``.
 
-    if utils.check_file(fs.enroller_file, force, 1000):
-      logger.info("- Enrollment: enroller '%s' already exists.", fs.enroller_file)
-    else:
-      # define the tool that is required to read the features
-      reader = algorithm if algorithm.use_projected_features_for_enrollment else extractor
-      bob.io.base.create_directories_safe(os.path.dirname(fs.enroller_file))
+  The given ``algorithm`` is used to enroll all models required for the current experiment.
+  It writes the models into the directories specified by the :py:class:`bob.bio.base.tools.FileSelector`.
+  By default, if target files already exist, they are not re-created.
 
-      # first, load the projector
-      algorithm.load_projector(fs.projector_file)
+  The extractor is only used to load features in a coherent way.
 
-      # load training data
-      train_files = fs.training_list('projected' if algorithm.use_projected_features_for_enrollment else 'extracted', 'train_enroller', arrange_by_client = True)
-      logger.info("- Enrollment: loading %d enroller training files", len(train_files))
-      train_features = read_features(train_files, reader, True)
+  **Parameters:**
 
-      # perform training
-      logger.info("- Enrollment: training enroller '%s' using %d identities: ", fs.enroller_file, len(train_features))
-      algorithm.train_enroller(train_features, fs.enroller_file)
+  algorithm : py:class:`bob.bio.base.algorithm.Algorithm` or derived
+    The algorithm, used for enrolling model and writing them to file.
 
+  extractor : py:class:`bob.bio.base.extractor.Extractor` or derived
+    The extractor, used for reading the extracted features, if the algorithm enrolls models from unprojected data.
 
+  compute_zt_norm : bool
+    If set to ``True`` and `'T'`` is part of the ``types``, also T-norm models are extracted.
 
-def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev', 'eval'], types = ['N', 'T'], force=False):
-  """Enroll the models for 'dev' and 'eval' groups, for both models and T-Norm-models.
-     This function uses the extracted or projected features to compute the models,
-     depending on your setup of the base class Algorithm."""
+  indices : (int, int) or None
+    If specified, only the models for the given index range ``range(begin, end)`` should be enrolled.
+    This is usually given, when parallel threads are executed.
 
+  groups : some of ``('dev', 'eval')``
+    The list of groups, for which models should be enrolled.
+
+  force : bool
+    If given, files are regenerated, even if they already exist.
+  """
   # the file selector object
   fs = FileSelector.instance()
   # read the projector file, if needed

@@ -29,7 +29,7 @@ class Algorithm:
   If your derived algorithm performs feature projection, please register this here.
   If it needs training for the projector or the enroller, please set this here, too.
 
-  **Keyword Arguments:**
+  **Parameters:**
 
   performs_projection : bool
     Set to ``True`` if your derived algorithm performs a projection.
@@ -108,7 +108,7 @@ class Algorithm:
     It must be overwritten by derived classes, as soon as ``performs_projection = True`` was set in the constructor.
     It is assured that the :py:meth:`load_projector` was called once before the ``project`` function is executed.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     feature : object
       The feature to be projected.
@@ -129,7 +129,7 @@ class Algorithm:
     This function will enroll and return the model from the given list of features.
     It must be overwritten by derived classes.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     enroll_features : [object]
       A list of features used for the enrollment of one model.
@@ -150,7 +150,7 @@ class Algorithm:
     This function will compute the score between the given model and probe.
     It must be overwritten by derived classes.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     model : object
       The model to compare the probe with.
@@ -177,7 +177,7 @@ class Algorithm:
     and fuses the scores using the fusion method specified in the constructor of this class.
     Usually this function is called from derived class :py:meth:`score` functions.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     models : [object]
       A list of model objects.
@@ -205,7 +205,7 @@ class Algorithm:
     In this base class implementation, it computes the scores for each probe file using the :py:meth:`score` method,
     and fuses the scores using the fusion method specified in the constructor of this class.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     model : object
       A model object to compare the probes with.
@@ -241,7 +241,7 @@ class Algorithm:
 
     Please register 'performs_projection = True' in the constructor to enable this function.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     feature : object
       A feature as returned by the :py:meth:`project` function, which should be written.
@@ -261,7 +261,7 @@ class Algorithm:
 
     Please register ``performs_projection = True`` in the constructor to enable this function.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     feature_file : str or :py:class:`bob.io.base.HDF5File`
       The file open for reading, or the file name to read from.
@@ -284,7 +284,7 @@ class Algorithm:
 
     If you have a different format, please overwrite this function.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     model : object
       A model as returned by the :py:meth:`enroll` function, which should be written.
@@ -303,7 +303,7 @@ class Algorithm:
 
     If you have a different format, please overwrite this function.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     model_file : str or :py:class:`bob.io.base.HDF5File`
       The file open for reading, or the file name to read from.
@@ -325,7 +325,7 @@ class Algorithm:
 
     If your algorithm requires different behavior, please overwrite this function.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     probe_file : str or :py:class:`bob.io.base.HDF5File`
       The file open for reading, or the file name to read from.
@@ -344,7 +344,7 @@ class Algorithm:
     If you do this, please also register the function by calling this base class constructor
     and enabling the training by ``requires_projector_training = True``.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     training_features : [object] or [[object]]
       A list of *extracted* features that can be used for training the projector.
@@ -365,7 +365,7 @@ class Algorithm:
 
     Please register `performs_projection = True` in the constructor to enable this function.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     projector_file : str
       The file to read the projector from.
@@ -378,7 +378,7 @@ class Algorithm:
     If you do this, please also register the function by calling this base class constructor
     and enabling the training by ``require_enroller_training = True``.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     training_features : [object] or [[object]]
       A list of *extracted* features that can be used for training the projector.
@@ -396,7 +396,7 @@ class Algorithm:
     This function is always called **after** calling :py:meth:`load_projector`.
     In this base class implementation, it does nothing.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     enroller_file : str
       The file to read the enroller from.

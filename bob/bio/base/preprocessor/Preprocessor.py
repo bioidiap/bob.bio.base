@@ -27,7 +27,7 @@ class Preprocessor:
   """This is the base class for all preprocessors.
   It defines the minimum requirements for all derived proprocessor classes.
 
-  **Keyword Arguments:**
+  **Parameters:**
 
   kwargs : ``key=value`` pairs
     A list of keyword arguments to be written in the :py:meth:`__str__` function.
@@ -47,7 +47,7 @@ class Preprocessor:
     This is the call function that you have to overwrite in the derived class.
     The parameters that this function will receive are:
 
-    **Keyword Parameters:**
+    **Parameters:**
 
     data : object
       The original data that needs preprocessing, usually a :py:class:`numpy.ndarray`, but might be different.
@@ -87,7 +87,7 @@ class Preprocessor:
     In this base class implementation, it uses :py:func:`bob.io.base.load` to do that.
     If you have different format, please overwrite this function.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     original_file_name : str
       The file name to read the original data from.
@@ -105,7 +105,7 @@ class Preprocessor:
     In this base class implementation, we simply use :py:func:`bob.bio.base.save` for that.
     If you have a different format (e.g. not images), please overwrite this function.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     data : object
       The preprocessed data, i.e., what is returned from :py:meth:`__call__`.
@@ -123,7 +123,7 @@ class Preprocessor:
     In this base class implementation, it uses :py:func:`bob.bio.base.load` to do that.
     If you have different format, please overwrite this function.
 
-    **Keyword Arguments:**
+    **Parameters:**
 
     data_file : str or :py:class:`bob.io.base.HDF5File`
       The file open for reading or the name of the file to read from.

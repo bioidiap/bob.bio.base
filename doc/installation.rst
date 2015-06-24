@@ -47,7 +47,7 @@ Databases
 With ``bob.bio`` you will run biometric recognition experiments using some default biometric recognition databases.
 Though the verification protocols are implemented in ``bob.bio``, the original data are **not included**.
 To download the original data of the databases, please refer to the according Web-pages.
-Database URL's will be given in the :ref:`databases` section.
+For a list of supported databases including their download URLs, please refer to the :ref:`verification_databases`.
 
 After downloading the original data for the databases, you will need to tell ``bob.bio``, where these databases can be found.
 For this purpose, we have decided to implement a special file, where you can set your directories.
@@ -65,7 +65,7 @@ Please use ``./bin/databases.py`` for a list of known databases, where you can s
 
 
 .. note::
-   If you have installed only ``bob.bio.base``, there is no database listed -- as all databases are included in other packages, such as :ref:`bob.bio.face <bob.bio.face>` or :ref:`bob.bio.speaker <bob.bio.speaker>`.
+   If you have installed only ``bob.bio.base``, there is no database listed -- as all databases are included in other packages, such as :ref:`bob.bio.face <bob.bio.face>` or :ref:`bob.bio.spear <bob.bio.spear>`.
 
 
 Test your Installation

@@ -13,6 +13,7 @@
 .. _bob's github page: http://idiap.github.com/bob
 .. _gridtk: http://github.com/idiap/gridtk
 .. _buildout: http://www.buildout.org
+.. _setuptools: http://trac.edgewall.org/wiki/setuptools
 .. _nist: http://www.nist.gov/itl/iad/ig/focs.cfm
 .. _pypi: http://pypi.python.org
 .. _sge: http://wiki.idiap.ch/linux/SunGridEngine
