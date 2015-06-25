@@ -17,9 +17,10 @@ class Singleton:
 
   def __init__(self, decorated):
     self._decorated = decorated
-    import functools
-    for attr in functools.WRAPPER_ASSIGNMENTS:
-      setattr(self, attr, getattr(decorated, attr))
+    # see: functools.WRAPPER_ASSIGNMENTS:
+    self.__doc__ = decorated.__doc__
+    self.__name__ = decorated.__name__
+    self.__module__ = decorated.__module__
     self.__bases__ = []
 
     self._instance = None
