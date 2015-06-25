@@ -65,6 +65,14 @@ def _open_to_write(score_file, write_compressed):
 
   return f
 
+def _write(f, data, write_compressed):
+  """Writes the given data to file, after converting it to the required type."""
+  if write_compressed:
+    if sys.version_info[0] <= 2:
+      data = str.encode(data)
+
+  f.write(data)
+
 def _close_written(score_file, f, write_compressed):
   """Closes the file f that was opened with :py:func:`_open_to_read`"""
   if write_compressed:
@@ -87,7 +95,7 @@ def _save_scores(score_file, scores, probe_objects, client_id, write_compressed=
 
   # write scores in four-column format as string
   for i, probe_object in enumerate(probe_objects):
-    f.write("%s %s %s %3.8f\n" % (str(client_id), str(probe_object.client_id), str(probe_object.path), scores[0,i]))
+    _write(f, "%s %s %s %3.8f\n" % (str(client_id), str(probe_object.client_id), str(probe_object.path), scores[0,i]), write_compressed)
 
   _close_written(score_file, f, write_compressed)
 
