@@ -144,7 +144,7 @@ Running in Parallel
 -------------------
 
 One important property of the ``./bin/verify.py`` script is that it can run in parallel, using either several threads on the local machine, or an SGE grid.
-To achieve that, ``bob.bio`` is well-integrated with our SGE grid toolkit GridTK_, which we have selected as a python package in the :ref:`Installation <installation>` section.
+To achieve that, ``bob.bio`` is well-integrated with our SGE grid toolkit GridTK_, which we have selected as a python package in the :ref:`Installation <bob.bio.base.installation>` section.
 The ``./bin/verify.py`` script can submit jobs either to the SGE grid, or to a local scheduler, keeping track of dependencies between the jobs.
 
 The GridTK_ keeps a list of jobs in a local database, which by default is called ``submitted.sql3``, but which can be overwritten with the ``--gridtk-database-file`` option.

@@ -33,10 +33,11 @@ All these steps of the biometric recognition system are given as configuration f
 
 In this base class implementation, only a few algorithms (such as PCA, LDA, PLDA, BIC) are implemented, while most algorithms that are more specialized are provided by other packages, which are usually in the ``bob.bio`` namespace, such as:
 
-* `bob.bio.face <http://pypi.python.org/pypi/bob.bio.face>`_ for face recognition databases, features and algorithms
-* `bob.bio.speaker <http://pypi.python.org/pypi/bob.bio.speaker>`_ for speaker recognition recognition databases, features and algorithms
-* `bob.bio.gmm <http://pypi.python.org/pypi/bob.bio.gmm>`_ for Gaussian-Mixture-model-based algorithms
-* `bob.bio.video <http://pypi.python.org/pypi/bob.bio.video>`_ for video-based databases and algorithms
+* `bob.bio.spear <http://pypi.python.org/pypi/bob.bio.spear>`__ for speaker recognition recognition databases, features and algorithms
+* `bob.bio.face <http://pypi.python.org/pypi/bob.bio.face>`__ for face recognition databases, features and algorithms
+* `bob.bio.video <http://pypi.python.org/pypi/bob.bio.video>`__ for video-based databases and algorithms
+* `bob.bio.gmm <http://pypi.python.org/pypi/bob.bio.gmm>`__ for Gaussian-mixture-model-based algorithms
+* `bob.bio.csu <http://pypi.python.org/pypi/bob.bio.csu>`__ for wrapper classes of the `CSU Face Recognition Resources <http://www.cs.colostate.edu/facerec>`__
 
 
 Additionally, a generic script ``./bin/evaluate.py`` is provided that can generate several types of plots (such as ROC, DET and CMC curves) and compute several measures (such as HTER, Cllr) to evaluate your experiments.
