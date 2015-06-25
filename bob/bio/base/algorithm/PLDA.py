@@ -15,7 +15,11 @@ logger = logging.getLogger("bob.bio.base")
 
 
 class PLDA (Algorithm):
-  """Tool chain for computing PLDA (over PCA-dimensionality reduced) features"""
+  """Tool chain for computing PLDA (over PCA-dimensionality reduced) features
+
+  .. todo:: Add more documentation for the PLDA constructor, i.e., by explaining the parameters
+
+  """
 
   def __init__(
       self,
@@ -45,7 +49,7 @@ class PLDA (Algorithm):
         INIT_SEED = INIT_SEED, # seed for initializing
         INIT_F_METHOD = str(INIT_F_METHOD),
         INIT_G_METHOD = str(INIT_G_METHOD),
-        INIT_S_METHOD =str(INIT_S_METHOD),
+        INIT_S_METHOD = str(INIT_S_METHOD),
         multiple_probe_scoring = multiple_probe_scoring,
         multiple_model_scoring = None
     )

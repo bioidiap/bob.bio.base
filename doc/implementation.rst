@@ -185,6 +185,17 @@ These two functions are:
 * ``score_for_multiple_probes(self, model, probes)``: By default, the average (or min, max, ...) of the scores for all probes are computed. **Override** this function in case you want different behavior.
 
 
+Implemented Tools
+-----------------
+
+In this base class, only one feature extractor and some recognition algorithms are defined.
+However, implementations of the base classes can be found in all of the ``bob.bio`` packages.
+Here is a list of implementations:
+
+* :ref:`bob.bio.base <bob.bio.base>` : :ref:`bob.bio.base.implemented`
+
+.. todo:: complete this list, once the other packages are documented as well.
+
 
 Databases
 ---------

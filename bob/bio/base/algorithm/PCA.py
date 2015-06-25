@@ -14,10 +14,10 @@ import logging
 logger = logging.getLogger("bob.bio.base")
 
 class PCA (Algorithm):
-  """Performs PCA on the given data.
+  """Performs a principal component analysis (PCA) on the given data.
 
-  This algorithm computes a PCA projection (:py:class:`bob.learn.linear.PCATrainer`) on the given training features, projects the features to face space and computes the distance of two projected features in face space.
-  For eaxmple, the eigenface algorithm as proposed by [TP91]_ can be run with this class.
+  This algorithm computes a PCA projection (:py:class:`bob.learn.linear.PCATrainer`) on the given training features, projects the features to eigenspace and computes the distance of two projected features in eigenspace.
+  For example, the eigenface algorithm as proposed by [TP91]_ can be run with this class.
 
   **Parameters:**
 
@@ -35,6 +35,8 @@ class PCA (Algorithm):
   use_variances : bool
     If set to ``True``, the ``distance_function`` is provided with a third argument, which is the vector of variances (aka. eigenvalues).
 
+  kwargs : ``key=value`` pairs
+    A list of keyword arguments directly passed to the :py:class:`Algorithm` base class constructor.
   """
 
   def __init__(
@@ -190,7 +192,6 @@ class PCA (Algorithm):
 
     score : float
       A similarity value between ``model`` and ``probe``
-
     """
     self._check_feature(probe, True)
     # return the negative distance (as a similarity measure)

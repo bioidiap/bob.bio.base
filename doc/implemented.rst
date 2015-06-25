@@ -1,3 +1,5 @@
+.. _bob.bio.base.implemented:
+
 =================================
 Tools implemented in bob.bio.base
 =================================
@@ -15,6 +17,7 @@ Base Classes
    bob.bio.base.database.Database
    bob.bio.base.database.DatabaseZT
    bob.bio.base.grid.Grid
+
 
 Implementations
 ~~~~~~~~~~~~~~~

@@ -72,6 +72,8 @@ References
 .. [ZKC+98]  *W. Zhao, A. Krishnaswamy, R. Chellappa, D. Swets and J. Weng*. **Discriminant analysis of principal components for face recognition**, pages 73-85. Springer Verlag Berlin, 1998.
 .. [Pri07]   *S. J. D. Prince*. **Probabilistic linear discriminant analysis for inferences about identity**. Proceedings of the International Conference on Computer Vision. 2007.
 .. [ESM+13]  *L. El Shafey, Chris McCool, Roy Wallace and Sébastien Marcel*. **A scalable formulation of probabilistic linear discriminant analysis: applied to face recognition**. IEEE Transactions on Pattern Analysis and Machine Intelligence, 35(7):1788-1794, 7/2013.
+.. [MWP98]   *B. Moghaddam, W. Wahid and A. Pentland*. **Beyond eigenfaces: probabilistic matching for face recognition**. IEEE International Conference on Automatic Face and Gesture Recognition, pages 30-35. 1998.
+.. [GW09]    *M. Günther and R.P. Würtz*. **Face detection and recognition using maximum likelihood classifiers on Gabor graphs**. International Journal of Pattern Recognition and Artificial Intelligence, 23(3):433-461, 2009.
 
 ToDo-List
 =========

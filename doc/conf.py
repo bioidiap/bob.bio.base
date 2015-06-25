@@ -246,7 +246,7 @@ autodoc_default_flags = ['members', 'inherited-members', 'show-inheritance']
 
 # For inter-documentation mapping:
 from bob.extension.utils import link_documentation
-intersphinx_mapping = link_documentation(['python', 'numpy', 'bob.bio.face', 'bob.bio.speaker', 'bob.bio.gmm', 'bob.bio.video', 'bob.bio.csu', 'gridtk', 'bob.db.youtube'])
+intersphinx_mapping = link_documentation(['python', 'numpy', 'bob.bio.face', 'bob.bio.speaker', 'bob.bio.gmm', 'bob.bio.video', 'bob.bio.csu', 'bob.bio.spear', 'gridtk', 'bob.db.youtube'])
 
 
 def skip(app, what, name, obj, skip, options):

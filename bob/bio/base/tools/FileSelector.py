@@ -11,7 +11,7 @@ class FileSelector:
 
   It communicates with the database and provides lists of file names for all steps of the tool chain.
 
-  .. todo:: Find a way the this class' methods get correctly documented, instead of the :py:class:`bob.bio.base.Singleton` wrapper class.
+  .. todo:: Find a way that this class' methods get correctly documented, instead of the :py:class:`bob.bio.base.Singleton` wrapper class.
 
   **Parameters:**
 
