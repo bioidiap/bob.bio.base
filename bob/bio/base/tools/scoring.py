@@ -68,7 +68,7 @@ def _open_to_write(score_file, write_compressed):
 def _write(f, data, write_compressed):
   """Writes the given data to file, after converting it to the required type."""
   if write_compressed:
-    if sys.version_info[0] <= 2:
+    if sys.version_info[0] > 2:
       data = str.encode(data)
 
   f.write(data)
