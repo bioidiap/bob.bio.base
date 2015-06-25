@@ -1,7 +1,7 @@
 import bob.db.atnt
 import os
 
-from bob.bio.base.database import DatabaseBob, DatabaseBobZT, FileSet
+from bob.bio.base.database import DatabaseBob, DatabaseBobZT, File, FileSet
 from bob.bio.base.test.utils import atnt_database_directory
 
 class FileSetDatabase (DatabaseBobZT):
@@ -28,9 +28,10 @@ class FileSetDatabase (DatabaseBobZT):
     # arrange files by clients
     file_sets = []
     for client_files in files:
+      # convert into our File objects (so that they are tested as well)
+      our_files = [File(f.id, f.client_id, f.path) for f in client_files]
       # generate file set for each client
-      file_set = FileSet(client_files[0].client_id, client_files[0].client_id, client_files[0].path)
-      file_set.files = client_files
+      file_set = FileSet(our_files[0].client_id, our_files)
       file_sets.append(file_set)
     return file_sets
 
