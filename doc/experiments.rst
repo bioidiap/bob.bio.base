@@ -118,6 +118,7 @@ By default, you can find them in a sub-directory the ``result`` directory, but y
    At Idiap_, the default result directory differs, see ``./bin/verify.py --help`` for your directory.
 
 
+.. _bob.bio.base.evaluate:
 
 Evaluating Experiments
 ----------------------

@@ -55,5 +55,5 @@ class Linearize (Extractor):
 
 
   # re-define unused functions, just so that they do not get documented
-  def train(): raise NotImplementedError()
-  def load(): raise NotImplementedError()
+  def train(*args,**kwargs): raise NotImplementedError()
+  def load(*args,**kwargs): pass

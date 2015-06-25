@@ -171,8 +171,8 @@ class PLDA (Algorithm):
       return self.score_set([model.log_likelihood_ratio(probe) for probe in probes])
 
   # re-define unused functions, just so that they do not get documented
-  def train_projector(): raise NotImplementedError()
-  def load_projector(): raise NotImplementedError()
-  def project(): raise NotImplementedError()
-  def write_feature(): raise NotImplementedError()
-  def read_feature(): raise NotImplementedError()
+  def train_projector(*args,**kwargs): raise NotImplementedError()
+  def load_projector(*args,**kwargs): pass
+  def project(*args,**kwargs): raise NotImplementedError()
+  def write_feature(*args,**kwargs): raise NotImplementedError()
+  def read_feature(*args,**kwargs): raise NotImplementedError()

@@ -206,5 +206,5 @@ class PCA (Algorithm):
       return self.factor * self.distance_function(model, probe)
 
   # re-define unused functions, just so that they do not get documented
-  def train_enroller(): raise NotImplementedError()
-  def load_enroller(): raise NotImplementedError()
+  def train_enroller(*args,**kwargs): raise NotImplementedError()
+  def load_enroller(*args,**kwargs): pass
