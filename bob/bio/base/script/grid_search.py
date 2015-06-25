@@ -8,6 +8,7 @@ from . import verify
 import argparse, os, sys
 import copy # for deep copies of dictionaries
 from .. import utils
+from ..tools import is_idiap
 
 import bob.core
 logger = bob.core.log.setup("bob.bio.base")
@@ -110,11 +111,10 @@ def command_line_options(command_line_parameters):
   bob.core.log.set_verbosity_level(logger, args.verbose)
 
   # set base directories
-  is_idiap = os.path.isdir("/idiap")
   if args.temp_directory is None:
-    args.temp_directory = "/idiap/temp/%s/grid_search" % os.environ["USER"] if is_idiap else "temp/grid_search"
+    args.temp_directory = "/idiap/temp/%s/grid_search" % os.environ["USER"] if is_idiap() else "temp/grid_search"
   if args.result_directory is None:
-    args.result_directory = "/idiap/user/%s/grid_search" % os.environ["USER"] if is_idiap else "results/grid_search"
+    args.result_directory = "/idiap/user/%s/grid_search" % os.environ["USER"] if is_idiap() else "results/grid_search"
 
 
   if args.executable:

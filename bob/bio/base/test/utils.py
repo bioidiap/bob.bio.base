@@ -54,8 +54,8 @@ def grid_available(test):
     try:
       import gridtk
       return test(*args, **kwargs)
-    except ImportError:
-      raise SkipTest("Skipping test since gridtk is not available")
+    except ImportError as e:
+      raise SkipTest("Skipping test since gridtk is not available: %s" % e)
   return wrapper
 
 

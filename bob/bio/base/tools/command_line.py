@@ -12,6 +12,9 @@ from .. import database
 """Execute biometric recognition algorithms on a certain biometric database.
 """
 
+def is_idiap():
+  return os.path.isdir("/idiap") and "USER" in os.environ
+
 def command_line_parser(description=__doc__, exclude_resources_from=[]):
   """command_line_parser(description=__doc__, exclude_resources_from=[]) -> parsers
 
@@ -66,9 +69,8 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
   ############## options to modify default directories or file names ####################
 
   # directories differ between idiap and extern
-  is_idiap = os.path.isdir("/idiap")
-  temp = "/idiap/temp/%s/database-name/sub-directory" % os.environ["USER"] if is_idiap else "temp"
-  results = "/idiap/user/%s/database-name/sub-directory" % os.environ["USER"] if is_idiap else "results"
+  temp = "/idiap/temp/%s/database-name/sub-directory" % os.environ["USER"] if is_idiap() else "temp"
+  results = "/idiap/user/%s/database-name/sub-directory" % os.environ["USER"] if is_idiap() else "results"
   database_replacement = "%s/.bob_bio_databases.txt" % os.environ["HOME"]
 
   dir_group = parser.add_argument_group('\nDirectories that can be changed according to your requirements')
@@ -205,11 +207,10 @@ def initialize(parsers, command_line_parameters = None, skips = []):
     args.grid = utils.load_resource(' '.join(args.grid), 'grid', imports = args.imports)
 
   # set base directories
-  is_idiap = os.path.isdir("/idiap")
   if args.temp_directory is None:
-    args.temp_directory = "/idiap/temp/%s/%s" % (os.environ["USER"], args.database.name) if is_idiap else "temp"
+    args.temp_directory = "/idiap/temp/%s/%s" % (os.environ["USER"], args.database.name) if is_idiap() else "temp"
   if args.result_directory is None:
-    args.result_directory = "/idiap/user/%s/%s" % (os.environ["USER"], args.database.name) if is_idiap else "results"
+    args.result_directory = "/idiap/user/%s/%s" % (os.environ["USER"], args.database.name) if is_idiap() else "results"
 
   args.temp_directory = os.path.join(args.temp_directory, args.sub_directory)
   args.result_directory = os.path.join(args.result_directory, args.sub_directory)
