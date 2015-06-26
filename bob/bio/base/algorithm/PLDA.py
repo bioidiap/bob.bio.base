@@ -77,8 +77,18 @@ class PLDA (Algorithm):
 
     logger.info("  -> Training LinearMachine using PCA ")
     trainer = bob.learn.linear.PCATrainer()
-    machine, _ = trainer.train(data)
+    machine, eigen_values = trainer.train(data)
+
+    if isinstance(self.subspace_dimension_pca, float):
+      cummulated = numpy.cumsum(eigen_values) / numpy.sum(eigen_values)
+      for index in range(len(cummulated)):
+        if cummulated[index] > self.subspace_dimension_pca:
+          self.subspace_dimension_pca = index
+          break
+      self.subspace_dimension_pca = index
+
     # limit number of pcs
+    logger.info("  -> limiting PCA subspace to %d dimensions", self.subspace_dimension_pca)
     machine.resize(machine.shape[0], self.subspace_dimension_pca)
     return machine
 
