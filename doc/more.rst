@@ -67,7 +67,7 @@ The configuration file is a common python file, which can contain certain variab
 5. ``requirement =``
 6. ``imports =``
 
-The variables from 1. to 3. usually contain instantiations for classes of :ref:`preprocessors`, :ref:`extractors` and :ref:`algorithms`, but also registered :ref:`resources` can be used.
+The variables from 1. to 3. usually contain instantiations for classes of :ref:`bob.bio.base.preprocessors`, :ref:`bob.bio.base.extractors` and :ref:`bob.bio.base.algorithms`, but also registered :ref:`bob.bio.base.resources` can be used.
 For any of the parameters of the classes, a *placeholder* can be put.
 By default, these place holders start with a # character, followed by a digit or character.
 The variables 1. to 3. can also be overridden by the command line options ``--preprocessor``, ``--extractor`` and ``--algorithm`` of the ``./bin/grid_search.py`` script.

@@ -30,7 +30,7 @@ This will assure that all parameters of the experiments are stored into the ``Ex
 If you plan to write your own tools, please assure that you are following the following structure.
 
 
-.. _preprocessors:
+.. _bob.bio.base.preprocessors:
 
 Preprocessors
 ~~~~~~~~~~~~~
@@ -59,7 +59,7 @@ When a different IO for the original data is required (for example to read video
 * ``read_original_data(filename)``: Reads the original data from file.
 
 
-.. _extractors:
+.. _bob.bio.base.extractors:
 
 Extractors
 ~~~~~~~~~~
@@ -97,7 +97,7 @@ Second, this behavior is registered in the ``__init__`` function by calling the 
 Given that the training algorithm needs to have the training data split by identity, the ``bob.bio.base.extractor.Extractor.__init__(self, requires_training=True, split_training_images_by_client = True, ...)`` is used instead.
 
 
-.. _algorithms:
+.. _bob.bio.base.algorithms:
 
 Algorithms
 ~~~~~~~~~~
@@ -254,7 +254,7 @@ In this case, derive you class from :py:class:`bob.bio.base.database.DatabaseZT`
 .. note:
    For a proper biometric recognition protocol, the identities from the models and the T-Norm models, as well as the Z-probes should be different.
 
-For some protocols, a single probe consists of several features, see :ref:`algorithms` about strategies how to incorporate several probe files into one score.
+For some protocols, a single probe consists of several features, see :ref:`bob.bio.base.algorithms` about strategies how to incorporate several probe files into one score.
 If your database should provide this functionality, please overwrite:
 
 * ``uses_probe_file_sets(self)``: Return ``True`` if the current protocol of the database provides multiple files for one probe.
@@ -263,7 +263,7 @@ If your database should provide this functionality, please overwrite:
 
 
 
-.. _configuration-files:
+.. _bob.bio.base.configuration-files:
 
 Configuration Files
 -------------------
@@ -294,7 +294,7 @@ Some default configuration files can be found in the ``bob/bio/*/config`` direct
 In fact, since all tools have a different keyword, you can define a complete experiment in a single configuration file.
 
 
-.. _resources:
+.. _bob.bio.base.resources:
 
 Resources
 ---------

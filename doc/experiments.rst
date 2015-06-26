@@ -73,7 +73,7 @@ These five options are:
 * ``--sub-directory``: A descriptive name for your experiment, which will serve as a sub-directory
 
 The first four parameters, i.e., the ``database``, the ``preprocessor``, the ``extractor`` and the ``algorithm`` can be specified in several different ways.
-For the start, we will use only the registered :ref:`Resources <resources>`.
+For the start, we will use only the registered :ref:`Resources <bob.bio.base.resources>`.
 These resources define the source code that will be used to compute the experiments, as well as all the meta-parameters of the algorithms (which we will call the *configuration*).
 To get a list of registered resources, please call:
 
