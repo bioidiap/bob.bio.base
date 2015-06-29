@@ -258,7 +258,7 @@ def compute_scores(algorithm, compute_zt_norm, force = False, indices = None, gr
     if compute_zt_norm:
       t_model_ids = fs.t_model_ids(group)
       if indices != None:
-        t_model_ids_short = t_model_ids[indices[0]:indices[1]]
+        t_model_ids = t_model_ids[indices[0]:indices[1]]
 
     # compute A scores
     if 'A' in types:
@@ -271,7 +271,6 @@ def compute_scores(algorithm, compute_zt_norm, force = False, indices = None, gr
 
       # compute C scores
       if 'C' in types:
-        t_model_ids_short = t_model_ids
         _scores_c(algorithm, t_model_ids, group, force)
 
       # compute D scores
