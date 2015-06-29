@@ -75,6 +75,8 @@ References
 .. [MWP98]   *B. Moghaddam, W. Wahid and A. Pentland*. **Beyond eigenfaces: probabilistic matching for face recognition**. IEEE International Conference on Automatic Face and Gesture Recognition, pages 30-35. 1998.
 .. [GW09]    *M. Günther and R.P. Würtz*. **Face detection and recognition using maximum likelihood classifiers on Gabor graphs**. International Journal of Pattern Recognition and Artificial Intelligence, 23(3):433-461, 2009.
 
+
+=========
 ToDo-List
 =========
 
@@ -84,6 +86,7 @@ Here is a list of things that needs to be done:
 .. todolist::
 
 
+==================
 Indices and tables
 ==================
 

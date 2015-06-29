@@ -21,6 +21,8 @@
  Scripts to run biometric recognition experiments
 ==================================================
 
+This package is part of the ``bob.bio`` packages, which allow to run comparable and reproducible biometric recognition experiments on publicly available databases.
+
 This package contains basic functionality to run biometric recognition experiments.
 It provides a generic ``./bin/verify.py`` script that takes several parameters, including:
 
