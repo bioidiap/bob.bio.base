@@ -188,7 +188,7 @@ def test_verify_fileset():
   test_dir = tempfile.mkdtemp(prefix='bobtest_')
   # define dummy parameters
   parameters = [
-      '-d', os.path.join(dummy_dir, 'database.py'),
+      '-d', os.path.join(dummy_dir, 'fileset.py'),
       '-p', 'dummy',
       '-e', 'bob.bio.base.test.dummy.extractor.DummyExtractor()',
       '-a', 'dummy',

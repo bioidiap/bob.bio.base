@@ -1,3 +1,5 @@
+import os
+
 class File:
   """This class defines the minimum interface of a database file that needs to be exported.
 
@@ -34,6 +36,31 @@ class File:
     # compare two File objects by comparing their IDs
     return self.id < other.id
 
+  def make_path(self, directory = None, extension = None):
+    """make_path(directory = None, extension = None) -> path
+
+    Generates the full path using the given directory and filename extension.
+
+    **Parameters:**
+
+    directory : str or ``None``
+      The directory to prepend.
+      If ``None``, no directory will be preprended.
+
+    extension : str or ``None``
+      The filename extension to append.
+      If ``None``, no file name extension will be appended.
+
+    **Returns:**
+
+    path : str
+      The full path including directory and extension.
+    """
+    if directory is None: directory = '.'
+    if extension is None: extension = ''
+
+    return os.path.join(directory, self.path + extension)
+
 
 class FileSet:
   """This class defines the minimum interface of a set of database files that needs to be exported.
@@ -62,6 +89,7 @@ class FileSet:
     assert all(f.client_id == self.client_id for f in files)
     # The list of files contained in this set
     self.files = files
+    self.path = "+".join(f.path for f in files)
 
   def __lt__(self, other):
     """Defines an order between file sets by using the order of the file set ids."""
