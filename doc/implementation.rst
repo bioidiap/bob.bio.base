@@ -193,6 +193,13 @@ However, implementations of the base classes can be found in all of the ``bob.bi
 Here is a list of implementations:
 
 * :ref:`bob.bio.base <bob.bio.base>` : :ref:`bob.bio.base.implemented`
+* :ref:`bob.bio.face <bob.bio.face>` : :ref:`bob.bio.face.implemented`
+* :ref:`bob.bio.video <bob.bio.video>` : :ref:`bob.bio.video.implemented`
+* :ref:`bob.bio.gmm <bob.bio.gmm>` : :ref:`bob.bio.gmm.implemented`
+* :ref:`bob.bio.csu <bob.bio.csu>` : :ref:`bob.bio.csu.implemented`
+
+.. * :ref:`bob.bio.spear <bob.bio.spear>` : :ref:`bob.bio.spear.implemented`
+
 
 .. todo:: complete this list, once the other packages are documented as well.
 
