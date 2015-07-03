@@ -200,7 +200,8 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
   # the file selector object
   fs = FileSelector.instance()
   # read the projector file, if needed
-  algorithm.load_projector(fs.projector_file)
+  if algorithm.requires_projector_training:  
+    algorithm.load_projector(fs.projector_file)
   # read the model enrollment file
   algorithm.load_enroller(fs.enroller_file)
 

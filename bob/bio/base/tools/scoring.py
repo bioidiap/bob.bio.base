@@ -246,7 +246,8 @@ def compute_scores(algorithm, compute_zt_norm, force = False, indices = None, gr
   fs = FileSelector.instance()
 
   # load the projector and the enroller, if needed
-  algorithm.load_projector(fs.projector_file)
+  if algorithm.requires_projector_training:  
+    algorithm.load_projector(fs.projector_file)
   algorithm.load_enroller(fs.enroller_file)
 
   for group in groups:
