@@ -51,7 +51,7 @@ def add_jobs(args, submitter):
       jobs_to_execute.append(('preprocess',))
     else:
       job_ids['preprocessing'] = submitter.submit(
-              '--sub-task preprocess',
+              '--sub-task preprocess --groups %s' %(' '.join(args.groups)),
               number_of_parallel_jobs = args.grid.number_of_preprocessing_jobs,
               dependencies = deps,
               **args.grid.preprocessing_queue)
@@ -75,7 +75,7 @@ def add_jobs(args, submitter):
       jobs_to_execute.append(('extract',))
     else:
       job_ids['extraction'] = submitter.submit(
-              '--sub-task extract',
+              '--sub-task extract --groups %s' %(' '.join(args.groups)),
               number_of_parallel_jobs = args.grid.number_of_extraction_jobs,
               dependencies = deps,
               **args.grid.extraction_queue)
@@ -99,7 +99,7 @@ def add_jobs(args, submitter):
       jobs_to_execute.append(('project',))
     else:
       job_ids['projection'] = submitter.submit(
-              '--sub-task project',
+              '--sub-task project --groups %s' %(' '.join(args.groups)),
               number_of_parallel_jobs = args.grid.number_of_projection_jobs,
               dependencies = deps,
               **args.grid.projection_queue)
