@@ -152,8 +152,7 @@ def train_enroller(algorithm, extractor, force = False):
     bob.io.base.create_directories_safe(os.path.dirname(fs.enroller_file))
 
     # first, load the projector
-    if algorithm.requires_projector_training:
-      algorithm.load_projector(fs.projector_file)
+    algorithm.load_projector(fs.projector_file)
 
     # load training data
     train_files = fs.training_list('projected' if algorithm.use_projected_features_for_enrollment else 'extracted', 'train_enroller', arrange_by_client = True)
