@@ -12,9 +12,10 @@ The ``bob.bio`` packages provide open source tools to run comparable and reprodu
 To design a biometric recognition experiment, one has to choose:
 
 * a databases containing the original data, and a protocol that defines how to use the data,
-* a data preprocessing algorithm, i.e., face detection for face recognition experiments or voice activity detection for speaker recognition
+* a data preprocessing algorithm, i.e., face detection for face recognition experiments or voice activity detection for speaker recognition,
 * the type of features to extract from the preprocessed data,
-* the biometric recognition algorithm to employ, and
+* the biometric recognition algorithm to employ,
+* the score fusion to combine outputs from different systems, and
 * the way to evaluate the results
 
 For any of these parts, several different types are implemented in the ``bob.bio`` packages, and basically any combination of the five parts can be executed.
