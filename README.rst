@@ -42,7 +42,10 @@ In this base class implementation, only a few algorithms (such as PCA, LDA, PLDA
 * `bob.bio.csu <http://pypi.python.org/pypi/bob.bio.csu>`__ for wrapper classes of the `CSU Face Recognition Resources <http://www.cs.colostate.edu/facerec>`__
 
 
+Moreover, a script for score fusion ``./bin/fusion_llr.py`` is provided to do score-level fusion using Logistic regression to combine outputs from different systems.    
+
 Additionally, a generic script ``./bin/evaluate.py`` is provided that can generate several types of plots (such as ROC, DET and CMC curves) and compute several measures (such as HTER, Cllr) to evaluate your experiments.
+
 
 Installation
 ------------
