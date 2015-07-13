@@ -75,11 +75,11 @@ def main(command_line_options = None):
 
   outf = open(args.score_fused_dev_file, 'w')
   for line in gen_data_dev[0]:
-    scores= []
+    
     claimed_id = line[0]
     real_id = line[-3]
     test_label = line[-2]
-    scores.append(line[-1])
+    scores= [ line[-1] ]
     for n in range(1, n_systems): 
       scores.append(gen_data_dev[n].next()[-1])
     scores = numpy.array([scores], dtype=numpy.float64)
@@ -98,11 +98,10 @@ def main(command_line_options = None):
       
     outf = open(args.score_fused_eval_file, 'w')
     for line in gen_data_eval[0]:
-      scores= []
       claimed_id = line[0]
       real_id = line[-3]
       test_label = line[-2]
-      scores.append(line[-1])
+      scores= [ line[-1] ] 
       for n in range(1, n_systems): 
         scores.append(gen_data_eval[n].next()[-1])
       scores = numpy.array([scores], dtype=numpy.float64)
