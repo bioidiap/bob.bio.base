@@ -75,7 +75,6 @@ def main(command_line_options = None):
 
   outf = open(args.score_fused_dev_file, 'w')
   for line in gen_data_dev[0]:
-    
     claimed_id = line[0]
     real_id = line[-3]
     test_label = line[-2]
