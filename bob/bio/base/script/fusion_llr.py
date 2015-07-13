@@ -39,11 +39,11 @@ def parse_command_line(command_line_options):
 
   # This option is not normally shown to the user...
   parser.add_argument('--self-test', action = 'store_true', help = argparse.SUPPRESS)
-  parser.add_argument('-s', '--score-development', nargs='*', required = True, help = 'The score file in 4 or 5 column format to train the fusion parameters.')
-  parser.add_argument('-t', '--score-evaluation', nargs='*', required = True, help = 'The score file in 4 or 5 column format to calibrate.')
-  parser.add_argument('-f', '--score-fused-development-file', required = True, help = 'The calibrated development score file in 4 or 5 column format to calibrate.')
-  parser.add_argument('-g', '--score-fused-evaluation-file', required = True, help = 'The calibrated evaluation score file in 4 or 5 column format to calibrate.')
-  parser.add_argument('-p', '--parser', default = '4column', choices = ('4column', '5column'), help = 'The type of the score file.')
+  parser.add_argument('-d', '--dev-files', required=True, nargs='+', help = "A list of score files of the development set.")
+  parser.add_argument('-e', '--eval-files', nargs='+', help = "A list of score files of the evaluation set; if given it must be the same number of files as the --dev-files.")
+  parser.add_argument('-f', '--score-fused-dev-file', required = True, help = 'The calibrated development score file in 4 or 5 column format to calibrate.')
+  parser.add_argument('-g', '--score-fused-eval-file', help = 'The calibrated evaluation score file in 4 or 5 column format to calibrate.')
+  parser.add_argument('-p', '--parser', default = '4column', choices = ('4column', '5column'),  help="The style of the resulting score files. The default fits to the usual output of score files.")
 
   args = parser.parse_args(command_line_options)
 
@@ -54,13 +54,13 @@ def main(command_line_options = None):
   args = parse_command_line(command_line_options)
 
   # read data
-  n_systems = len(args.score_development)
+  n_systems = len(args.dev_files)
   for i in range(n_systems):
-    if not os.path.isfile(args.score_development[i]): raise IOError("The given score file does not exist")
+    if not os.path.isfile(args.dev_files[i]): raise IOError("The given score file does not exist")
   # pythonic way: create inline dictionary "{...}", index with desired value "[...]", execute function "(...)"
   data = []
   for i in range(n_systems):
-    data.append({'4column' : bob.measure.load.split_four_column, '5column' : bob.measure.load.split_five_column}[args.parser](args.score_development[i]))
+    data.append({'4column' : bob.measure.load.split_four_column, '5column' : bob.measure.load.split_five_column}[args.parser](args.dev_files[i]))
   import numpy
 
   data_neg = numpy.vstack([data[k][0] for k in range(n_systems)]).T.copy()
@@ -69,20 +69,19 @@ def main(command_line_options = None):
   machine = trainer.train(data_neg, data_pos)
 
   # fuse development scores
+  gen_data_dev = []
+  for i in range(n_systems):
+    gen_data_dev.append({'4column' : bob.measure.load.four_column, '5column' : bob.measure.load.five_column}[args.parser](args.dev_files[i]))
+
   data_dev = []
   for i in range(n_systems):
-    data_dev.append({'4column' : bob.measure.load.four_column, '5column' : bob.measure.load.five_column}[args.parser](args.score_development[i]))
-
-  data_dev2 = []
-  for i in range(n_systems):
     data_sys = []
-    for (client_id, probe_id, file_id, score) in data_dev[i]:
+    for (client_id, probe_id, file_id, score) in gen_data_dev[i]:
       data_sys.append([client_id, probe_id, file_id, score])
-    data_dev2.append(data_sys)
-  data_dev = data_dev2
+    data_dev.append(data_sys)
   
   ndata = len(data_dev[0])
-  outf = open(args.score_fused_development_file, 'w')
+  outf = open(args.score_fused_dev_file, 'w')
   for k in range(ndata):
     scores = numpy.array([[v[k][-1] for v in data_dev]], dtype=numpy.float64)
     s_fused = machine.forward(scores)[0,0]  
@@ -90,25 +89,28 @@ def main(command_line_options = None):
     outf.write(line)
 
   # fuse evaluation scores
-  data_eval = []
-  for i in range(n_systems):
-    data_eval.append({'4column' : bob.measure.load.four_column, '5column' : bob.measure.load.five_column}[args.parser](args.score_evaluation[i]))
+  if args.eval_files is not None:
+    if len(args.dev_files) != len(args.eval_files):
+      logger.error("The number of --dev-files (%d) and --eval-files (%d) are not identical", len(args.dev_files), len(args.eval_files))
     
-  data_eval2 = []
-  for i in range(n_systems):
-    data_sys = []
-    for (client_id, probe_id, file_id, score) in data_eval[i]:
-      data_sys.append([client_id, probe_id, file_id, score])
-    data_eval2.append(data_sys)
-  data_eval = data_eval2
-    
-  ndata = len(data_eval[0])
-  outf = open(args.score_fused_evaluation_file, 'w')
-  for k in range(ndata):
-    scores = numpy.array([[v[k][-1] for v in data_eval]], dtype=numpy.float64)
-    s_fused = machine.forward(scores)[0,0]
-    line = " ".join(data_eval[0][k][0:-1]) + " " + str(s_fused) + "\n"
-    outf.write(line)
+    gen_data_eval = []
+    for i in range(n_systems):
+      gen_data_eval.append({'4column' : bob.measure.load.four_column, '5column' : bob.measure.load.five_column}[args.parser](args.eval_files[i]))
+      
+    data_eval = []
+    for i in range(n_systems):
+      data_sys = []
+      for (client_id, probe_id, file_id, score) in gen_data_eval[i]:
+        data_sys.append([client_id, probe_id, file_id, score])
+      data_eval.append(data_sys)
+      
+    ndata = len(data_eval[0])
+    outf = open(args.score_fused_eval_file, 'w')
+    for k in range(ndata):
+      scores = numpy.array([[v[k][-1] for v in data_eval]], dtype=numpy.float64)
+      s_fused = machine.forward(scores)[0,0]
+      line = " ".join(data_eval[0][k][0:-1]) + " " + str(s_fused) + "\n"
+      outf.write(line)
 
   return 0
 

@@ -67,7 +67,7 @@ def command_line_arguments(command_line_parameters):
   parser.add_argument('-R', '--roc', help = "If given, ROC curves will be plotted into the given pdf file.")
   parser.add_argument('-D', '--det', help = "If given, DET curves will be plotted into the given pdf file.")
   parser.add_argument('-C', '--cmc', help = "If given, CMC curves will be plotted into the given pdf file.")
-  parser.add_argument('--parser', default = '4column', choices = ('4column', '5column'), help="The style of the resulting score files. The default fits to the usual output of FaceRecLib score files.")
+  parser.add_argument('--parser', default = '4column', choices = ('4column', '5column'), help="The style of the resulting score files. The default fits to the usual output of score files.")
 
   # add verbose option
   bob.core.log.add_command_line_option(parser)
