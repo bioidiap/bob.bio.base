@@ -50,7 +50,7 @@ def parse_command_line(command_line_options):
   return args
 
 def main(command_line_options = None):
-  """Score Fusion using logistic regresssion"""
+  """Score Fusion using Logistic regression"""
   args = parse_command_line(command_line_options)
 
   # read data
