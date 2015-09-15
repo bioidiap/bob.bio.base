@@ -58,7 +58,7 @@ class GridSubmission:
       assert os.path.isfile(jman)
 
       self.args = args
-      self.command_line = [p for p in command_line_parameters if not p.startswith('--skip') and p not in ('-q', '--dry-run', '-o', '--execute-only')]
+      self.command_line = [p for p in command_line_parameters if not p.startswith('--skip') and p not in ('-q', '--dry-run')]
       self.fake_job_id = first_fake_job_id
 
       import gridtk
