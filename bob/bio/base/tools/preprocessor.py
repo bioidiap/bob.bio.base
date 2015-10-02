@@ -51,10 +51,11 @@ def preprocess(preprocessor, groups = None, indices = None, force = False):
   # iterate over the selected files
   for i in index_range:
     preprocessed_data_file = str(preprocessed_data_files[i])
+    file_name = str(data_files[i])
 
     # check for existence
     if not utils.check_file(preprocessed_data_file, force, 1000):
-      file_name = data_files[i]
+      logger.debug("... Processing original data file '%s'", file_name)
       data = preprocessor.read_original_data(file_name)
 
       # get the annotations; might be None
@@ -63,11 +64,15 @@ def preprocess(preprocessor, groups = None, indices = None, force = False):
       # call the preprocessor
       preprocessed_data = preprocessor(data, annotations)
       if preprocessed_data is None:
-        logger.error("Preprocessing of file %s was not successful", str(file_name))
+        logger.error("Preprocessing of file '%s' was not successful", file_name)
 
       # write the data
       bob.io.base.create_directories_safe(os.path.dirname(preprocessed_data_file))
       preprocessor.write_data(preprocessed_data, preprocessed_data_file)
+
+    else:
+      logger.debug("... Skipping original data file '%s' since preprocessed data '%s' exists", file_name, preprocessed_data_file)
+
 
 
 def read_preprocessed_data(file_names, preprocessor, split_by_client = False):

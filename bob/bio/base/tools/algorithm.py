@@ -107,6 +107,7 @@ def project(algorithm, extractor, groups = None, indices = None, force = False):
     projected_file = str(projected_files[i])
 
     if not utils.check_file(projected_file, force, 1000):
+      logger.debug("... Projecting features for file '%s'", feature_file)
       # load feature
       feature = extractor.read_feature(feature_file)
       # project feature
@@ -114,6 +115,9 @@ def project(algorithm, extractor, groups = None, indices = None, force = False):
       # write it
       bob.io.base.create_directories_safe(os.path.dirname(projected_file))
       algorithm.write_feature(projected, projected_file)
+
+    else:
+      logger.debug("... Skipping feature file '%s' since projected file '%s' exists", feature_file, projected_file)
 
 
 
@@ -200,7 +204,7 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
   # the file selector object
   fs = FileSelector.instance()
   # read the projector file, if needed
-  if algorithm.requires_projector_training:  
+  if algorithm.requires_projector_training:
     algorithm.load_projector(fs.projector_file)
   # read the model enrollment file
   algorithm.load_enroller(fs.enroller_file)
@@ -225,6 +229,7 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
         # Removes old file if required
         if not utils.check_file(model_file, force, 1000):
           enroll_files = fs.enroll_files(model_id, group, 'projected' if algorithm.use_projected_features_for_enrollment else 'extracted')
+          logger.debug("... Enrolling model from %d features to file '%s'", len(enroll_files), model_file)
 
           # load all files into memory
           enroll_features = [reader.read_feature(str(enroll_file)) for enroll_file in enroll_files]
@@ -233,6 +238,10 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
           # save the model
           bob.io.base.create_directories_safe(os.path.dirname(model_file))
           algorithm.write_model(model, model_file)
+
+        else:
+          logger.debug("... Skipping model file '%s' since it exists", model_file)
+
 
   # T-Norm-Models
   if 'T' in types and compute_zt_norm:
@@ -251,6 +260,7 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
         # Removes old file if required
         if not utils.check_file(t_model_file, force, 1000):
           t_enroll_files = fs.t_enroll_files(t_model_id, group, 'projected' if algorithm.use_projected_features_for_enrollment else 'extracted')
+          logger.debug("... Enrolling T-model from %d features to file '%s'", len(t_enroll_files), t_model_file)
 
           # load all files into memory
           t_enroll_features = [reader.read_feature(str(t_enroll_file)) for t_enroll_file in t_enroll_files]
@@ -259,3 +269,5 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
           # save model
           bob.io.base.create_directories_safe(os.path.dirname(t_model_file))
           algorithm.write_model(t_model, t_model_file)
+        else:
+          logger.debug("... Skipping T-model file '%s' since it exists", t_model_file)

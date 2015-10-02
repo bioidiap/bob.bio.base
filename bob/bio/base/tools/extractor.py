@@ -97,6 +97,7 @@ def extract(extractor, preprocessor, groups=None, indices = None, force = False)
     feature_file = str(feature_files[i])
 
     if not utils.check_file(feature_file, force, 1000):
+      logger.debug("... Extracting features for data file '%s'", data_file)
       # load data
       data = preprocessor.read_data(data_file)
       # extract feature
@@ -104,6 +105,9 @@ def extract(extractor, preprocessor, groups=None, indices = None, force = False)
       # write feature
       bob.io.base.create_directories_safe(os.path.dirname(feature_file))
       extractor.write_feature(feature, feature_file)
+    else:
+      logger.debug("... Skipping preprocessed data '%s' since feature file '%s' exists", data_file, feature_file)
+
 
 def read_features(file_names, extractor, split_by_client = False):
   """read_features(file_names, extractor, split_by_client = False) -> extracted

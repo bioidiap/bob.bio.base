@@ -72,6 +72,7 @@ def test_verify_local():
       '-e', os.path.join(dummy_dir, 'extractor.py'),
       '-a', os.path.join(dummy_dir, 'algorithm.py'),
       '--zt-norm',
+      '-vvv',
       '-s', 'test_local',
       '--temp-directory', test_dir,
       '--result-directory', test_dir
@@ -91,6 +92,7 @@ def test_verify_resources():
       '-e', 'dummy',
       '-a', 'dummy',
       '--zt-norm',
+      '-vvv',
       '-s', 'test_resource',
       '--temp-directory', test_dir,
       '--result-directory', test_dir
@@ -110,6 +112,7 @@ def test_verify_commandline():
       '-e', 'bob.bio.base.test.dummy.extractor.DummyExtractor()',
       '-a', 'bob.bio.base.test.dummy.algorithm.DummyAlgorithm()',
       '--zt-norm',
+      '-vvv',
       '-s', 'test_commandline',
       '--temp-directory', test_dir,
       '--result-directory', test_dir
@@ -132,6 +135,7 @@ def test_verify_parallel():
       '-e', 'bob.bio.base.test.dummy.extractor.DummyExtractor()',
       '-a', 'dummy',
       '--zt-norm',
+      '-vvv',
       '-s', 'test_parallel',
       '--temp-directory', test_dir,
       '--result-directory', test_dir,
@@ -153,6 +157,7 @@ def test_verify_compressed():
       '-e', 'dummy',
       '-a', 'dummy',
       '--zt-norm',
+      '-vvv',
       '-s', 'test_compressed',
       '--temp-directory', test_dir,
       '--result-directory', test_dir,
@@ -173,6 +178,7 @@ def test_verify_calibrate():
       '-e', 'dummy',
       '-a', 'dummy',
       '--zt-norm',
+      '-vvv',
       '-s', 'test_calibrate',
       '--temp-directory', test_dir,
       '--result-directory', test_dir,
@@ -193,6 +199,7 @@ def test_verify_fileset():
       '-e', 'bob.bio.base.test.dummy.extractor.DummyExtractor()',
       '-a', 'dummy',
       '--zt-norm',
+      '-vvv',
       '-s', 'test_fileset',
       '--temp-directory', test_dir,
       '--result-directory', test_dir
@@ -217,6 +224,7 @@ def test_verify_filelist():
       '-e', 'dummy',
       '-a', 'dummy',
       '--zt-norm',
+      '-vvv',
       '-s', 'test_filelist',
       '--temp-directory', test_dir,
       '--result-directory', test_dir
@@ -267,6 +275,7 @@ def test_evaluate():
     '--roc', plots[0],
     '--det', plots[1],
     '--cmc', plots[2],
+    '-vvv',
   ]
 
   # execute the script
@@ -342,7 +351,7 @@ def test_grid_search():
         '-T', test_dir,
         '-R', test_dir,
         '-w', 'Job.txt',
-        '-l', '4', '-L', '-1', '-vv',
+        '-l', '4', '-L', '-1', '-vvv',
         '--', '--imports', 'bob.io.image',
         '--dry-run'
     ]
@@ -398,7 +407,8 @@ def test_scripts():
         '-a', annotation_file,
         '-p', 'dummy',
         '-o', preprocessed_file,
-        '-c', preprocessed_image
+        '-c', preprocessed_image,
+        '-vvv',
     ]
     preprocess(parameters)
 
@@ -414,6 +424,7 @@ def test_scripts():
         '-e', 'dummy',
         '-E', extractor_file,
         '-o', extracted_file,
+        '-vvv',
     ]
     extract(parameters)
 
@@ -427,7 +438,8 @@ def test_scripts():
         '-a', 'dummy',
         '-P', projector_file,
         '-E', enroller_file,
-        '-o', model_file
+        '-o', model_file,
+        '-vvv',
     ]
     enroll(parameters)
 
@@ -441,6 +453,7 @@ def test_scripts():
         '-a', 'dummy',
         '-P', projector_file,
         '-E', enroller_file,
+        '-vvv',
     ]
     score(parameters)
 
