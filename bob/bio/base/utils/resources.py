@@ -190,7 +190,7 @@ def list_resources(keyword, strip=['dummy']):
   retval = ""
   length = max(len(entry_point.name) for entry_point in entry_points) if entry_points else 1
 
-  for entry_point in sorted(entry_points):
+  for entry_point in sorted(entry_points, key=lambda p: p.dist.project_name):
     if last_dist != str(entry_point.dist):
       retval += "\n- %s: \n" % str(entry_point.dist)
       last_dist = str(entry_point.dist)

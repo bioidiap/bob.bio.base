@@ -13,27 +13,34 @@ def resources():
                       default = ('d', 'p', 'e', 'a', 'g'),
                       help = "Select the resource types that should be listed.")
 
+  parser.add_argument("--no-strip-dummy", '-s', action = 'store_true',
+                      help = "If given, the dummy elements (usually used for testing purposes only) are **not** removed from the list.")
+
   args = parser.parse_args()
+
+  kwargs = {}
+  if args.no_strip_dummy:
+    kwargs['strip'] = []
 
   if 'd' in args.details or 'database' in args.details:
     print ("\nList of registered databases:")
-    print (bob.bio.base.list_resources('database'))
+    print (bob.bio.base.list_resources('database', **kwargs))
 
   if 'p' in args.details or 'preprocessor' in args.details:
     print ("\nList of registered preprocessors:")
-    print (bob.bio.base.list_resources('preprocessor'))
+    print (bob.bio.base.list_resources('preprocessor', **kwargs))
 
   if 'e' in args.details or 'extractor' in args.details:
     print ("\nList of registered extractors:")
-    print (bob.bio.base.list_resources('extractor'))
+    print (bob.bio.base.list_resources('extractor', **kwargs))
 
   if 'a' in args.details or 'algorithm' in args.details:
     print ("\nList of registered algorithms:")
-    print (bob.bio.base.list_resources('algorithm'))
+    print (bob.bio.base.list_resources('algorithm', **kwargs))
 
   if 'g' in args.details or 'grid' in args.details:
     print ("\nList of registered grid configurations:")
-    print (bob.bio.base.list_resources('grid'))
+    print (bob.bio.base.list_resources('grid', **kwargs))
 
   print()
 
