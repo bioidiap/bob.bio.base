@@ -5,7 +5,6 @@ from __future__ import print_function
 import bob.measure
 
 import os
-import sys
 import shutil
 import tempfile
 import numpy
@@ -20,24 +19,6 @@ from nose.plugins.skip import SkipTest
 import pkg_resources
 
 regenerate_reference = False
-
-# based on: http://stackoverflow.com/questions/6796492/temporarily-redirect-stdout-stderr
-class Quiet(object):
-  def __init__(self):
-    devnull = open(os.devnull, 'w')
-    self._stdout = devnull
-    self._stderr = devnull
-
-  def __enter__(self):
-    self.old_stdout, self.old_stderr = sys.stdout, sys.stderr
-    self.old_stdout.flush(); self.old_stderr.flush()
-    sys.stdout, sys.stderr = self._stdout, self._stderr
-
-  def __exit__(self, exc_type, exc_value, traceback):
-    self._stdout.flush(); self._stderr.flush()
-    sys.stdout = self.old_stdout
-    sys.stderr = self.old_stderr
-
 
 dummy_dir = pkg_resources.resource_filename('bob.bio.base', 'test/dummy')
 data_dir = pkg_resources.resource_filename('bob.bio.base', 'test/data')
@@ -325,7 +306,7 @@ def test_grid_search():
         '--', '--dry-run',
     ]
     from bob.bio.base.script.grid_search import main
-    with Quiet():
+    with utils.Quiet():
       main(parameters)
 
     # number of jobs should be 12
@@ -347,7 +328,7 @@ def test_grid_search():
         '-v',
         '--', '--dry-run',
     ]
-    with Quiet():
+    with utils.Quiet():
       main(parameters)
 
     # number of jobs should be 12
@@ -368,7 +349,7 @@ def test_grid_search():
         '--', '--imports', 'bob.io.image',
         '--dry-run',
     ]
-    with Quiet():
+    with utils.Quiet():
       main(parameters)
 
     # number of jobs should be 12
@@ -469,7 +450,7 @@ def test_scripts():
         '-E', enroller_file,
         '-v',
     ]
-    with Quiet():
+    with utils.Quiet():
       score(parameters)
 
   finally:
