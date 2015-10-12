@@ -362,9 +362,8 @@ class DatabaseBob (Database):
 
     **Returns:**
 
-    paths : [str] or [[str]]
+    paths : [str]
       The paths extracted for the files, in the same order.
-      If this database provides file sets, a list of lists of file names is returned, one sub-list for each file set.
     """
     return self.database.original_file_names(files, self.check_existence)
 

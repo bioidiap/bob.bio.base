@@ -26,7 +26,7 @@ def _scores(algorithm, model, probes):
     if fs.uses_probe_file_sets():
       assert isinstance(probe_element, list)
       # read probe from probe_set
-      probe = [algorithm.read_probe(str(probe_file)) for probe_file in probe_element]
+      probe = [algorithm.read_probe(probe_file) for probe_file in probe_element]
       # compute score
       scores[0,i] = algorithm.score_for_multiple_probes(model, probe)
     else:
@@ -244,7 +244,7 @@ def compute_scores(algorithm, compute_zt_norm, force = False, indices = None, gr
   fs = FileSelector.instance()
 
   # load the projector and the enroller, if needed
-  if algorithm.requires_projector_training:  
+  if algorithm.requires_projector_training:
     algorithm.load_projector(fs.projector_file)
   algorithm.load_enroller(fs.enroller_file)
 

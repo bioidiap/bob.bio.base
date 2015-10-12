@@ -50,8 +50,8 @@ def preprocess(preprocessor, groups = None, indices = None, force = False):
 
   # iterate over the selected files
   for i in index_range:
-    preprocessed_data_file = str(preprocessed_data_files[i])
-    file_name = str(data_files[i])
+    preprocessed_data_file = preprocessed_data_files[i]
+    file_name = data_files[i]
 
     # check for existence
     if not utils.check_file(preprocessed_data_file, force, 1000):
@@ -99,6 +99,6 @@ def read_preprocessed_data(file_names, preprocessor, split_by_client = False):
     The list of preprocessed data, in the same order as in the ``file_names``.
   """
   if split_by_client:
-    return [[preprocessor.read_data(str(f)) for f in client_files] for client_files in file_names]
+    return [[preprocessor.read_data(f) for f in client_files] for client_files in file_names]
   else:
-    return [preprocessor.read_data(str(f)) for f in file_names]
+    return [preprocessor.read_data(f) for f in file_names]

@@ -93,8 +93,8 @@ def extract(extractor, preprocessor, groups=None, indices = None, force = False)
 
   logger.info("- Extraction: extracting %d features from directory '%s' to directory '%s'", len(index_range), fs.directories['preprocessed'], fs.directories['extracted'])
   for i in index_range:
-    data_file = str(data_files[i])
-    feature_file = str(feature_files[i])
+    data_file = data_files[i]
+    feature_file = feature_files[i]
 
     if not utils.check_file(feature_file, force, 1000):
       logger.debug("... Extracting features for data file '%s'", data_file)
@@ -133,6 +133,6 @@ def read_features(file_names, extractor, split_by_client = False):
     The list of extracted features, in the same order as in the ``file_names``.
   """
   if split_by_client:
-    return [[extractor.read_feature(str(f)) for f in client_files] for client_files in file_names]
+    return [[extractor.read_feature(f) for f in client_files] for client_files in file_names]
   else:
-    return [extractor.read_feature(str(f)) for f in file_names]
+    return [extractor.read_feature(f) for f in file_names]

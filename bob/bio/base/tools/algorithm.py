@@ -103,8 +103,8 @@ def project(algorithm, extractor, groups = None, indices = None, force = False):
   logger.info("- Projection: projecting %d features from directory '%s' to directory '%s'", len(index_range), fs.directories['extracted'], fs.directories['projected'])
   # extract the features
   for i in index_range:
-    feature_file = str(feature_files[i])
-    projected_file = str(projected_files[i])
+    feature_file = feature_files[i]
+    projected_file = projected_files[i]
 
     if not utils.check_file(projected_file, force, 1000):
       logger.debug("... Projecting features for file '%s'", feature_file)
@@ -224,7 +224,7 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
       logger.info("- Enrollment: enrolling models of group '%s'", group)
       for model_id in model_ids:
         # Path to the model
-        model_file = str(fs.model_file(model_id, group))
+        model_file = fs.model_file(model_id, group)
 
         # Removes old file if required
         if not utils.check_file(model_file, force, 1000):
@@ -232,7 +232,7 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
           logger.debug("... Enrolling model from %d features to file '%s'", len(enroll_files), model_file)
 
           # load all files into memory
-          enroll_features = [reader.read_feature(str(enroll_file)) for enroll_file in enroll_files]
+          enroll_features = [reader.read_feature(enroll_file) for enroll_file in enroll_files]
 
           model = algorithm.enroll(enroll_features)
           # save the model
@@ -255,7 +255,7 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
       logger.info("- Enrollment: enrolling T-models of group '%s'", group)
       for t_model_id in t_model_ids:
         # Path to the model
-        t_model_file = str(fs.t_model_file(t_model_id, group))
+        t_model_file = fs.t_model_file(t_model_id, group)
 
         # Removes old file if required
         if not utils.check_file(t_model_file, force, 1000):
@@ -263,7 +263,7 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
           logger.debug("... Enrolling T-model from %d features to file '%s'", len(t_enroll_files), t_model_file)
 
           # load all files into memory
-          t_enroll_features = [reader.read_feature(str(t_enroll_file)) for t_enroll_file in t_enroll_files]
+          t_enroll_features = [reader.read_feature(t_enroll_file) for t_enroll_file in t_enroll_files]
 
           t_model = algorithm.enroll(t_enroll_features)
           # save model
