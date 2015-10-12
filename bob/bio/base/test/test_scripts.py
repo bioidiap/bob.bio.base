@@ -5,6 +5,7 @@ from __future__ import print_function
 import bob.measure
 
 import os
+import sys
 import shutil
 import tempfile
 import numpy
@@ -20,6 +21,22 @@ import pkg_resources
 
 regenerate_reference = False
 
+# based on: http://stackoverflow.com/questions/6796492/temporarily-redirect-stdout-stderr
+class Quiet(object):
+  def __init__(self):
+    devnull = open(os.devnull, 'w')
+    self._stdout = devnull
+    self._stderr = devnull
+
+  def __enter__(self):
+    self.old_stdout, self.old_stderr = sys.stdout, sys.stderr
+    self.old_stdout.flush(); self.old_stderr.flush()
+    sys.stdout, sys.stderr = self._stdout, self._stderr
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    self._stdout.flush(); self._stderr.flush()
+    sys.stdout = self.old_stdout
+    sys.stderr = self.old_stderr
 
 
 dummy_dir = pkg_resources.resource_filename('bob.bio.base', 'test/dummy')
@@ -72,8 +89,7 @@ def test_verify_local():
       '-e', os.path.join(dummy_dir, 'extractor.py'),
       '-a', os.path.join(dummy_dir, 'algorithm.py'),
       '--zt-norm',
-      '-vvv',
-      '-s', 'test_local',
+      '-vs', 'test_local',
       '--temp-directory', test_dir,
       '--result-directory', test_dir
   ]
@@ -92,8 +108,7 @@ def test_verify_resources():
       '-e', 'dummy',
       '-a', 'dummy',
       '--zt-norm',
-      '-vvv',
-      '-s', 'test_resource',
+      '-vs', 'test_resource',
       '--temp-directory', test_dir,
       '--result-directory', test_dir
   ]
@@ -112,8 +127,7 @@ def test_verify_commandline():
       '-e', 'bob.bio.base.test.dummy.extractor.DummyExtractor()',
       '-a', 'bob.bio.base.test.dummy.algorithm.DummyAlgorithm()',
       '--zt-norm',
-      '-vvv',
-      '-s', 'test_commandline',
+      '-vs', 'test_commandline',
       '--temp-directory', test_dir,
       '--result-directory', test_dir
   ]
@@ -135,8 +149,7 @@ def test_verify_parallel():
       '-e', 'bob.bio.base.test.dummy.extractor.DummyExtractor()',
       '-a', 'dummy',
       '--zt-norm',
-      '-vvv',
-      '-s', 'test_parallel',
+      '-vs', 'test_parallel',
       '--temp-directory', test_dir,
       '--result-directory', test_dir,
       '-g', 'bob.bio.base.grid.Grid(grid_type = "local", number_of_parallel_processes = 2, scheduler_sleep_time = 0.1)', '-G', test_database, '--run-local-scheduler', '--stop-on-failure',
@@ -157,8 +170,7 @@ def test_verify_compressed():
       '-e', 'dummy',
       '-a', 'dummy',
       '--zt-norm',
-      '-vvv',
-      '-s', 'test_compressed',
+      '-vs', 'test_compressed',
       '--temp-directory', test_dir,
       '--result-directory', test_dir,
       '--write-compressed-score-files'
@@ -178,8 +190,7 @@ def test_verify_calibrate():
       '-e', 'dummy',
       '-a', 'dummy',
       '--zt-norm',
-      '-vvv',
-      '-s', 'test_calibrate',
+      '-vs', 'test_calibrate',
       '--temp-directory', test_dir,
       '--result-directory', test_dir,
       '--calibrate-scores'
@@ -199,8 +210,7 @@ def test_verify_fileset():
       '-e', 'bob.bio.base.test.dummy.extractor.DummyExtractor()',
       '-a', 'dummy',
       '--zt-norm',
-      '-vvv',
-      '-s', 'test_fileset',
+      '-vs', 'test_fileset',
       '--temp-directory', test_dir,
       '--result-directory', test_dir
   ]
@@ -224,8 +234,7 @@ def test_verify_filelist():
       '-e', 'dummy',
       '-a', 'dummy',
       '--zt-norm',
-      '-vvv',
-      '-s', 'test_filelist',
+      '-vs', 'test_filelist',
       '--temp-directory', test_dir,
       '--result-directory', test_dir
   ]
@@ -275,7 +284,7 @@ def test_evaluate():
     '--roc', plots[0],
     '--det', plots[1],
     '--cmc', plots[2],
-    '-vvv',
+    '-v',
   ]
 
   # execute the script
@@ -312,10 +321,12 @@ def test_grid_search():
         '-s', 'test_grid_search',
         '-T', test_dir,
         '-R', test_dir,
+        '-v',
         '--', '--dry-run',
     ]
     from bob.bio.base.script.grid_search import main
-    main(parameters)
+    with Quiet():
+      main(parameters)
 
     # number of jobs should be 12
     assert bob.bio.base.script.grid_search.task_count == 6
@@ -333,9 +344,11 @@ def test_grid_search():
         '-R', test_dir,
         '-w', 'Job.txt',
         '-g', 'grid',
+        '-v',
         '--', '--dry-run',
     ]
-    main(parameters)
+    with Quiet():
+      main(parameters)
 
     # number of jobs should be 12
     assert bob.bio.base.script.grid_search.task_count == 6
@@ -351,11 +364,12 @@ def test_grid_search():
         '-T', test_dir,
         '-R', test_dir,
         '-w', 'Job.txt',
-        '-l', '4', '-L', '-1', '-vvv',
+        '-l', '4', '-L', '-1', '-v',
         '--', '--imports', 'bob.io.image',
-        '--dry-run'
+        '--dry-run',
     ]
-    main(parameters)
+    with Quiet():
+      main(parameters)
 
     # number of jobs should be 12
     assert bob.bio.base.script.grid_search.task_count == 6
@@ -408,7 +422,7 @@ def test_scripts():
         '-p', 'dummy',
         '-o', preprocessed_file,
         '-c', preprocessed_image,
-        '-vvv',
+        '-v',
     ]
     preprocess(parameters)
 
@@ -424,7 +438,7 @@ def test_scripts():
         '-e', 'dummy',
         '-E', extractor_file,
         '-o', extracted_file,
-        '-vvv',
+        '-v',
     ]
     extract(parameters)
 
@@ -439,7 +453,7 @@ def test_scripts():
         '-P', projector_file,
         '-E', enroller_file,
         '-o', model_file,
-        '-vvv',
+        '-v',
     ]
     enroll(parameters)
 
@@ -453,9 +467,10 @@ def test_scripts():
         '-a', 'dummy',
         '-P', projector_file,
         '-E', enroller_file,
-        '-vvv',
+        '-v',
     ]
-    score(parameters)
+    with Quiet():
+      score(parameters)
 
   finally:
     shutil.rmtree(test_dir)
