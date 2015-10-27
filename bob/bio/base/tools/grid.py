@@ -40,7 +40,7 @@ class GridSubmission:
     if command_line_parameters is None:
       command_line_parameters = sys.argv[1:]
 
-    executables = bob.extension.find_executable(executable, prefixes = ['bin'])
+    executables = bob.extension.find_executable(executable, prefixes = [os.path.dirname(sys.argv[0]), 'bin'])
     if not len(executables):
       raise IOError("Could not find the '%s' executable." % executable)
     executable = executables[0]
