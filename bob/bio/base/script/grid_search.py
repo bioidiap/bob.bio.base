@@ -182,7 +182,7 @@ def create_command_line(replacements):
   for key in configuration.replace:
     values.update(extract_values(configuration.replace[key], replacements))
   # replace the place holders with the values
-  call = [sys.argv[0], '--database', args.database]
+  call = ['--database', args.database]
   if args.protocol:
     call += ['--protocol', args.protocol]
   call += ['--temp-directory', args.temp_directory, '--result-directory', args.result_directory]
@@ -242,6 +242,9 @@ def directory_parameters(directories):
   # - model enrollment
   parameters += ['--model-directories', _join_dirs(3, 'N-Models'), _join_dirs(3, 'T-Models'), '--enroller-file', _join_dirs(3, 'Enroller.hdf5')]
 
+  # - scoring
+  parameters += ['--score-directories', _join_dirs(4, 'nonorm'), _join_dirs(4, 'ztnorm')]
+
   # the sub-dorectory, given on command line
   parameters += ['--sub-directory', args.sub_directory]
 
@@ -298,7 +301,7 @@ def execute_dependent_task(command_line, directories, dependency_level):
     bob.io.base.create_directories_safe(os.path.dirname(command_file))
     with open(command_file, 'w') as f:
       f.write('bin/verify.py ')
-      for p in command_line[1:]:
+      for p in command_line:
         f.write(p + ' ')
       f.close()
     logger.info("Wrote command line into file '%s'", command_file)
@@ -318,7 +321,7 @@ def execute_dependent_task(command_line, directories, dependency_level):
   # execute the command
   new_job_ids = {}
   try:
-    verif_args = verify.parse_arguments(command_line[1:])
+    verif_args = verify.parse_arguments(command_line)
     result_dir = os.path.join(verif_args.result_directory, verif_args.sub_directory)
     if not args.skip_when_existent or not os.path.exists(result_dir):
       # get the command line parameter for the result directory
@@ -333,7 +336,7 @@ def execute_dependent_task(command_line, directories, dependency_level):
       logger.info("Skipping execution of %s since result directory '%s' already exists", tools.command_line(command_line), result_dir)
 
   except Exception as e:
-    logger.error("The execution of job was rejected!\n%s\n Reason:\n%s", " ".join(command_line), e)
+    logger.error("The execution of job was rejected!\n%s\n Reason:\n%s", tools.command_line(command_line), e)
 
   # some statistics
   global job_count, task_count
