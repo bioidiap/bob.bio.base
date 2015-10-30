@@ -74,7 +74,7 @@ The variables 1. to 3. can also be overridden by the command line options ``--pr
 
 The ``replace`` variable has to be set as a dictionary.
 In it, you can define with which values your place holder key should be filled, and in which step of the tool chain execution this should happen.
-The steps are ``'preprocessing'``, ``'extraction'``, ``'projection'``, ``'enrollment'`` and ``'scoring'``.
+The steps are ``'preprocess'``, ``'extract'``, ``'project'``, ``'enroll'`` and ``'score'``.
 For each of the steps, it can be defined, which placeholder should be replaced by which values.
 To be able to differentiate the results later on, each of the replacement values is bound to a directory name.
 The final structure looks somewhat like that:

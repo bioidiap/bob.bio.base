@@ -264,6 +264,9 @@ def check_requirements(replacements):
   global configuration
   values = {}
   for key in configuration.replace:
+    # check that the key is one of the known steps
+    if key not in steps:
+      raise ValueError("The step '%s' defined in the configuration file is unknown; choose one of %s" % (key, steps))
     values.update(extract_values(configuration.replace[key], replacements))
   for requirement in configuration.requirements:
     test = replace(requirement, values)
