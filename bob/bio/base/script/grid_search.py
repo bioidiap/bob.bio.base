@@ -7,7 +7,7 @@ from . import verify
 
 import argparse, os, sys
 import copy # for deep copies of dictionaries
-from .. import utils
+from .. import utils, tools
 from ..tools import is_idiap
 
 import bob.core
@@ -324,13 +324,13 @@ def execute_dependent_task(command_line, directories, dependency_level):
       # get the command line parameter for the result directory
       if args.dry_run:
         if args.verbose:
-          print ("Would have executed job", utils.command_line(command_line))
+          print ("Would have executed job", tools.command_line(command_line))
       else:
         # execute the verification experiment
         global fake_job_id
         new_job_ids = verify.verify(verif_args, command_line, external_fake_job_id = fake_job_id)
     else:
-      logger.info("Skipping execution of %s since result directory '%s' already exists", utils.command_line(command_line), result_dir)
+      logger.info("Skipping execution of %s since result directory '%s' already exists", tools.command_line(command_line), result_dir)
 
   except Exception as e:
     logger.error("The execution of job was rejected!\n%s\n Reason:\n%s", " ".join(command_line), e)
