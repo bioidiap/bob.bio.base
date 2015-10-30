@@ -5,7 +5,7 @@ bob.core
 bob.io.base
 bob.learn.activation
 bob.math
-bob.learn.linear
+bob.learn.linear==2.0.6
 bob.sp
 bob.learn.em
 bob.measure
