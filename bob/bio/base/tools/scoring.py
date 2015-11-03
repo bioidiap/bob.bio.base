@@ -251,12 +251,12 @@ def compute_scores(algorithm, compute_zt_norm, force = False, indices = None, gr
   for group in groups:
     # get model ids
     model_ids = fs.model_ids(group)
-    if indices != None:
+    if indices is not None:
       model_ids = model_ids[indices[0]:indices[1]]
       logger.info("- Scoring: splitting of index range %s", str(indices))
     if compute_zt_norm:
       t_model_ids = fs.t_model_ids(group)
-      if indices != None:
+      if indices is not None:
         t_model_ids = t_model_ids[indices[0]:indices[1]]
 
     # compute A scores

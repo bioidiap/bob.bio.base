@@ -37,7 +37,7 @@ def preprocess(preprocessor, groups = None, indices = None, force = False):
   preprocessed_data_files = fs.preprocessed_data_list(groups=groups)
 
   # select a subset of keys to iterate
-  if indices != None:
+  if indices is not None:
     index_range = range(indices[0], indices[1])
     logger.info("- Preprocessing: splitting of index range %s", str(indices))
   else:

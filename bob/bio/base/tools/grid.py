@@ -63,7 +63,7 @@ class GridSubmission:
 
       import gridtk
       # setup logger
-      bob.core.log.set_verbosity_level(bob.core.log.setup("gridtk"), args.verbose)
+      bob.core.log.set_verbosity_level(bob.core.log.setup("gridtk"), min(args.verbose,2))
       Manager = gridtk.local.JobManagerLocal if args.grid.is_local() else gridtk.sge.JobManagerSGE
       self.job_manager = Manager(database = args.gridtk_database_file, wrapper_script=jman)
       self.submitted_job_ids = []

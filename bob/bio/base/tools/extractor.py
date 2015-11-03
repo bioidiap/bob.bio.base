@@ -85,7 +85,7 @@ def extract(extractor, preprocessor, groups=None, indices = None, force = False)
   feature_files = fs.feature_list(groups=groups)
 
   # select a subset of indices to iterate
-  if indices != None:
+  if indices is not None:
     index_range = range(indices[0], indices[1])
     logger.info("- Extraction: splitting of index range %s" % str(indices))
   else:

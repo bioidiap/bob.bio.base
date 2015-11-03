@@ -94,7 +94,7 @@ def project(algorithm, extractor, groups = None, indices = None, force = False):
   projected_files = fs.projected_list(groups=groups)
 
   # select a subset of indices to iterate
-  if indices != None:
+  if indices is not None:
     index_range = range(indices[0], indices[1])
     logger.info("- Projection: splitting of index range %s", str(indices))
   else:
@@ -217,7 +217,7 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
     for group in groups:
       model_ids = fs.model_ids(group)
 
-      if indices != None:
+      if indices is not None:
         model_ids = model_ids[indices[0]:indices[1]]
         logger.info("- Enrollment: splitting of index range %s", str(indices))
 
@@ -248,7 +248,7 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
     for group in groups:
       t_model_ids = fs.t_model_ids(group)
 
-      if indices != None:
+      if indices is not None:
         t_model_ids = t_model_ids[indices[0]:indices[1]]
         logger.info("- Enrollment: splitting of index range %s", str(indices))
 
