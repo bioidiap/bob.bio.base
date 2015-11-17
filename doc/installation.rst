@@ -55,7 +55,7 @@ By default, this file is located in ``~/.bob_bio_databases.txt``, and it contain
 
 .. code-block:: text
 
-   [YOUR_ATNT_DATABASE_DIRECTORY] = /path/to/your/directory
+   [YOUR_ATNT_DIRECTORY] = /path/to/your/directory
 
 .. note::
    If this file does not exist, feel free to create and populate it yourself.
