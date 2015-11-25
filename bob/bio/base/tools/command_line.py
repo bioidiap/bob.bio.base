@@ -131,6 +131,8 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
       help = 'Performs score calibration after the scores are computed.')
   flag_group.add_argument('-z', '--zt-norm', action='store_true',
       help = 'Enable the computation of ZT norms')
+  flag_group.add_argument('-r', '--parallel', type=int,
+      help = 'This flag is a shortcut for running the commands on the local machine with the given amount of parallel threads; equivalent to --grid bob.bio.base.grid.Grid("local", number_of_parallel_threads=X) --run-local-scheduler --stop-on-failure.')
 
   return {
     'main' : parser,
@@ -190,6 +192,11 @@ def initialize(parsers, command_line_parameters = None, skips = []):
     for skip in skips:
       if skip not in args.execute_only:
         exec("args.skip_%s = True" % (skip.replace("-", "_")))
+
+  if args.parallel is not None:
+    args.grid = ['bob.bio.base.grid.Grid("local", number_of_parallel_processes = %d)' % args.parallel]
+    args.run_local_scheduler = True
+    args.stop_on_failure = True
 
   # logging
   bob.core.log.set_verbosity_level(logger, args.verbose)

@@ -165,7 +165,7 @@ def train_enroller(algorithm, extractor, force = False):
     train_features = read_features(train_files, reader, True)
 
     # perform training
-    logger.info("- Enrollment: training enroller '%s' using %d identities: ", fs.enroller_file, len(train_features))
+    logger.info("- Enrollment: training enroller '%s' using %d identities", fs.enroller_file, len(train_features))
     algorithm.train_enroller(train_features, fs.enroller_file)
 
 
