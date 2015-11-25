@@ -319,14 +319,14 @@ def execute_dependent_task(command_line, directories, dependency_level):
 
   # add dependencies
   if dependencies:
-    command_line += ['--external-dependencies'] + [str(d) for d in dependencies]
+    command_line += ['--external-dependencies'] + [str(d) for d in sorted(list(set(dependencies)))]
 
   # execute the command
   new_job_ids = {}
   try:
     verif_args = verify.parse_arguments(command_line)
-    result_dir = os.path.join(verif_args.result_directory, verif_args.sub_directory)
-    if not args.skip_when_existent or not os.path.exists(result_dir):
+    result_dirs = [os.path.join(verif_args.result_directory, verif_args.database.protocol, verif_args.score_directories[i]) for i in ((0,1) if verif_args.zt_norm else (0,))]
+    if not args.skip_when_existent or not all(os.path.exists(result_dir) for result_dir in result_dirs):
       # get the command line parameter for the result directory
       if args.dry_run:
         if args.verbose:
@@ -336,7 +336,7 @@ def execute_dependent_task(command_line, directories, dependency_level):
         global fake_job_id
         new_job_ids = verify.verify(verif_args, command_line, external_fake_job_id = fake_job_id)
     else:
-      logger.info("Skipping execution of %s since result directory '%s' already exists", tools.command_line(command_line), result_dir)
+      logger.info("Skipping execution of %s since result directories '%s' already exists", tools.command_line(command_line), result_dirs)
 
   except Exception as e:
     logger.error("The execution of job was rejected!\n%s\n Reason:\n%s", tools.command_line(command_line), e)
