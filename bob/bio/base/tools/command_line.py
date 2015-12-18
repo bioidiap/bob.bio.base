@@ -127,6 +127,8 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
       help = 'Starts the local scheduler after submitting the jobs to the local queue (by default, local jobs must be started by hand, e.g., using ./bin/jman --local -vv run-scheduler -x)')
   flag_group.add_argument('-N', '--nice', type=int, default=10,
       help = 'Runs the local scheduler with the given nice value')
+  flag_group.add_argument('-D', '--delete-jobs-finished-with-status', choices = ('all', 'failure', 'success'),
+      help = 'If selected, local scheduler jobs that finished with the given status are deleted from the --gridtk-database-file; otherwise the jobs remain in the database')
   flag_group.add_argument('-c', '--calibrate-scores', action='store_true',
       help = 'Performs score calibration after the scores are computed.')
   flag_group.add_argument('-z', '--zt-norm', action='store_true',

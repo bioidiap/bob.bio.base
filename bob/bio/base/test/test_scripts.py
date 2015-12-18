@@ -57,6 +57,8 @@ def _verify(parameters, test_dir, sub_dir, ref_modifier="", score_modifier=('sco
       # assert that the values are OK
       assert numpy.allclose(d[0][:,3].astype(float), d[1][:,3].astype(float), 1e-5)
 
+      assert not os.path.exists(os.path.join(test_dir, 'submitted.sql3'))
+
   finally:
     shutil.rmtree(test_dir)
 
@@ -133,7 +135,9 @@ def test_verify_parallel():
       '-vs', 'test_parallel',
       '--temp-directory', test_dir,
       '--result-directory', test_dir,
-      '-g', 'bob.bio.base.grid.Grid(grid_type = "local", number_of_parallel_processes = 2, scheduler_sleep_time = 0.1)', '-G', test_database, '--run-local-scheduler', '--stop-on-failure',
+      '-g', 'bob.bio.base.grid.Grid(grid_type = "local", number_of_parallel_processes = 2, scheduler_sleep_time = 0.1)',
+      '-G', test_database, '--run-local-scheduler', '--stop-on-failure',
+      '-D', 'success',
       '--import', 'bob.io.image'
   ]
 

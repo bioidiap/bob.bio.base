@@ -127,3 +127,9 @@ class GridSubmission:
     if failures:
       logger.error("The jobs with the following IDS did not finish successfully: '%s'.", ', '.join([str(f) for f in failures]))
       self.job_manager.report(job_ids = failures[:1], output=False)
+
+    # delete the jobs that we have added
+    if self.args.delete_jobs_finished_with_status is not None:
+      logger.info("Deleting jman jobs that we have added")
+      status = ('success', 'failure') if self.args.delete_jobs_finished_with_status == 'all' else (self.args.delete_jobs_finished_with_status,)
+      self.job_manager.delete(job_ids=self.submitted_job_ids, status=status)
