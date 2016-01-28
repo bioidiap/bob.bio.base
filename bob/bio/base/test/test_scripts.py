@@ -93,7 +93,8 @@ def test_verify_resources():
       '--zt-norm',
       '-vs', 'test_resource',
       '--temp-directory', test_dir,
-      '--result-directory', test_dir
+      '--result-directory', test_dir,
+      '--preferred-package', 'bob.bio.base'
   ]
 
   print (bob.bio.base.tools.command_line(parameters))
@@ -138,7 +139,8 @@ def test_verify_parallel():
       '-g', 'bob.bio.base.grid.Grid(grid_type = "local", number_of_parallel_processes = 2, scheduler_sleep_time = 0.1)',
       '-G', test_database, '--run-local-scheduler', '--stop-on-failure',
       '-D', 'success',
-      '--import', 'bob.io.image'
+      '--import', 'bob.io.image',
+      '--preferred-package', 'bob.bio.base'
   ]
 
   print (bob.bio.base.tools.command_line(parameters))
@@ -158,7 +160,8 @@ def test_verify_compressed():
       '-vs', 'test_compressed',
       '--temp-directory', test_dir,
       '--result-directory', test_dir,
-      '--write-compressed-score-files'
+      '--write-compressed-score-files',
+      '--preferred-package', 'bob.bio.base'
   ]
 
   print (bob.bio.base.tools.command_line(parameters))
@@ -178,7 +181,8 @@ def test_verify_calibrate():
       '-vs', 'test_calibrate',
       '--temp-directory', test_dir,
       '--result-directory', test_dir,
-      '--calibrate-scores'
+      '--calibrate-scores',
+      '--preferred-package', 'bob.bio.base'
   ]
 
   print (bob.bio.base.tools.command_line(parameters))
@@ -197,7 +201,8 @@ def test_verify_fileset():
       '--zt-norm',
       '-vs', 'test_fileset',
       '--temp-directory', test_dir,
-      '--result-directory', test_dir
+      '--result-directory', test_dir,
+      '--preferred-package', 'bob.bio.base'
   ]
 
   print (bob.bio.base.tools.command_line(parameters))
@@ -221,7 +226,8 @@ def test_verify_filelist():
       '--zt-norm',
       '-vs', 'test_filelist',
       '--temp-directory', test_dir,
-      '--result-directory', test_dir
+      '--result-directory', test_dir,
+      '--preferred-package', 'bob.bio.base'
   ]
 
   print (bob.bio.base.tools.command_line(parameters))
@@ -308,6 +314,7 @@ def test_grid_search():
         '-R', test_dir,
         '-v',
         '--', '--dry-run',
+        '--preferred-package', 'bob.bio.base'
     ]
     from bob.bio.base.script.grid_search import main
     with utils.Quiet():
@@ -331,6 +338,7 @@ def test_grid_search():
         '-g', 'grid',
         '-v',
         '--', '--dry-run',
+        '--preferred-package', 'bob.bio.base'
     ]
     with utils.Quiet():
       main(parameters)
@@ -352,6 +360,7 @@ def test_grid_search():
         '-l', '4', '-L', '-1', '-v',
         '--', '--imports', 'bob.io.image',
         '--dry-run',
+        '--preferred-package', 'bob.bio.base'
     ]
     with utils.Quiet():
       main(parameters)

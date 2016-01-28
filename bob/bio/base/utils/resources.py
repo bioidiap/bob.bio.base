@@ -80,8 +80,8 @@ def _get_entry_points(keyword, strip = []):
   return  [entry_point for entry_point in pkg_resources.iter_entry_points('bob.bio.' + keyword) if not entry_point.name.startswith(tuple(strip))]
 
 
-def load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_extension = None):
-  """load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_extension = None) -> resource
+def load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_package = None):
+  """load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_package = None) -> resource
 
   Loads the given resource that is registered with the given keyword.
   The resource can be:
@@ -101,8 +101,8 @@ def load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_exten
   imports : [str]
     A list of strings defining which modules to import, when constructing new objects (option 3).
 
-  preferred_extension : str or ``None``
-    When several resources with the same name are found in different extension (in different ``bob.bio`` packages), this specifies the preferred extension to load the resource from.
+  preferred_package : str or ``None``
+    When several resources with the same name are found in different extension (in different ``bob.bio`` packages), this specifies the preferred package to load the resource from.
     If not specified, the extension that is **not** ``bob.bio.base`` is selected.
 
   **Returns:**
@@ -129,9 +129,9 @@ def load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_exten
 
       # Now: check if there are only two entry points, and one is from the bob.bio.base, then use the other one
       index = -1
-      if preferred_extension:
+      if preferred_package:
         for i,p in enumerate(entry_points):
-          if p.dist.project_name == preferred_extension: index = i
+          if p.dist.project_name == preferred_package: index = i
 
       if index == -1:
         if len(entry_points) == 2:

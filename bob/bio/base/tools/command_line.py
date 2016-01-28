@@ -56,10 +56,12 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
       help = 'Biometric recognition; registered algorithms are: %s' % utils.resource_keys('algorithm', exclude_resources_from))
   config_group.add_argument('-g', '--grid', metavar = 'x', nargs = '+',
       help = 'Configuration for the grid setup; if not specified, the commands are executed sequentially on the local machine.')
-  config_group.add_argument('--imports', metavar = 'LIB', nargs = '+', default = ['bob.bio.base'],
+  config_group.add_argument('-I', '--imports', metavar = 'LIB', nargs = '+', default = ['bob.bio.base'],
       help = 'If one of your configuration files is an actual command, please specify the lists of required libraries (imports) to execute this command')
+  config_group.add_argument('-W', '--preferred-package', metavar = 'LIB',
+      help = 'If resources with identical names are defined in several packages, prefer the one from the given package')
   config_group.add_argument('-s', '--sub-directory', metavar = 'DIR', required = True,
-      help = 'The sub-directory where the files of the current experiment should be stored. Please specify a directory name with a name describing your experiment.')
+      help = 'The sub-directory where the files of the current experiment should be stored. Please specify a directory name with a name describing your experiment')
   config_group.add_argument('--groups', metavar = 'GROUP', nargs = '+', default = ['dev'],
       help = "The groups (i.e., 'dev', 'eval') for which the models and scores should be generated; by default, only the 'dev' group is evaluated")
   config_group.add_argument('-P', '--protocol', metavar='PROTOCOL',
@@ -208,12 +210,12 @@ def initialize(parsers, command_line_parameters = None, skips = []):
     args.timer = ('real', 'system', 'user')
 
   # load configuration resources
-  args.database = utils.load_resource(' '.join(args.database), 'database', imports = args.imports)
-  args.preprocessor = utils.load_resource(' '.join(args.preprocessor), 'preprocessor', imports = args.imports)
-  args.extractor = utils.load_resource(' '.join(args.extractor), 'extractor', imports = args.imports)
-  args.algorithm = utils.load_resource(' '.join(args.algorithm), 'algorithm', imports = args.imports)
+  args.database = utils.load_resource(' '.join(args.database), 'database', imports = args.imports, preferred_package = args.preferred_package)
+  args.preprocessor = utils.load_resource(' '.join(args.preprocessor), 'preprocessor', imports = args.imports, preferred_package = args.preferred_package)
+  args.extractor = utils.load_resource(' '.join(args.extractor), 'extractor', imports = args.imports, preferred_package = args.preferred_package)
+  args.algorithm = utils.load_resource(' '.join(args.algorithm), 'algorithm', imports = args.imports, preferred_package = args.preferred_package)
   if args.grid is not None:
-    args.grid = utils.load_resource(' '.join(args.grid), 'grid', imports = args.imports)
+    args.grid = utils.load_resource(' '.join(args.grid), 'grid', imports = args.imports, preferred_package = args.preferred_package)
 
   # set base directories
   if args.temp_directory is None:

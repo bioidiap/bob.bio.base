@@ -64,7 +64,7 @@ def _gmm_stats(self, feature_file, count = 50, minimum = 0, maximum = 1):
 def test_pca():
   temp_file = bob.io.base.test_utils.temporary_filename()
   # load PCA from configuration
-  pca1 = bob.bio.base.load_resource("pca", "algorithm")
+  pca1 = bob.bio.base.load_resource("pca", "algorithm", preferred_package = 'bob.bio.base')
   assert isinstance(pca1, bob.bio.base.algorithm.PCA)
   assert isinstance(pca1, bob.bio.base.algorithm.Algorithm)
   assert pca1.performs_projection
@@ -134,10 +134,10 @@ def test_pca():
 def test_lda():
   temp_file = bob.io.base.test_utils.temporary_filename()
   # assure that the configurations are loadable
-  lda1 = bob.bio.base.load_resource("lda", "algorithm")
+  lda1 = bob.bio.base.load_resource("lda", "algorithm", preferred_package = 'bob.bio.base')
   assert isinstance(lda1, bob.bio.base.algorithm.LDA)
   assert isinstance(lda1, bob.bio.base.algorithm.Algorithm)
-  lda2 = bob.bio.base.load_resource("pca+lda", "algorithm")
+  lda2 = bob.bio.base.load_resource("pca+lda", "algorithm", preferred_package = 'bob.bio.base')
   assert isinstance(lda2, bob.bio.base.algorithm.LDA)
   assert isinstance(lda2, bob.bio.base.algorithm.Algorithm)
 
@@ -209,7 +209,7 @@ def test_lda():
 def test_bic():
   temp_file = bob.io.base.test_utils.temporary_filename()
   # assure that the configurations are loadable
-  bic1 = bob.bio.base.load_resource("bic", "algorithm")
+  bic1 = bob.bio.base.load_resource("bic", "algorithm", preferred_package = 'bob.bio.base')
   assert isinstance(bic1, bob.bio.base.algorithm.BIC)
   assert isinstance(bic1, bob.bio.base.algorithm.Algorithm)
 
@@ -278,10 +278,10 @@ def test_bic():
 def test_plda():
   temp_file = bob.io.base.test_utils.temporary_filename()
   # assure that the configurations are loadable
-  plda1 = bob.bio.base.load_resource("plda", "algorithm")
+  plda1 = bob.bio.base.load_resource("plda", "algorithm", preferred_package = 'bob.bio.base')
   assert isinstance(plda1, bob.bio.base.algorithm.PLDA)
   assert isinstance(plda1, bob.bio.base.algorithm.Algorithm)
-  plda2 = bob.bio.base.load_resource("pca+plda", "algorithm")
+  plda2 = bob.bio.base.load_resource("pca+plda", "algorithm", preferred_package = 'bob.bio.base')
   assert isinstance(plda2, bob.bio.base.algorithm.PLDA)
   assert isinstance(plda2, bob.bio.base.algorithm.Algorithm)
 
