@@ -75,7 +75,7 @@ def command_line_options(command_line_parameters):
       help = 'Split the gridtk databases after the following level -1 - never split; 0 - preprocess; 1 - extract; 2 -- project; 3 -- enroll; 4 -- score;')
 
   parser.add_argument('-x', '--executable', metavar='X',
-      help = '(optional) The executable to be executed instead of bob/bio/base/verify.py (taken *always* from bob.bio.base, not from the bin directory)')
+      help = '(optional) The executable to be executed instead of bob/bio/base/verify.py (which is taken *always* from bob.bio.base, not from the bin directory)')
 
   parser.add_argument('-R', '--result-directory', metavar='DIR',
       help = 'The directory where to write the resulting score files to.')
@@ -282,7 +282,7 @@ def execute_dependent_task(command_line, directories, dependency_level):
   if args.grid:
     command_line += ['--grid', args.grid, '--stop-on-failure']
   if args.parallel:
-    command_line += ['--grid', 'bob.bio.base.grid.Grid("local", number_of_parallel_processes=%d)' % args.parallel, '--run-local-scheduler', '--stop-on-failure']
+    command_line += ['--parallel', str(args.parallel)]
 
   if args.verbose:
     command_line += ['-' + 'v'*args.verbose]
