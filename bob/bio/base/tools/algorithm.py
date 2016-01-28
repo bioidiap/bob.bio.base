@@ -108,12 +108,13 @@ def project(algorithm, extractor, groups = None, indices = None, force = False):
 
     if not utils.check_file(projected_file, force, 1000):
       logger.debug("... Projecting features for file '%s'", feature_file)
+      # create output directory before reading the data file (is sometimes required, when relative directories are specified, especially, including a .. somewhere)
+      bob.io.base.create_directories_safe(os.path.dirname(projected_file))
       # load feature
       feature = extractor.read_feature(feature_file)
       # project feature
       projected = algorithm.project(feature)
       # write it
-      bob.io.base.create_directories_safe(os.path.dirname(projected_file))
       algorithm.write_feature(projected, projected_file)
 
     else:
@@ -230,13 +231,13 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
         if not utils.check_file(model_file, force, 1000):
           enroll_files = fs.enroll_files(model_id, group, 'projected' if algorithm.use_projected_features_for_enrollment else 'extracted')
           logger.debug("... Enrolling model from %d features to file '%s'", len(enroll_files), model_file)
+          bob.io.base.create_directories_safe(os.path.dirname(model_file))
 
           # load all files into memory
           enroll_features = [reader.read_feature(enroll_file) for enroll_file in enroll_files]
 
           model = algorithm.enroll(enroll_features)
           # save the model
-          bob.io.base.create_directories_safe(os.path.dirname(model_file))
           algorithm.write_model(model, model_file)
 
         else:
@@ -261,13 +262,13 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
         if not utils.check_file(t_model_file, force, 1000):
           t_enroll_files = fs.t_enroll_files(t_model_id, group, 'projected' if algorithm.use_projected_features_for_enrollment else 'extracted')
           logger.debug("... Enrolling T-model from %d features to file '%s'", len(t_enroll_files), t_model_file)
+          bob.io.base.create_directories_safe(os.path.dirname(t_model_file))
 
           # load all files into memory
           t_enroll_features = [reader.read_feature(t_enroll_file) for t_enroll_file in t_enroll_files]
 
           t_model = algorithm.enroll(t_enroll_features)
           # save model
-          bob.io.base.create_directories_safe(os.path.dirname(t_model_file))
           algorithm.write_model(t_model, t_model_file)
         else:
           logger.debug("... Skipping T-model file '%s' since it exists", t_model_file)

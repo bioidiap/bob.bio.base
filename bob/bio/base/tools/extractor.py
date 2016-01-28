@@ -98,12 +98,13 @@ def extract(extractor, preprocessor, groups=None, indices = None, force = False)
 
     if not utils.check_file(feature_file, force, 1000):
       logger.debug("... Extracting features for data file '%s'", data_file)
+      # create output directory before reading the data file (is sometimes required, when relative directories are specified, especially, including a .. somewhere)
+      bob.io.base.create_directories_safe(os.path.dirname(feature_file))
       # load data
       data = preprocessor.read_data(data_file)
       # extract feature
       feature = extractor(data)
       # write feature
-      bob.io.base.create_directories_safe(os.path.dirname(feature_file))
       extractor.write_feature(feature, feature_file)
     else:
       logger.debug("... Skipping preprocessed data '%s' since feature file '%s' exists", data_file, feature_file)

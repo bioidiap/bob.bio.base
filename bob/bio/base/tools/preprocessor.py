@@ -57,6 +57,8 @@ def preprocess(preprocessor, groups = None, indices = None, force = False):
     if not utils.check_file(preprocessed_data_file, force, 1000):
       logger.debug("... Processing original data file '%s'", file_name)
       data = preprocessor.read_original_data(file_name)
+      # create output directory before reading the data file (is sometimes required, when relative directories are specified, especially, including a .. somewhere)
+      bob.io.base.create_directories_safe(os.path.dirname(preprocessed_data_file))
 
       # get the annotations; might be None
       annotations = fs.get_annotations(annotation_list[i])
@@ -67,7 +69,6 @@ def preprocess(preprocessor, groups = None, indices = None, force = False):
         logger.error("Preprocessing of file '%s' was not successful", file_name)
 
       # write the data
-      bob.io.base.create_directories_safe(os.path.dirname(preprocessed_data_file))
       preprocessor.write_data(preprocessed_data, preprocessed_data_file)
 
     else:
