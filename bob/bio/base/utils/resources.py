@@ -102,8 +102,8 @@ def load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_packa
     A list of strings defining which modules to import, when constructing new objects (option 3).
 
   preferred_package : str or ``None``
-    When several resources with the same name are found in different extension (in different ``bob.bio`` packages), this specifies the preferred package to load the resource from.
-    If not specified, the extension that is **not** ``bob.bio.base`` is selected.
+    When several resources with the same name are found in different packages (e.g., in different ``bob.bio`` or other packages), this specifies the preferred package to load the resource from.
+    If not specified, the extension that is **not** from ``bob.bio`` is selected.
 
   **Returns:**
 
@@ -129,20 +129,26 @@ def load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_packa
 
       # Now: check if there are only two entry points, and one is from the bob.bio.base, then use the other one
       index = -1
-      if preferred_package:
+      if preferred_package is not None:
         for i,p in enumerate(entry_points):
-          if p.dist.project_name == preferred_package: index = i
+          if p.dist.project_name == preferred_package:
+            index = i
+            break
 
       if index == -1:
-        if len(entry_points) == 2:
-          if entry_points[0].dist.project_name == 'bob.bio.base': index = 1
-          elif entry_points[1].dist.project_name == 'bob.bio.base': index = 0
+        # by default, use the first one that is not from bob.bio
+        for i,p in enumerate(entry_points):
+          if not p.dist.project_name.startswith('bob.bio'):
+            index = i
+            break
 
       if index != -1:
-        logger.info("RESOURCES: Using the resource '%s' from '%s', and ignoring the one from '%s'", resource, entry_points[index].module_name, entry_points[1-index].module_name)
+        logger.debug("RESOURCES: Using the resource '%s' from '%s', and ignoring the one from '%s'", resource, entry_points[index].module_name, entry_points[1-index].module_name)
         return entry_points[index].load()
       else:
-        raise ImportError("Under the desired name '%s', there are multiple entry points defined: %s" %(resource, [entry_point.module_name for entry_point in entry_points]))
+        logger.warn("Under the desired name '%s', there are multiple entry points defined, we return the first one: %s", resource, [entry_point.module_name for entry_point in entry_points])
+        return entry_points[0].load()
+
 
   # if the resource is neither a config file nor an entry point,
   # just execute it as a command
