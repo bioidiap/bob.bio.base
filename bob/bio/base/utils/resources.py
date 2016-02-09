@@ -220,7 +220,7 @@ def database_directories(strip=['dummy'], replacements = None):
       dirs[entry_point.name] = [db.original_directory]
       if db.annotation_directory is not None:
         dirs[entry_point.name].append(db.annotation_directory)
-    except (AttributeError, ValueError):
+    except (AttributeError, ValueError, ImportError):
       pass
 
   return dirs
