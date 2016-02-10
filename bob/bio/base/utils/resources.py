@@ -59,7 +59,7 @@ def read_config_file(filename, keyword = None):
   """
 
   if not os.path.exists(filename):
-    raise IOError("The given configuration file '%s' could not be found" % file)
+    raise IOError("The given configuration file '%s' could not be found" % filename)
 
   import string
   import random

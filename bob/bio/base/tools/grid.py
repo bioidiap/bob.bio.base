@@ -114,12 +114,6 @@ class GridSubmission:
       return self.fake_job_id
 
 
-  def grid_job_id(self):
-    id = os.getenv('JOB_ID')
-    if id is not None:
-      return int(id)
-    return id
-
   def execute_local(self):
     """Starts the local deamon and waits until it has finished."""
     logger.info("Starting jman deamon to run the jobs on the local machine.")

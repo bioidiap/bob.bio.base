@@ -38,6 +38,7 @@ def train_extractor(extractor, preprocessor, force = False):
   if utils.check_file(fs.extractor_file, force, 1000):
     logger.info("- Extraction: extractor '%s' already exists.", fs.extractor_file)
   else:
+    bob.io.base.create_directories_safe(os.path.dirname(fs.extractor_file))
     # read training files
     train_files = fs.training_list('preprocessed', 'train_extractor', arrange_by_client = extractor.split_training_data_by_client)
     train_data = read_preprocessed_data(train_files, preprocessor, extractor.split_training_data_by_client)
@@ -46,7 +47,6 @@ def train_extractor(extractor, preprocessor, force = False):
     else:
       logger.info("- Extraction: training extractor '%s' using %d training files:", fs.extractor_file, len(train_files))
     # train model
-    bob.io.base.create_directories_safe(os.path.dirname(fs.extractor_file))
     extractor.train(train_data, fs.extractor_file)
 
 

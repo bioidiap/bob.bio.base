@@ -266,7 +266,7 @@ def check_requirements(replacements):
   for key in configuration.replace:
     # check that the key is one of the known steps
     if key not in steps:
-      raise ValueError("The step '%s' defined in the configuration file is unknown; choose one of %s" % (key, steps))
+      raise ValueError("The step '%s' defined in the configuration file '%s' is unknown; choose one of %s" % (key, args.configuration_file, steps))
     values.update(extract_values(configuration.replace[key], replacements))
   for requirement in configuration.requirements:
     test = replace(requirement, values)
@@ -444,6 +444,10 @@ def main(command_line_parameters = None):
   create_recursive(replace_dict, step_index = 0, directories = {}, dependency_level = 0)
 
   # finally, write some information about the
-  logger.info("The number of executed tasks is: %d, which are split up into %d jobs that are executed in the grid" %(task_count, job_count))
+  if args.grid is not None:
+    logger.info("The number of executed tasks is: %d, which are split up into %d jobs that are executed in the grid" , task_count, job_count)
+
+  if args.parallel is not None:
+    logger.info("The total amount of finsihed tasks is: %d", task_count)
 
   return score_directories
