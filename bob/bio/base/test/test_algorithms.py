@@ -45,20 +45,30 @@ def _compare(data, reference, write_function = bob.bio.base.save, read_function 
   assert numpy.allclose(data, read_function(reference), atol=1e-5)
 
 
-def _gmm_stats(self, feature_file, count = 50, minimum = 0, maximum = 1):
-  # generate a random sequence of GMM-Stats features
-  numpy.random.seed(42)
-  train_set = []
-  f = bob.io.base.HDF5File(feature_file)
-  for i in range(count):
-    per_id = []
-    for j in range(count):
-      gmm_stats = bob.learn.em.GMMStats(f)
-      gmm_stats.sum_px = numpy.random.random(gmm_stats.sum_px.shape) * (maximum - minimum) + minimum
-      gmm_stats.sum_pxx = numpy.random.random(gmm_stats.sum_pxx.shape) * (maximum - minimum) + minimum
-      per_id.append(gmm_stats)
-    train_set.append(per_id)
-  return train_set
+def test_distance():
+  # test the two registered distance functions
+
+  # euclidean distance
+  euclidean = bob.bio.base.load_resource("distance-euclidean", "algorithm", preferred_package = 'bob.bio.base')
+  assert isinstance(euclidean, bob.bio.base.algorithm.Distance)
+  assert isinstance(euclidean, bob.bio.base.algorithm.Algorithm)
+  assert not euclidean.performs_projection
+  assert not euclidean.requires_projector_training
+  assert not euclidean.use_projected_features_for_enrollment
+  assert not euclidean.split_training_features_by_client
+  assert not euclidean.requires_enroller_training
+
+  # test distance computation
+  f1 = numpy.ones((20,10), numpy.float64)
+  f2 = numpy.ones((20,10), numpy.float64) * 2.
+
+  model = euclidean.enroll([f1, f1])
+  assert abs(euclidean.score_for_multiple_probes(model, [f2, f2]) + math.sqrt(200.)) < 1e-6, euclidean.score_for_multiple_probes(model, [f2, f2])
+
+  # test cosine distance
+  cosine = bob.bio.base.load_resource("distance-cosine", "algorithm", preferred_package = 'bob.bio.base')
+  model = cosine.enroll([f1, f1])
+  assert abs(cosine.score_for_multiple_probes(model, [f2, f2])) < 1e-8, cosine.score_for_multiple_probes(model, [f2, f2])
 
 
 def test_pca():

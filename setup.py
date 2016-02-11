@@ -127,6 +127,8 @@ setup(
 
       'bob.bio.algorithm': [
         'dummy             = bob.bio.base.test.dummy.algorithm:algorithm', # for test purposes only
+        'distance-euclidean = bob.bio.base.config.algorithm.distance_euclidean:algorithm',
+        'distance-cosine   = bob.bio.base.config.algorithm.distance_cosine:algorithm',
         'pca               = bob.bio.base.config.algorithm.pca:algorithm',
         'lda               = bob.bio.base.config.algorithm.lda:algorithm',
         'pca+lda           = bob.bio.base.config.algorithm.pca_lda:algorithm',

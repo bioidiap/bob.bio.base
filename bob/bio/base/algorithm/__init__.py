@@ -1,4 +1,5 @@
 from .Algorithm import Algorithm
+from .Distance import Distance
 from .PCA import PCA
 from .LDA import LDA
 from .PLDA import PLDA
