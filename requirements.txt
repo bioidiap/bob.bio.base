@@ -1,4 +1,5 @@
 setuptools
+scipy
 bob.extension
 bob.blitz
 bob.core
