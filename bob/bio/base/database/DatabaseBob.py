@@ -325,7 +325,7 @@ class DatabaseBob (Database):
 
     files : [:py:class:`FileSet`] or something similar
       The list of file sets used to probe the model with the given model id."""
-    if model_id:
+    if model_id is not None:
       file_sets = self.database.object_sets(protocol = self.protocol, groups = group, model_ids = (model_id,), purposes = 'probe', **self.all_files_options)
     else:
       file_sets = self.database.object_sets(protocol = self.protocol, groups = group, purposes = 'probe', **self.all_files_options)
