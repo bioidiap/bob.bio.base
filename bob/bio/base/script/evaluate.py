@@ -67,6 +67,7 @@ def command_line_arguments(command_line_parameters):
   parser.add_argument('-R', '--roc', help = "If given, ROC curves will be plotted into the given pdf file.")
   parser.add_argument('-D', '--det', help = "If given, DET curves will be plotted into the given pdf file.")
   parser.add_argument('-C', '--cmc', help = "If given, CMC curves will be plotted into the given pdf file.")
+  parser.add_argument('-E', '--epc', help = "If given, EPC curves will be plotted into the given pdf file. For this plot --eval-files is mandatory.")  
   parser.add_argument('--parser', default = '4column', choices = ('4column', '5column'), help="The style of the resulting score files. The default fits to the usual output of score files.")
 
   # add verbose option
@@ -160,6 +161,28 @@ def _plot_cmc(cmcs, colors, labels, title, fontsize=18, position=None):
   pyplot.title(title)
 
   return figure
+  
+  
+  
+def _plot_epc(scores_dev, scores_eval, colors, labels, title, fontsize=18, position=None):
+  if position is None: position = 4
+  # open new page for current plot
+  figure = pyplot.figure()
+
+  # plot the DET curves
+  for i in range(len(scores_dev)):
+    bob.measure.plot.epc(scores_dev[i][0], scores_dev[i][1], scores_eval[i][0], scores_eval[i][1], 100, label=labels[i], lw=2)
+
+  # change axes accordingly
+  pyplot.xlabel('alpha')
+  pyplot.ylabel('HTER (\\%)')
+  pyplot.title(title)
+  pyplot.grid(True)
+  pyplot.legend(loc=position, prop = {'size':fontsize})
+  pyplot.title(title)
+
+  return figure  
+
 
 
 def main(command_line_parameters=None):
@@ -265,6 +288,23 @@ def main(command_line_parameters=None):
         pdf.close()
       except RuntimeError as e:
         raise RuntimeError("During plotting of ROC curves, the following exception occured:\n%s\nUsually this happens when the label contains characters that LaTeX cannot parse." % e)
+
+
+    if args.epc:
+      logger.info("Plotting EPC curves ")
+      
+      if not args.eval_files:
+        raise ValueError("To plot the EPC curve the evaluation scores are necessary. Please, set it with the --eval-files option.")
+      
+      try:
+        # create a multi-page PDF for the ROC curve
+        pdf = PdfPages(args.epc)
+        pdf.savefig(_plot_epc(scores_dev, scores_eval, colors, args.legends, "EPC Curves" , args.legend_font_size, args.legend_position))
+        pdf.close()
+      except RuntimeError as e:
+        raise RuntimeError("During plotting of EPC curves, the following exception occured:\n%s\nUsually this happens when the label contains characters that LaTeX cannot parse." % e)
+
+
 
 
   if args.cmc or args.rr:
