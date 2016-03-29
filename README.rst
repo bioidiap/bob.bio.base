@@ -39,7 +39,7 @@ In this base class implementation, only a few algorithms (such as PCA, LDA, PLDA
 * `bob.bio.face <http://pypi.python.org/pypi/bob.bio.face>`__ for face recognition databases, features and algorithms
 * `bob.bio.video <http://pypi.python.org/pypi/bob.bio.video>`__ for video-based databases and algorithms
 * `bob.bio.gmm <http://pypi.python.org/pypi/bob.bio.gmm>`__ for Gaussian-mixture-model-based algorithms
-* `bob.bio.csu <http://pypi.python.org/pypi/bob.bio.csu>`__ for wrapper classes of the `CSU Face Recognition Resources <http://www.cs.colostate.edu/facerec>`__
+* `bob.bio.csu <http://pypi.python.org/pypi/bob.bio.csu>`__ for wrapper classes of the `CSU Face Recognition Resources <http://www.cs.colostate.edu/facerec>`__ (see `Installation Instructions <http://pythonhosted.org/bob.bio.csu/installation.html>`__ of ``bob.bio.csu``).
 
 
 Moreover, a script for score fusion ``./bin/fusion_llr.py`` is provided to do score-level fusion using Logistic regression to combine outputs from different systems.
@@ -49,7 +49,9 @@ Additionally, a generic script ``./bin/evaluate.py`` is provided that can genera
 
 Installation
 ------------
-To install this package -- alone or together with other `Packages of Bob <https://github.com/idiap/bob/wiki/Packages>`_ -- please read the `Installation Instructions <https://github.com/idiap/bob/wiki/Installation>`_.
+To create your own working package using one or more of the ``bob.bio`` packages, please follow the `Installation Instructions <http://pythonhosted.org/bob.bio.base/installation.html>`__ of the ``bob.bio`` packages.
+
+To install this package -- alone or together with other `Packages of Bob <https://github.com/idiap/bob/wiki/Packages>`_ -- please read the `Installation Instructions <https://github.com/idiap/bob/wiki/Installation>`__.
 For Bob_ to be able to work properly, some dependent packages are required to be installed.
 Please make sure that you have read the `Dependencies <https://github.com/idiap/bob/wiki/Dependencies>`_ for your operating system.
 

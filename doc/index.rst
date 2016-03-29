@@ -37,7 +37,7 @@ Here is a growing list of derived packages:
 * :ref:`bob.bio.face <bob.bio.face>` Tools to run face recognition experiments, such as face detection, facial feature extraction and comparison, and face image databases
 * :ref:`bob.bio.video <bob.bio.video>` An extension of face recognition algorithms to run on video data, and the according video databases
 * :ref:`bob.bio.gmm <bob.bio.gmm>` Algorithms based on Gaussian Mixture Modeling (GMM) such as Inter-Session Variability modeling (ISV) or Total Variability modeling (TV, aka. I-Vector)
-* :ref:`bob.bio.csu <bob.bio.csu>` Wrapper classes for the `CSU Face Recognition Resources <http://www.cs.colostate.edu/facerec>`_ to be run with ``bob.bio``.
+* `bob.bio.csu <http://pypi.python.org/pypi/bob.bio.csu>`__ for wrapper classes of the `CSU Face Recognition Resources <http://www.cs.colostate.edu/facerec>`__ (see `Installation Instructions <http://pythonhosted.org/bob.bio.csu/installation.html>`__ of ``bob.bio.csu``).
 
 If you are interested, please continue reading:
 
