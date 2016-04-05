@@ -124,7 +124,7 @@ class Distance (Algorithm):
   def train_projector(*args,**kwargs): raise NotImplementedError()
   def load_projector(*args,**kwargs): pass
   def project(*args,**kwargs): raise NotImplementedError()
-  def read_feature(*args,**kwargs): raise NotImplementedError()
   def write_feature(*args,**kwargs): raise NotImplementedError()
+  def read_feature(*args,**kwargs): raise NotImplementedError()
   def train_enroller(*args,**kwargs): raise NotImplementedError()
   def load_enroller(*args,**kwargs): pass
