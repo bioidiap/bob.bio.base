@@ -6,6 +6,7 @@ import numpy
 import scipy.spatial
 
 from .Algorithm import Algorithm
+from .. import utils
 
 import logging
 logger = logging.getLogger("bob.bio.base")
@@ -72,6 +73,25 @@ class Distance (Algorithm):
     # just store all the features
     return numpy.vstack([f.flatten() for f in enroll_features])
 
+
+  def read_probe(self, probe_file):
+    """read_probe(probe_file) -> probe
+
+    Reads the probe feature from the given HDF5 file.
+
+    **Parameters:**
+
+    probe_file : str or :py:class:`bob.io.base.HDF5File`
+      The file (open for reading) or the name of an existing file to read from.
+
+    **Returns:**
+
+    probe : object
+      The probe.
+    """
+    return utils.load(feature_file)
+
+
   def score(self, model, probe):
     """score(model, probe) -> float
 
@@ -104,7 +124,7 @@ class Distance (Algorithm):
   def train_projector(*args,**kwargs): raise NotImplementedError()
   def load_projector(*args,**kwargs): pass
   def project(*args,**kwargs): raise NotImplementedError()
-  def write_feature(*args,**kwargs): raise NotImplementedError()
   def read_feature(*args,**kwargs): raise NotImplementedError()
+  def write_feature(*args,**kwargs): raise NotImplementedError()
   def train_enroller(*args,**kwargs): raise NotImplementedError()
   def load_enroller(*args,**kwargs): pass
