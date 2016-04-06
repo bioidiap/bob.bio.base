@@ -111,7 +111,7 @@ setup(
         'extract.py        = bob.bio.base.script.extract:main',
         'enroll.py         = bob.bio.base.script.enroll:main',
         'score.py          = bob.bio.base.script.score:main',
-        'fusion_llr.py     = bob.bio.base.script.fusion_llr:main',
+        'fuse_scores.py    = bob.bio.base.script.fuse_scores:main',
       ],
 
       'bob.bio.database': [

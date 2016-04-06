@@ -261,6 +261,37 @@ def test_verify_filelist():
     shutil.rmtree(test_dir)
 
 
+def test_fusion():
+  # tests that the fuse_scores script is doing something useful
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
+  reference_files = [os.path.join(data_dir, s) for s in ('scores-nonorm-dev', 'scores-ztnorm-dev')]
+  output_files = [os.path.join(test_dir, s) for s in ("fused-dev", "fused-eval")]
+  parameters = [
+    '--dev-files', reference_files[0], reference_files[1],
+    '--eval-files', reference_files[0], reference_files[1],
+    '--fused-dev-file', output_files[0],
+    '--fused-eval-file', output_files[1],
+    '--max-iterations', '100',
+    '--convergence-threshold', '1e-4',
+    '-v'
+  ]
+
+  # execute the script
+  from bob.bio.base.script.fuse_scores import main
+  try:
+    main(parameters)
+
+    # assert that we can read the two files, and that they contain the same number of lines as the original file
+    for i in (0,1):
+      assert os.path.exists(output_files[i])
+      r = bob.measure.load.four_column(reference_files[i])
+      o = bob.measure.load.four_column(output_files[i])
+      assert len(list(r)) == len(list(o))
+  finally:
+    shutil.rmtree(test_dir)
+
+
+
 def test_evaluate():
   # tests our 'evaluate' script using the reference files
   test_dir = tempfile.mkdtemp(prefix='bobtest_')

@@ -41,6 +41,27 @@ All these three ways can be used for any of the five command line options: ``--d
 You can even mix these three types freely in a single command line.
 
 
+Score Level Fusion of Different Algorithms on the same Database
+---------------------------------------------------------------
+
+In several of our publications, we have shown that the combination of several biometric recognition algorithms is able to outperform each single algorithm.
+This is particularly true, when the algorithms rely on different kind of data, e.g., we have `fused face and speaker recognition system on the MOBIO database <http://publications.idiap.ch/index.php/publications/show/2688>`__.
+As long as several algorithms are executed on the same database, we can simply generate a fusion system by using the ``./bin/fuse_scores.py`` script, generating a new score file:
+
+.. code-block:: sh
+
+   $ ./bin/fuse_scores.py --dev
+
+This computation is based on the :py:class:`bob.learn.linear.CGLogRegTrainer`, which is trained on the scores of the development set files (``--dev-files``) for the given systems.
+Afterwards, the fusion is applied to the ``--dev-files`` and the resulting score file is written to the file specified by ``--fused-dev-file``.
+If ``--eval-files`` are specified, the same fusion that is trained on the development set is now applied to the evaluation set as well, and the ``--fused-eval-file`` is written.
+
+.. note::
+   When ``--eval-files`` are specified, they need to be in the same order as the ``dev-files``, otherwise the result is undefined.
+
+The resulting ``--fused-dev-file`` and ``fused-eval-file`` can then be evaluated normally, e.g., using the ``./bin/evaluate.py`` script.
+
+
 .. _grid-search:
 
 Finding the Optimal Configuration
