@@ -102,7 +102,7 @@ def main(command_line_options = None):
     test_label = line[-2]
     scores= [ line[-1] ]
     for n in range(1, n_systems):
-      scores.append(gen_data_dev[n].next()[-1])
+      scores.append(next(gen_data_dev[n])[-1])
     scores = numpy.array([scores], dtype=numpy.float64)
     s_fused = machine.forward(scores)[0,0]
     line = claimed_id + " " + real_id + " " + test_label + " "  + str(s_fused) + "\n"
@@ -123,7 +123,7 @@ def main(command_line_options = None):
       test_label = line[-2]
       scores= [ line[-1] ]
       for n in range(1, n_systems):
-        scores.append(gen_data_eval[n].next()[-1])
+        scores.append(next(gen_data_eval[n])[-1])
       scores = numpy.array([scores], dtype=numpy.float64)
       s_fused = machine.forward(scores)[0,0]
       line = claimed_id + " " + real_id + " " + test_label + " "  + str(s_fused) + "\n"
