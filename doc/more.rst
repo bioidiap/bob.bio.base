@@ -140,7 +140,7 @@ Continuing the above example, it is possible to add:
 
   ...
       step3 : {
-          ('#d','#e') : {
+          '(#d,#e)' : {
               'Dir_de1' : ('Value_d1', 'Value_e1'),
               'Dir_de2' : ('Value_d2', 'Value_e2')
           }
