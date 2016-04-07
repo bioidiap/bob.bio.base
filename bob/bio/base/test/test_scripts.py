@@ -306,6 +306,8 @@ def test_evaluate():
     '--roc', plots[0],
     '--det', plots[1],
     '--cmc', plots[2],
+    '--rr',
+    '--thresholds', '5000', '0',
     '-v',
   ]
 
