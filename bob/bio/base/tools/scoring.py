@@ -29,13 +29,14 @@ def _scores(algorithm, model, probes, allow_missing_files):
   for i, probe_element in enumerate(probes):
     if fs.uses_probe_file_sets():
       assert isinstance(probe_element, list)
-      # read probe from probe_set
-      probe = [algorithm.read_probe(probe_file) for probe_file in probe_element]
+      # filter missing files
       if allow_missing_files:
-        probe = utils.filter_missing_files(probe)
-        if not probe:
+        probe_element = utils.filter_missing_files(probe_element)
+        if not probe_element:
           # we keep the NaN score
           continue
+      # read probe from probe_set
+      probe = [algorithm.read_probe(probe_file) for probe_file in probe_element]
       # compute score
       scores[0,i] = algorithm.score_for_multiple_probes(model, probe)
     else:

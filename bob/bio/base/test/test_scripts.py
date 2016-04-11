@@ -266,10 +266,6 @@ def test_verify_filelist():
 
 
 def test_verify_missing():
-  try:
-    import bob.db.verification.filelist
-  except ImportError:
-    raise SkipTest("Skipping test since bob.db.verification.filelist is not available")
   test_dir = tempfile.mkdtemp(prefix='bobtest_')
   # define dummy parameters
   parameters = [
