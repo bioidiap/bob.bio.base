@@ -7,7 +7,8 @@ logger = logging.getLogger("bob.bio.base")
 from .FileSelector import FileSelector
 from .. import utils
 
-def preprocess(preprocessor, groups = None, indices = None, force = False):
+
+def preprocess(preprocessor, groups = None, indices = None, allow_missing_files = False, force = False):
   """Preprocesses the original data of the database with the given preprocessor.
 
   The given ``preprocessor`` is used to preprocess all data required for the current experiment.
@@ -25,6 +26,9 @@ def preprocess(preprocessor, groups = None, indices = None, force = False):
   indices : (int, int) or None
     If specified, only the data for the given index range ``range(begin, end)`` should be preprocessed.
     This is usually given, when parallel threads are executed.
+
+  allow_missing_files : bool
+    If set to ``True``, files for which the preprocessor returns ``None`` are silently ignored.
 
   force : bool
     If given, files are regenerated, even if they already exist.
@@ -66,7 +70,11 @@ def preprocess(preprocessor, groups = None, indices = None, force = False):
       # call the preprocessor
       preprocessed_data = preprocessor(data, annotations)
       if preprocessed_data is None:
-        logger.error("Preprocessing of file '%s' was not successful", file_name)
+        if allow_missing_files:
+          logger.debug("... Processing original data file '%s' was not successful", file_name)
+        else:
+          logger.error("Preprocessing of file '%s' was not successful", file_name)
+        continue
 
       # write the data
       preprocessor.write_data(preprocessed_data, preprocessed_data_file)
@@ -76,7 +84,7 @@ def preprocess(preprocessor, groups = None, indices = None, force = False):
 
 
 
-def read_preprocessed_data(file_names, preprocessor, split_by_client = False):
+def read_preprocessed_data(file_names, preprocessor, split_by_client = False, allow_missing_files = False):
   """read_preprocessed_data(file_names, preprocessor, split_by_client = False) -> preprocessed
 
   Reads the preprocessed data from ``file_names`` using the given preprocessor.
@@ -94,11 +102,16 @@ def read_preprocessed_data(file_names, preprocessor, split_by_client = False):
   split_by_client : bool
     Indicates if the given ``file_names`` are split into groups.
 
+  allow_missing_files : bool
+    If set to ``True``, preprocessed data files that are not found are silently ignored.
+
   **Returns:**
 
   preprocessed : [object] or [[object]]
     The list of preprocessed data, in the same order as in the ``file_names``.
   """
+  file_names = utils.filter_missing_files(file_names, split_by_client, allow_missing_files)
+
   if split_by_client:
     return [[preprocessor.read_data(f) for f in client_files] for client_files in file_names]
   else:

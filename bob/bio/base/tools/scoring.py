@@ -13,13 +13,17 @@ from .FileSelector import FileSelector
 from .extractor import read_features
 from .. import utils
 
-def _scores(algorithm, model, probes):
+def _scores(algorithm, model, probes, allow_missing_files):
   """Compute scores for the given model and a list of probes.
   """
   # the file selector object
   fs = FileSelector.instance()
-  # the scores to be computed
-  scores = numpy.ndarray((1,len(probes)), 'float64')
+  # the scores to be computed; initialized with NaN
+  scores = numpy.full((1,len(probes)), numpy.nan, numpy.float64)
+
+  if allow_missing_files and model is None:
+    # if we have no model, all scores are undefined
+    return scores
 
   # Loops over the probe sets
   for i, probe_element in enumerate(probes):
@@ -27,9 +31,17 @@ def _scores(algorithm, model, probes):
       assert isinstance(probe_element, list)
       # read probe from probe_set
       probe = [algorithm.read_probe(probe_file) for probe_file in probe_element]
+      if allow_missing_files:
+        probe = utils.filter_missing_files(probe)
+        if not probe:
+          # we keep the NaN score
+          continue
       # compute score
       scores[0,i] = algorithm.score_for_multiple_probes(model, probe)
     else:
+      if allow_missing_files and not os.path.exists(probe_element):
+        # we keep the NaN score
+        continue
       # read probe
       probe = algorithm.read_probe(probe_element)
       # compute score
@@ -84,7 +96,7 @@ def _close_written(score_file, f, write_compressed):
   f.close()
 
 
-def _save_scores(score_file, scores, probe_objects, client_id, write_compressed=False):
+def _save_scores(score_file, scores, probe_objects, client_id, write_compressed):
   """Saves the scores of one model into a text file that can be interpreted by :py:func:`bob.measure.load.split_four_column`."""
   assert len(probe_objects) == scores.shape[1]
 
@@ -98,7 +110,7 @@ def _save_scores(score_file, scores, probe_objects, client_id, write_compressed=
   _close_written(score_file, f, write_compressed)
 
 
-def _scores_a(algorithm, model_ids, group, compute_zt_norm, force, write_compressed=False):
+def _scores_a(algorithm, model_ids, group, compute_zt_norm, force, write_compressed, allow_missing_files):
   """Computes A scores for the models with the given model_ids. If ``compute_zt_norm = False``, these are the only scores that are actually computed."""
   # the file selector object
   fs = FileSelector.instance()
@@ -117,11 +129,15 @@ def _scores_a(algorithm, model_ids, group, compute_zt_norm, force, write_compres
     else:
       # get probe files that are required for this model
       current_probe_objects = fs.probe_objects_for_model(model_id, group)
-      model = algorithm.read_model(fs.model_file(model_id, group))
+      model_file = fs.model_file(model_id, group)
+      if allow_missing_files and not os.path.exists(model_file):
+        model = None
+      else:
+        model = algorithm.read_model(model_file)
       # get the probe files
       current_probe_files = fs.get_paths(current_probe_objects, 'projected' if algorithm.performs_projection else 'extracted')
       # compute scores
-      a = _scores(algorithm, model, current_probe_files)
+      a = _scores(algorithm, model, current_probe_files, allow_missing_files)
 
       if compute_zt_norm:
         # write A matrix only when you want to compute zt norm afterwards
@@ -131,7 +147,7 @@ def _scores_a(algorithm, model_ids, group, compute_zt_norm, force, write_compres
       _save_scores(fs.no_norm_file(model_id, group), a, current_probe_objects, fs.client_id(model_id, group), write_compressed)
 
 
-def _scores_b(algorithm, model_ids, group, force):
+def _scores_b(algorithm, model_ids, group, force, allow_missing_files):
   """Computes B scores for the given model ids."""
   # the file selector object
   fs = FileSelector.instance()
@@ -149,11 +165,15 @@ def _scores_b(algorithm, model_ids, group, force):
     if utils.check_file(score_file, force):
       logger.warn("Score file '%s' already exists.", score_file)
     else:
-      model = algorithm.read_model(fs.model_file(model_id, group))
-      b = _scores(algorithm, model, z_probe_files)
+      model_file = fs.model_file(model_id, group)
+      if allow_missing_files and not os.path.exists(model_file):
+        model = None
+      else:
+        model = algorithm.read_model(model_file)
+      b = _scores(algorithm, model, z_probe_files, allow_missing_files)
       bob.io.base.save(b, score_file, True)
 
-def _scores_c(algorithm, t_model_ids, group, force):
+def _scores_c(algorithm, t_model_ids, group, force, allow_missing_files):
   """Computes C scores for the given t-norm model ids."""
   # the file selector object
   fs = FileSelector.instance()
@@ -171,11 +191,15 @@ def _scores_c(algorithm, t_model_ids, group, force):
     if utils.check_file(score_file, force):
       logger.warn("Score file '%s' already exists.", score_file)
     else:
-      t_model = algorithm.read_model(fs.t_model_file(t_model_id, group))
-      c = _scores(algorithm, t_model, probe_files)
+      t_model_file = fs.t_model_file(t_model_id, group)
+      if allow_missing_files and not os.path.exists(t_model_file):
+        t_model = None
+      else:
+        t_model = algorithm.read_model(t_model_file)
+      c = _scores(algorithm, t_model, probe_files, allow_missing_files)
       bob.io.base.save(c, score_file, True)
 
-def _scores_d(algorithm, t_model_ids, group, force):
+def _scores_d(algorithm, t_model_ids, group, force, allow_missing_files):
   """Computes D scores for the given t-norm model ids. Both the D matrix and the D-samevalue matrix are written."""
   # the file selector object
   fs = FileSelector.instance()
@@ -197,8 +221,12 @@ def _scores_d(algorithm, t_model_ids, group, force):
     if utils.check_file(score_file, force) and utils.check_file(same_score_file, force):
       logger.warn("score files '%s' and '%s' already exist.", score_file, same_score_file)
     else:
-      t_model = algorithm.read_model(fs.t_model_file(t_model_id, group))
-      d = _scores(algorithm, t_model, z_probe_files)
+      t_model_file = fs.t_model_file(t_model_id, group)
+      if allow_missing_files and not os.path.exists(t_model_file):
+        t_model = None
+      else:
+        t_model = algorithm.read_model(t_model_file)
+      d = _scores(algorithm, t_model, z_probe_files, allow_missing_files)
       bob.io.base.save(d, score_file, True)
 
       t_client_id = [fs.client_id(t_model_id, group, True)]
@@ -206,7 +234,7 @@ def _scores_d(algorithm, t_model_ids, group, force):
       bob.io.base.save(d_same_value_tm, same_score_file, True)
 
 
-def compute_scores(algorithm, compute_zt_norm, force = False, indices = None, groups = ['dev', 'eval'], types = ['A', 'B', 'C', 'D'], write_compressed = False):
+def compute_scores(algorithm, compute_zt_norm, indices = None, groups = ['dev', 'eval'], types = ['A', 'B', 'C', 'D'], write_compressed = False, allow_missing_files = False, force = False):
   """Computes the scores for the given groups.
 
   This function computes all scores for the experiment, and writes them to files, one per model.
@@ -217,9 +245,6 @@ def compute_scores(algorithm, compute_zt_norm, force = False, indices = None, gr
 
   algorithm : py:class:`bob.bio.base.algorithm.Algorithm` or derived
     The algorithm, used for enrolling model and writing them to file.
-
-  force : bool
-    If given, files are regenerated, even if they already exist.
 
   compute_zt_norm : bool
     If set to ``True``, also ZT-norm scores are computed.
@@ -239,12 +264,18 @@ def compute_scores(algorithm, compute_zt_norm, force = False, indices = None, gr
 
   write_compressed : bool
     If enabled, score files are compressed as ``.tar.bz2`` files.
+
+  allow_missing_files : bool
+    If set to ``True``, model and probe files that are not found will produce ``NaN`` scores.
+
+  force : bool
+    If given, score files are regenerated, even if they already exist.
   """
   # the file selector object
   fs = FileSelector.instance()
 
   # load the projector and the enroller, if needed
-  if algorithm.requires_projector_training:
+  if algorithm.performs_projection:
     algorithm.load_projector(fs.projector_file)
   algorithm.load_enroller(fs.enroller_file)
 
@@ -261,26 +292,26 @@ def compute_scores(algorithm, compute_zt_norm, force = False, indices = None, gr
 
     # compute A scores
     if 'A' in types:
-      _scores_a(algorithm, model_ids, group, compute_zt_norm, force, write_compressed)
+      _scores_a(algorithm, model_ids, group, compute_zt_norm, force, write_compressed, allow_missing_files)
 
     if compute_zt_norm:
       # compute B scores
       if 'B' in types:
-        _scores_b(algorithm, model_ids, group, force)
+        _scores_b(algorithm, model_ids, group, force, allow_missing_files)
 
       # compute C scores
       if 'C' in types:
-        _scores_c(algorithm, t_model_ids, group, force)
+        _scores_c(algorithm, t_model_ids, group, force, allow_missing_files)
 
       # compute D scores
       if 'D' in types:
-        _scores_d(algorithm, t_model_ids, group, force)
+        _scores_d(algorithm, t_model_ids, group, force, allow_missing_files)
 
 
 
 def _c_matrix_split_for_model(selected_probe_objects, all_probe_objects, all_c_scores):
   """Helper function to sub-select the c-scores in case not all probe files were used to compute A scores."""
-  c_scores_for_model = numpy.ndarray((all_c_scores.shape[0], len(selected_probe_objects)), numpy.float64)
+  c_scores_for_model = numpy.empty((all_c_scores.shape[0], len(selected_probe_objects)), numpy.float64)
   selected_index = 0
   for all_index in range(len(all_probe_objects)):
     if selected_index < len(selected_probe_objects) and selected_probe_objects[selected_index].id == all_probe_objects[all_index].id:
@@ -338,7 +369,7 @@ def _scores_d_normalize(t_model_ids, group):
 
 
 
-def zt_norm(groups = ['dev', 'eval'], write_compressed=False):
+def zt_norm(groups = ['dev', 'eval'], write_compressed = False, allow_missing_files = False):
   """Computes ZT-Norm using the previously generated A, B, C, D and D-samevalue matrix files.
 
   This function computes the ZT-norm scores for all model ids for all desired groups and writes them into files defined by the :py:class:`bob.bio.base.tools.FileSelector`.
@@ -351,6 +382,10 @@ def zt_norm(groups = ['dev', 'eval'], write_compressed=False):
 
   write_compressed : bool
     If enabled, score files are compressed as ``.tar.bz2`` files.
+
+  allow_missing_files : bool
+    Currently, this option is only provided for completeness.
+    ``NaN`` scores are not yet handled correctly.
   """
   # the file selector object
   fs = FileSelector.instance()
@@ -366,10 +401,10 @@ def zt_norm(groups = ['dev', 'eval'], write_compressed=False):
     # and normalize it
     _scores_d_normalize(t_model_ids, group)
 
-
     # load D matrices only once
     d = bob.io.base.load(fs.d_matrix_file(group))
     d_same_value = bob.io.base.load(fs.d_same_value_matrix_file(group)).astype(bool)
+    error_log_done = False
     # Loops over the model ids
     for model_id in model_ids:
       # Loads probe files to get information about the type of access
@@ -381,6 +416,12 @@ def zt_norm(groups = ['dev', 'eval'], write_compressed=False):
       c = bob.io.base.load(fs.c_file_for_model(model_id, group))
 
       # compute zt scores
+      if allow_missing_files:
+        # TODO: handle NaN scores, i.e., when allow_missing_files is enabled
+        if not error_log_done and any(numpy.any(numpy.isnan(x)) for x in (a,b,c,d,d_same_value)):
+          logger.error("There are NaN scores inside one of the score files for group %s; ZT-Norm will not work", group)
+          error_log_done = True
+
       zt_scores = bob.learn.em.ztnorm(a, b, c, d, d_same_value)
 
       # Saves to text file
@@ -401,7 +442,7 @@ def _concat(score_files, output, write_compressed):
 
 
 
-def concatenate(compute_zt_norm, groups = ['dev', 'eval'], write_compressed=False):
+def concatenate(compute_zt_norm, groups = ['dev', 'eval'], write_compressed = False):
   """Concatenates all results into one (or two) score files per group.
 
   Score files, which were generated per model, are concatenated into a single score file, which can be interpreter by :py:func:`bob.measure.load.split_four_column`.
@@ -443,6 +484,10 @@ def calibrate(compute_zt_norm, groups = ['dev', 'eval'], prior = 0.5, write_comp
   For ZT-norm scores, the calibration is performed independently, if enabled.
   The names of the calibrated score files that should be written are obtained from the :py:class:`bob.bio.base.tools.FileSelector`.
 
+  .. note::
+     All ``NaN`` scores in the development set are silently ignored.
+     This might raise an error, if **all** scores are ``NaN``.
+
   **Parameters:**
 
   compute_zt_norm : bool
@@ -451,6 +496,9 @@ def calibrate(compute_zt_norm, groups = ['dev', 'eval'], prior = 0.5, write_comp
   groups : some of ``('dev', 'eval')``
     The list of groups, for which score files should be calibrated.
     The first of the given groups is used to train the logistic regression parameters, while the calibration is performed for all given groups.
+
+  prior : float
+    Whatever :py:class:`bob.learn.linear.CGLogRegTrainer` takes as a ``prior``.
 
   write_compressed : bool
     If enabled, calibrated score files are compressed as ``.tar.bz2`` files.
@@ -469,8 +517,9 @@ def calibrate(compute_zt_norm, groups = ['dev', 'eval'], prior = 0.5, write_comp
     training_scores = list(bob.measure.load.split_four_column(training_score_file))
     for i in (0,1):
       h = numpy.array(training_scores[i])
-      h.shape = (len(training_scores[i]), 1)
-      training_scores[i] = h
+      # remove NaN's
+      h = h[~numpy.isnan(h)]
+      training_scores[i] = h[:,numpy.newaxis]
     # train the LLR
     llr_machine = llr_trainer.train(training_scores[0], training_scores[1])
     del training_scores

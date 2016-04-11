@@ -252,6 +252,7 @@ def execute(args):
         args.preprocessor,
         groups = tools.groups(args),
         indices = tools.indices(fs.original_data_list(groups=tools.groups(args)), None if args.grid is None else args.grid.number_of_preprocessing_jobs),
+        allow_missing_files = args.allow_missing_files,
         force = args.force)
 
   # train the feature extractor
@@ -259,6 +260,7 @@ def execute(args):
     tools.train_extractor(
         args.extractor,
         args.preprocessor,
+        allow_missing_files = args.allow_missing_files,
         force = args.force)
 
   # extract the features
@@ -268,6 +270,7 @@ def execute(args):
         args.preprocessor,
         groups = tools.groups(args),
         indices = tools.indices(fs.preprocessed_data_list(groups=tools.groups(args)), None if args.grid is None else args.grid.number_of_extraction_jobs),
+        allow_missing_files = args.allow_missing_files,
         force = args.force)
 
   # train the feature projector
@@ -275,6 +278,7 @@ def execute(args):
     tools.train_projector(
         args.algorithm,
         args.extractor,
+        allow_missing_files = args.allow_missing_files,
         force = args.force)
 
   # project the features
@@ -284,6 +288,7 @@ def execute(args):
         args.extractor,
         groups = tools.groups(args),
         indices = tools.indices(fs.preprocessed_data_list(groups=tools.groups(args)), None if args.grid is None else args.grid.number_of_projection_jobs),
+        allow_missing_files = args.allow_missing_files,
         force = args.force)
 
   # train the model enroller
@@ -291,6 +296,7 @@ def execute(args):
     tools.train_enroller(
         args.algorithm,
         args.extractor,
+        allow_missing_files = args.allow_missing_files,
         force = args.force)
 
   # enroll the models
@@ -303,6 +309,7 @@ def execute(args):
           indices = tools.indices(fs.model_ids(args.group), None if args.grid is None else args.grid.number_of_enrollment_jobs),
           groups = [args.group],
           types = ['N'],
+          allow_missing_files = args.allow_missing_files,
           force = args.force)
 
     else:
@@ -313,6 +320,7 @@ def execute(args):
           indices = tools.indices(fs.t_model_ids(args.group), None if args.grid is None else args.grid.number_of_enrollment_jobs),
           groups = [args.group],
           types = ['T'],
+          allow_missing_files = args.allow_missing_files,
           force = args.force)
 
   # compute scores
@@ -325,6 +333,7 @@ def execute(args):
           groups = [args.group],
           types = [args.score_type],
           force = args.force,
+          allow_missing_files = args.allow_missing_files,
           write_compressed = args.write_compressed_score_files)
 
     elif args.score_type in ['C', 'D']:
@@ -335,12 +344,14 @@ def execute(args):
           groups = [args.group],
           types = [args.score_type],
           force = args.force,
+          allow_missing_files = args.allow_missing_files,
           write_compressed = args.write_compressed_score_files)
 
     else:
       tools.zt_norm(
           groups = [args.group],
-          write_compressed = args.write_compressed_score_files)
+          write_compressed = args.write_compressed_score_files,
+          allow_missing_files = args.allow_missing_files)
 
   # concatenate
   elif args.sub_task == 'concatenate':

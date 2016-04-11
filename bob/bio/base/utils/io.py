@@ -6,6 +6,22 @@ logger = logging.getLogger("bob.bio.base")
 
 import bob.io.base
 
+def filter_missing_files(file_names, split_by_client=False, allow_missing_files=True):
+  """This function filters out files that do not exist, but only if ``allow_missing_files`` is set to ``True``, otherwise the list of ``file_names`` is returned unaltered."""
+
+  if not allow_missing_files:
+    return file_names
+
+  if split_by_client:
+    # filter out missing files and empty clients
+    existing_files = [[f for f in client_files if os.path.exists(f)] for client_files in file_names]
+    existing_files = [client_files for client_files in existing_files if client_files]
+  else:
+    # filter out missing files
+    existing_files = [f for f in file_names if os.path.exists(f)]
+  return existing_files
+
+
 def check_file(filename, force, expected_file_size = 1):
   """Checks if the file with the given ``filename`` exists and has size greater or equal to ``expected_file_size``.
   If the file is to small, **or** if the ``force`` option is set to ``True``, the file is removed.
@@ -83,7 +99,6 @@ def close_compressed(filename, hdf5_file, compression_type='bz2', create_link=Fa
 
   # clean up locally generated files
   os.remove(hdf5_file_name)
-
 
 
 def load_compressed(filename, compression_type='bz2'):

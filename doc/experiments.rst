@@ -228,8 +228,28 @@ If the ZT-norm is enabled, two sets of scores will be computed, and they will be
 Other Arguments
 ---------------
 
+Calibration
+~~~~~~~~~~~
+
 For some applications it is interesting to get calibrated scores.
 Simply add the ``--calibrate-scores`` option and another set of score files will be created by training the score calibration on the scores of the ``'dev'`` group and execute it to all available groups.
-The scores will be located at the same directory as the **nonorm** and **ztnorm** scores, and the file names are **calibrated-dev** (and **calibrated-eval** if applicable) .
+The scores will be located at the same directory as the **nonorm** and **ztnorm** scores, and the file names are **calibrated-dev** (and **calibrated-eval** if applicable).
+
+Unsuccessful Preprocessing
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In some cases, the preprocessor is not able to preprocess the data (e.g., for face image processing the face detector might not detect the face).
+If you expect such cases to happen, you might want to use the ``--allow-missing-files`` option.
+When this option is enabled, missing files will be handled correctly throughout the whole processing chain, i.e.:
+
+* the data file is not used during training (in any step of the processing tool chain)
+* preprocessed data is not written
+* feature extraction is not performed for that file
+* the file is exempt from model enrollment; if no enrollment file is found for a model, no model file is written
+* if either model or probe file is not found, the according score will be ``NaN``.
+  If several probe files are combined into one score, missing probe files will be ignored; if all probe files are not found, the score is ``NaN``.
+
+.. warning::
+   At the moment, combining the ``--allow-missing-files`` and ``zt-norm`` options might result in unexpected behavior, as the ZT-Norm computation does not handle ``NaN`` values appropriately.
 
 .. include:: links.rst

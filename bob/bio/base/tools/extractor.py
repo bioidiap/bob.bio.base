@@ -8,7 +8,7 @@ from .FileSelector import FileSelector
 from .preprocessor import read_preprocessed_data
 from .. import utils
 
-def train_extractor(extractor, preprocessor, force = False):
+def train_extractor(extractor, preprocessor, allow_missing_files = False, force = False):
   """Trains the feature extractor using preprocessed data of the ``'world'`` group, if the feature extractor requires training.
 
   This function should only be called, when the ``extractor`` actually requires training.
@@ -23,6 +23,9 @@ def train_extractor(extractor, preprocessor, force = False):
 
   preprocessor : py:class:`bob.bio.base.preprocessor.Preprocessor` or derived
     The preprocessor, used for reading the preprocessed data.
+
+  allow_missing_files : bool
+    If set to ``True``, preprocessed data files that are not found are silently ignored during training.
 
   force : bool
     If given, the extractor file is regenerated, even if it already exists.
@@ -41,7 +44,7 @@ def train_extractor(extractor, preprocessor, force = False):
     bob.io.base.create_directories_safe(os.path.dirname(fs.extractor_file))
     # read training files
     train_files = fs.training_list('preprocessed', 'train_extractor', arrange_by_client = extractor.split_training_data_by_client)
-    train_data = read_preprocessed_data(train_files, preprocessor, extractor.split_training_data_by_client)
+    train_data = read_preprocessed_data(train_files, preprocessor, extractor.split_training_data_by_client, allow_missing_files)
     if extractor.split_training_data_by_client:
       logger.info("- Extraction: training extractor '%s' using %d identities:", fs.extractor_file, len(train_files))
     else:
@@ -51,7 +54,7 @@ def train_extractor(extractor, preprocessor, force = False):
 
 
 
-def extract(extractor, preprocessor, groups=None, indices = None, force = False):
+def extract(extractor, preprocessor, groups=None, indices = None, allow_missing_files = False, force = False):
   """Extracts features from the preprocessed data using the given extractor.
 
   The given ``extractor`` is used to extract all features required for the current experiment.
@@ -75,6 +78,9 @@ def extract(extractor, preprocessor, groups=None, indices = None, force = False)
     If specified, only the features for the given index range ``range(begin, end)`` should be extracted.
     This is usually given, when parallel threads are executed.
 
+  allow_missing_files : bool
+    If set to ``True``, preprocessed data files that are not found are silently ignored.
+
   force : bool
     If given, files are regenerated, even if they already exist.
   """
@@ -96,6 +102,13 @@ def extract(extractor, preprocessor, groups=None, indices = None, force = False)
     data_file = data_files[i]
     feature_file = feature_files[i]
 
+    if not os.path.exists(data_file):
+      if allow_missing_files:
+        logger.debug("... Cannot find preprocessed data file %s; skipping", data_file)
+        continue
+      else:
+        logger.error("Cannot find preprocessed data file %s", data_file)
+
     if not utils.check_file(feature_file, force, 1000):
       logger.debug("... Extracting features for data file '%s'", data_file)
       # create output directory before reading the data file (is sometimes required, when relative directories are specified, especially, including a .. somewhere)
@@ -110,7 +123,7 @@ def extract(extractor, preprocessor, groups=None, indices = None, force = False)
       logger.debug("... Skipping preprocessed data '%s' since feature file '%s' exists", data_file, feature_file)
 
 
-def read_features(file_names, extractor, split_by_client = False):
+def read_features(file_names, extractor, split_by_client = False, allow_missing_files = False):
   """read_features(file_names, extractor, split_by_client = False) -> extracted
 
   Reads the extracted features from ``file_names`` using the given ``extractor``.
@@ -128,11 +141,16 @@ def read_features(file_names, extractor, split_by_client = False):
   split_by_client : bool
     Indicates if the given ``file_names`` are split into groups.
 
+  allow_missing_files : bool
+    If set to ``True``, extracted files that are not found are silently ignored.
+
   **Returns:**
 
   extracted : [object] or [[object]]
     The list of extracted features, in the same order as in the ``file_names``.
   """
+  file_names = utils.filter_missing_files(file_names, split_by_client, allow_missing_files)
+
   if split_by_client:
     return [[extractor.read_feature(f) for f in client_files] for client_files in file_names]
   else:

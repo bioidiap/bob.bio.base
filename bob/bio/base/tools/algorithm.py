@@ -9,7 +9,7 @@ from .extractor import read_features
 from .. import utils
 
 
-def train_projector(algorithm, extractor, force = False):
+def train_projector(algorithm, extractor, allow_missing_files = False, force = False):
   """Trains the feature projector using extracted features of the ``'world'`` group, if the algorithm requires projector training.
 
   This function should only be called, when the ``algorithm`` actually requires projector training.
@@ -24,6 +24,9 @@ def train_projector(algorithm, extractor, force = False):
 
   extractor : py:class:`bob.bio.base.extractor.Extractor` or derived
     The extractor, used for reading the training data.
+
+  allow_missing_files : bool
+    If set to ``True``, extracted files that are not found are silently ignored during training.
 
   force : bool
     If given, the projector file is regenerated, even if it already exists.
@@ -42,7 +45,7 @@ def train_projector(algorithm, extractor, force = False):
     # train projector
     logger.info("- Projection: loading training data")
     train_files = fs.training_list('extracted', 'train_projector', arrange_by_client = algorithm.split_training_features_by_client)
-    train_features = read_features(train_files, extractor, algorithm.split_training_features_by_client)
+    train_features = read_features(train_files, extractor, algorithm.split_training_features_by_client, allow_missing_files)
     if algorithm.split_training_features_by_client:
       logger.info("- Projection: training projector '%s' using %d identities: ", fs.projector_file, len(train_files))
     else:
@@ -53,7 +56,7 @@ def train_projector(algorithm, extractor, force = False):
 
 
 
-def project(algorithm, extractor, groups = None, indices = None, force = False):
+def project(algorithm, extractor, groups = None, indices = None, allow_missing_files = False, force = False):
   """Projects the features for all files of the database.
 
   The given ``algorithm`` is used to project all features required for the current experiment.
@@ -76,6 +79,9 @@ def project(algorithm, extractor, groups = None, indices = None, force = False):
   indices : (int, int) or None
     If specified, only the features for the given index range ``range(begin, end)`` should be projected.
     This is usually given, when parallel threads are executed.
+
+  allow_missing_files : bool
+    If set to ``True``, extracted files that are not found are silently ignored.
 
   force : bool
     If given, files are regenerated, even if they already exist.
@@ -106,6 +112,14 @@ def project(algorithm, extractor, groups = None, indices = None, force = False):
     feature_file = feature_files[i]
     projected_file = projected_files[i]
 
+    if not os.path.exists(feature_file):
+      if allow_missing_files:
+        logger.debug("... Cannot find extracted feature file %s; skipping", feature_file)
+        continue
+      else:
+        logger.error("Cannot find extracted feature file %s", feature_file)
+
+
     if not utils.check_file(projected_file, force, 1000):
       logger.debug("... Projecting features for file '%s'", feature_file)
       # create output directory before reading the data file (is sometimes required, when relative directories are specified, especially, including a .. somewhere)
@@ -122,7 +136,7 @@ def project(algorithm, extractor, groups = None, indices = None, force = False):
 
 
 
-def train_enroller(algorithm, extractor, force = False):
+def train_enroller(algorithm, extractor, allow_missing_files = False, force = False):
   """Trains the model enroller using the extracted or projected features, depending on your setup of the algorithm.
 
   This function should only be called, when the ``algorithm`` actually requires enroller training.
@@ -138,6 +152,9 @@ def train_enroller(algorithm, extractor, force = False):
 
   extractor : py:class:`bob.bio.base.extractor.Extractor` or derived
     The extractor, used for reading the training data, if unprojected features are used for enroller training.
+
+  allow_missing_files : bool
+    If set to ``True``, extracted files that are not found are silently ignored during training.
 
   force : bool
     If given, the enroller file is regenerated, even if it already exists.
@@ -163,7 +180,7 @@ def train_enroller(algorithm, extractor, force = False):
     # load training data
     train_files = fs.training_list('projected' if algorithm.use_projected_features_for_enrollment else 'extracted', 'train_enroller', arrange_by_client = True)
     logger.info("- Enrollment: loading %d enroller training files", len(train_files))
-    train_features = read_features(train_files, reader, True)
+    train_features = read_features(train_files, reader, True, allow_missing_files)
 
     # perform training
     logger.info("- Enrollment: training enroller '%s' using %d identities", fs.enroller_file, len(train_features))
@@ -171,7 +188,7 @@ def train_enroller(algorithm, extractor, force = False):
 
 
 
-def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev', 'eval'], types = ['N', 'T'], force = False):
+def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev', 'eval'], types = ['N', 'T'], allow_missing_files = False, force = False):
   """Enroll the models for the given groups, eventually for both models and T-Norm-models.
      This function uses the extracted or projected features to compute the models, depending on your setup of the given ``algorithm``.
 
@@ -198,6 +215,10 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
 
   groups : some of ``('dev', 'eval')``
     The list of groups, for which models should be enrolled.
+
+  allow_missing_files : bool
+    If set to ``True``, extracted or ptojected files that are not found are silently ignored.
+    If none of the enroll files are found, no model file will be written.
 
   force : bool
     If given, files are regenerated, even if they already exist.
@@ -230,6 +251,13 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
         # Removes old file if required
         if not utils.check_file(model_file, force, 1000):
           enroll_files = fs.enroll_files(model_id, group, 'projected' if algorithm.use_projected_features_for_enrollment else 'extracted')
+
+          if allow_missing_files:
+            enroll_files = utils.filter_missing_files(enroll_files)
+            if not enroll_files:
+              logger.debug("... Skipping model file %s since no feature file could be found", model_file)
+              continue
+
           logger.debug("... Enrolling model from %d features to file '%s'", len(enroll_files), model_file)
           bob.io.base.create_directories_safe(os.path.dirname(model_file))
 
@@ -261,6 +289,13 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
         # Removes old file if required
         if not utils.check_file(t_model_file, force, 1000):
           t_enroll_files = fs.t_enroll_files(t_model_id, group, 'projected' if algorithm.use_projected_features_for_enrollment else 'extracted')
+
+          if allow_missing_files:
+            t_enroll_files = utils.filter_missing_files(t_enroll_files)
+            if not t_enroll_files:
+              logger.debug("... Skipping T-model file %s since no feature file could be found", t_model_file)
+              continue
+
           logger.debug("... Enrolling T-model from %d features to file '%s'", len(t_enroll_files), t_model_file)
           bob.io.base.create_directories_safe(os.path.dirname(t_model_file))
 
