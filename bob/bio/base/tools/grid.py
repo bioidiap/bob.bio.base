@@ -49,6 +49,8 @@ class GridSubmission:
 
     if args.grid is not None:
       assert isinstance(args.grid, grid.Grid)
+      
+      self.env = args.env #Fetching the enviroment variable
 
       # find, where jman is installed
       jmans = bob.extension.find_executable('jman', prefixes = ['bin'])
@@ -93,6 +95,9 @@ class GridSubmission:
 
     # submit the job to the job manager
     if not self.args.dry_run:
+      if(self.env is not None):
+        kwargs['env'] = self.env
+
       job_id = self.job_manager.submit(
           command_line = cmd,
           name = name,
