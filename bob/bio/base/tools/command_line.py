@@ -139,6 +139,8 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
       help = "If given, missing files will not stop the processing; this is helpful if not all files of the database can be processed; missing scores will be NaN.")
   flag_group.add_argument('-r', '--parallel', type=int,
       help = 'This flag is a shortcut for running the commands on the local machine with the given amount of parallel threads; equivalent to --grid bob.bio.base.grid.Grid("local", number_of_parallel_threads=X) --run-local-scheduler --stop-on-failure.')
+      
+  flag_group.add_argument('-t', '--environment', dest='env', nargs='*', default=[], help='Passes specific environment variables to the job.')
 
   return {
     'main' : parser,
