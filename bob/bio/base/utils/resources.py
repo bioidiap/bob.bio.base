@@ -75,13 +75,13 @@ def read_config_file(filename, keyword = None):
   return eval('config.' + keyword)
 
 
-def _get_entry_points(keyword, strip = []):
+def _get_entry_points(keyword, strip = [], package_prefix='bob.bio.'):
   """Returns the list of entry points for registered resources with the given keyword."""
-  return  [entry_point for entry_point in pkg_resources.iter_entry_points('bob.bio.' + keyword) if not entry_point.name.startswith(tuple(strip))]
+  return  [entry_point for entry_point in pkg_resources.iter_entry_points(package_prefix + keyword) if not entry_point.name.startswith(tuple(strip))]
 
 
-def load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_package = None):
-  """load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_package = None) -> resource
+def load_resource(resource, keyword, imports = ['bob.bio.base'], package_prefix='bob.bio.', preferred_package=None):
+  """load_resource(resource, keyword, imports = ['bob.bio.base'], package_prefix='bob.bio.', preferred_package = None) -> resource
 
   Loads the given resource that is registered with the given keyword.
   The resource can be:
@@ -101,6 +101,9 @@ def load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_packa
   imports : [str]
     A list of strings defining which modules to import, when constructing new objects (option 3).
 
+  package_prefix : str
+    Package namespace, in which we search for entry points, e.g., ``bob.bio``.
+
   preferred_package : str or ``None``
     When several resources with the same name are found in different packages (e.g., in different ``bob.bio`` or other packages), this specifies the preferred package to load the resource from.
     If not specified, the extension that is **not** from ``bob.bio`` is selected.
@@ -119,7 +122,7 @@ def load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_packa
     raise ValueError("The given keyword '%s' is not valid. Please use one of %s!" % (str(keyword), str(valid_keywords)))
 
   # now, we check if the resource is registered as an entry point in the resource files
-  entry_points = [entry_point for entry_point in _get_entry_points(keyword) if entry_point.name == resource]
+  entry_points = [entry_point for entry_point in _get_entry_points(keyword, package_prefix=package_prefix) if entry_point.name == resource]
 
   if len(entry_points):
     if len(entry_points) == 1:
@@ -138,7 +141,7 @@ def load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_packa
       if index == -1:
         # by default, use the first one that is not from bob.bio
         for i,p in enumerate(entry_points):
-          if not p.dist.project_name.startswith('bob.bio'):
+          if not p.dist.project_name.startswith(package_prefix):
             index = i
             break
 
@@ -165,8 +168,8 @@ def load_resource(resource, keyword, imports = ['bob.bio.base'], preferred_packa
     raise ImportError("The given command line option '%s' is neither a resource for a '%s', nor an existing configuration file, nor could be interpreted as a command (error: %s)"%(resource, keyword, str(e)))
 
 
-def extensions(keywords=valid_keywords):
-  """extensions(keywords=valid_keywords) -> extensions
+def extensions(keywords=valid_keywords, package_prefix='bob.bio.'):
+  """extensions(keywords=valid_keywords, package_prefix='bob.bio.') -> extensions
 
   Returns a list of packages that define extensions using the given keywords.
 
@@ -175,23 +178,28 @@ def extensions(keywords=valid_keywords):
   keywords : [str]
     A list of keywords to load entry points for.
     Defaults to all :py:attr:`valid_keywords`.
+    
+  package_prefix : str
+    Package namespace, in which we search for entry points, e.g., ``bob.bio``.
   """
-  entry_points = [entry_point for keyword in keywords for entry_point in _get_entry_points(keyword)]
+  entry_points = [entry_point for keyword in keywords for entry_point in _get_entry_points(keyword, package_prefix=package_prefix)]
   return sorted(list(set(entry_point.dist.project_name for entry_point in entry_points)))
 
 
-def resource_keys(keyword, exclude_packages=[], strip=['dummy']):
+def resource_keys(keyword, exclude_packages=[], package_prefix='bob.bio.', strip=['dummy']):
   """Reads and returns all resources that are registered with the given keyword.
   Entry points from the given ``exclude_packages`` are ignored."""
-  return sorted([entry_point.name for entry_point in _get_entry_points(keyword, strip) if entry_point.dist.project_name not in exclude_packages])
+  return sorted([entry_point.name for entry_point in
+                 _get_entry_points(keyword, strip=strip, package_prefix=package_prefix)
+                 if entry_point.dist.project_name not in exclude_packages])
 
 
-def list_resources(keyword, strip=['dummy']):
+def list_resources(keyword, strip=['dummy'], package_prefix='bob.bio.'):
   """Returns a string containing a detailed list of resources that are registered with the given keyword."""
   if keyword not in valid_keywords:
     raise ValueError("The given keyword '%s' is not valid. Please use one of %s!" % (str(keyword), str(valid_keywords)))
 
-  entry_points = _get_entry_points(keyword, strip)
+  entry_points = _get_entry_points(keyword, strip, package_prefix=package_prefix)
   last_dist = None
   retval = ""
   length = max(len(entry_point.name) for entry_point in entry_points) if entry_points else 1
@@ -208,9 +216,9 @@ def list_resources(keyword, strip=['dummy']):
   return retval
 
 
-def database_directories(strip=['dummy'], replacements = None):
+def database_directories(strip=['dummy'], replacements = None, package_prefix='bob.bio.'):
   """Returns a dictionary of original directories for all registered databases."""
-  entry_points = _get_entry_points('database', strip)
+  entry_points = _get_entry_points('database', strip, package_prefix=package_prefix)
 
   dirs = {}
   for entry_point in sorted(entry_points):
