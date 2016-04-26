@@ -89,7 +89,7 @@ class Distance (Algorithm):
     probe : object
       The probe.
     """
-    return utils.load(feature_file)
+    return utils.load(probe_file)
 
 
   def score(self, model, probe):

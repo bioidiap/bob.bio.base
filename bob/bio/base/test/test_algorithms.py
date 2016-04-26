@@ -216,6 +216,37 @@ def test_lda():
 
 
 
+
+def test_distance():
+
+  import scipy.spatial
+  
+  # assure that the configurations are loadable
+  distance = bob.bio.base.load_resource("distance-cosine", "algorithm", preferred_package = 'bob.bio.base')
+  assert isinstance(distance, bob.bio.base.algorithm.Distance)
+  assert isinstance(distance, bob.bio.base.algorithm.Algorithm)
+
+  assert distance.performs_projection==False
+  assert distance.requires_projector_training==False
+  assert distance.use_projected_features_for_enrollment == False
+  assert distance.split_training_features_by_client == False
+  assert distance.requires_enroller_training == False
+  
+  distance =  bob.bio.base.algorithm.Distance(
+            distance_function = scipy.spatial.distance.cosine,
+            is_distance_function = True
+          )  
+
+  # compare model with probe
+  enroll = utils.random_training_set(5, 5, 0., 255., seed=21);
+  model = numpy.mean(distance.enroll(enroll),axis=0)
+  probe = distance.read_probe(pkg_resources.resource_filename('bob.bio.base.test', 'data/lda_projected.hdf5'))
+  
+  reference_score = -0.1873371
+  assert abs(distance.score(model, probe) - reference_score) < 1e-5, "The scores differ: %3.8f, %3.8f" % (distance.score(model, probe), reference_score)
+
+
+
 def test_bic():
   temp_file = bob.io.base.test_utils.temporary_filename()
   # assure that the configurations are loadable
