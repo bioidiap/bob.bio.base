@@ -50,10 +50,7 @@ class GridSubmission:
     if args.grid is not None:
       assert isinstance(args.grid, grid.Grid)
       
-      if(hasattr(args,'env')):
-        self.env = args.env #Fetching the enviroment variable
-      else:
-        self.env = None
+      self.env = args.env #Fetching the enviroment variable
 
       # find, where jman is installed
       jmans = bob.extension.find_executable('jman', prefixes = ['bin'])
