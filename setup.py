@@ -145,6 +145,7 @@ setup(
         'local-p16         = bob.bio.base.config.grid.local:grid_p16',
         'grid              = bob.bio.base.config.grid.grid:grid',
         'demanding         = bob.bio.base.config.grid.demanding:grid',
+        'gpu               = bob.bio.base.config.grid.gpu:grid',
       ],
    },
 
