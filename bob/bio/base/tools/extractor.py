@@ -117,6 +117,15 @@ def extract(extractor, preprocessor, groups=None, indices = None, allow_missing_
       data = preprocessor.read_data(data_file)
       # extract feature
       feature = extractor(data)
+
+      if feature is None:
+        if allow_missing_files:
+          logger.debug("... Feature extraction for data file %s failed; skipping", data_file)
+          continue
+        else:
+          logger.error("Feature extraction  of file '%s' was not successful", data_file)
+        continue
+
       # write feature
       extractor.write_feature(feature, feature_file)
     else:
