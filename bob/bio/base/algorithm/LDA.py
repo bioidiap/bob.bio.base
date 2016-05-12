@@ -168,7 +168,7 @@ class LDA (Algorithm):
       data = self._perform_pca(pca_machine, data)
 
     logger.info("  -> Training Linear Machine using LDA")
-    trainer = bob.learn.linear.FisherLDATrainer(strip_to_rank = (self.lda_subspace is None))
+    trainer = bob.learn.linear.FisherLDATrainer(use_pinv = True, strip_to_rank = (self.lda_subspace is None))
     self.machine, self.variances = trainer.train(data)
     if self.lda_subspace is not None:
       self.machine.resize(self.machine.shape[0], self.lda_subspace)
