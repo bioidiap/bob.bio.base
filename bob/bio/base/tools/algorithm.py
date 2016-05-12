@@ -128,6 +128,15 @@ def project(algorithm, extractor, groups = None, indices = None, allow_missing_f
       feature = extractor.read_feature(feature_file)
       # project feature
       projected = algorithm.project(feature)
+
+      if projected is None:
+        if allow_missing_files:
+          logger.debug("... Projection for extracted file %s failed; skipping", feature_file)
+          continue
+        else:
+          logger.error("Projection of file '%s' was not successful", feature_file)
+        continue
+
       # write it
       algorithm.write_feature(projected, projected_file)
 
@@ -265,6 +274,15 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
           enroll_features = [reader.read_feature(enroll_file) for enroll_file in enroll_files]
 
           model = algorithm.enroll(enroll_features)
+
+          if model is None:
+            if allow_missing_files:
+              logger.debug("... Enrollment for model %s failed; skipping", model_id)
+              continue
+            else:
+              logger.error("Enrollemnt of model '%s' was not successful", model_id)
+            continue
+
           # save the model
           algorithm.write_model(model, model_file)
 
@@ -303,6 +321,15 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
           t_enroll_features = [reader.read_feature(t_enroll_file) for t_enroll_file in t_enroll_files]
 
           t_model = algorithm.enroll(t_enroll_features)
+
+          if t_model is None:
+            if allow_missing_files:
+              logger.debug("... Enrollment for T-model %s failed; skipping", t_model_id)
+              continue
+            else:
+              logger.error("Enrollemnt of T-model '%s' was not successful", t_model_id)
+            continue
+
           # save model
           algorithm.write_model(t_model, t_model_file)
         else:
