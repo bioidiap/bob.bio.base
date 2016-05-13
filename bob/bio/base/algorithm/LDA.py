@@ -34,6 +34,11 @@ class LDA (Algorithm):
     If specified as ``int``, defines the number of eigenvectors used in the PCA projection matrix.
     If specified as ``float`` (between 0 and 1), the number of eigenvectors is calculated such that the given percentage of variance is kept.
 
+  use_pinv : bool
+    Use the Pseudo-inverse to compute the LDA projection matrix?
+    Sometimes, the training fails because it is impossible to invert the covariance matrix.
+    In these cases, you might want to set ``use_pinv`` to ``True``, which solves this process, but slows down the processing noticeably.
+
   distance_function : function
     A function taking two parameters and returns a float.
     If ``uses_variances`` is set to ``True``, the function is provided with a third parameter, which is the vector of variances (aka. eigenvalues).
@@ -52,6 +57,7 @@ class LDA (Algorithm):
       self,
       lda_subspace_dimension = None, # if set, the LDA subspace will be truncated to the given number of dimensions; by default it is limited to the number of classes in the training set
       pca_subspace_dimension = None, # if set, a PCA subspace truncation is performed before applying LDA; might be integral or float
+      use_pinv = False,
       distance_function = scipy.spatial.distance.euclidean,
       is_distance_function = True,
       uses_variances = False,
@@ -66,6 +72,7 @@ class LDA (Algorithm):
 
         lda_subspace_dimension = lda_subspace_dimension,
         pca_subspace_dimension = pca_subspace_dimension,
+        use_pinv = use_pinv,
         distance_function = str(distance_function),
         is_distance_function = is_distance_function,
         uses_variances = uses_variances,
@@ -78,6 +85,7 @@ class LDA (Algorithm):
     self.lda_subspace = lda_subspace_dimension
     if self.pca_subspace is not None and isinstance(self.pca_subspace, int) and self.lda_subspace and self.pca_subspace < self.lda_subspace:
       raise ValueError("The LDA subspace is larger than the PCA subspace size. This won't work properly. Please check your setup!")
+    self.use_pinv = use_pinv
 
     self.machine = None
     self.distance_function = distance_function
@@ -168,7 +176,7 @@ class LDA (Algorithm):
       data = self._perform_pca(pca_machine, data)
 
     logger.info("  -> Training Linear Machine using LDA")
-    trainer = bob.learn.linear.FisherLDATrainer(use_pinv = True, strip_to_rank = (self.lda_subspace is None))
+    trainer = bob.learn.linear.FisherLDATrainer(use_pinv = self.use_pinv, strip_to_rank = (self.lda_subspace is None))
     self.machine, self.variances = trainer.train(data)
     if self.lda_subspace is not None:
       self.machine.resize(self.machine.shape[0], self.lda_subspace)
