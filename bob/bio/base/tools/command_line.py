@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import socket
 
 import bob.core
 logger = bob.core.log.setup("bob.bio.base")
@@ -139,7 +140,7 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
       help = "If given, missing files will not stop the processing; this is helpful if not all files of the database can be processed; missing scores will be NaN.")
   flag_group.add_argument('-r', '--parallel', type=int,
       help = 'This flag is a shortcut for running the commands on the local machine with the given amount of parallel threads; equivalent to --grid bob.bio.base.grid.Grid("local", number_of_parallel_threads=X) --run-local-scheduler --stop-on-failure.')
-      
+
   flag_group.add_argument('-t', '--environment', dest='env', nargs='*', default=[], help='Passes specific environment variables to the job.')
 
   return {
@@ -341,6 +342,7 @@ def write_info(args, command_line_parameters, executable):
     f = open(args.info_file, 'w')
     f.write("Command line:\n")
     f.write(command_line([executable] + command_line_parameters) + "\n\n")
+    f.write("Host: %s\n" % socket.gethostname())
     f.write("Configuration:\n")
     f.write("Database:\n%s\n\n" % args.database)
     f.write("Preprocessor:\n%s\n\n" % args.preprocessor)
