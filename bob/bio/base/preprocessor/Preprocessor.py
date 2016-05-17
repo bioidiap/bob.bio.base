@@ -29,6 +29,9 @@ class Preprocessor:
 
   **Parameters:**
 
+  writes_data : bool
+    Select, if the preprocessor actually writes preprocessed images, or if it is simply returning values.
+
   kwargs : ``key=value`` pairs
     A list of keyword arguments to be written in the :py:meth:`__str__` function.
   """
