@@ -33,6 +33,11 @@ def preprocess(preprocessor, groups = None, indices = None, allow_missing_files 
   force : bool
     If given, files are regenerated, even if they already exist.
   """
+  if not preprocessor.writes_data:
+    # The preprocessor does not write anything, so no need to call it
+    logger.info("Skipping preprocessing as preprocessor does not write any data")
+    return
+
   # the file selector object
   fs = FileSelector.instance()
 
@@ -110,9 +115,10 @@ def read_preprocessed_data(file_names, preprocessor, split_by_client = False, al
   preprocessed : [object] or [[object]]
     The list of preprocessed data, in the same order as in the ``file_names``.
   """
-  file_names = utils.filter_missing_files(file_names, split_by_client, allow_missing_files)
+  file_names = utils.filter_missing_files(file_names, split_by_client, allow_missing_files and preprocessor.writes_data)
 
   if split_by_client:
-    return [[preprocessor.read_data(f) for f in client_files] for client_files in file_names]
+    preprocessed = [[preprocessor.read_data(f) for f in client_files] for client_files in file_names]
   else:
-    return [preprocessor.read_data(f) for f in file_names]
+    preprocessed = [preprocessor.read_data(f) for f in file_names]
+  return utils.filter_none(preprocessed, split_by_client)

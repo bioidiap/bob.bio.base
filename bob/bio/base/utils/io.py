@@ -22,6 +22,21 @@ def filter_missing_files(file_names, split_by_client=False, allow_missing_files=
   return existing_files
 
 
+def filter_none(data, split_by_client=False):
+  """This function filters out ``None`` values from the given list (or list of lists, when ``split_by_client`` is enabled)."""
+
+  if split_by_client:
+    # filter out missing files and empty clients
+    existing_data = [[d for d in client_data if d is not None] for client_data in data]
+    existing_data = [client_data for client_data in existing_data if client_data]
+  else:
+    # filter out missing files
+    existing_data = [d for d in data if d is not None]
+  return existing_data
+
+
+
+
 def check_file(filename, force, expected_file_size = 1):
   """Checks if the file with the given ``filename`` exists and has size greater or equal to ``expected_file_size``.
   If the file is to small, **or** if the ``force`` option is set to ``True``, the file is removed.

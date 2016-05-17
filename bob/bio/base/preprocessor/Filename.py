@@ -27,7 +27,7 @@ class Filename (Preprocessor):
   """
 
   def __init__(self):
-    pass
+    Preprocessor.__init__(self, writes_data=False)
 
 
   # The call function (i.e. the operator() in C++ terms)

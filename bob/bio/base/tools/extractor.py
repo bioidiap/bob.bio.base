@@ -102,7 +102,7 @@ def extract(extractor, preprocessor, groups=None, indices = None, allow_missing_
     data_file = data_files[i]
     feature_file = feature_files[i]
 
-    if not os.path.exists(data_file):
+    if not os.path.exists(data_file) and preprocessor.writes_data:
       if allow_missing_files:
         logger.debug("... Cannot find preprocessed data file %s; skipping", data_file)
         continue

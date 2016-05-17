@@ -33,9 +33,10 @@ class Preprocessor:
     A list of keyword arguments to be written in the :py:meth:`__str__` function.
   """
 
-  def __init__(self, **kwargs):
+  def __init__(self, writes_data = True, **kwargs):
     # Each class needs to have a constructor taking
     # all the parameters that are required for the preprocessing as arguments
+    self.writes_data = writes_data
     self._kwargs = kwargs
     pass
 
