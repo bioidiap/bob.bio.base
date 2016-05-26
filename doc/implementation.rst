@@ -234,7 +234,7 @@ In most of the cases, the :py:class:`bob.db.verification.filelist.Database` shou
 Please refer to the documentation :ref:`Documentation <bob.db.verification.filelist>` of this database for more instructions on how to configure this database.
 
 In case you want to have a more complicated interface to your database, you are welcome to write your own database wrapper class.
-In this case, you have to derive your class from the :py:class:`facereclib.databases.Database`, and provide the following functions:
+In this case, you have to derive your class from the :py:class:`bob.bio.base.database.Database`, and provide the following functions:
 
 * ``__init__(self, <your-parameters>, **kwargs)``: Constructor of your database interface.
   Please call the base class constructor, providing all the required parameters, e.g. by ``bob.bio.base.database.Database.__init__(self, **kwargs)``.
