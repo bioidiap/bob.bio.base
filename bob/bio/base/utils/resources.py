@@ -178,7 +178,7 @@ def extensions(keywords=valid_keywords, package_prefix='bob.bio.'):
   keywords : [str]
     A list of keywords to load entry points for.
     Defaults to all :py:attr:`valid_keywords`.
-    
+
   package_prefix : str
     Package namespace, in which we search for entry points, e.g., ``bob.bio``.
   """
@@ -194,7 +194,7 @@ def resource_keys(keyword, exclude_packages=[], package_prefix='bob.bio.', strip
                  if entry_point.dist.project_name not in exclude_packages])
 
 
-def list_resources(keyword, strip=['dummy'], package_prefix='bob.bio.'):
+def list_resources(keyword, strip=['dummy'], package_prefix='bob.bio.', verbose=False):
   """Returns a string containing a detailed list of resources that are registered with the given keyword."""
   if keyword not in valid_keywords:
     raise ValueError("The given keyword '%s' is not valid. Please use one of %s!" % (str(keyword), str(valid_keywords)))
@@ -213,6 +213,9 @@ def list_resources(keyword, strip=['dummy'], package_prefix='bob.bio.'):
       retval += "  + %s --> %s: %s\n" % (entry_point.name + " "*(length - len(entry_point.name)), entry_point.module_name, entry_point.attrs[0])
     else:
       retval += "  + %s --> %s\n" % (entry_point.name + " "*(length - len(entry_point.name)), entry_point.module_name)
+    if verbose:
+      retval += "    ==> " + str(entry_point.load()) + "\n\n"
+
   return retval
 
 

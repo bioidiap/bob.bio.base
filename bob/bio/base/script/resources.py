@@ -8,19 +8,22 @@ def resources():
 
   import argparse
   parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-  parser.add_argument("--details", '-d', nargs = '+',
+  parser.add_argument("--types", '-t', nargs = '+',
                       choices = ('d', 'database', 'p', 'preprocessor', 'e', 'extractor', 'a', 'algorithm', 'g', 'grid'),
                       default = ('d', 'p', 'e', 'a', 'g'),
                       help = "Select the resource types that should be listed.")
+
+  parser.add_argument("--details", '-d', action='store_true', help = "Prints the complete configuration for all resources")
 
   parser.add_argument("--no-strip-dummy", '-s', action = 'store_true',
                       help = "If given, the dummy elements (usually used for testing purposes only) are **not** removed from the list.")
 
   args = parser.parse_args()
 
-  kwargs = {}
+  kwargs = {'verbose' : args.verbose}
   if args.no_strip_dummy:
     kwargs['strip'] = []
+
 
   if 'd' in args.details or 'database' in args.details:
     print ("\nList of registered databases:")

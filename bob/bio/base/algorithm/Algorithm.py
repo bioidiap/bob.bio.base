@@ -98,7 +98,7 @@ class Algorithm:
     info : str
       A string containing the full information of all parameters of this (and the derived) class.
     """
-    return "%s(%s)" % (str(self.__class__), ", ".join(["%s=%s" % (key, value) for key,value in self._kwargs.items() if value is not None]))
+    return utils.pretty_print(self, self._kwargs)
 
 
   def project(self, feature):

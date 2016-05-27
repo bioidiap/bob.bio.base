@@ -91,6 +91,15 @@ class Grid:
   ):
 
     self.grid_type = grid_type
+    if self.is_local():
+      self._kwargs = dict(grid_type=grid_type, number_of_parallel_processes=number_of_parallel_processes, scheduler_sleep_time=scheduler_sleep_time)
+    else:
+      self._kwargs = dict(
+          grid_type=grid_type,
+          number_of_preprocessing_jobs=number_of_preprocessing_jobs, number_of_extraction_jobs=number_of_extraction_jobs, number_of_projection_jobs=number_of_projection_jobs, number_of_enrollment_jobs=number_of_enrollment_jobs,
+          training_queue=training_queue, preprocessing_queue=preprocessing_queue, extraction_queue=extraction_queue, projection_queue=projection_queue, enrollment_queue=enrollment_queue, scoring_queue=scoring_queue
+      )
+
 
     # the numbers
     if self.is_local():
@@ -117,6 +126,10 @@ class Grid:
     self.number_of_parallel_processes = number_of_parallel_processes
     self.scheduler_sleep_time = scheduler_sleep_time
 
+
+  def __str__(self):
+    """Converts this grid configuration into a string, which contains the complete set of parameters."""
+    return utils.pretty_print(self, self._kwargs)
 
 
   def queue(self, params):

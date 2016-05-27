@@ -82,7 +82,13 @@ To get a list of registered resources, please call:
    $ ./bin/resources.py
 
 Each package in ``bob.bio`` defines its own resources, and the printed list of registered resources differs according to the installed packages.
-If only ``bob.bio.base`` is installed, no databases and no preprocessors will be listed.
+If only ``bob.bio.base`` is installed, no databases and only one preprocessor will be listed.
+To see more details about the resources, i.e., the full constructor call fo the respective class, use the ``--details`` (or shortly ``-d``) option, and to sub-select only specific types of resources, use the ``--types`` (or ``-t``) option:
+
+.. code-block:: sh
+
+   $ ./bin/resources.py -dt algorithm
+
 
 .. note::
    You will also find some ``grid`` resources being listed.
