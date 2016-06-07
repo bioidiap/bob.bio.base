@@ -33,6 +33,8 @@ PREDEFINED_QUEUES = {
   'GPU'         : {'queue' : 'gpu'}
 }
 
+from . import utils
+
 class Grid:
   """This class is defining the options that are required to submit parallel jobs to the SGE grid, or jobs to the local queue.
 

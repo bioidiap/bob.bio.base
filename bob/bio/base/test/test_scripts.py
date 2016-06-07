@@ -365,6 +365,14 @@ def test_evaluate():
   os.rmdir(test_dir)
 
 
+def test_resources():
+  # simply test that the collect_results script works
+  from bob.bio.base.script.resources import resources, databases
+  with utils.Quiet():
+    resources(['--types', 'database', 'preprocessor', 'extractor', 'algorithm', 'grid', '--details'])
+    databases([])
+
+
 def test_collect_results():
   # simply test that the collect_results script works
   test_dir = tempfile.mkdtemp(prefix='bobtest_')

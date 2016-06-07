@@ -4,7 +4,7 @@ from __future__ import print_function
 import bob.bio.base
 import os
 
-def resources():
+def resources(command_line_parameters = None):
 
   import argparse
   parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -18,43 +18,43 @@ def resources():
   parser.add_argument("--no-strip-dummy", '-s', action = 'store_true',
                       help = "If given, the dummy elements (usually used for testing purposes only) are **not** removed from the list.")
 
-  args = parser.parse_args()
+  args = parser.parse_args(command_line_parameters)
 
-  kwargs = {'verbose' : args.verbose}
+  kwargs = {'verbose' : args.details}
   if args.no_strip_dummy:
     kwargs['strip'] = []
 
 
-  if 'd' in args.details or 'database' in args.details:
+  if 'd' in args.types or 'database' in args.types:
     print ("\nList of registered databases:")
     print (bob.bio.base.list_resources('database', **kwargs))
 
-  if 'p' in args.details or 'preprocessor' in args.details:
+  if 'p' in args.types or 'preprocessor' in args.types:
     print ("\nList of registered preprocessors:")
     print (bob.bio.base.list_resources('preprocessor', **kwargs))
 
-  if 'e' in args.details or 'extractor' in args.details:
+  if 'e' in args.types or 'extractor' in args.types:
     print ("\nList of registered extractors:")
     print (bob.bio.base.list_resources('extractor', **kwargs))
 
-  if 'a' in args.details or 'algorithm' in args.details:
+  if 'a' in args.types or 'algorithm' in args.types:
     print ("\nList of registered algorithms:")
     print (bob.bio.base.list_resources('algorithm', **kwargs))
 
-  if 'g' in args.details or 'grid' in args.details:
+  if 'g' in args.types or 'grid' in args.types:
     print ("\nList of registered grid configurations:")
     print (bob.bio.base.list_resources('grid', **kwargs))
 
   print()
 
-def databases():
+def databases(command_line_parameters = None):
   import argparse
   database_replacement = "%s/.bob_bio_databases.txt" % os.environ["HOME"]
 
   parser = argparse.ArgumentParser(description="Prints a list of directories for registered databases", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument('-D', '--database-directories-file', metavar = 'FILE', default = database_replacement, help = 'The file, where database directories are stored (to avoid changing the database configurations)')
 
-  args = parser.parse_args()
+  args = parser.parse_args(command_line_parameters)
 
   # get registered databases
   databases = bob.bio.base.utils.resources.database_directories(replacements=args.database_directories_file)
