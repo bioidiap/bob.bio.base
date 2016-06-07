@@ -19,7 +19,7 @@ def _scores(algorithm, model, probes, allow_missing_files):
   # the file selector object
   fs = FileSelector.instance()
   # the scores to be computed; initialized with NaN
-  scores = numpy.full((1,len(probes)), numpy.nan, numpy.float64)
+  scores = numpy.ones((1,len(probes)), numpy.float64) * numpy.nan
 
   if allow_missing_files and model is None:
     # if we have no model, all scores are undefined
