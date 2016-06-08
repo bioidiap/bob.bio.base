@@ -224,7 +224,7 @@ def database_directories(strip=['dummy'], replacements = None, package_prefix='b
   entry_points = _get_entry_points('database', strip, package_prefix=package_prefix)
 
   dirs = {}
-  for entry_point in sorted(entry_points):
+  for entry_point in sorted(entry_points, key=lambda entry_point: entry_point.name):  
     try:
       db = load_resource(entry_point.name, 'database')
       db.replace_directories(replacements)
