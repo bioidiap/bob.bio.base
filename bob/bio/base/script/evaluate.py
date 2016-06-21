@@ -56,7 +56,8 @@ def command_line_arguments(command_line_parameters):
 
   parser.add_argument('-s', '--directory', default = '.', help = "A directory, where to find the --dev-files and the --eval-files")
 
-  parser.add_argument('-c', '--criterion', choices = ('EER', 'HTER'), help = "If given, the threshold of the development set will be computed with this criterion.")
+  parser.add_argument('-c', '--criterion', choices = ('EER', 'HTER', 'FAR'), help = "If given, the threshold of the development set will be computed with this criterion.")
+  parser.add_argument('-f', '--far-value', type=float, default=0.1, help = "The FAR value in %% for which to evaluate (only for --criterion FAR)")
   parser.add_argument('-x', '--cllr', action = 'store_true', help = "If given, Cllr and minCllr will be computed.")
   parser.add_argument('-m', '--mindcf', action = 'store_true', help = "If given, minDCF will be computed.")
   parser.add_argument('--cost', default=0.99,  help='Cost for FAR in minDCF')
@@ -65,6 +66,7 @@ def command_line_arguments(command_line_parameters):
   parser.add_argument('-l', '--legends', nargs='+', help = "A list of legend strings used for ROC, CMC and DET plots; if given, must be the same number than --dev-files.")
   parser.add_argument('-F', '--legend-font-size', type=int, default=18, help = "Set the font size of the legends.")
   parser.add_argument('-P', '--legend-position', type=int, help = "Set the font size of the legends.")
+  parser.add_argument('-T', '--title', nargs = '+', help = "Overwrite the default title of the plot for development (and evaluation) set")
   parser.add_argument('-R', '--roc', help = "If given, ROC curves will be plotted into the given pdf file.")
   parser.add_argument('-D', '--det', help = "If given, DET curves will be plotted into the given pdf file.")
   parser.add_argument('-C', '--cmc', help = "If given, CMC curves will be plotted into the given pdf file.")
@@ -101,6 +103,12 @@ def command_line_arguments(command_line_parameters):
       logger.error("If given, the number of --thresholds imust be either 1, or the same as --dev-files (%d), but it is %d", len(args.dev_files), len(args.thresholds))
   else:
     args.thresholds = [None] * len(args.dev_files)
+
+  if args.title is not None:
+    if args.eval_files is None and len(args.title) != 1:
+      logger.warning("Ignoring the title for the evaluation set, as no evaluation set is given")
+    if args.eval_files is not None and len(args.title) < 2:
+      logger.error("The title for the evaluation set is not specified")
 
   return args
 
@@ -180,7 +188,7 @@ def _plot_epc(scores_dev, scores_eval, colors, labels, title, fontsize=18, posit
 
   # plot the DET curves
   for i in range(len(scores_dev)):
-    bob.measure.plot.epc(scores_dev[i][0], scores_dev[i][1], scores_eval[i][0], scores_eval[i][1], 100, label=labels[i], lw=2)
+    bob.measure.plot.epc(scores_dev[i][0], scores_dev[i][1], scores_eval[i][0], scores_eval[i][1], 100, color=colors[i], label=labels[i], lw=2)
 
   # change axes accordingly
   pyplot.xlabel('alpha')
@@ -203,7 +211,7 @@ def main(command_line_parameters=None):
   cmap = pyplot.cm.get_cmap(name='hsv')
   colors = [cmap(i) for i in numpy.linspace(0, 1.0, len(args.dev_files)+1)]
 
-  if args.criterion or args.roc or args.det or args.cllr or args.mindcf:
+  if args.criterion or args.roc or args.det or args.epc or args.cllr or args.mindcf:
     score_parser = {'4column' : bob.measure.load.split_four_column, '5column' : bob.measure.load.split_five_column}[args.parser]
 
     # First, read the score files
@@ -219,14 +227,23 @@ def main(command_line_parameters=None):
       logger.info("Computing %s on the development " % args.criterion + ("and HTER on the evaluation set" if args.eval_files else "set"))
       for i in range(len(scores_dev)):
         # compute threshold on development set
-        threshold = {'EER': bob.measure.eer_threshold, 'HTER' : bob.measure.min_hter_threshold} [args.criterion](scores_dev[i][0], scores_dev[i][1])
+        if args.criterion == 'FAR':
+          threshold = bob.measure.far_threshold(scores_dev[i][0], scores_dev[i][1], args.far_value/100.)
+        else:
+          threshold = {'EER': bob.measure.eer_threshold, 'HTER' : bob.measure.min_hter_threshold} [args.criterion](scores_dev[i][0], scores_dev[i][1])
         # apply threshold to development set
         far, frr = bob.measure.farfrr(scores_dev[i][0], scores_dev[i][1], threshold)
-        print("The %s of the development set of '%s' is %2.3f%%" % (args.criterion, args.legends[i], (far + frr) * 50.)) # / 2 * 100%
+        if args.criterion == 'FAR':
+          print("The FRR at FAR=%2.3f%% of the development set of '%s' is %2.3f%% (CAR: %2.3f%%)" % (args.far_value, args.legends[i], frr * 100., 100.*(1-frr))) 
+        else:          
+          print("The %s of the development set of '%s' is %2.3f%%" % (args.criterion, args.legends[i], (far + frr) * 50.)) # / 2 * 100%
         if args.eval_files:
           # apply threshold to evaluation set
           far, frr = bob.measure.farfrr(scores_eval[i][0], scores_eval[i][1], threshold)
-          print("The HTER of the evaluation set of '%s' is %2.3f%%" % (args.legends[i], (far + frr) * 50.)) # / 2 * 100%
+          if args.criterion == 'FAR':
+            print("The FRR of the evaluation set of '%s' is %2.3f%% (CAR: %2.3f%%)" % (args.legends[i], frr * 100., 100.*(1-frr))) # / 2 * 100%
+          else:          
+            print("The HTER of the evaluation set of '%s' is %2.3f%%" % (args.legends[i], (far + frr) * 50.)) # / 2 * 100%
 
 
     if args.mindcf:
@@ -269,10 +286,10 @@ def main(command_line_parameters=None):
         # create a multi-page PDF for the ROC curve
         pdf = PdfPages(args.roc)
         # create a separate figure for dev and eval
-        pdf.savefig(_plot_roc(frrs_dev, colors, args.legends, "ROC curve for development set", args.legend_font_size, args.legend_position))
+        pdf.savefig(_plot_roc(frrs_dev, colors, args.legends, args.title[0] if args.title is not None else "ROC curve for development set", args.legend_font_size, args.legend_position))
         del frrs_dev
         if args.eval_files:
-          pdf.savefig(_plot_roc(frrs_eval, colors, args.legends, "ROC curve for evaluation set", args.legend_font_size, args.legend_position))
+          pdf.savefig(_plot_roc(frrs_eval, colors, args.legends, args.title[1] if args.title is not None else "ROC curve for evaluation set", args.legend_font_size, args.legend_position))
           del frrs_eval
         pdf.close()
       except RuntimeError as e:
@@ -289,10 +306,10 @@ def main(command_line_parameters=None):
         # create a multi-page PDF for the ROC curve
         pdf = PdfPages(args.det)
         # create a separate figure for dev and eval
-        pdf.savefig(_plot_det(dets_dev, colors, args.legends, "DET plot for development set", args.legend_font_size, args.legend_position))
+        pdf.savefig(_plot_det(dets_dev, colors, args.legends, args.title[0] if args.title is not None else "DET plot for development set", args.legend_font_size, args.legend_position))
         del dets_dev
         if args.eval_files:
-          pdf.savefig(_plot_det(dets_eval, colors, args.legends, "DET plot for evaluation set", args.legend_font_size, args.legend_position))
+          pdf.savefig(_plot_det(dets_eval, colors, args.legends, args.title[1] if args.title is not None else "DET plot for evaluation set", args.legend_font_size, args.legend_position))
           del dets_eval
         pdf.close()
       except RuntimeError as e:
@@ -300,7 +317,7 @@ def main(command_line_parameters=None):
 
 
     if args.epc:
-      logger.info("Plotting EPC curves ")
+      logger.info("Plotting EPC curves to file '%s'", args.epc)
       
       if not args.eval_files:
         raise ValueError("To plot the EPC curve the evaluation scores are necessary. Please, set it with the --eval-files option.")
@@ -308,7 +325,7 @@ def main(command_line_parameters=None):
       try:
         # create a multi-page PDF for the ROC curve
         pdf = PdfPages(args.epc)
-        pdf.savefig(_plot_epc(scores_dev, scores_eval, colors, args.legends, "EPC Curves" , args.legend_font_size, args.legend_position))
+        pdf.savefig(_plot_epc(scores_dev, scores_eval, colors, args.legends, args.title if args.title is not None else "EPC Curves" , args.legend_font_size, args.legend_position))
         pdf.close()
       except RuntimeError as e:
         raise RuntimeError("During plotting of EPC curves, the following exception occured:\n%s\nUsually this happens when the label contains characters that LaTeX cannot parse." % e)
@@ -329,9 +346,9 @@ def main(command_line_parameters=None):
         # create a multi-page PDF for the ROC curve
         pdf = PdfPages(args.cmc)
         # create a separate figure for dev and eval
-        pdf.savefig(_plot_cmc(cmcs_dev, colors, args.legends, "CMC curve for development set", args.legend_font_size, args.legend_position))
+        pdf.savefig(_plot_cmc(cmcs_dev, colors, args.legends, args.title[0] if args.title is not None else "CMC curve for development set", args.legend_font_size, args.legend_position))
         if args.eval_files:
-          pdf.savefig(_plot_cmc(cmcs_eval, colors, args.legends, "CMC curve for evaluation set", args.legend_font_size, args.legend_position))
+          pdf.savefig(_plot_cmc(cmcs_eval, colors, args.legends, args.title[1] if args.title is not None else "CMC curve for evaluation set", args.legend_font_size, args.legend_position))
         pdf.close()
       except RuntimeError as e:
         raise RuntimeError("During plotting of ROC curves, the following exception occured:\n%s\nUsually this happens when the label contains characters that LaTeX cannot parse." % e)
