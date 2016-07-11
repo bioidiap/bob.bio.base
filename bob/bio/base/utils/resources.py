@@ -194,7 +194,7 @@ def resource_keys(keyword, exclude_packages=[], package_prefix='bob.bio.', strip
                  if entry_point.dist.project_name not in exclude_packages])
 
 
-def list_resources(keyword, strip=['dummy'], package_prefix='bob.bio.', verbose=False):
+def list_resources(keyword, strip=['dummy'], package_prefix='bob.bio.', verbose=False, packages=None):
   """Returns a string containing a detailed list of resources that are registered with the given keyword."""
   if keyword not in valid_keywords:
     raise ValueError("The given keyword '%s' is not valid. Please use one of %s!" % (str(keyword), str(valid_keywords)))
@@ -204,7 +204,10 @@ def list_resources(keyword, strip=['dummy'], package_prefix='bob.bio.', verbose=
   retval = ""
   length = max(len(entry_point.name) for entry_point in entry_points) if entry_points else 1
 
-  for entry_point in sorted(entry_points, key=lambda p: p.dist.project_name):
+  if packages is not None:
+    entry_points = [entry_point for entry_point in entry_points if entry_point.dist.project_name in packages]
+
+  for entry_point in sorted(entry_points, key=lambda p: (p.dist.project_name, p.name)):
     if last_dist != str(entry_point.dist):
       retval += "\n- %s @ %s: \n" % (str(entry_point.dist), str(entry_point.dist.location))
       last_dist = str(entry_point.dist)
@@ -224,7 +227,7 @@ def database_directories(strip=['dummy'], replacements = None, package_prefix='b
   entry_points = _get_entry_points('database', strip, package_prefix=package_prefix)
 
   dirs = {}
-  for entry_point in sorted(entry_points, key=lambda entry_point: entry_point.name):  
+  for entry_point in sorted(entry_points, key=lambda entry_point: entry_point.name):
     try:
       db = load_resource(entry_point.name, 'database')
       db.replace_directories(replacements)

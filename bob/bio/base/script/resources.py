@@ -15,12 +15,14 @@ def resources(command_line_parameters = None):
 
   parser.add_argument("--details", '-d', action='store_true', help = "Prints the complete configuration for all resources")
 
+  parser.add_argument("--packages", '-p', nargs='+', help = "If given, shows only resources defined in the given package(s)")
+
   parser.add_argument("--no-strip-dummy", '-s', action = 'store_true',
                       help = "If given, the dummy elements (usually used for testing purposes only) are **not** removed from the list.")
 
   args = parser.parse_args(command_line_parameters)
 
-  kwargs = {'verbose' : args.details}
+  kwargs = {'verbose' : args.details, "packages" : args.packages}
   if args.no_strip_dummy:
     kwargs['strip'] = []
 

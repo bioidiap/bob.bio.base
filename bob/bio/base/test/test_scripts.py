@@ -369,7 +369,7 @@ def test_resources():
   # simply test that the collect_results script works
   from bob.bio.base.script.resources import resources, databases
   with utils.Quiet():
-    resources(['--types', 'database', 'preprocessor', 'extractor', 'algorithm', 'grid', '--details'])
+    resources(['--types', 'database', 'preprocessor', 'extractor', 'algorithm', 'grid', '--details', '--packages', 'bob.bio.base'])
     databases([])
 
 
