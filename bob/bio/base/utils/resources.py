@@ -72,7 +72,7 @@ def read_config_file(filename, keyword = None):
   if not hasattr(config, keyword):
     raise ImportError("The desired keyword '%s' does not exist in your configuration file '%s'." %(keyword, filename))
 
-  return eval('config.' + keyword)
+  return getattr(config, keyword)
 
 
 def _get_entry_points(keyword, strip = [], package_prefix='bob.bio.'):
