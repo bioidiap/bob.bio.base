@@ -42,7 +42,7 @@ def preprocess(preprocessor, groups = None, indices = None, allow_missing_files 
   fs = FileSelector.instance()
 
   # get the file lists
-  data_files = fs.original_data_list(groups=groups)
+  data_files, original_directory, original_extension = fs.original_data_list_files(groups=groups)
   preprocessed_data_files = fs.preprocessed_data_list(groups=groups)
 
   # select a subset of keys to iterate
@@ -60,12 +60,16 @@ def preprocess(preprocessor, groups = None, indices = None, allow_missing_files 
   # iterate over the selected files
   for i in index_range:
     preprocessed_data_file = preprocessed_data_files[i]
-    file_name = data_files[i]
+    file_object = data_files[i]
+    file_name = file_object.make_path(original_directory, original_extension)
 
     # check for existence
     if not utils.check_file(preprocessed_data_file, force, 1000):
       logger.debug("... Processing original data file '%s'", file_name)
-      data = preprocessor.read_original_data(file_name)
+      if hasattr(file_object, 'load'):
+        data = file_object.load(original_directory, original_extension)
+      else:
+        data = preprocessor.read_original_data(file_name)
       # create output directory before reading the data file (is sometimes required, when relative directories are specified, especially, including a .. somewhere)
       bob.io.base.create_directories_safe(os.path.dirname(preprocessed_data_file))
 
