@@ -8,7 +8,7 @@ logger = bob.core.log.setup("bob.bio.base")
 
 from .. import utils
 from . import FileSelector
-from .. import database
+from bob.bio.db import BioDatabase
 
 """Execute biometric recognition algorithms on a certain biometric database.
 """
@@ -249,7 +249,7 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   model_sub_dir = protocol if args.database.models_depend_on_protocol else enroller_sub_dir
 
   # Database directories, which should be automatically replaced
-  if isinstance(args.database, database.DatabaseBob):
+  if isinstance(args.database, BioDatabase):
     args.database.replace_directories(args.database_directories_file)
 
   # initialize the file selector

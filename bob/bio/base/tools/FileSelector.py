@@ -112,7 +112,7 @@ class FileSelector:
 
   def original_data_list_files(self, groups = None):
     """Returns the list of original data that can be used for preprocessing."""
-    return (self.database.all_files(groups=groups), self.database.database.original_directory, self.database.database.original_extension)
+    return (self.database.all_files(groups=groups), self.database.original_directory, self.database.original_extension)
 
   def annotation_list(self, groups = None):
     """Returns the list of annotations objects."""
