@@ -1,0 +1,3 @@
+bob.db.atnt
+bob.io.image
+matplotlib

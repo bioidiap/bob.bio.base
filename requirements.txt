@@ -1,17 +1,14 @@
-setuptools
-scipy
-bob.extension
+bob.bio.db
 bob.blitz
 bob.core
+bob.db.base
+bob.extension
 bob.io.base
 bob.learn.activation
-bob.math
-bob.learn.linear
-bob.sp
 bob.learn.em
+bob.learn.linear
+bob.math
 bob.measure
-bob.db.base
-bob.bio.db
-bob.db.atnt  # for test purposes
-bob.io.image # for test purposes
-matplotlib   # for plotting
+bob.sp
+scipy
+setuptools
