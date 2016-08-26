@@ -16,8 +16,8 @@ class DummyDatabase(ZTBioDatabase):
         )
         self.__db = AtntBioDatabase()
 
-    def model_ids(self, group=None, protocol=None, gender=None):
-        return self.__db.model_ids(group, protocol, gender)
+    def model_ids(self, groups=None, protocol=None, gender=None):
+        return self.__db.model_ids(groups, protocol, gender)
 
     def objects(self, groups=None, protocol=None, purposes=None, model_ids=None, **kwargs):
         return self.__db.objects(groups, protocol, purposes, model_ids, **kwargs)
