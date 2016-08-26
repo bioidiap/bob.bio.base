@@ -10,7 +10,7 @@ from .Preprocessor import Preprocessor
 class Filename (Preprocessor):
   """This preprocessor is simply passing over the file name, in order to be used in an extractor that loads the data from file.
 
-  The file name that will be returned by the :py:meth:`read_data` function will contain the path of the :py:class:`bob.db.verification.utils.File`, but it might contain more paths (such as the ``--preprocessed-directory`` passed on command line).
+  The file name that will be returned by the :py:meth:`read_data` function will contain the path of the :py:class:`bob.bio.db.BioFile`, but it might contain more paths (such as the ``--preprocessed-directory`` passed on command line).
   """
 
   def __init__(self):
