@@ -2,20 +2,6 @@
 # vim: set fileencoding=utf-8 :
 # @author: Manuel Guenther <Manuel.Guenther@idiap.ch>
 # @date: Thu May 24 10:41:42 CEST 2012
-#
-# Copyright (C) 2011-2012 Idiap Research Institute, Martigny, Switzerland
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, version 3 of the License.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import shutil
@@ -220,7 +206,7 @@ def test_lda():
 def test_distance():
 
   import scipy.spatial
-  
+
   # assure that the configurations are loadable
   distance = bob.bio.base.load_resource("distance-cosine", "algorithm", preferred_package = 'bob.bio.base')
   assert isinstance(distance, bob.bio.base.algorithm.Distance)
@@ -231,17 +217,17 @@ def test_distance():
   assert distance.use_projected_features_for_enrollment == False
   assert distance.split_training_features_by_client == False
   assert distance.requires_enroller_training == False
-  
+
   distance =  bob.bio.base.algorithm.Distance(
             distance_function = scipy.spatial.distance.cosine,
             is_distance_function = True
-          )  
+          )
 
   # compare model with probe
   enroll = utils.random_training_set(5, 5, 0., 255., seed=21);
   model = numpy.mean(distance.enroll(enroll),axis=0)
   probe = distance.read_probe(pkg_resources.resource_filename('bob.bio.base.test', 'data/lda_projected.hdf5'))
-  
+
   reference_score = -0.1873371
   assert abs(distance.score(model, probe) - reference_score) < 1e-5, "The scores differ: %3.8f, %3.8f" % (distance.score(model, probe), reference_score)
 

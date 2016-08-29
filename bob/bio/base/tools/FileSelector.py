@@ -110,6 +110,10 @@ class FileSelector:
     """Returns the list of original data that can be used for preprocessing."""
     return self.database.original_file_names(self.database.all_files(groups=groups))
 
+  def original_data_list_files(self, groups = None):
+    """Returns the list of original data that can be used for preprocessing."""
+    return (self.database.all_files(groups=groups), self.database.original_directory, self.database.original_extension)
+
   def annotation_list(self, groups = None):
     """Returns the list of annotations objects."""
     return self.database.all_files(groups=groups)
@@ -154,7 +158,7 @@ class FileSelector:
 
   def model_ids(self, group):
     """Returns the sorted list of model ids from the given group."""
-    return sorted(self.database.model_ids(group = group))
+    return sorted(self.database.model_ids(groups=group))
 
   def enroll_files(self, model_id, group, directory_type):
     """Returns the list of model feature files used for enrollment of the model with the given model_id from the given group.
@@ -186,7 +190,7 @@ class FileSelector:
 
   def t_model_ids(self, group):
     """Returns the sorted list of T-Norm-model ids from the given group."""
-    return sorted(self.database.t_model_ids(group = group))
+    return sorted(self.database.t_model_ids(groups = group))
 
   def t_enroll_files(self, t_model_id, group, directory_type):
     """Returns the list of T-norm model files used for enrollment of the given model_id from the given group."""

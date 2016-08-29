@@ -6,7 +6,7 @@ import bob.core
 logger = bob.core.log.setup("bob.bio.base")
 
 import bob.bio.base
-import bob.db.verification.utils
+import bob.db.base
 import numpy
 
 import bob.core
@@ -47,7 +47,7 @@ def main(command_line_parameters=None):
 
   logger.debug("Loading input data from file '%s'%s", args.input_file, " and '%s'" % args.annotation_file if args.annotation_file is not None else "")
   data = preprocessor.read_original_data(args.input_file)
-  annotations = bob.db.verification.utils.read_annotation_file(args.annotation_file, 'named') if args.annotation_file is not None else None
+  annotations = bob.db.base.annotations.read_annotation_file(args.annotation_file, 'named') if args.annotation_file is not None else None
 
   logger.info("Preprocessing data")
   preprocessed = preprocessor(data, annotations)

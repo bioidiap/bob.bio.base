@@ -2,20 +2,6 @@
 # vim: set fileencoding=utf-8 :
 # Manuel Guenther <manuel.guenther@idiap.ch>
 # Tue Jul 2 14:52:49 CEST 2013
-#
-# Copyright (C) 2011-2013 Idiap Research Institute, Martigny, Switzerland
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, version 3 of the License.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the ipyplotied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import print_function
 
@@ -70,7 +56,7 @@ def command_line_arguments(command_line_parameters):
   parser.add_argument('-R', '--roc', help = "If given, ROC curves will be plotted into the given pdf file.")
   parser.add_argument('-D', '--det', help = "If given, DET curves will be plotted into the given pdf file.")
   parser.add_argument('-C', '--cmc', help = "If given, CMC curves will be plotted into the given pdf file.")
-  parser.add_argument('-E', '--epc', help = "If given, EPC curves will be plotted into the given pdf file. For this plot --eval-files is mandatory.")  
+  parser.add_argument('-E', '--epc', help = "If given, EPC curves will be plotted into the given pdf file. For this plot --eval-files is mandatory.")
   parser.add_argument('--parser', default = '4column', choices = ('4column', '5column'), help="The style of the resulting score files. The default fits to the usual output of score files.")
 
   # add verbose option
@@ -178,9 +164,9 @@ def _plot_cmc(cmcs, colors, labels, title, fontsize=18, position=None):
   pyplot.title(title)
 
   return figure
-  
-  
-  
+
+
+
 def _plot_epc(scores_dev, scores_eval, colors, labels, title, fontsize=18, position=None):
   if position is None: position = 4
   # open new page for current plot
@@ -198,7 +184,7 @@ def _plot_epc(scores_dev, scores_eval, colors, labels, title, fontsize=18, posit
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
 
-  return figure  
+  return figure
 
 
 
@@ -234,15 +220,15 @@ def main(command_line_parameters=None):
         # apply threshold to development set
         far, frr = bob.measure.farfrr(scores_dev[i][0], scores_dev[i][1], threshold)
         if args.criterion == 'FAR':
-          print("The FRR at FAR=%2.3f%% of the development set of '%s' is %2.3f%% (CAR: %2.3f%%)" % (args.far_value, args.legends[i], frr * 100., 100.*(1-frr))) 
-        else:          
+          print("The FRR at FAR=%2.3f%% of the development set of '%s' is %2.3f%% (CAR: %2.3f%%)" % (args.far_value, args.legends[i], frr * 100., 100.*(1-frr)))
+        else:
           print("The %s of the development set of '%s' is %2.3f%%" % (args.criterion, args.legends[i], (far + frr) * 50.)) # / 2 * 100%
         if args.eval_files:
           # apply threshold to evaluation set
           far, frr = bob.measure.farfrr(scores_eval[i][0], scores_eval[i][1], threshold)
           if args.criterion == 'FAR':
             print("The FRR of the evaluation set of '%s' is %2.3f%% (CAR: %2.3f%%)" % (args.legends[i], frr * 100., 100.*(1-frr))) # / 2 * 100%
-          else:          
+          else:
             print("The HTER of the evaluation set of '%s' is %2.3f%%" % (args.legends[i], (far + frr) * 50.)) # / 2 * 100%
 
 
@@ -318,10 +304,10 @@ def main(command_line_parameters=None):
 
     if args.epc:
       logger.info("Plotting EPC curves to file '%s'", args.epc)
-      
+
       if not args.eval_files:
         raise ValueError("To plot the EPC curve the evaluation scores are necessary. Please, set it with the --eval-files option.")
-      
+
       try:
         # create a multi-page PDF for the ROC curve
         pdf = PdfPages(args.epc)

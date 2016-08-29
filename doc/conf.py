@@ -1,45 +1,46 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8 :
-# Andre Anjos <andre.anjos@idiap.ch>
-# Mon 13 Aug 2012 12:38:15 CEST
-#
-# Copyright (C) 2011-2014 Idiap Research Institute, Martigny, Switzerland
 
 import os
 import sys
 import glob
 import pkg_resources
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
 
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-#needs_sphinx = '1.0'
+needs_sphinx = '1.3'
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-  'sphinx.ext.todo',
-  'sphinx.ext.coverage',
-  'sphinx.ext.pngmath',
-  'sphinx.ext.ifconfig',
-  'sphinx.ext.autodoc',
-  'sphinx.ext.autosummary',
-  'sphinx.ext.doctest',
-  'sphinx.ext.intersphinx',
-  ]
+    'sphinx.ext.todo',
+    'sphinx.ext.coverage',
+    'sphinx.ext.ifconfig',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.doctest',
+    'sphinx.ext.graphviz',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.viewcode',
+    ]
 
-# The viewcode extension appeared only on Sphinx >= 1.0.0
 import sphinx
-if sphinx.__version__ >= "1.0":
-  extensions.append('sphinx.ext.viewcode')
+if sphinx.__version__ >= "1.4.1":
+    extensions.append('sphinx.ext.imgmath')
+else:
+    extensions.append('sphinx.ext.pngmath')
 
 # Always includes todos
 todo_include_todos = True
+
+# Generates auto-summary automatically
+autosummary_generate = True
+
+# Create numbers on figures with captions
+numfig = True
 
 # If we are on OSX, the 'dvipng' path maybe different
 dvipng_osx = '/opt/local/libexec/texlive/binaries/dvipng'
@@ -58,12 +59,12 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Bobs interface for running biometric recognition experiments'
+project = u'bob.bio.base'
 import time
 copyright = u'%s, Idiap Research Institute' % time.strftime('%Y')
 
 # Grab the setup entry
-distribution = pkg_resources.require('bob.bio.base')[0]
+distribution = pkg_resources.require(project)[0]
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -108,13 +109,18 @@ pygments_style = 'sphinx'
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
 
+# Some variables which are useful for generated material
+project_variable = project.replace('.', '_')
+short_description = u'Tools for running biometric recognition experiments'
+owner = [u'Idiap Research Institute']
+
 
 # -- Options for HTML output ---------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-if sphinx.__version__ >= "1.0":
-  html_theme = 'nature'
+import sphinx_rtd_theme
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -122,14 +128,14 @@ if sphinx.__version__ >= "1.0":
 #html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
-#html_theme_path = []
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
 #html_title = None
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-#html_short_title = 'bob'
+#html_short_title = project_variable
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -187,105 +193,48 @@ html_favicon = 'img/favicon.ico'
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'bob_bio_base_doc'
+htmlhelp_basename = project_variable + u'_doc'
 
 
-# -- Options for LaTeX output --------------------------------------------------
-
-# The paper size ('letter' or 'a4').
-latex_paper_size = 'a4'
-
-# The font size ('10pt', '11pt' or '12pt').
-latex_font_size = '10pt'
-
-# Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title, author, documentclass [howto/manual]).
-latex_documents = [
-  ('index', 'bob_bio_base.tex', u'Bob',
-   u'Biometrics Group, Idiap Research Institute', 'manual'),
-]
-
-# The name of an image file (relative to this directory) to place at the top of
-# the title page.
-latex_logo = ''
-
-# For "manual" documents, if this is true, then toplevel headings are parts,
-# not chapters.
-#latex_use_parts = False
-
-# If true, show page references after internal links.
-#latex_show_pagerefs = False
-
-# If true, show URL addresses after external links.
-#latex_show_urls = False
-
-# Additional stuff for the LaTeX preamble.
-#latex_preamble = ''
-
-# Documents to append as an appendix to all manuals.
-#latex_appendices = []
-
-# If false, no module index is generated.
-#latex_domain_indices = True
+# -- Post configuration --------------------------------------------------------
 
 # Included after all input documents
-rst_epilog = ''
-
-# -- Options for manual page output --------------------------------------------
-
-# One entry per manual page. List of tuples
-# (source start file, name, description, authors, manual section).
-man_pages = [
-    ('index', 'bob.bio.base', u'Base tools to run biometric recognition experiments', [u'Idiap Research Institute'], 1)
-]
+rst_epilog = """
+.. |project| replace:: Bob
+.. |version| replace:: %s
+.. |current-year| date:: %%Y
+""" % (version,)
 
 # Default processing flags for sphinx
-autoclass_content = 'both'
+autoclass_content = 'class'
 autodoc_member_order = 'bysource'
-autodoc_default_flags = ['members', 'inherited-members', 'show-inheritance']
+autodoc_default_flags = [
+  'members',
+  'undoc-members',
+  'inherited-members',
+  'show-inheritance',
+  ]
 
 # For inter-documentation mapping:
 from bob.extension.utils import link_documentation
-intersphinx_mapping = link_documentation(['python', 'numpy', 'bob.bio.face', 'bob.bio.speaker', 'bob.bio.gmm', 'bob.bio.video', 'bob.bio.csu', 'bob.bio.spear', 'gridtk', 'bob.db.youtube'])
+intersphinx_mapping = link_documentation()
 
+# We want to remove all private (i.e. _. or __.__) members
+# that are not in the list of accepted functions
+accepted_private_functions = ['__array__']
 
-def skip(app, what, name, obj, skip, options):
-  # Do not skip the __call__ and the __str__ functions as we have special implementations for them.
-  if name in ("__str__", "__call__"):
-    return False
-  return skip
-
-# getting dictionaries printed nicely.
-# see: http://stackoverflow.com/questions/7250659/python-code-to-generate-part-of-sphinx-documentation-is-it-possible/18143318#18143318
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
-
-from sphinx.util.compat import Directive
-from docutils import nodes, statemachine
-
-class ExecDirective(Directive):
-    """Execute the specified python code and insert the output into the document"""
-    has_content = True
-
-    def run(self):
-        oldStdout, sys.stdout = sys.stdout, StringIO()
-
-        tab_width = self.options.get('tab-width', self.state.document.settings.tab_width)
-        source = self.state_machine.input_lines.source(self.lineno - self.state_machine.input_offset - 1)
-
-        try:
-            exec('\n'.join(self.content))
-            text = sys.stdout.getvalue()
-            lines = statemachine.string2lines(text, tab_width, convert_whitespace=True)
-            self.state_machine.insert_input(lines, source)
-            return []
-        except Exception:
-            return [nodes.error(None, nodes.paragraph(text = "Unable to execute python code at %s:%d:" % (os.path.basename(source), self.lineno)), nodes.paragraph(text = str(sys.exc_info()[1])))]
-        finally:
-            sys.stdout = oldStdout
+def member_function_test(app, what, name, obj, skip, options):
+  # test if we have a private function
+  if len(name) > 1 and name[0] == '_':
+    # test if this private function should be allowed
+    if name not in accepted_private_functions:
+      # omit privat functions that are not in the list of accepted private functions
+      return skip
+    else:
+      # test if the method is documented
+      if not hasattr(obj, '__doc__') or not obj.__doc__:
+        return skip
+  return False
 
 def setup(app):
-  app.connect("autodoc-skip-member", skip)
-  app.add_directive('exec', ExecDirective)
+  app.connect('autodoc-skip-member', member_function_test)

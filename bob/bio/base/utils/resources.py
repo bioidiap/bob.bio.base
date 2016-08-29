@@ -2,20 +2,7 @@
 # vim: set fileencoding=utf-8 :
 # @author: Manuel Guenther <Manuel.Guenther@idiap.ch>
 # @date: Thu Oct 25 10:05:55 CEST 2012
-#
-# Copyright (C) 2011-2012 Idiap Research Institute, Martigny, Switzerland
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, version 3 of the License.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from __future__ import print_function
 
 import imp
@@ -72,7 +59,7 @@ def read_config_file(filename, keyword = None):
   if not hasattr(config, keyword):
     raise ImportError("The desired keyword '%s' does not exist in your configuration file '%s'." %(keyword, filename))
 
-  return eval('config.' + keyword)
+  return getattr(config, keyword)
 
 
 def _get_entry_points(keyword, strip = [], package_prefix='bob.bio.'):
