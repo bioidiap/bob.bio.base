@@ -220,7 +220,52 @@ def initialize(parsers, command_line_parameters = None, skips = []):
 
   _take_from_config_or_command_line(args, config, "grid", required=False)
 
-  for keyword in ("protocol", "groups", "parallel"):
+  for keyword in (
+      "protocol",
+      "groups",
+      "parallel",
+      "preferred_package",
+      "sub_directory",
+      "temp_directory",
+      "result_directory",
+      "extractor_file",
+      "projector_file",
+      "enroller_file",
+      "gridtk_database_file",
+      "experiment_info_file",
+      "database_directories_file",
+      "preprocessed_directory",
+      "extracted_directory",
+      "projected_directory",
+      "model_directories",
+      "score_directories",
+      "zt_directories",
+      "grid_log_directory",
+      "verbose",
+      "dry_run",
+      "force",
+      "write_compressed_score_files",
+      "stop_on_failure",
+      "run_local_scheduler",
+      "external_dependencies",
+      "timer",
+      "nice",
+      "delete_jobs_finished_with_status",
+      "calibrate_scores",
+      "zt_norm",
+      "allow_missing_files",
+      "environment",
+      "skip_preprocessing",
+      "skip_extractor_training",
+      "skip_extraction",
+      "skip_projector_training",
+      "skip_projection",
+      "skip_enroller_training",
+      "skip_enrollment",
+      "skip_score_computation",
+      "skip_concatenation",
+      "skip_calibration",
+      ):
     _take_from_config_or_command_line(args, config, keyword, required=False, is_resource=False)
 
   # evaluate skips
