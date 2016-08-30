@@ -254,7 +254,7 @@ def initialize(parsers, command_line_parameters = None, skips = []):
       "calibrate_scores",
       "zt_norm",
       "allow_missing_files",
-      "environment",
+      "env",
       "skip_preprocessing",
       "skip_extractor_training",
       "skip_extraction",
