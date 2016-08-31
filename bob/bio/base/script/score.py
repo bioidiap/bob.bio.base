@@ -17,8 +17,9 @@ def command_line_arguments(command_line_parameters):
   parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
   parser.add_argument('-a', '--algorithm', metavar = 'x', nargs = '+', required = True, help = 'Biometric recognition; registered algorithms are: %s' % bob.bio.base.resource_keys('algorithm'))
-  parser.add_argument('-P', '--projector-file', metavar = 'FILE', help = 'The pre-trained extractor file, if the algorithm performs projection')
+  parser.add_argument('-P', '--projector-file', metavar = 'FILE', help = 'The pre-trained projector file, if the algorithm performs projection')
   parser.add_argument('-E', '--enroller-file' , metavar = 'FILE', help = 'The pre-trained enroller file, if the extractor requires enroller training')
+  parser.add_argument('-e', '--extractor', metavar = 'x', nargs = '+', help = 'Feature extraction -- required when algorithm performs projection; registered feature extractors are: %s' % bob.bio.base.resource_keys('extractor'))
   parser.add_argument('-m', '--model-files', metavar = 'MODEL', nargs='+', required = True, help = "A list of enrolled model files")
   parser.add_argument('-p', '--probe-files', metavar = 'PROBE', nargs='+', required = True, help = "A list of extracted feature files used as probes")
 
@@ -51,11 +52,18 @@ def main(command_line_parameters=None):
   models, probes = {}, {}
   logger.debug("Loading %d models", len(args.model_files))
   for m in args.model_files: models[m] = algorithm.read_model(m)
-  logger.debug("Loading %d probes", len(args.probe_files))
-  for p in args.probe_files: probes[p] = algorithm.read_probe(p)
   if algorithm.performs_projection:
+    if args.extractor is None:
+      raise ValueError("The --extractor is required when the algorithm requires projection")
+    logger.debug("Loading extractor")
+    extractor = bob.bio.base.load_resource(' '.join(args.extractor), "extractor")
+    logger.debug("Loading %d probes", len(args.probe_files))
+    for p in args.probe_files: probes[p] = extractor.read_feature(p)
     logger.debug("Projecting %d probes", len(args.probe_files))
     for p in probes: probes[p] = algorithm.project(probes[p])
+  else:
+    logger.debug("Loading %d probes", len(args.probe_files))
+    for p in args.probe_files: probes[p] = algorithm.read_probe(p)
 
   logger.info("Computing scores")
   for p in args.probe_files:
