@@ -82,6 +82,25 @@ def test_verify_config():
   _verify(parameters, test_dir, 'test_config')
 
 
+def test_verify_algorithm_noprojection():
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
+  # define dummy parameters
+  parameters = [
+      '-d', os.path.join(dummy_dir, 'database.py'),
+      '-p', os.path.join(dummy_dir, 'preprocessor.py'),
+      '-e', os.path.join(dummy_dir, 'extractor.py'),
+      '-a', os.path.join(dummy_dir, 'algorithm_noprojection.py'),
+      '--zt-norm',
+      '-vs', 'algorithm_noprojection',
+      '--temp-directory', test_dir,
+      '--result-directory', test_dir
+  ]
+
+  print (bob.bio.base.tools.command_line(parameters))
+
+  _verify(parameters, test_dir, 'algorithm_noprojection')
+
+
 def test_verify_resources():
   test_dir = tempfile.mkdtemp(prefix='bobtest_')
   # define dummy parameters
