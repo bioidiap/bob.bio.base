@@ -512,6 +512,7 @@ def test_scripts():
     parameters = [
         '-m', model_file, model_file,
         '-p', extracted_file, extracted_file,
+        '-e', 'dummy',
         '-a', 'dummy',
         '-P', projector_file,
         '-E', enroller_file,
