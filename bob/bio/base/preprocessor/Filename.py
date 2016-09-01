@@ -14,7 +14,8 @@ class Filename (Preprocessor):
   """
 
   def __init__(self):
-    Preprocessor.__init__(self, writes_data=False)
+    # call base class constructor, using a custom ``load_function`` that does nothing and always returns None
+    Preprocessor.__init__(self, writes_data=False, load_function = lambda x,y,z: None)
 
 
   # The call function (i.e. the operator() in C++ terms)
@@ -38,28 +39,6 @@ class Filename (Preprocessor):
       1 throughout
     """
     return 1
-
-
-  ############################################################
-  ### Special functions that might be overwritten on need
-  ############################################################
-
-  def read_original_data(self, original_file_name):
-    """read_original_data(original_file_name) -> data
-
-    This function does **not** read the original image..
-
-    **Parameters:**
-
-    ``original_file_name`` : any
-      ignored
-
-    **Returns:**
-
-    ``data`` : ``None``
-      throughout.
-    """
-    pass
 
 
   def write_data(self, data, data_file):
