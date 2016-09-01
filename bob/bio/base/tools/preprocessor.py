@@ -61,10 +61,7 @@ def preprocess(preprocessor, groups = None, indices = None, allow_missing_files 
   for i in index_range:
     preprocessed_data_file = preprocessed_data_files[i]
     file_object = data_files[i]
-    if isinstance(file_object, list):
-      file_name = [f.make_path(original_directory, original_extension) for f in file_object]
-    else:
-      file_name = file_object.make_path(original_directory, original_extension)
+    file_name = file_object.make_path(original_directory, original_extension)
 
     # check for existence
     if not utils.check_file(preprocessed_data_file, force, 1000):
