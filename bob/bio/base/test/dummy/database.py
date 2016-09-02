@@ -1,4 +1,4 @@
-from bob.bio.db import ZTBioDatabase, AtntBioDatabase
+from bob.bio.db import ZTBioDatabase, BioFile
 from bob.bio.base.test.utils import atnt_database_directory
 
 
@@ -14,13 +14,17 @@ class DummyDatabase(ZTBioDatabase):
             training_depends_on_protocol=False,
             models_depend_on_protocol=False
         )
-        self.__db = AtntBioDatabase()
+        import bob.db.atnt
+        self.__db = bob.db.atnt.Database()
+
+    def _make_bio(self, files):
+      return [BioFile(client_id=f.client_id, path=f.path, file_id=f.id) for f in files]
 
     def model_ids_with_protocol(self, groups=None, protocol=None, **kwargs):
-        return self.__db.model_ids_with_protocol(groups, protocol)
+        return self.__db.model_ids(groups, protocol)
 
     def objects(self, groups=None, protocol=None, purposes=None, model_ids=None, **kwargs):
-        return self.__db.objects(groups, protocol, purposes, model_ids, **kwargs)
+        return self._make_bio(self.__db.objects(model_ids, groups, purposes, protocol, **kwargs))
 
     def tobjects(self, groups=None, protocol=None, model_ids=None, **kwargs):
         return []
@@ -29,7 +33,7 @@ class DummyDatabase(ZTBioDatabase):
         return []
 
     def tmodel_ids_with_protocol(self, protocol=None, groups=None, **kwargs):
-        return self.__db.model_ids_with_protocol(groups, protocol)
+        return self.__db.model_ids(groups)
 
     def t_enroll_files(self, t_model_id, group='dev'):
         return self.enroll_files(t_model_id, group)
