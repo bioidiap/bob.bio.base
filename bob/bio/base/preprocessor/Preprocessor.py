@@ -4,7 +4,7 @@
 # @date: Tue Oct  2 12:12:39 CEST 2012
 
 import bob.io.base
-import bob.db.base
+import bob.bio.db
 
 import os
 
@@ -27,11 +27,11 @@ class Preprocessor:
     A list of keyword arguments to be written in the :py:meth:`__str__` function.
   """
 
-  def __init__(self, writes_data = True, load_function = bob.db.base.File.load, **kwargs):
+  def __init__(self, writes_data = True, read_original_data = bob.bio.db.BioFile.load, **kwargs):
     # Each class needs to have a constructor taking
     # all the parameters that are required for the preprocessing as arguments
     self.writes_data = writes_data
-    self.read_original_data = load_function
+    self.read_original_data = read_original_data
     self._kwargs = kwargs
     pass
 
