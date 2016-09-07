@@ -63,7 +63,7 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
       help = 'If one of your configuration files is an actual command, please specify the lists of required libraries (imports) to execute this command')
   config_group.add_argument('-W', '--preferred-package', metavar = 'LIB',
       help = 'If resources with identical names are defined in several packages, prefer the one from the given package')
-  config_group.add_argument('-s', '--sub-directory', metavar = 'DIR', required = True,
+  config_group.add_argument('-s', '--sub-directory', metavar = 'DIR',
       help = 'The sub-directory where the files of the current experiment should be stored. Please specify a directory name with a name describing your experiment')
   config_group.add_argument('--groups', metavar = 'GROUP', nargs = '+', default = ['dev'],
       help = "The groups (i.e., 'dev', 'eval') for which the models and scores should be generated; by default, only the 'dev' group is evaluated")
@@ -155,19 +155,21 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
   }
 
 
-def _take_from_config_or_command_line(args, config, keyword, required=True, is_resource=True):
-  if getattr(args, keyword) is not None:
+def _take_from_config_or_command_line(args, config, keyword, default, required=True, is_resource=True):
+
+  if getattr(args, keyword) != default:
     if is_resource:
       setattr(args, keyword, utils.load_resource(' '.join(getattr(args, keyword)), keyword, imports = args.imports, preferred_package = args.preferred_package))
+
   elif config is not None and hasattr(config, keyword):
+
     val = getattr(config, keyword)
     if isinstance(val, str) and is_resource:
       val = utils.load_resource(val, keyword, imports = args.imports, preferred_package = args.preferred_package)
     setattr(args, keyword, val)
+
   elif required:
     raise ValueError("Please specify a %s either on command line (via --%s) or in the configuration file (via --configuration-file)" %(keyword, keyword))
-
-
 
 
 def initialize(parsers, command_line_parameters = None, skips = []):
@@ -211,21 +213,28 @@ def initialize(parsers, command_line_parameters = None, skips = []):
     skip_group.add_argument('-o', '--execute-only', nargs = '+', choices = skips, help = 'If specified, executes only the given parts of the tool chain.')
 
   # parse the arguments
-  args = parsers['main'].parse_args(command_line_parameters)
+  parser = parsers['main']
+  args = parser.parse_args(command_line_parameters)
 
   # first, read the configuration file and set everything from the config file to the args -- as long as not overwritten on command line
   config = utils.read_config_file(args.configuration_file) if args.configuration_file is not None else None
   for keyword in ("database", "preprocessor", "extractor", "algorithm"):
-    _take_from_config_or_command_line(args, config, keyword)
+    _take_from_config_or_command_line(args, config, keyword,
+        parser.get_default(keyword))
 
-  _take_from_config_or_command_line(args, config, "grid", required=False)
+  _take_from_config_or_command_line(args, config, "grid",
+      parser.get_default(keyword), required=False)
+
+  _take_from_config_or_command_line(args, config, "sub_directory",
+      parser.get_default(keyword), is_resource=False)
+
+  skip_keywords = tuple(['skip_' + k.replace('-', '_') for k in skips])
 
   for keyword in (
       "protocol",
       "groups",
       "parallel",
       "preferred_package",
-      "sub_directory",
       "temp_directory",
       "result_directory",
       "extractor_file",
@@ -255,18 +264,9 @@ def initialize(parsers, command_line_parameters = None, skips = []):
       "zt_norm",
       "allow_missing_files",
       "env",
-      "skip_preprocessing",
-      "skip_extractor_training",
-      "skip_extraction",
-      "skip_projector_training",
-      "skip_projection",
-      "skip_enroller_training",
-      "skip_enrollment",
-      "skip_score_computation",
-      "skip_concatenation",
-      "skip_calibration",
-      ):
-    _take_from_config_or_command_line(args, config, keyword, required=False, is_resource=False)
+      ) + skip_keywords:
+    _take_from_config_or_command_line(args, config, keyword,
+        parser.get_default(keyword), required=False, is_resource=False)
 
   # evaluate skips
   if skips is not None and args.execute_only is not None:
