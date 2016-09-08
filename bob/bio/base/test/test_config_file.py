@@ -13,7 +13,7 @@ from ..script.verify import parse_arguments
 def tmp_file(contents):
   '''Generates a temporary configuration file with the contents on the input'''
 
-  retval = tempfile.NamedTemporaryFile()
+  retval = tempfile.NamedTemporaryFile('w')
   retval.write('\n'.join(contents) + '\n')
   retval.flush()
   return retval
