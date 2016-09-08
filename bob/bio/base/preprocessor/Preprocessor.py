@@ -21,13 +21,13 @@ class Preprocessor:
 
   read_original_data: callable
     This function is used to read the original data from file.
-    It takes three inputs: A :py:class:`bob.bio.db.BioFile`, the original directory (as ``str``) and the original extension (as ``str``).
+    It takes three inputs: A :py:class:`bob.bio.db.BioFile` (or one of its derivatives), the original directory (as ``str``) and the original extension (as ``str``).
 
   kwargs : ``key=value`` pairs
     A list of keyword arguments to be written in the :py:meth:`__str__` function.
   """
 
-  def __init__(self, writes_data = True, read_original_data = bob.bio.db.BioFile.load, **kwargs):
+  def __init__(self, writes_data = True, read_original_data = lambda biofile,directory,extension : biofile.load(directory,extension), **kwargs):
     # Each class needs to have a constructor taking
     # all the parameters that are required for the preprocessing as arguments
     self.writes_data = writes_data
