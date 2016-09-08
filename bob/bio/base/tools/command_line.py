@@ -47,13 +47,15 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
   #######################################################################################
   ############## options that are required to be specified #######################
   config_group = parser.add_argument_group('\nParameters defining the experiment. Most of these parameters can be a registered resource, a configuration file, or even a string that defines a newly created object')
-  config_group.add_argument('-d', '--database', metavar = 'x', nargs = '+', required = True,
+  config_group.add_argument('-c', '--configuration-file',
+      help = 'A configuration file containing one or more of "database", "preprocessor", "extractor", "algorithm" and/or "grid"')
+  config_group.add_argument('-d', '--database', metavar = 'x', nargs = '+',
       help = 'Database and the protocol; registered databases are: %s' % utils.resource_keys('database', exclude_resources_from))
-  config_group.add_argument('-p', '--preprocessor', metavar = 'x', nargs = '+', required = True,
+  config_group.add_argument('-p', '--preprocessor', metavar = 'x', nargs = '+',
       help = 'Data preprocessing; registered preprocessors are: %s' % utils.resource_keys('preprocessor', exclude_resources_from))
-  config_group.add_argument('-e', '--extractor', metavar = 'x', nargs = '+', required = True,
+  config_group.add_argument('-e', '--extractor', metavar = 'x', nargs = '+',
       help = 'Feature extraction; registered feature extractors are: %s' % utils.resource_keys('extractor', exclude_resources_from))
-  config_group.add_argument('-a', '--algorithm', metavar = 'x', nargs = '+', required = True,
+  config_group.add_argument('-a', '--algorithm', metavar = 'x', nargs = '+',
       help = 'Biometric recognition; registered algorithms are: %s' % utils.resource_keys('algorithm', exclude_resources_from))
   config_group.add_argument('-g', '--grid', metavar = 'x', nargs = '+',
       help = 'Configuration for the grid setup; if not specified, the commands are executed sequentially on the local machine.')
@@ -61,7 +63,7 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
       help = 'If one of your configuration files is an actual command, please specify the lists of required libraries (imports) to execute this command')
   config_group.add_argument('-W', '--preferred-package', metavar = 'LIB',
       help = 'If resources with identical names are defined in several packages, prefer the one from the given package')
-  config_group.add_argument('-s', '--sub-directory', metavar = 'DIR', required = True,
+  config_group.add_argument('-s', '--sub-directory', metavar = 'DIR',
       help = 'The sub-directory where the files of the current experiment should be stored. Please specify a directory name with a name describing your experiment')
   config_group.add_argument('--groups', metavar = 'GROUP', nargs = '+', default = ['dev'],
       help = "The groups (i.e., 'dev', 'eval') for which the models and scores should be generated; by default, only the 'dev' group is evaluated")
@@ -132,7 +134,7 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
       help = 'Runs the local scheduler with the given nice value')
   flag_group.add_argument('-D', '--delete-jobs-finished-with-status', choices = ('all', 'failure', 'success'),
       help = 'If selected, local scheduler jobs that finished with the given status are deleted from the --gridtk-database-file; otherwise the jobs remain in the database')
-  flag_group.add_argument('-c', '--calibrate-scores', action='store_true',
+  flag_group.add_argument('-C', '--calibrate-scores', action='store_true',
       help = 'Performs score calibration after the scores are computed.')
   flag_group.add_argument('-z', '--zt-norm', action='store_true',
       help = 'Enable the computation of ZT norms')
@@ -152,6 +154,22 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
     'flag' : flag_group
   }
 
+
+def _take_from_config_or_command_line(args, config, keyword, default, required=True, is_resource=True):
+
+  if getattr(args, keyword) != default:
+    if is_resource:
+      setattr(args, keyword, utils.load_resource(' '.join(getattr(args, keyword)), keyword, imports = args.imports, preferred_package = args.preferred_package))
+
+  elif config is not None and hasattr(config, keyword):
+
+    val = getattr(config, keyword)
+    if isinstance(val, str) and is_resource:
+      val = utils.load_resource(val, keyword, imports = args.imports, preferred_package = args.preferred_package)
+    setattr(args, keyword, val)
+
+  elif required:
+    raise ValueError("Please specify a %s either on command line (via --%s) or in the configuration file (via --configuration-file)" %(keyword, keyword))
 
 
 def initialize(parsers, command_line_parameters = None, skips = []):
@@ -185,7 +203,7 @@ def initialize(parsers, command_line_parameters = None, skips = []):
     .. note:: The database, preprocessor, extractor, algorithm and grid (if specified) are actual instances of the according classes.
   """
 
-  # execute-only
+  # add execute-only flags to command line options
   if skips is not None:
     #######################################################################################
     ################# options for skipping parts of the toolchain #########################
@@ -194,16 +212,70 @@ def initialize(parsers, command_line_parameters = None, skips = []):
       skip_group.add_argument('--skip-%s' % skip, action='store_true', help = 'Skip the %s step.' % skip)
     skip_group.add_argument('-o', '--execute-only', nargs = '+', choices = skips, help = 'If specified, executes only the given parts of the tool chain.')
 
-  args = parsers['main'].parse_args(command_line_parameters)
+  # parse the arguments
+  parser = parsers['main']
+  args = parser.parse_args(command_line_parameters)
+
+  # first, read the configuration file and set everything from the config file to the args -- as long as not overwritten on command line
+  config = utils.read_config_file(args.configuration_file) if args.configuration_file is not None else None
+  for keyword in ("database", "preprocessor", "extractor", "algorithm"):
+    _take_from_config_or_command_line(args, config, keyword,
+        parser.get_default(keyword))
+
+  _take_from_config_or_command_line(args, config, "grid",
+      parser.get_default(keyword), required=False)
+
+  _take_from_config_or_command_line(args, config, "sub_directory",
+      parser.get_default(keyword), is_resource=False)
+
+  skip_keywords = tuple(['skip_' + k.replace('-', '_') for k in skips])
+
+  for keyword in (
+      "protocol",
+      "groups",
+      "parallel",
+      "preferred_package",
+      "temp_directory",
+      "result_directory",
+      "extractor_file",
+      "projector_file",
+      "enroller_file",
+      "gridtk_database_file",
+      "experiment_info_file",
+      "database_directories_file",
+      "preprocessed_directory",
+      "extracted_directory",
+      "projected_directory",
+      "model_directories",
+      "score_directories",
+      "zt_directories",
+      "grid_log_directory",
+      "verbose",
+      "dry_run",
+      "force",
+      "write_compressed_score_files",
+      "stop_on_failure",
+      "run_local_scheduler",
+      "external_dependencies",
+      "timer",
+      "nice",
+      "delete_jobs_finished_with_status",
+      "calibrate_scores",
+      "zt_norm",
+      "allow_missing_files",
+      "env",
+      ) + skip_keywords:
+    _take_from_config_or_command_line(args, config, keyword,
+        parser.get_default(keyword), required=False, is_resource=False)
 
   # evaluate skips
   if skips is not None and args.execute_only is not None:
     for skip in skips:
       if skip not in args.execute_only:
-        exec("args.skip_%s = True" % (skip.replace("-", "_")))
+        setattr("args", "skip_%s" % skip.replace("-", "_"),  True)
 
   if args.parallel is not None:
-    args.grid = ['bob.bio.base.grid.Grid("local", number_of_parallel_processes = %d)' % args.parallel]
+    args.grid = bob.bio.base.grid.Grid("local", number_of_parallel_processes = args.parallel)
     args.run_local_scheduler = True
     args.stop_on_failure = True
 
@@ -214,13 +286,6 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   if args.timer is not None and not len(args.timer):
     args.timer = ('real', 'system', 'user')
 
-  # load configuration resources
-  args.database = utils.load_resource(' '.join(args.database), 'database', imports = args.imports, preferred_package = args.preferred_package)
-  args.preprocessor = utils.load_resource(' '.join(args.preprocessor), 'preprocessor', imports = args.imports, preferred_package = args.preferred_package)
-  args.extractor = utils.load_resource(' '.join(args.extractor), 'extractor', imports = args.imports, preferred_package = args.preferred_package)
-  args.algorithm = utils.load_resource(' '.join(args.algorithm), 'algorithm', imports = args.imports, preferred_package = args.preferred_package)
-  if args.grid is not None:
-    args.grid = utils.load_resource(' '.join(args.grid), 'grid', imports = args.imports, preferred_package = args.preferred_package)
 
   # set base directories
   if args.temp_directory is None:
@@ -231,7 +296,6 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   args.temp_directory = os.path.join(args.temp_directory, args.sub_directory)
   args.result_directory = os.path.join(args.result_directory, args.sub_directory)
   args.grid_log_directory = os.path.join(args.temp_directory, args.grid_log_directory)
-
 
   # protocol command line override
   if args.protocol is not None:
