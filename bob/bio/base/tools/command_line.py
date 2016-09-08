@@ -79,9 +79,9 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
 
   dir_group = parser.add_argument_group('\nDirectories that can be changed according to your requirements')
   dir_group.add_argument('-T', '--temp-directory', metavar = 'DIR',
-      help = 'The directory for temporary files, default is: %s.' % temp)
+      help = 'The directory for temporary files; if --temp-directory is not specified, "%s" is used' % temp)
   dir_group.add_argument('-R', '--result-directory', metavar = 'DIR',
-      help = 'The directory for resulting score files, default is: %s.' % results)
+      help = 'The directory for resulting score files; if --result-directory is not specified, "%s" is used' % results)
 
   file_group = parser.add_argument_group('\nName (maybe including a path relative to the --temp-directory, if not specified otherwise) of files that will be generated. Note that not all files will be used by all algorithms')
   file_group.add_argument('--extractor-file', metavar = 'FILE', default = 'Extractor.hdf5',
