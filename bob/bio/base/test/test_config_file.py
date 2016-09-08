@@ -54,9 +54,6 @@ def check_parameters(args_file, args_cmdline):
     if (isinstance(attr_file, (bool, str, int, list))) or (attr_file is None):
       assert attr_cmdline == attr_file, '(%s) %r != %r' % \
           (attr, attr_cmdline, attr_file)
-    else:
-      print '(%s) %r == %r?' % (attr, attr_cmdline, attr_file),
-      print attr_cmdline == attr_file, type(attr_cmdline)
 
 
 def test_basic():
