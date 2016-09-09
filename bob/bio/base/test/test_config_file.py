@@ -76,7 +76,7 @@ def test_basic():
       'result_directory = "%s"' % test_dir,
       ])
 
-    args = parse_arguments(['-c', test_config_file.name])
+    args = parse_arguments([test_config_file.name])
 
     assert args.zt_norm is True
     assert args.verbose == 1
@@ -117,7 +117,7 @@ def test_compare_to_cmdline_basic():
       'result_directory = "%s"' % test_dir,
       ])
 
-    args_file = parse_arguments(['-c', test_config_file.name])
+    args_file = parse_arguments([test_config_file.name])
 
     # now do the same with command-line arguments, ensure result is equal
     args_cmdline = parse_arguments([
@@ -159,7 +159,7 @@ def test_compare_to_cmdline_resources():
       'preferred_package = "bob.bio.base"',
       ])
 
-    args_file = parse_arguments(['-c', test_config_file.name])
+    args_file = parse_arguments([test_config_file.name])
 
     # now do the same with command-line arguments, ensure result is equal
     args_cmdline = parse_arguments([
@@ -204,7 +204,7 @@ def test_compare_to_cmdline_skip():
       'preferred_package = "bob.bio.base"',
       ])
 
-    args_file = parse_arguments(['-c', test_config_file.name])
+    args_file = parse_arguments([test_config_file.name])
 
     # now do the same with command-line arguments, ensure result is equal
     args_cmdline = parse_arguments([
