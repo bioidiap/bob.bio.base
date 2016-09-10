@@ -1,7 +1,4 @@
 import bob.bio.base
-import bob.bio.db
-
-from . import utils
 
 def test_filename():
   # load extractor
@@ -10,7 +7,7 @@ def test_filename():
   assert isinstance(preprocessor, bob.bio.base.preprocessor.Filename)
 
   # try to load the original image
-  assert preprocessor.read_original_data(bob.bio.db.BioFile(1,"2",3), "/any/path", ".any.extension") is None
+  assert preprocessor.read_original_data(bob.bio.base.database.file.BioFile(1,"2",3), "/any/path", ".any.extension") is None
 
   # try to process
   assert preprocessor(None, None) == 1

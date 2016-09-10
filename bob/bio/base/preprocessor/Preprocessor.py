@@ -3,11 +3,6 @@
 # @author: Manuel Guenther <Manuel.Guenther@idiap.ch>
 # @date: Tue Oct  2 12:12:39 CEST 2012
 
-import bob.io.base
-import bob.bio.db
-
-import os
-
 from .. import utils
 
 class Preprocessor:
@@ -21,7 +16,7 @@ class Preprocessor:
 
   read_original_data: callable
     This function is used to read the original data from file.
-    It takes three inputs: A :py:class:`bob.bio.db.BioFile` (or one of its derivatives), the original directory (as ``str``) and the original extension (as ``str``).
+    It takes three inputs: A :py:class:`bob.bio.base.database.BioFile` (or one of its derivatives), the original directory (as ``str``) and the original extension (as ``str``).
 
   kwargs : ``key=value`` pairs
     A list of keyword arguments to be written in the :py:meth:`__str__` function.
