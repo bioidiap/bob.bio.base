@@ -8,7 +8,7 @@ logger = bob.core.log.setup("bob.bio.base")
 
 from .. import utils
 from . import FileSelector
-from bob.bio.db import BioDatabase
+from bob.bio.base.database import BioDatabase
 
 """Execute biometric recognition algorithms on a certain biometric database.
 """

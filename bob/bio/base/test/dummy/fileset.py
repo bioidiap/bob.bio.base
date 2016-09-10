@@ -1,4 +1,4 @@
-from bob.bio.db import ZTBioDatabase, BioFileSet, BioFile
+from bob.bio.base.database import ZTBioDatabase, BioFileSet, BioFile
 from bob.bio.base.test.utils import atnt_database_directory
 
 

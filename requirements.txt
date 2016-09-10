@@ -1,4 +1,3 @@
-bob.bio.db
 bob.blitz
 bob.core
 bob.db.base
