@@ -278,7 +278,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
         """
         if self.annotation_directory:
             try:
-                from .annotations import read_annotation_file
+                from bob.db.base.annotations import read_annotation_file
                 annotation_path = os.path.join(self.annotation_directory, file.path + self.annotation_extension)
                 return read_annotation_file(annotation_path, self.annotation_type)
             except ImportError as e:
