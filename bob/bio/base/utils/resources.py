@@ -20,10 +20,77 @@ logger = logging.getLogger("bob.bio.base")
 
 
 #: Keywords for which resources are defined.
-valid_keywords = ('database', 'preprocessor', 'extractor', 'algorithm', 'grid')
+valid_keywords = ('database', 'preprocessor', 'extractor', 'algorithm', 'grid', 'config')
 
-def read_config_file(filename, keyword = None):
-  """read_config_file(filename, keyword = None) -> config
+
+def _collect_config(paths):
+  '''Collect all python file resources into a module
+
+  This function recursively loads python modules (in a Python 3-compatible way)
+  so the last loaded module corresponds to the final state of the loading. In
+  this way, we load the first file, resolve its symbols, overwrite with the
+  second file and so on. We return a temporarily created module containing all
+  resolved variables, respecting the input order.
+
+
+  Parameters:
+
+    paths (list): A list of resources, modules or files (in order) to collect
+      resources from
+
+
+  Returns:
+
+    module: A valid Python module you can use to configure your tool
+
+  '''
+
+  def _attach_resources(src, dst):
+    for k in dir(src):
+      dst.__dict__[k] = getattr(src, k)
+
+  import random
+
+  name = "".join(random.sample(ascii_letters, 10))
+  retval = imp.new_module(name)
+
+  #loads used modules recursively, attach results to module to return
+  if len(paths) > 1:
+    deps = _collect_config(paths[:-1])
+    _attach_resources(deps, retval)
+
+  #execute the module code on the context of previously import modules
+  for ep in pkg_resources.iter_entry_points('bob.bio.config'):
+    if ep.name == paths[-1]:
+      tmp = ep.load() #loads the pointed module
+      _attach_resources(tmp, retval)
+      return retval
+
+  #if you get to this point, then it is not a resource, maybe it is a module?
+  try:
+    tmp = __import__(paths[-1], retval.__dict__, retval.__dict__, ['*'])
+    _attach_resources(tmp, retval)
+    return retval
+  except ImportError:
+    #module does not exist, ignore it
+    pass
+  except Exception as e:
+    raise IOError("The configuration module '%s' could not " \
+        "be loaded: %s" % (paths[-1], e))
+
+  #if you get to this point, then its not a resource nor a loadable module, is
+  #it on the file system?
+  if not os.path.exists(paths[-1]):
+    raise IOError("The configuration file, resource or module '%s' " \
+        "could not be found, loaded or imported" % paths[-1])
+
+  exec(compile(open(paths[-1], "rb").read(), paths[-1], 'exec'), retval.__dict__)
+
+  return retval
+
+
+def read_config_file(filenames, keyword = None):
+  """read_config_file(filenames, keyword = None) -> config
 
   Use this function to read the given configuration file.
   If a keyword is specified, only the configuration according to this keyword is returned.
@@ -31,8 +98,9 @@ def read_config_file(filename, keyword = None):
 
   **Parameters:**
 
-  filename : str
-    The name of the configuration file to read.
+  filenames : list
+    A list (pontentially empty) of configuration files or resources to read
+    running options from
 
   keyword : str or ``None``
     If specified, only the contents of the variable with the given name is returned.
@@ -45,19 +113,18 @@ def read_config_file(filename, keyword = None):
     Otherwise, the whole configuration is returned (as a local namespace).
   """
 
-  if not os.path.exists(filename):
-    raise IOError("The given configuration file '%s' could not be found" % filename)
+  if not filenames:
+    raise RuntimeError("At least one configuration file, resource or " \
+        "module name must be passed")
 
-  import string
-  import random
-  tmp_config = "".join(random.sample(ascii_letters, 10))
-  config = imp.load_source(tmp_config, filename)
+  config = _collect_config(filenames)
 
   if not keyword:
     return config
 
   if not hasattr(config, keyword):
-    raise ImportError("The desired keyword '%s' does not exist in your configuration file '%s'." %(keyword, filename))
+    raise ImportError("The desired keyword '%s' does not exist in any of " \
+        "your configuration files: %s" %(keyword, ', '.join(filenames)))
 
   return getattr(config, keyword)
 

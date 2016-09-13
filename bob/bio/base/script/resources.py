@@ -9,8 +9,8 @@ def resources(command_line_parameters = None):
   import argparse
   parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument("--types", '-t', nargs = '+',
-                      choices = ('d', 'database', 'p', 'preprocessor', 'e', 'extractor', 'a', 'algorithm', 'g', 'grid'),
-                      default = ('d', 'p', 'e', 'a', 'g'),
+                      choices = ('d', 'database', 'p', 'preprocessor', 'e', 'extractor', 'a', 'algorithm', 'g', 'grid', 'c', 'config'),
+                      default = ('d', 'p', 'e', 'a', 'g', 'c'),
                       help = "Select the resource types that should be listed.")
 
   parser.add_argument("--details", '-d', action='store_true', help = "Prints the complete configuration for all resources")
@@ -46,6 +46,10 @@ def resources(command_line_parameters = None):
   if 'g' in args.types or 'grid' in args.types:
     print ("\nList of registered grid configurations:")
     print (bob.bio.base.list_resources('grid', **kwargs))
+
+  if 'c' in args.types or 'config' in args.types:
+    print ("\nList of registered configurations:")
+    print (bob.bio.base.list_resources('config', **kwargs))
 
   print()
 
