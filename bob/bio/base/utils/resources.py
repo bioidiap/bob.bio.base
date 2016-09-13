@@ -35,13 +35,13 @@ def _collect_config(paths):
 
   Parameters:
 
-    paths (list): A list of resources, modules or files (in order) to collect
-      resources from
+    paths : [str]
+      A list of resources, modules or files (in order) to collect resources from
 
 
-  Returns:
+  Returns: module
 
-    module: A valid Python module you can use to configure your tool
+    A valid Python module you can use to configure your tool
 
   '''
 
@@ -54,39 +54,34 @@ def _collect_config(paths):
   name = "".join(random.sample(ascii_letters, 10))
   retval = imp.new_module(name)
 
-  #loads used modules recursively, attach results to module to return
-  if len(paths) > 1:
-    deps = _collect_config(paths[:-1])
-    _attach_resources(deps, retval)
+  for path in paths:
+    # execute the module code on the context of previously import modules
+    for ep in pkg_resources.iter_entry_points('bob.bio.config'):
+      if ep.name == path:
+        tmp = ep.load() # loads the pointed module
+        _attach_resources(tmp, retval)
+        break
+    else:
 
-  #execute the module code on the context of previously import modules
-  for ep in pkg_resources.iter_entry_points('bob.bio.config'):
-    if ep.name == paths[-1]:
-      tmp = ep.load() #loads the pointed module
+      # if you get to this point, then it is not a resource, maybe it is a module?
+      try:
+        tmp = __import__(path, retval.__dict__, retval.__dict__, ['*'])
+        _attach_resources(tmp, retval)
+        continue
+      except ImportError:
+        # module does not exist, ignore it
+        pass
+      except Exception as e:
+        raise IOError("The configuration module '%s' could not be loaded: %s" % (path, e))
+
+      # if you get to this point, then its not a resource nor a loadable module, is
+      # it on the file system?
+      if not os.path.exists(path):
+        raise IOError("The configuration file, resource or module '%s' could not be found, loaded or imported" % path)
+
+      name = "".join(random.sample(ascii_letters, 10))
+      tmp = imp.load_source(name, path)
       _attach_resources(tmp, retval)
-      return retval
-
-  #if you get to this point, then it is not a resource, maybe it is a module?
-  try:
-    tmp = __import__(paths[-1], retval.__dict__, retval.__dict__, ['*'])
-    _attach_resources(tmp, retval)
-    return retval
-  except ImportError:
-    #module does not exist, ignore it
-    pass
-  except Exception as e:
-    raise IOError("The configuration module '%s' could not " \
-        "be loaded: %s" % (paths[-1], e))
-
-  #if you get to this point, then its not a resource nor a loadable module, is
-  #it on the file system?
-  if not os.path.exists(paths[-1]):
-    raise IOError("The configuration file, resource or module '%s' " \
-        "could not be found, loaded or imported" % paths[-1])
-
-  name = "".join(random.sample(ascii_letters, 10))
-  tmp = imp.load_source(name, paths[-1])
-  _attach_resources(tmp, retval)
 
   return retval
 
@@ -100,7 +95,7 @@ def read_config_file(filenames, keyword = None):
 
   **Parameters:**
 
-  filenames : list
+  filenames : [str]
     A list (pontentially empty) of configuration files or resources to read
     running options from
 
