@@ -84,7 +84,9 @@ def _collect_config(paths):
     raise IOError("The configuration file, resource or module '%s' " \
         "could not be found, loaded or imported" % paths[-1])
 
-  exec(compile(open(paths[-1], "rb").read(), paths[-1], 'exec'), retval.__dict__)
+  name = "".join(random.sample(ascii_letters, 10))
+  tmp = imp.load_source(name, paths[-1])
+  _attach_resources(tmp, retval)
 
   return retval
 
