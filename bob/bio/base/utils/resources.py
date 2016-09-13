@@ -47,7 +47,7 @@ def _collect_config(paths):
 
   def _attach_resources(src, dst):
     for k in dir(src):
-      dst.__dict__[k] = getattr(src, k)
+      setattr(dst, k, getattr(src, k))
 
   import random
 
@@ -170,7 +170,7 @@ def load_resource(resource, keyword, imports = ['bob.bio.base'], package_prefix=
 
   # first, look if the resource is a file name
   if os.path.isfile(resource):
-    return read_config_file(resource, keyword)
+    return read_config_file([resource], keyword)
 
   if keyword not in valid_keywords:
     raise ValueError("The given keyword '%s' is not valid. Please use one of %s!" % (str(keyword), str(valid_keywords)))
