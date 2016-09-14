@@ -307,7 +307,7 @@ Resources
 ---------
 
 Finally, some of the configuration files, which sit in the ``bob/bio/*/config`` directories, are registered as *resources*.
-This means that a resource is nothing else than a short name for a registered instance of one of the tools (database, preprocessor, extractor, algorithm or grid configuration) of ``bob.bio``, which has a pre-defined set of parameters.
+A resource is nothing else than a short name for a registered instance of one of the tools (database, preprocessor, extractor, algorithm or grid configuration) of ``bob.bio`` or a python module which has a pre-defined set of parameters.
 
 The process of registering a resource is relatively easy.
 We use the SetupTools_ mechanism of registering so-called entry points in the ``setup.py`` file of the according ``bob.bio`` package.
@@ -318,6 +318,8 @@ Particularly, we use a specific list of entry points, which are:
 * ``bob.bio.extractor`` to register an instance of a (derivation of a) :py:class:`bob.bio.base.extractor.Extractor`
 * ``bob.bio.algorithm`` to register an instance of a (derivation of a) :py:class:`bob.bio.base.algorithm.Algorithm`
 * ``bob.bio.grid`` to register an instance of the :py:class:`bob.bio.base.grid.Grid`
+* ``bob.bio.config`` to register a Python module that contains the values of
+  resources and parameters to use for an experiment
 
 For each of the tools, several resources are defined, which you can list with the ``./bin/resources.py`` command line.
 

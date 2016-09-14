@@ -20,10 +20,74 @@ logger = logging.getLogger("bob.bio.base")
 
 
 #: Keywords for which resources are defined.
-valid_keywords = ('database', 'preprocessor', 'extractor', 'algorithm', 'grid')
+valid_keywords = ('database', 'preprocessor', 'extractor', 'algorithm', 'grid', 'config')
 
-def read_config_file(filename, keyword = None):
-  """read_config_file(filename, keyword = None) -> config
+
+def _collect_config(paths):
+  '''Collect all python file resources into a module
+
+  This function recursively loads python modules (in a Python 3-compatible way)
+  so the last loaded module corresponds to the final state of the loading. In
+  this way, we load the first file, resolve its symbols, overwrite with the
+  second file and so on. We return a temporarily created module containing all
+  resolved variables, respecting the input order.
+
+
+  Parameters:
+
+    paths : [str]
+      A list of resources, modules or files (in order) to collect resources from
+
+
+  Returns: module
+
+    A valid Python module you can use to configure your tool
+
+  '''
+
+  def _attach_resources(src, dst):
+    for k in dir(src):
+      setattr(dst, k, getattr(src, k))
+
+  import random
+
+  name = "".join(random.sample(ascii_letters, 10))
+  retval = imp.new_module(name)
+
+  for path in paths:
+    # execute the module code on the context of previously import modules
+    for ep in pkg_resources.iter_entry_points('bob.bio.config'):
+      if ep.name == path:
+        tmp = ep.load() # loads the pointed module
+        _attach_resources(tmp, retval)
+        break
+    else:
+
+      # if you get to this point, then it is not a resource, maybe it is a module?
+      try:
+        tmp = __import__(path, retval.__dict__, retval.__dict__, ['*'])
+        _attach_resources(tmp, retval)
+        continue
+      except ImportError:
+        # module does not exist, ignore it
+        pass
+      except Exception as e:
+        raise IOError("The configuration module '%s' could not be loaded: %s" % (path, e))
+
+      # if you get to this point, then its not a resource nor a loadable module, is
+      # it on the file system?
+      if not os.path.exists(path):
+        raise IOError("The configuration file, resource or module '%s' could not be found, loaded or imported" % path)
+
+      name = "".join(random.sample(ascii_letters, 10))
+      tmp = imp.load_source(name, path)
+      _attach_resources(tmp, retval)
+
+  return retval
+
+
+def read_config_file(filenames, keyword = None):
+  """read_config_file(filenames, keyword = None) -> config
 
   Use this function to read the given configuration file.
   If a keyword is specified, only the configuration according to this keyword is returned.
@@ -31,8 +95,9 @@ def read_config_file(filename, keyword = None):
 
   **Parameters:**
 
-  filename : str
-    The name of the configuration file to read.
+  filenames : [str]
+    A list (pontentially empty) of configuration files or resources to read
+    running options from
 
   keyword : str or ``None``
     If specified, only the contents of the variable with the given name is returned.
@@ -45,19 +110,18 @@ def read_config_file(filename, keyword = None):
     Otherwise, the whole configuration is returned (as a local namespace).
   """
 
-  if not os.path.exists(filename):
-    raise IOError("The given configuration file '%s' could not be found" % filename)
+  if not filenames:
+    raise RuntimeError("At least one configuration file, resource or " \
+        "module name must be passed")
 
-  import string
-  import random
-  tmp_config = "".join(random.sample(ascii_letters, 10))
-  config = imp.load_source(tmp_config, filename)
+  config = _collect_config(filenames)
 
   if not keyword:
     return config
 
   if not hasattr(config, keyword):
-    raise ImportError("The desired keyword '%s' does not exist in your configuration file '%s'." %(keyword, filename))
+    raise ImportError("The desired keyword '%s' does not exist in any of " \
+        "your configuration files: %s" %(keyword, ', '.join(filenames)))
 
   return getattr(config, keyword)
 
@@ -103,7 +167,7 @@ def load_resource(resource, keyword, imports = ['bob.bio.base'], package_prefix=
 
   # first, look if the resource is a file name
   if os.path.isfile(resource):
-    return read_config_file(resource, keyword)
+    return read_config_file([resource], keyword)
 
   if keyword not in valid_keywords:
     raise ValueError("The given keyword '%s' is not valid. Please use one of %s!" % (str(keyword), str(valid_keywords)))

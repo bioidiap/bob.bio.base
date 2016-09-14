@@ -47,8 +47,7 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
   #######################################################################################
   ############## options that are required to be specified #######################
   config_group = parser.add_argument_group('\nParameters defining the experiment. Most of these parameters can be a registered resource, a configuration file, or even a string that defines a newly created object')
-  config_group.add_argument('-c', '--configuration-file',
-      help = 'A configuration file containing one or more of "database", "preprocessor", "extractor", "algorithm" and/or "grid"')
+  config_group.add_argument('configuration_file', metavar='PATH', nargs='*', help = 'A configuration file containing one or more of "database", "preprocessor", "extractor", "algorithm" and/or "grid"')
   config_group.add_argument('-d', '--database', metavar = 'x', nargs = '+',
       help = 'Database and the protocol; registered databases are: %s' % utils.resource_keys('database', exclude_resources_from))
   config_group.add_argument('-p', '--preprocessor', metavar = 'x', nargs = '+',
@@ -169,7 +168,7 @@ def _take_from_config_or_command_line(args, config, keyword, default, required=T
     setattr(args, keyword, val)
 
   elif required:
-    raise ValueError("Please specify a %s either on command line (via --%s) or in the configuration file (via --configuration-file)" %(keyword, keyword))
+    raise ValueError("Please specify a %s either on command line (via --%s) or in a configuration file" %(keyword, keyword))
 
 
 def initialize(parsers, command_line_parameters = None, skips = []):
@@ -217,7 +216,7 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   args = parser.parse_args(command_line_parameters)
 
   # first, read the configuration file and set everything from the config file to the args -- as long as not overwritten on command line
-  config = utils.read_config_file(args.configuration_file) if args.configuration_file is not None else None
+  config = utils.read_config_file(args.configuration_file) if args.configuration_file else None
   for keyword in ("database", "preprocessor", "extractor", "algorithm"):
     _take_from_config_or_command_line(args, config, keyword,
         parser.get_default(keyword))

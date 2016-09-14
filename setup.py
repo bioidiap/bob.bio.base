@@ -83,6 +83,11 @@ setup(
         'fuse_scores.py    = bob.bio.base.script.fuse_scores:main',
       ],
 
+      'bob.bio.config': [
+        'dummy             = bob.bio.base.test.dummy.config', # for test purposes only
+        'dummy2            = bob.bio.base.test.dummy.config2', # for test purposes only
+      ],
+
       'bob.bio.database': [
         'dummy             = bob.bio.base.test.dummy.database:database', # for test purposes only
       ],

@@ -76,7 +76,7 @@ def test_basic():
       'result_directory = "%s"' % test_dir,
       ])
 
-    args = parse_arguments(['-c', test_config_file.name])
+    args = parse_arguments([test_config_file.name])
 
     assert args.zt_norm is True
     assert args.verbose == 1
@@ -117,7 +117,7 @@ def test_compare_to_cmdline_basic():
       'result_directory = "%s"' % test_dir,
       ])
 
-    args_file = parse_arguments(['-c', test_config_file.name])
+    args_file = parse_arguments([test_config_file.name])
 
     # now do the same with command-line arguments, ensure result is equal
     args_cmdline = parse_arguments([
@@ -159,7 +159,7 @@ def test_compare_to_cmdline_resources():
       'preferred_package = "bob.bio.base"',
       ])
 
-    args_file = parse_arguments(['-c', test_config_file.name])
+    args_file = parse_arguments([test_config_file.name])
 
     # now do the same with command-line arguments, ensure result is equal
     args_cmdline = parse_arguments([
@@ -204,7 +204,7 @@ def test_compare_to_cmdline_skip():
       'preferred_package = "bob.bio.base"',
       ])
 
-    args_file = parse_arguments(['-c', test_config_file.name])
+    args_file = parse_arguments([test_config_file.name])
 
     # now do the same with command-line arguments, ensure result is equal
     args_cmdline = parse_arguments([
@@ -227,3 +227,107 @@ def test_compare_to_cmdline_skip():
   finally:
     if test_dir: shutil.rmtree(test_dir)
     if test_config_file: del test_config_file
+
+
+def test_from_resource():
+
+  test_dir = None
+
+  try:
+    test_dir = tempfile.mkdtemp(prefix='bobtest_')
+    args = parse_arguments(['dummy'])
+
+    assert args.sub_directory.endswith('test_dummy')
+    assert args.allow_missing_files is False
+    assert args.zt_norm is True
+    assert args.verbose == 1
+
+    from bob.bio.base.test.dummy.database import DummyDatabase
+    assert isinstance(args.database, DummyDatabase)
+    from bob.bio.base.test.dummy.preprocessor import DummyPreprocessor
+    assert isinstance(args.preprocessor, DummyPreprocessor)
+    from bob.bio.base.test.dummy.extractor import DummyExtractor
+    assert isinstance(args.extractor, DummyExtractor)
+    from bob.bio.base.test.dummy.algorithm import DummyAlgorithm
+    assert isinstance(args.algorithm, DummyAlgorithm)
+
+  finally:
+    if test_dir: shutil.rmtree(test_dir)
+
+
+def test_from_module():
+
+  test_dir = None
+
+  try:
+    test_dir = tempfile.mkdtemp(prefix='bobtest_')
+    args = parse_arguments(['bob.bio.base.test.dummy.config'])
+
+    assert args.sub_directory.endswith('test_dummy')
+    assert args.allow_missing_files is False
+    assert args.zt_norm is True
+    assert args.verbose == 1
+
+    from bob.bio.base.test.dummy.database import DummyDatabase
+    assert isinstance(args.database, DummyDatabase)
+    from bob.bio.base.test.dummy.preprocessor import DummyPreprocessor
+    assert isinstance(args.preprocessor, DummyPreprocessor)
+    from bob.bio.base.test.dummy.extractor import DummyExtractor
+    assert isinstance(args.extractor, DummyExtractor)
+    from bob.bio.base.test.dummy.algorithm import DummyAlgorithm
+    assert isinstance(args.algorithm, DummyAlgorithm)
+
+  finally:
+    if test_dir: shutil.rmtree(test_dir)
+
+
+def test_order():
+
+  test_dir = None
+
+  try:
+    test_dir = tempfile.mkdtemp(prefix='bobtest_')
+    args = parse_arguments(['dummy', 'dummy2'])
+
+    assert args.sub_directory.endswith('test_dummy2')
+    assert args.allow_missing_files is False
+    assert args.zt_norm is True
+    assert args.verbose == 2
+
+    from bob.bio.base.test.dummy.database import DummyDatabase
+    assert isinstance(args.database, DummyDatabase)
+    from bob.bio.base.test.dummy.preprocessor import DummyPreprocessor
+    assert isinstance(args.preprocessor, DummyPreprocessor)
+    from bob.bio.base.test.dummy.extractor import DummyExtractor
+    assert isinstance(args.extractor, DummyExtractor)
+    from bob.bio.base.test.dummy.algorithm import DummyAlgorithm
+    assert isinstance(args.algorithm, DummyAlgorithm)
+
+  finally:
+    if test_dir: shutil.rmtree(test_dir)
+
+
+def test_order_inverse():
+
+  test_dir = None
+
+  try:
+    test_dir = tempfile.mkdtemp(prefix='bobtest_')
+    args = parse_arguments(['dummy2', 'dummy'])
+
+    assert args.sub_directory.endswith('test_dummy')
+    assert args.allow_missing_files is False
+    assert args.zt_norm is True
+    assert args.verbose == 1
+
+    from bob.bio.base.test.dummy.database import DummyDatabase
+    assert isinstance(args.database, DummyDatabase)
+    from bob.bio.base.test.dummy.preprocessor import DummyPreprocessor
+    assert isinstance(args.preprocessor, DummyPreprocessor)
+    from bob.bio.base.test.dummy.extractor import DummyExtractor
+    assert isinstance(args.extractor, DummyExtractor)
+    from bob.bio.base.test.dummy.algorithm import DummyAlgorithm
+    assert isinstance(args.algorithm, DummyAlgorithm)
+
+  finally:
+    if test_dir: shutil.rmtree(test_dir)

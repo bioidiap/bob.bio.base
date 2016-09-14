@@ -406,7 +406,7 @@ def main(command_line_parameters = None):
   command_line_options(command_line_parameters)
 
   global configuration, place_holder_key
-  configuration = utils.read_config_file(args.configuration_file)
+  configuration = utils.read_config_file([args.configuration_file])
   place_holder_key = args.place_holder_key
 
   if args.preprocessor:
