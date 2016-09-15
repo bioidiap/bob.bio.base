@@ -1,4 +1,5 @@
-from bob.bio.db import ZTBioDatabase
+from bob.bio.base.database import ZTBioDatabase
+from bob.bio.base.database.file import BioFile
 from bob.bio.base.test.utils import atnt_database_directory
 
 
@@ -17,11 +18,14 @@ class DummyDatabase(ZTBioDatabase):
         import bob.db.atnt
         self.__db = bob.db.atnt.Database()
 
+    def _make_bio(self, files):
+      return [BioFile(client_id=f.client_id, path=f.path, file_id=f.id) for f in files]
+
     def model_ids_with_protocol(self, groups=None, protocol=None, **kwargs):
         return self.__db.model_ids(groups, protocol)
 
     def objects(self, groups=None, protocol=None, purposes=None, model_ids=None, **kwargs):
-        return self.__db.objects(model_ids, groups, purposes, protocol, **kwargs)
+        return self._make_bio(self.__db.objects(model_ids, groups, purposes, protocol, **kwargs))
 
     def tobjects(self, groups=None, protocol=None, model_ids=None, **kwargs):
         return []

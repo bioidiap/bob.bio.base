@@ -3,10 +3,6 @@
 # @author: Manuel Guenther <Manuel.Guenther@idiap.ch>
 # @date: Tue Oct  2 12:12:39 CEST 2012
 
-import bob.io.base
-
-import os
-
 from .. import utils
 
 class Preprocessor:
@@ -18,14 +14,19 @@ class Preprocessor:
   writes_data : bool
     Select, if the preprocessor actually writes preprocessed images, or if it is simply returning values.
 
+  read_original_data: callable
+    This function is used to read the original data from file.
+    It takes three inputs: A :py:class:`bob.bio.base.database.BioFile` (or one of its derivatives), the original directory (as ``str``) and the original extension (as ``str``).
+
   kwargs : ``key=value`` pairs
     A list of keyword arguments to be written in the :py:meth:`__str__` function.
   """
 
-  def __init__(self, writes_data = True, **kwargs):
+  def __init__(self, writes_data = True, read_original_data = lambda biofile,directory,extension : biofile.load(directory,extension), **kwargs):
     # Each class needs to have a constructor taking
     # all the parameters that are required for the preprocessing as arguments
     self.writes_data = writes_data
+    self.read_original_data = read_original_data
     self._kwargs = kwargs
     pass
 
@@ -69,25 +70,6 @@ class Preprocessor:
   ############################################################
   ### Special functions that might be overwritten on need
   ############################################################
-
-  def read_original_data(self, original_file_name):
-    """read_original_data(original_file_name) -> data
-
-    Reads the *original* data (usually something like an image) from file.
-    In this base class implementation, it uses :py:func:`bob.io.base.load` to do that.
-    If you have different format, please overwrite this function.
-
-    **Parameters:**
-
-    original_file_name : str
-      The file name to read the original data from.
-
-    **Returns:**
-
-    data : object (usually :py:class:`numpy.ndarray`)
-      The original data read from file.
-    """
-    return bob.io.base.load(original_file_name)
 
 
   def write_data(self, data, data_file):
