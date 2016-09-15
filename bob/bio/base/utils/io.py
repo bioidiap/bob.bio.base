@@ -4,6 +4,7 @@ import tempfile, tarfile
 import logging
 logger = logging.getLogger("bob.bio.base")
 
+from .. import database
 import bob.io.base
 
 def filter_missing_files(file_names, split_by_client=False, allow_missing_files=True):
@@ -49,6 +50,33 @@ def check_file(filename, force, expected_file_size = 1):
     else:
       return True
   return False
+
+
+def read_original_data(biofile, directory, extension):
+  """read_original_data(biofile, directory, extension) -> data
+
+  This function reads the original data using the given ``biofile`` instance.
+  It simply calls ``load(directory, extension)`` from :py:class:`bob.bio.base.database.BioFile` or one of its derivatives.
+
+  **Parameters:**
+
+  ``biofile`` : :py:class:`bob.bio.base.database.BioFile` or one of its derivatives
+    The file to read the original data.
+
+  ``directory`` : str
+    The base directory of the database.
+
+  ``extension`` : str or ``None``
+    The extension of the original data.
+    Might be ``None`` if the ``biofile`` itself has the extension stored.
+
+  **Returns**
+
+  ``data`` : object
+    Whatver ``biofile.load`` returns; usually a :py:class:`numpy.ndarray`
+  """
+  assert isinstance(biofile, database.BioFile)
+  return biofile.load(directory, extension)
 
 
 def load(file):
