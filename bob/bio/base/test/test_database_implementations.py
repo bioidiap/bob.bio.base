@@ -12,7 +12,7 @@ import os
 from bob.bio.base.database import BioDatabase, ZTBioDatabase
 
 
-def check_database(database, groups=('dev',), protocol=None, training_depends=False, models_depend=False):
+def check_database(database, groups=('dev',), protocol=None, training_depends=False, models_depend=False, skip_train=False):
     assert isinstance(database, BioDatabase)
 
     # load the directories
@@ -23,8 +23,9 @@ def check_database(database, groups=('dev',), protocol=None, training_depends=Fa
     if protocol is None: protocol = database.protocol
 
     assert len(database.all_files()) > 0
-    assert len(database.training_files('train_extractor')) > 0
-    assert len(database.arrange_by_client(database.training_files('train_enroller'))) > 0
+    if not skip_train:
+        assert len(database.training_files('train_extractor')) > 0
+        assert len(database.arrange_by_client(database.training_files('train_enroller'))) > 0
 
     for group in groups:
         model_ids = database.model_ids_with_protocol(group, protocol=protocol)
