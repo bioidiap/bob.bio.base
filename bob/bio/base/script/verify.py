@@ -30,8 +30,16 @@ def parse_arguments(command_line_parameters, exclude_resources_from = []):
       help = argparse.SUPPRESS) #'The group for which the current action should be performed'
 
   # now that we have set up everything, get the command line arguments
-  return tools.initialize(parsers, command_line_parameters,
+  args = tools.initialize(parsers, command_line_parameters,
       skips = ['preprocessing', 'extractor-training', 'extraction', 'projector-training', 'projection', 'enroller-training', 'enrollment', 'score-computation', 'concatenation', 'calibration'])
+
+  # check that none of the above arguments are used without the --sub-task
+  if args.sub_task is None:
+    if args.model_type is not None: raise ValueError("The option --model-type is an internal option and cannot be used to define experiments")
+    if args.score_type is not None: raise ValueError("The option --score-type is an internal option and cannot be used to define experiments")
+    if args.group is not None: raise ValueError("The option --group is an internal option and cannot be used to define experiments; did you mean to use --groups?")
+
+  return args
 
 
 def add_jobs(args, submitter):
