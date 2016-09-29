@@ -1,13 +1,12 @@
 
 
-from __future__ import print_function
-
 import bob.measure
 
 import os
 import shutil
 import tempfile
 import numpy
+import nose
 
 import bob.io.image
 import bob.bio.base
@@ -76,8 +75,6 @@ def test_verify_config():
       '--result-directory', test_dir
   ]
 
-  print (bob.bio.base.tools.command_line(parameters))
-
   _verify(parameters, test_dir, 'test_config')
 
 
@@ -94,8 +91,6 @@ def test_verify_algorithm_noprojection():
       '--temp-directory', test_dir,
       '--result-directory', test_dir
   ]
-
-  print (bob.bio.base.tools.command_line(parameters))
 
   _verify(parameters, test_dir, 'algorithm_noprojection')
 
@@ -116,8 +111,6 @@ def test_verify_resources():
       '--preferred-package', 'bob.bio.base'
   ]
 
-  print (bob.bio.base.tools.command_line(parameters))
-
   _verify(parameters, test_dir, 'test_resource')
 
 
@@ -135,8 +128,6 @@ def test_verify_commandline():
       '--result-directory', test_dir,
       '--imports', 'bob.bio.base.test.dummy'
   ]
-
-  print (bob.bio.base.tools.command_line(parameters))
 
   _verify(parameters, test_dir, 'test_commandline')
 
@@ -164,8 +155,6 @@ def test_verify_parallel():
       '--preferred-package', 'bob.bio.base'
   ]
 
-  print (bob.bio.base.tools.command_line(parameters))
-
   _verify(parameters, test_dir, 'test_parallel')
 
 
@@ -184,8 +173,6 @@ def test_verify_compressed():
       '--write-compressed-score-files',
       '--preferred-package', 'bob.bio.base'
   ]
-
-  print (bob.bio.base.tools.command_line(parameters))
 
   _verify(parameters, test_dir, 'test_compressed', score_modifier=('scores', '.tar.bz2'))
 
@@ -206,8 +193,6 @@ def test_verify_calibrate():
       '--preferred-package', 'bob.bio.base'
   ]
 
-  print (bob.bio.base.tools.command_line(parameters))
-
   _verify(parameters, test_dir, 'test_calibrate', '-calibrated', score_modifier=('calibrated', ''))
 
 
@@ -226,8 +211,6 @@ def test_verify_fileset():
       '--preferred-package', 'bob.bio.base',
       '--imports', 'bob.bio.base.test.dummy'
   ]
-
-  print (bob.bio.base.tools.command_line(parameters))
 
   _verify(parameters, test_dir, 'test_fileset', ref_modifier="-fileset")
 
@@ -249,8 +232,6 @@ def test_verify_missing():
       '--imports', 'bob.bio.base.test.dummy'
   ]
 
-  print (bob.bio.base.tools.command_line(parameters))
-
   try:
     from bob.bio.base.script.verify import main
     main(parameters)
@@ -271,6 +252,29 @@ def test_verify_missing():
 
   finally:
     shutil.rmtree(test_dir)
+
+
+def test_internal_raises():
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
+  # define dummy parameters
+  parameters = [
+      '-d', 'dummy',
+      '-p', 'dummy',
+      '-e', 'dummy',
+      '-a', 'dummy',
+      '-vs', 'test_raises',
+      '--temp-directory', test_dir,
+      '--result-directory', test_dir,
+      '--preferred-package', 'bob.bio.base',
+      '--imports', 'bob.bio.base.test.dummy'
+  ]
+
+  from bob.bio.base.script.verify import main
+  for option, value in (("--group", "dev"), ("--model-type", "N"), ("--score-type", "A")):
+    internal = parameters + [option, value]
+
+    nose.tools.assert_raises(ValueError, main, internal)
+  shutil.rmtree(test_dir)
 
 
 def test_fusion():
