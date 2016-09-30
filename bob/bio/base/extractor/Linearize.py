@@ -6,40 +6,41 @@
 from .Extractor import Extractor
 import numpy
 
-class Linearize (Extractor):
-  """Extracts features by simply concatenating all elements of the data into one long vector.
 
-  If a ``dtype`` is specified in the contructor, it is assured that the resulting
-  """
+class Linearize(Extractor):
+    """Extracts features by simply concatenating all elements of the data into one long vector.
 
-  def __init__(self, dtype=None):
-    """If the ``dtype`` parameter is given, it specifies the data type that is enforced for the features."""
-    Extractor.__init__(self, dtype = dtype)
-    self.dtype = dtype
-
-  def __call__(self, data):
-    """__call__(data) -> data
-
-    Takes data of arbitrary dimensions and linearizes it into a 1D vector; enforcing the data type, if desired.
-
-    **Parameters:**
-
-    data : :py:class:`numpy.ndarray`
-      The preprocessed data to be transformed into one vector.
-
-    **Returns:**
-
-    data : 1D :py:class:`numpy.ndarray`
-      The extracted feature vector, of the desired ``dtype`` (if specified).
+    If a ``dtype`` is specified in the contructor, it is assured that the resulting
     """
-    assert isinstance(data, numpy.ndarray)
 
-    linear = numpy.reshape(data, data.size)
-    if self.dtype is not None:
-      linear = linear.astype(self.dtype)
-    return linear
+    def __init__(self, dtype=None):
+        """If the ``dtype`` parameter is given, it specifies the data type that is enforced for the features."""
+        Extractor.__init__(self, dtype=dtype)
+        self.dtype = dtype
 
+    def __call__(self, data):
+        """__call__(data) -> data
 
-  # re-define unused functions, just so that they do not get documented
-  def train(*args,**kwargs): raise NotImplementedError()
-  def load(*args,**kwargs): pass
+        Takes data of arbitrary dimensions and linearizes it into a 1D vector; enforcing the data type, if desired.
+
+        **Parameters:**
+
+        data : :py:class:`numpy.ndarray`
+          The preprocessed data to be transformed into one vector.
+
+        **Returns:**
+
+        data : 1D :py:class:`numpy.ndarray`
+          The extracted feature vector, of the desired ``dtype`` (if specified).
+        """
+        assert isinstance(data, numpy.ndarray)
+
+        linear = numpy.reshape(data, data.size)
+        if self.dtype is not None:
+            linear = linear.astype(self.dtype)
+        return linear
+
+    # re-define unused functions, just so that they do not get documented
+    def train(*args, **kwargs): raise NotImplementedError()
+
+    def load(*args, **kwargs): pass

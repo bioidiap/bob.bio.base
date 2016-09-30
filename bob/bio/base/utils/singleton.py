@@ -1,13 +1,13 @@
 # A singleton class decorator, based on http://stackoverflow.com/a/7346105/3301902
 
-class Singleton:
+class Singleton(object):
   """
   A non-thread-safe helper class to ease implementing singletons.
   This should be used as a **decorator** -- not a metaclass -- to the class that should be a singleton.
 
   The decorated class can define one `__init__` function that takes an arbitrary list of parameters.
 
-  To get the singleton instance, use the :py:meth:`instance` method. Trying to use :py:meth:`__call__` will result in a :py:class:`TypeError` being raised.
+  To get the singleton instance, use the :py:meth:`instance` method. Trying to use `__call__` will result in a `TypeError` being raised.
 
   Limitations:
 
@@ -21,6 +21,7 @@ class Singleton:
     self.__doc__ = decorated.__doc__
     self.__name__ = decorated.__name__
     self.__module__ = decorated.__module__
+    self.__mro__ = decorated.__mro__
     self.__bases__ = []
 
     self._instance = None

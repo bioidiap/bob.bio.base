@@ -8,7 +8,6 @@ logger = bob.core.log.setup("bob.bio.base")
 
 from .. import utils
 from . import FileSelector
-from bob.bio.base.database import BioDatabase
 
 """Execute biometric recognition algorithms on a certain biometric database.
 """
@@ -201,6 +200,7 @@ def initialize(parsers, command_line_parameters = None, skips = []):
 
     .. note:: The database, preprocessor, extractor, algorithm and grid (if specified) are actual instances of the according classes.
   """
+  from bob.bio.base.database import BioDatabase
 
   # add execute-only flags to command line options
   if skips is not None:

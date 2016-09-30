@@ -6,7 +6,7 @@ import os
 from .. import utils
 
 @utils.Singleton
-class FileSelector:
+class FileSelector(object):
   """This class provides shortcuts for selecting different files for different stages of the verification process.
 
   It communicates with the database and provides lists of file names for all steps of the tool chain.
@@ -15,7 +15,7 @@ class FileSelector:
 
   **Parameters:**
 
-  database : :py:class:`bob.bio.base.database.Database` or derived
+  database : :py:class:`bob.bio.base.database.BioDatabase` or derived
     The database object that provides the list of files.
 
   preprocessed_directory : str
