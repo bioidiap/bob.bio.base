@@ -9,5 +9,11 @@ bob.learn.linear
 bob.math
 bob.measure
 bob.sp
+bob.bio.face # To build the documentation
+bob.bio.gmm
+bob.bio.spear
+bob.bio.video
+bob.db.youtube
+gridtk
 scipy
 setuptools
