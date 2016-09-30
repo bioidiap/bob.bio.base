@@ -18,7 +18,7 @@ Please make sure that you have read the `Dependencies <https://github.com/idiap/
   However, we found that running Bob_ in a virtual Unix environment such as the one provided by VirtualBox_ is a good alternative.
 
 Installation via conda
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 The most simple and most convenient way to use the ``bob.bio`` tools is to install it using `conda <http://conda.pydata.org/docs/intro.html>`_.
 We offer pre-compiled binary installations of Bob_ and ``bob.bio`` with conda.
@@ -32,7 +32,7 @@ first search the ``bob.bio`` in the conda-forge channel and then install it.
 
 
 Installation via zc.buildout
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------
 
 Another convenient way to use the ``bob.bio`` tools is to use a ``zc.buildout`` package, as explained in more detail `here <https://github.com/idiap/bob/wiki/Installation#using-zcbuildout-for-production>`__.
 There, in the ``eggs`` section of the ``buildout.cfg`` file, simply list the ``bob.bio`` packages that you want, like:
@@ -119,6 +119,7 @@ In case any of the tests fail for unexplainable reasons, please file a bug repor
 .. note::
   Usually, all tests should pass with the latest stable versions of the Bob_ packages.
   In other versions, some of the tests may fail.
+
 
 
 Generate this documentation
