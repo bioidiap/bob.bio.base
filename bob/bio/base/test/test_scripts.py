@@ -144,7 +144,6 @@ def test_verify_parallel():
       '-e', 'bob.bio.base.test.dummy.extractor.DummyExtractor()',
       '-a', 'dummy',
       '--zt-norm',
-      '--allow-missing-files',
       '-vs', 'test_parallel',
       '--temp-directory', test_dir,
       '--result-directory', test_dir,
