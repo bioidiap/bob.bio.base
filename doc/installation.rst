@@ -17,7 +17,24 @@ Please make sure that you have read the `Dependencies <https://github.com/idiap/
   Currently, running Bob_ under MS Windows in not yet supported.
   However, we found that running Bob_ in a virtual Unix environment such as the one provided by VirtualBox_ is a good alternative.
 
-The most simple and most convenient way to use the ``bob.bio`` tools is to use a ``zc.buildout`` package, as explained in more detail `here <https://github.com/idiap/bob/wiki/Installation#using-zcbuildout-for-production>`__.
+Installation via conda
+~~~~~~~~~~~~~~~~~~~~~~
+
+The most simple and most convenient way to use the ``bob.bio`` tools is to install it using `conda <http://conda.pydata.org/docs/intro.html>`_.
+We offer pre-compiled binary installations of Bob_ and ``bob.bio`` with conda.
+After setting up your conda environment (you can find the instructions `here <https://gitlab.idiap.ch/bob/bob/wikis/Installation>`_), use the sequence of commands to
+first search the ``bob.bio`` in the conda-forge channel and then install it.
+
+.. code-block:: sh
+
+   $ conda search bob.bio # searching
+   $ conda install bob.bio.base # Install the base package
+
+
+Installation via zc.buildout
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Another convenient way to use the ``bob.bio`` tools is to use a ``zc.buildout`` package, as explained in more detail `here <https://github.com/idiap/bob/wiki/Installation#using-zcbuildout-for-production>`__.
 There, in the ``eggs`` section of the ``buildout.cfg`` file, simply list the ``bob.bio`` packages that you want, like:
 
 .. code-block:: python
@@ -42,7 +59,7 @@ will the download and install all dependent packages locally (relative to your c
 
 
 Databases
-~~~~~~~~~
+---------
 
 With ``bob.bio`` you will run biometric recognition experiments using some default biometric recognition databases.
 Though the verification protocols are implemented in ``bob.bio``, the original data are **not included**.
@@ -69,7 +86,7 @@ Please use ``./bin/databases.py`` for a list of known databases, where you can s
 
 
 Test your Installation
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 One of the scripts that were generated during the bootstrap/buildout step is a test script.
 To verify your installation, you should run the script running the nose tests for each of the ``bob.bio`` packages:
@@ -105,7 +122,7 @@ In case any of the tests fail for unexplainable reasons, please file a bug repor
 
 
 Generate this documentation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------
 
 Generally, the documentation of this package is `available online <http://pythonhosted.org/bob.bio.base>`__, and this should be your preferred resource.
 However, to generate this documentation locally, you call:

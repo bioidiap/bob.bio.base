@@ -14,8 +14,6 @@ Base Classes
    bob.bio.base.preprocessor.Preprocessor
    bob.bio.base.extractor.Extractor
    bob.bio.base.algorithm.Algorithm
-   bob.bio.base.database.Database
-   bob.bio.base.database.DatabaseZT
    bob.bio.base.grid.Grid
 
 
@@ -30,9 +28,8 @@ Implementations
    bob.bio.base.algorithm.LDA
    bob.bio.base.algorithm.PLDA
    bob.bio.base.algorithm.BIC
-   bob.bio.base.database.DatabaseBob
-   bob.bio.base.database.DatabaseBobZT
-   bob.bio.base.database.DatabaseFileList
+   bob.bio.base.database.BioDatabase
+   bob.bio.base.database.ZTBioDatabase
 
 
 Preprocessors
