@@ -1,4 +1,9 @@
 bob.db.atnt
 bob.io.image
+bob.bio.face
+bob.bio.gmm # For the docs
+bob.bio.spear
+bob.bio.video
+bob.db.youtube
 matplotlib
 gridtk

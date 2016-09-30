@@ -24,7 +24,7 @@ class Extractor:
     Ignored, if ``requires_training`` is ``False``
 
   kwargs : ``key=value`` pairs
-    A list of keyword arguments to be written in the :py:meth:`__str__` function.
+    A list of keyword arguments to be written in the `__str__` function.
   """
 
   def __init__(
@@ -89,7 +89,7 @@ class Extractor:
     **Parameters:**
 
     feature : object
-      The extracted feature, i.e., what is returned from :py:meth:`__call__`.
+      The extracted feature, i.e., what is returned from `__call__`.
 
     feature_file : str or :py:class:`bob.io.base.HDF5File`
       The file open for writing, or the name of the file to write.

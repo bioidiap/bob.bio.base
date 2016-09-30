@@ -15,7 +15,7 @@ class FileSelector:
 
   **Parameters:**
 
-  database : :py:class:`bob.bio.base.database.Database` or derived
+  database : :py:class:`bob.bio.base.database.BioDatabase` or derived
     The database object that provides the list of files.
 
   preprocessed_directory : str

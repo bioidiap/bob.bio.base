@@ -7,7 +7,7 @@ class Singleton:
 
   The decorated class can define one `__init__` function that takes an arbitrary list of parameters.
 
-  To get the singleton instance, use the :py:meth:`instance` method. Trying to use :py:meth:`__call__` will result in a :py:class:`TypeError` being raised.
+  To get the singleton instance, use the :py:meth:`instance` method. Trying to use `__call__` will result in a `TypeError` being raised.
 
   Limitations:
 

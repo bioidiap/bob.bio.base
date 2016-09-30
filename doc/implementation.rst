@@ -219,7 +219,7 @@ Verification Database Interface
 
 For most of the data sets, we rely on the database interfaces from Bob_.
 
-Particularly, all databases that are derived from the :py:class:`bob.bio.base.database.BioDatabase` (click :ref:`here <verification_databases>` for a list of implemented databases) are supported by a special derivation of the databases from above.
+Particularly, all databases that are derived from the :py:class:`bob.bio.base.database.BioDatabase` (click `here <https://github.com/idiap/bob/wiki/Packages>`_ for a list of implemented databases) are supported by a special derivation of the databases from above.
 For these databases, the special :py:class:`bob.bio.base.database.BioDatabase` interface is provided, which takes the Bob_ database as parameter.
 Several such databases are defined in the according packages, i.e., :ref:`bob.bio.spear <bob.bio.spear>`, :ref:`bob.bio.face <bob.bio.face>` and :ref:`bob.bio.video <bob.bio.video>`.
 For Bob_'s ZT-norm databases, we provide the :py:class:`bob.bio.base.database.ZTBioDatabase` interface.
@@ -315,7 +315,7 @@ The process of registering a resource is relatively easy.
 We use the SetupTools_ mechanism of registering so-called entry points in the ``setup.py`` file of the according ``bob.bio`` package.
 Particularly, we use a specific list of entry points, which are:
 
-* ``bob.bio.database`` to register an instance of a (derivation of a) :py:class:`bob.bio.base.database.Database`
+* ``bob.bio.database`` to register an instance of a (derivation of a) :py:class:`bob.bio.base.database.BioDatabase`
 * ``bob.bio.preprocessor`` to register an instance of a (derivation of a) :py:class:`bob.bio.base.preprocessor.Preprocessor`
 * ``bob.bio.extractor`` to register an instance of a (derivation of a) :py:class:`bob.bio.base.extractor.Extractor`
 * ``bob.bio.algorithm`` to register an instance of a (derivation of a) :py:class:`bob.bio.base.algorithm.Algorithm`

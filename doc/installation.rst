@@ -47,7 +47,7 @@ There, in the ``eggs`` section of the ``buildout.cfg`` file, simply list the ``b
           gridtk
 
 in order to download and install all packages that are required for your experiments.
-In the example above, you might want to run a video face recognition experiments using the :py:class:`bob.bio.face.preprocessor.FaceDetector` and the :py:class:`bob.bio.face.extractor.DCTBlocks` feature extractor defined in :ref:`bob.bio.face <bob.bio.face>`, the :py:class:`bob.bio.gmm.algorithm.IVector` algorithm defined in :ref:`bob.bio.gmm <bob.bio.gmm>` and the video extensions defined in :ref:`bob.bio.video <bob.bio.video>`, using the YouTube faces database interface defined in :ref:`bob.db.youtube <bob.db.youtube>`.
+In the example above, you might want to run a video face recognition experiments using the :py:class:`bob.bio.face.preprocessor.FaceDetect` and the :py:class:`bob.bio.face.extractor.DCTBlocks` feature extractor defined in :ref:`bob.bio.face <bob.bio.face>`, the :py:class:`bob.bio.gmm.algorithm.IVector` algorithm defined in :ref:`bob.bio.gmm <bob.bio.gmm>` and the video extensions defined in :ref:`bob.bio.video <bob.bio.video>`, using the YouTube faces database interface defined in :ref:`bob.db.youtube <bob.db.youtube>`.
 Running the simple command line:
 
 .. code-block:: sh
@@ -64,7 +64,7 @@ Databases
 With ``bob.bio`` you will run biometric recognition experiments using some default biometric recognition databases.
 Though the verification protocols are implemented in ``bob.bio``, the original data are **not included**.
 To download the original data of the databases, please refer to the according Web-pages.
-For a list of supported databases including their download URLs, please refer to the :ref:`verification_databases`.
+For a list of supported databases including their download URLs, please refer to the `verification_databases <https://github.com/idiap/bob/wiki/Packages>`_.
 
 After downloading the original data for the databases, you will need to tell ``bob.bio``, where these databases can be found.
 For this purpose, we have decided to implement a special file, where you can set your directories.
