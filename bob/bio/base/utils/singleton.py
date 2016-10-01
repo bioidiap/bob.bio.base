@@ -16,12 +16,12 @@ class Singleton(object):
   """
 
   def __init__(self, decorated):
-    super(Singleton, self).__init__()
     self._decorated = decorated
     # see: functools.WRAPPER_ASSIGNMENTS:
     self.__doc__ = decorated.__doc__
     self.__name__ = decorated.__name__
     self.__module__ = decorated.__module__
+    self.__mro__ = decorated.__mro__
     self.__bases__ = []
 
     self._instance = None

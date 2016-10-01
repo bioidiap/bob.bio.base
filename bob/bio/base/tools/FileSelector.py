@@ -70,7 +70,6 @@ class FileSelector(object):
     default_extension = '.hdf5',
     compressed_extension = ''
   ):
-    super(FileSelector, self).__init__()
 
     """Initialize the file selector object with the current configuration."""
     self.database = database
