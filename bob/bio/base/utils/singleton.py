@@ -1,6 +1,6 @@
 # A singleton class decorator, based on http://stackoverflow.com/a/7346105/3301902
 
-class Singleton:
+class Singleton(object):
   """
   A non-thread-safe helper class to ease implementing singletons.
   This should be used as a **decorator** -- not a metaclass -- to the class that should be a singleton.
@@ -16,6 +16,7 @@ class Singleton:
   """
 
   def __init__(self, decorated):
+    super(Singleton, self).__init__()
     self._decorated = decorated
     # see: functools.WRAPPER_ASSIGNMENTS:
     self.__doc__ = decorated.__doc__
