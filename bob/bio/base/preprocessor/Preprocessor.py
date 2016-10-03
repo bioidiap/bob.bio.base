@@ -23,10 +23,12 @@ class Preprocessor:
       A list of keyword arguments to be written in the `__str__` function.
     """
 
-    def __init__(self, writes_data=True, read_original_data=utils.read_original_data, **kwargs):
+    def __init__(self, writes_data=True, read_original_data=None, **kwargs):
         # Each class needs to have a constructor taking
         # all the parameters that are required for the preprocessing as arguments
         self.writes_data = writes_data
+        if read_original_data is None:
+            read_original_data = utils.read_original_data
         self.read_original_data = read_original_data
         self._kwargs = kwargs
         pass
