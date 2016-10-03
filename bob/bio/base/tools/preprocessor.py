@@ -42,7 +42,8 @@ def preprocess(preprocessor, groups = None, indices = None, allow_missing_files 
   fs = FileSelector.instance()
 
   # get the file lists
-  data_files, original_directory, original_extension = fs.original_data_list_files(groups=groups)
+  data_files = fs.original_data_list(groups=groups)
+  original_directory, original_extension = fs.original_directory_and_extension()
   preprocessed_data_files = fs.preprocessed_data_list(groups=groups)
 
   # select a subset of keys to iterate

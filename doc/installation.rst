@@ -17,7 +17,24 @@ Please make sure that you have read the `Dependencies <https://github.com/idiap/
   Currently, running Bob_ under MS Windows in not yet supported.
   However, we found that running Bob_ in a virtual Unix environment such as the one provided by VirtualBox_ is a good alternative.
 
-The most simple and most convenient way to use the ``bob.bio`` tools is to use a ``zc.buildout`` package, as explained in more detail `here <https://github.com/idiap/bob/wiki/Installation#using-zcbuildout-for-production>`__.
+Installation via conda
+----------------------
+
+The most simple and most convenient way to use the ``bob.bio`` tools is to install it using `conda <http://conda.pydata.org/docs/intro.html>`_.
+We offer pre-compiled binary installations of Bob_ and ``bob.bio`` with conda.
+After setting up your conda environment (you can find the instructions `here <https://gitlab.idiap.ch/bob/bob/wikis/Installation>`_), use the sequence of commands to
+first search the ``bob.bio`` in the conda-forge channel and then install it.
+
+.. code-block:: sh
+
+   $ conda search bob.bio # searching
+   $ conda install bob.bio.base # Install the base package
+
+
+Installation via zc.buildout
+----------------------------
+
+Another convenient way to use the ``bob.bio`` tools is to use a ``zc.buildout`` package, as explained in more detail `here <https://github.com/idiap/bob/wiki/Installation#using-zcbuildout-for-production>`__.
 There, in the ``eggs`` section of the ``buildout.cfg`` file, simply list the ``bob.bio`` packages that you want, like:
 
 .. code-block:: python
@@ -30,7 +47,7 @@ There, in the ``eggs`` section of the ``buildout.cfg`` file, simply list the ``b
           gridtk
 
 in order to download and install all packages that are required for your experiments.
-In the example above, you might want to run a video face recognition experiments using the :py:class:`bob.bio.face.preprocessor.FaceDetector` and the :py:class:`bob.bio.face.extractor.DCTBlocks` feature extractor defined in :ref:`bob.bio.face <bob.bio.face>`, the :py:class:`bob.bio.gmm.algorithm.IVector` algorithm defined in :ref:`bob.bio.gmm <bob.bio.gmm>` and the video extensions defined in :ref:`bob.bio.video <bob.bio.video>`, using the YouTube faces database interface defined in :ref:`bob.db.youtube <bob.db.youtube>`.
+In the example above, you might want to run a video face recognition experiments using the :py:class:`bob.bio.face.preprocessor.FaceDetect` and the :py:class:`bob.bio.face.extractor.DCTBlocks` feature extractor defined in :ref:`bob.bio.face <bob.bio.face>`, the :py:class:`bob.bio.gmm.algorithm.IVector` algorithm defined in :ref:`bob.bio.gmm <bob.bio.gmm>` and the video extensions defined in :ref:`bob.bio.video <bob.bio.video>`, using the YouTube faces database interface defined in :ref:`bob.db.youtube <bob.db.youtube>`.
 Running the simple command line:
 
 .. code-block:: sh
@@ -42,12 +59,12 @@ will the download and install all dependent packages locally (relative to your c
 
 
 Databases
-~~~~~~~~~
+---------
 
 With ``bob.bio`` you will run biometric recognition experiments using some default biometric recognition databases.
 Though the verification protocols are implemented in ``bob.bio``, the original data are **not included**.
 To download the original data of the databases, please refer to the according Web-pages.
-For a list of supported databases including their download URLs, please refer to the :ref:`verification_databases`.
+For a list of supported databases including their download URLs, please refer to the `verification_databases <https://github.com/idiap/bob/wiki/Packages>`_.
 
 After downloading the original data for the databases, you will need to tell ``bob.bio``, where these databases can be found.
 For this purpose, we have decided to implement a special file, where you can set your directories.
@@ -69,7 +86,7 @@ Please use ``./bin/databases.py`` for a list of known databases, where you can s
 
 
 Test your Installation
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 One of the scripts that were generated during the bootstrap/buildout step is a test script.
 To verify your installation, you should run the script running the nose tests for each of the ``bob.bio`` packages:
@@ -104,8 +121,9 @@ In case any of the tests fail for unexplainable reasons, please file a bug repor
   In other versions, some of the tests may fail.
 
 
+
 Generate this documentation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------
 
 Generally, the documentation of this package is `available online <http://pythonhosted.org/bob.bio.base>`__, and this should be your preferred resource.
 However, to generate this documentation locally, you call:

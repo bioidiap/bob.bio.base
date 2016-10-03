@@ -196,7 +196,6 @@ Here is a list of implementations:
 * :ref:`bob.bio.face <bob.bio.face>` : :ref:`bob.bio.face.implemented`
 * :ref:`bob.bio.video <bob.bio.video>` : :ref:`bob.bio.video.implemented`
 * :ref:`bob.bio.gmm <bob.bio.gmm>` : :ref:`bob.bio.gmm.implemented`
-* :ref:`bob.bio.csu <bob.bio.csu>` : :ref:`bob.bio.csu.implemented`
 
 .. * :ref:`bob.bio.spear <bob.bio.spear>` : :ref:`bob.bio.spear.implemented`
 
@@ -218,56 +217,58 @@ Verification Database Interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For most of the data sets, we rely on the database interfaces from Bob_.
-Particularly, all databases that are derived from the :py:class:`bob.bio.base.database.BioDatabase` (click :ref:`here <verification_databases>` for a list of implemented databases) are supported by a special derivation of the databases from above.
-For these databases, the special :py:class:`bob.bio.base.database.DatabaseBob` interface is provided, which takes the Bob_ database as parameter.
-Several such databases are defined in the according packages, i.e., :ref:`bob.bio.spear <bob.bio.spear>`, :ref:`bob.bio.face <bob.bio.face>` and :ref:`bob.bio.video <bob.bio.video>`.
-For Bob_'s ZT-norm databases, we provide the :py:class:`bob.bio.base.database.DatabaseBobZT` interface.
 
-Additionally, a generic database interface, which is derived from :py:class:`bob.bio.base.database.DatabaseBobZT`, is the :py:class:`bob.bio.base.database.DatabaseFileList`.
-This database interfaces with the :py:class:`bob.db.verification.filelist.Database`, which is a generic database based on file lists, implementing the :py:class:`bob.bio.base.database.BioDatabase` interface.
+Particularly, all databases that are derived from the :py:class:`bob.bio.base.database.BioDatabase` (click `here <https://github.com/idiap/bob/wiki/Packages>`_ for a list of implemented databases) are supported by a special derivation of the databases from above.
+For these databases, the special :py:class:`bob.bio.base.database.BioDatabase` interface is provided, which takes the Bob_ database as parameter.
+Several such databases are defined in the according packages, i.e., :ref:`bob.bio.spear <bob.bio.spear>`, :ref:`bob.bio.face <bob.bio.face>` and :ref:`bob.bio.video <bob.bio.video>`.
+For Bob_'s ZT-norm databases, we provide the :py:class:`bob.bio.base.database.ZTBioDatabase` interface.
 
 Defining your own Database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+..
+    If you have your own database that you want to execute the recognition experiments on, you should first check if you could use the :ref:`Verifcation File List Database <bob.db.bio_filelist>` interface by defining appropriate file lists for the training set, the model set, and the probes.
+    In most of the cases, the :py:class:`bob.db.bio_filelist.Database` should be sufficient to run experiments.
+    Please refer to the documentation :ref:`Documentation <bob.db.bio_filelist>` of this database for more instructions on how to configure this database.
 
-If you have your own database that you want to execute the recognition experiments on, you should first check if you could use the :ref:`Verifcation FileList Database <bob.db.verification.filelist>` interface by defining appropriate file lists for the training set, the model set, and the probes.
-In most of the cases, the :py:class:`bob.db.verification.filelist.Database` should be sufficient to run experiments.
-Please refer to the documentation :ref:`Documentation <bob.db.verification.filelist>` of this database for more instructions on how to configure this database.
+To "plug" your own database in this framework you have to write your own database class by deriving :py:class:`bob.bio.base.database.BioDatabase`.
+In this case, you have to derive your class from the :py:class:`bob.bio.base.database.BioDatabase`, and provide the following functions:
 
-In case you want to have a more complicated interface to your database, you are welcome to write your own database wrapper class.
-In this case, you have to derive your class from the :py:class:`bob.bio.base.database.Database`, and provide the following functions:
 
-* ``__init__(self, <your-parameters>, **kwargs)``: Constructor of your database interface.
-  Please call the base class constructor, providing all the required parameters, e.g. by ``bob.bio.base.database.Database.__init__(self, **kwargs)``.
-* ``all_files(self)``: Returns a list of all :py:class:`bob.bio.base.database.File` objects of the database.
-  The list needs to be sorted by the file id (you can use the ``self.sort(files)`` function for sorting).
-* ``training_files(self, step, arrange_by_client = False)``: A sorted list of the :py:class:`bob.bio.base.database.File` objects that is used for training.
-  If ``arrange_by_clients`` is enabled, you might want to use the :py:meth:`bob.bio.base.database.Database.arrange_by_client` function to perform the job.
-* ``model_ids(self, group = 'dev'): The ids for the models (usually, there is only one model per client and, thus, you can simply use the client ids) for the given group.
+* ``__init__(self, <your-parameters>, **kwargs)`` Constructor of your database interface.
+  Please call the base class constructor, providing all the required parameters, e.g. by ``super(<your_db>,self).__init__(self, **kwargs)``.
   Usually, providing ids for the group ``'dev'`` should be sufficient.
-* ``client_id_from_model_id(self, model_id)``: Returns the client id for the given model id.
-* ``enroll_files(self, model_id, group='dev')``: Returns the list of model :py:class:`bob.bio.base.database.File` objects for the given model id.
-* ``probe_files(self, model_id=None, group='dev')``: Returns the list of probe files, the given model_id should be compared with.
-  Usually, all probe files are compared with all model files.
-  In this case, you can just ignore the ``model_id``.
-  If the ``model_id`` is ``None``, this function is supposed to return *all* probe files for all models of the given group.
+
+*  ``objects(self, groups=None, protocol=None, purposes=None, model_ids=None, **kwargs)``
+    This function must return a list of ``bob.db.base.database.BioFile`` objects with your data.
+    The keyword arguments are possible filters that you may use.
+
+* ``model_ids_with_protocol(self, groups, protocol, **kwargs)``
+   This function must return a list of model ids for the given groups and given protocol.
+   In this context models are basically them "templates" used for enrollment.
 
 Additionally, you can define more lists that can be used for ZT score normalization.
-In this case, derive you class from :py:class:`bob.bio.base.database.DatabaseZT` instead, and additionally overwrite the following functions:
+If you don't know what ZT score normalization is, just forget about it and move on.
+If you know and want to use it, just derive your class from :py:class:`bob.bio.base.database.ZTBioDatabase` instead, and additionally overwrite the following functions:
 
-* ``t_model_ids(self, group = 'dev')``: The ids for the T-Norm models for the given group.
-* ``t_enroll_files(self, model_id, group='dev')``: Returns the list of model :py:class:`bob.bio.base.database.File` objects for the given T-Norm model id.
-* ``z_probe_files(self, group='dev')``: Returns the list of Z-probe :py:class:`bob.bio.base.database.File` objects, with which all the models and T-Norm models are compared.
+* ``tobjects(self, groups=None, protocol=None, model_ids=None, **kwargs)``
+    This function must return a list of ``bob.db.base.database.BioFile`` objects used for `T` normalization.
+
+* ``zobjects(self, groups=None, protocol=None, **kwargs)``
+     This function must return a list of ``bob.db.base.database.BioFile`` objects used for `Z` normalization.
+
+* ``tmodel_ids_with_protocol(self, protocol=None, groups=None, **kwargs)``
+    The ids for the T norm models for the given group and protocol.
 
 .. note:
    For a proper biometric recognition protocol, the identities from the models and the T-Norm models, as well as the Z-probes should be different.
 
-For some protocols, a single probe consists of several features, see :ref:`bob.bio.base.algorithms` about strategies how to incorporate several probe files into one score.
-If your database should provide this functionality, please overwrite:
+..
+    For some protocols, a single probe consists of several features, see :ref:`bob.bio.base.algorithms` about strategies how to incorporate several probe files into one score.
+    If your database should provide this functionality, please overwrite:
 
-* ``uses_probe_file_sets(self)``: Return ``True`` if the current protocol of the database provides multiple files for one probe.
-* ``probe_file_sets(self, model_id=None, group='dev')``: Returns a list of lists of :py:class:`bob.bio.base.database.FileSet` objects.
-* ``z_probe_file_sets(self, model_id=None, group='dev')``: Returns a list of lists of Z-probe :py:class:`bob.bio.base.database.FileSet` objects (only needed if the base class is :py:class:`bob.bio.base.database.DatabaseZT`).
-
+    * ``uses_probe_file_sets(self)``: Return ``True`` if the current protocol of the database provides multiple files for one probe.
+    * ``probe_file_sets(self, model_id=None, group='dev')``: Returns a list of lists of :py:class:`bob.bio.base.database.FileSet` objects.
+    * ``z_probe_file_sets(self, model_id=None, group='dev')``: Returns a list of lists of Z-probe :py:class:`bob.bio.base.database.FileSet` objects (only needed if the base class is :py:class:`bob.bio.base.database.DatabaseZT`).
 
 
 .. _bob.bio.base.configuration-files:
@@ -282,7 +283,7 @@ In ``bob.bio`` this is achieved by providing these parameters in configuration f
 In these files, an *instance* of one of the tools is generated, and assigned to a variable with a specific name.
 These variable names are:
 
-* ``database`` for an instance of a (derivation of a) :py:class:`bob.bio.base.database.Database`
+* ``database`` for an instance of a (derivation of a) :py:class:`bob.bio.base.database.BioDatabase`
 * ``preprocessor`` for an instance of a (derivation of a) :py:class:`bob.bio.base.preprocessor.Preprocessor`
 * ``extractor`` for an instance of a (derivation of a) :py:class:`bob.bio.base.extractor.Extractor`
 * ``algorithm`` for an instance of a (derivation of a) :py:class:`bob.bio.base.algorithm.Algorithm`
@@ -313,7 +314,7 @@ The process of registering a resource is relatively easy.
 We use the SetupTools_ mechanism of registering so-called entry points in the ``setup.py`` file of the according ``bob.bio`` package.
 Particularly, we use a specific list of entry points, which are:
 
-* ``bob.bio.database`` to register an instance of a (derivation of a) :py:class:`bob.bio.base.database.Database`
+* ``bob.bio.database`` to register an instance of a (derivation of a) :py:class:`bob.bio.base.database.BioDatabase`
 * ``bob.bio.preprocessor`` to register an instance of a (derivation of a) :py:class:`bob.bio.base.preprocessor.Preprocessor`
 * ``bob.bio.extractor`` to register an instance of a (derivation of a) :py:class:`bob.bio.base.extractor.Extractor`
 * ``bob.bio.algorithm`` to register an instance of a (derivation of a) :py:class:`bob.bio.base.algorithm.Algorithm`

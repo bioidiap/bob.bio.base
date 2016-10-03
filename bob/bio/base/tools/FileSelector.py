@@ -6,7 +6,7 @@ import os
 from .. import utils
 
 @utils.Singleton
-class FileSelector:
+class FileSelector(object):
   """This class provides shortcuts for selecting different files for different stages of the verification process.
 
   It communicates with the database and provides lists of file names for all steps of the tool chain.
@@ -15,7 +15,7 @@ class FileSelector:
 
   **Parameters:**
 
-  database : :py:class:`bob.bio.base.database.Database` or derived
+  database : :py:class:`bob.bio.base.database.BioDatabase` or derived
     The database object that provides the list of files.
 
   preprocessed_directory : str
@@ -107,12 +107,12 @@ class FileSelector:
 
   ### List of files that will be used for all files
   def original_data_list(self, groups = None):
-    """Returns the list of original data that can be used for preprocessing."""
-    return self.database.original_file_names(self.database.all_files(groups=groups))
+    """Returns the list of original ``BioFile`` objects that can be used for preprocessing."""
+    return self.database.all_files(groups=groups)
 
-  def original_data_list_files(self, groups = None):
-    """Returns the list of original data that can be used for preprocessing."""
-    return (self.database.all_files(groups=groups), self.database.original_directory, self.database.original_extension)
+  def original_directory_and_extension(self):
+    """Returns the directory and extension of the original files."""
+    return self.database.original_directory, self.database.original_extension
 
   def annotation_list(self, groups = None):
     """Returns the list of annotations objects."""

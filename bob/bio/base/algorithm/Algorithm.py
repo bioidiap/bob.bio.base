@@ -47,7 +47,7 @@ class Algorithm:
     See :py:func:`bob.bio.base.score_fusion_strategy` for possible values.
 
   kwargs : ``key=value`` pairs
-    A list of keyword arguments to be written in the :py:meth:`__str__` function.
+    A list of keyword arguments to be written in the `__str__` function.
 
   """
 

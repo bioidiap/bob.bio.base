@@ -10,7 +10,64 @@ import bob.db.base
 
 import bob.bio.base.database
 
+
 class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
+    """This class represents the basic API for database access.
+    Please use this class as a base class for your database access classes.
+    Do not forget to call the constructor of this base class in your derived class.
+
+    **Parameters:**
+
+    name : str
+    A unique name for the database.
+
+    all_files_options : dict
+    Dictionary of options passed to the :py:meth:`bob.bio.base.database.BioDatabase.objects` database query when retrieving all data.
+
+    extractor_training_options : dict
+    Dictionary of options passed to the :py:meth:`bob.bio.base.database.BioDatabase.objects` database query used to retrieve the files for the extractor training.
+
+    projector_training_options : dict
+    Dictionary of options passed to the :py:meth:`bob.bio.base.database.BioDatabase.objects` database query used to retrieve the files for the projector training.
+
+    enroller_training_options : dict
+    Dictionary of options passed to the :py:meth:`bob.bio.base.database.BioDatabase.objects` database query used to retrieve the files for the enroller training.
+
+    check_original_files_for_existence : bool
+    Enables to test for the original data files when querying the database.
+
+    original_directory : str
+    The directory where the original data of the database are stored.
+
+    original_extension : str
+    The file name extension of the original data.
+
+    annotation_directory : str
+    The directory where the image annotations of the database are stored, if any.
+
+    annotation_extension : str
+    The file name extension of the annotation files.
+
+    annotation_type : str
+    The type of the annotation file to read, see `bob.db.base.annotations.read_annotation_file` for accepted formats.
+
+    protocol : str or ``None``
+    The name of the protocol that defines the default experimental setup for this database.
+
+    .. todo:: Check if the ``None`` protocol is supported.
+
+    training_depends_on_protocol : bool
+    Specifies, if the training set used for training the extractor and the projector depend on the protocol.
+    This flag is used to avoid re-computation of data when running on the different protocols of the same database.
+
+    models_depend_on_protocol : bool
+    Specifies, if the models depend on the protocol.
+    This flag is used to avoid re-computation of models when running on the different protocols of the same database.
+
+    kwargs : ``key=value`` pairs
+    The arguments of the :py:class:`Database` base class constructor.
+
+    """
     def __init__(
             self,
             name,
@@ -32,62 +89,6 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
             models_depend_on_protocol=False,
             **kwargs
     ):
-        """This class represents the basic API for database access.
-        Please use this class as a base class for your database access classes.
-        Do not forget to call the constructor of this base class in your derived class.
-
-        **Parameters:**
-
-        name : str
-        A unique name for the database.
-
-        all_files_options : dict
-        Dictionary of options passed to the :py:meth:`bob.bio.base.database.BioDatabase.objects` database query when retrieving all data.
-
-        extractor_training_options : dict
-        Dictionary of options passed to the :py:meth:`bob.bio.base.database.BioDatabase.objects` database query used to retrieve the files for the extractor training.
-
-        projector_training_options : dict
-        Dictionary of options passed to the :py:meth:`bob.bio.base.database.BioDatabase.objects` database query used to retrieve the files for the projector training.
-
-        enroller_training_options : dict
-        Dictionary of options passed to the :py:meth:`bob.bio.base.database.BioDatabase.objects` database query used to retrieve the files for the enroller training.
-
-        check_original_files_for_existence : bool
-        Enables to test for the original data files when querying the database.
-
-        original_directory : str
-        The directory where the original data of the database are stored.
-
-        original_extension : str
-        The file name extension of the original data.
-
-        annotation_directory : str
-        The directory where the image annotations of the database are stored, if any.
-
-        annotation_extension : str
-        The file name extension of the annotation files.
-
-        annotation_type : str
-        The type of the annotation file to read, see :py:func:`bob.bio.base.database.read_annotation_file` for accepted formats.
-
-        protocol : str or ``None``
-        The name of the protocol that defines the default experimental setup for this database.
-
-        .. todo:: Check if the ``None`` protocol is supported.
-
-        training_depends_on_protocol : bool
-        Specifies, if the training set used for training the extractor and the projector depend on the protocol.
-        This flag is used to avoid re-computation of data when running on the different protocols of the same database.
-
-        models_depend_on_protocol : bool
-        Specifies, if the models depend on the protocol.
-        This flag is used to avoid re-computation of models when running on the different protocols of the same database.
-
-        kwargs : ``key=value`` pairs
-        The arguments of the :py:class:`Database` base class constructor.
-
-        """
 
         assert isinstance(name, str)
 
@@ -214,13 +215,13 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Parameters:**
 
-        files : [:py:class:`File`]
+        files : [:py:class:`BioFile`]
           The list of files to be uniquified and sorted.
 
         **Returns:**
 
-        sorted : [:py:class:`File`]
-          The sorted list of files, with duplicate :py:attr:`File.id`\s being removed.
+        sorted : [:py:class:`BioFile`]
+          The sorted list of files, with duplicate `BioFile.id`\s being removed.
         """
         # sort files using their sort function
         sorted_files = sorted(files)
@@ -242,13 +243,13 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Parameters:**
 
-        files : :py:class:`File`
-          A list of files that should be split up by :py:attr:`File.client_id`.
+        files : :py:class:`BioFile`
+          A list of files that should be split up by `BioFile.client_id`.
 
         **Returns:**
 
-        files_by_client : [[:py:class:`File`]]
-          The list of lists of files, where each sub-list groups the files with the same :py:attr:`File.client_id`
+        files_by_client : [[:py:class:`BioFile`]]
+          The list of lists of files, where each sub-list groups the files with the same `BioFile.client_id`
         """
         client_files = {}
         for file in files:
@@ -264,11 +265,11 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
     def annotations(self, file):
         """
         Returns the annotations for the given File object, if available.
-        It uses :py:func:`bob.bio.base.database.read_annotation_file` to load the annotations.
+        It uses `bob.db.base.annotations.read_annotation_file` to load the annotations.
 
         **Parameters:**
 
-        file : :py:class:`File`
+        file : :py:class:`BioFile`
           The file for which annotations should be returned.
 
         **Returns:**
@@ -293,7 +294,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Parameters:**
 
-        files : [:py:class:`File`]
+        files : [:py:class:`BioFile`]
           The list of file object to retrieve the file names for.
 
         directory : str
@@ -323,7 +324,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Parameters:**
 
-        files : [:py:class:`File`]
+        files : [:py:class:`BioFile`]
           The list of file object to retrieve the original data file names for.
 
         **Returns:**
@@ -413,7 +414,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         Keyword parameters:
 
-        file : :py:class:`File` or a derivative
+        file : :py:class:`BioFile` or a derivative
           The File objects for which the file name should be retrieved
 
         Return value : str
@@ -444,7 +445,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Returns:**
 
-        files : [:py:class:`File`]
+        files : [:py:class:`BioFile`]
           The sorted and unique list of all files of the database.
         """
         return self.sort(self.objects(protocol=self.protocol, groups=groups, **self.all_files_options))
@@ -467,7 +468,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Returns:**
 
-        files : [:py:class:`File`] or [[:py:class:`File`]]
+        files : [:py:class:`BioFile`] or [[:py:class:`BioFile`]]
           The (arranged) list of files used for the training of the given step.
         """
         if step is None:
@@ -502,7 +503,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Returns:**
 
-        files : [:py:class:`File`]
+        files : [:py:class:`BioFile`]
           The sorted and unique list of test files of the database.
         """
         return self.sort(self.objects(protocol=self.protocol, groups=groups, **self.all_files_options))
@@ -551,7 +552,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Returns:**
 
-        files : [:py:class:`File`]
+        files : [:py:class:`BioFile`]
           The list of files used for to probe the model with the given model id.
         """
         if model_id is not None:
@@ -605,7 +606,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Returns:**
 
-        files : [:py:class:`FileSet`] or something similar
+        files : [:py:class:`BioFileSet`] or something similar
           The list of file sets used to probe the model with the given model id."""
         if model_id is not None:
             file_sets = self.object_sets(protocol=self.protocol, groups=group, model_ids=(model_id,), purposes='probe',
@@ -714,7 +715,7 @@ class ZTBioDatabase(BioDatabase):
 
         **Returns:**
 
-        files : [:py:class:`File`]
+        files : [:py:class:`BioFile`]
           The sorted and unique list of all files of the database.
         """
         files = self.objects(protocol=self.protocol, groups=groups, **self.all_files_options)
@@ -776,7 +777,7 @@ class ZTBioDatabase(BioDatabase):
 
         **Returns:**
 
-        files : [:py:class:`File`]
+        files : [:py:class:`BioFile`]
           The sorted list of files used for to enroll the model with the given model id.
         """
         return self.sort(self.tobjects(protocol=self.protocol, groups=group, model_ids=(t_model_id,)))
@@ -785,7 +786,7 @@ class ZTBioDatabase(BioDatabase):
         """z_probe_files(group = 'dev') -> files
 
         Returns a list of probe files used to compute the Z-Norm, respecting the current protocol.
-        The Z-probe files can be limited using the ``z_probe_options`` in the query to :py:meth:`ZTBioDatabase.z_probe_files`
+        The Z-probe files can be limited using the ``z_probe_options`` in the query to :py:meth:`bob.bio.base.database.ZTBioDatabase.z_probe_files`
 
         **Parameters:**
 
@@ -794,7 +795,7 @@ class ZTBioDatabase(BioDatabase):
 
         **Returns:**
 
-        files : [:py:class:`File`]
+        files : [:py:class:`BioFile`]
           The unique list of files used to compute the Z-norm.
         """
         return self.sort(self.zobjects(protocol=self.protocol, groups=group, **self.z_probe_options))
@@ -812,7 +813,7 @@ class ZTBioDatabase(BioDatabase):
 
         **Returns:**
 
-        files : [:py:class:`FileSet`]
+        files : [:py:class:`BioFileSet`]
           The unique list of file sets used to compute the Z-norm.
         """
         raise NotImplementedError("Please implement this function in derived classes")
@@ -822,12 +823,16 @@ class ZTBioDatabase(BioDatabase):
         Returns the client id for the given T-Norm model id.
         In this base class implementation, we just use the :py:meth:`client_id_from_model_id` function.
         Overload this function if you need another behavior.
+
         **Parameters:**
+
         t_model_id : int or str
           A unique ID that identifies the T-Norm model.
         group : one of ``('dev', 'eval')``
           The group to get the client ids for.
+
         **Returns:**
+
         client_id : [int] or [str]
           A unique ID that identifies the client, to which the T-Norm model belongs.
         """
