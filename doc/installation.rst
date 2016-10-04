@@ -9,9 +9,9 @@ Installation Instructions
 =========================
 
 As noted before, this package is part of the ``bob.bio`` packages, which in turn are part of the signal-processing and machine learning toolbox Bob_.
-To install `Packages of Bob <https://github.com/idiap/bob/wiki/Packages>`_, please read the `Installation Instructions <https://github.com/idiap/bob/wiki/Installation>`_.
+To install `Packages of Bob <https://gitlab.idiap.ch/bob/bob/wikis/Packages>`_, please read the `Installation Instructions <https://gitlab.idiap.ch/bob/bob/wikis/Installation>`_.
 For Bob_ to be able to work properly, some dependent packages are required to be installed.
-Please make sure that you have read the `Dependencies <https://github.com/idiap/bob/wiki/Dependencies>`_ for your operating system.
+Please make sure that you have read the `Dependencies <https://gitlab.idiap.ch/bob/bob/wikis/Dependencies>`_ for your operating system.
 
 .. note::
   Currently, running Bob_ under MS Windows in not yet supported.
@@ -34,7 +34,7 @@ first search the ``bob.bio`` in the conda-forge channel and then install it.
 Installation via zc.buildout
 ----------------------------
 
-Another convenient way to use the ``bob.bio`` tools is to use a ``zc.buildout`` package, as explained in more detail `here <https://github.com/idiap/bob/wiki/Installation#using-zcbuildout-for-production>`__.
+Another convenient way to use the ``bob.bio`` tools is to use a ``zc.buildout`` package, as explained in more detail `here <https://gitlab.idiap.ch/bob/bob/wikis/Installation#using-zcbuildout-for-production>`__.
 There, in the ``eggs`` section of the ``buildout.cfg`` file, simply list the ``bob.bio`` packages that you want, like:
 
 .. code-block:: python
@@ -64,7 +64,7 @@ Databases
 With ``bob.bio`` you will run biometric recognition experiments using some default biometric recognition databases.
 Though the verification protocols are implemented in ``bob.bio``, the original data are **not included**.
 To download the original data of the databases, please refer to the according Web-pages.
-For a list of supported databases including their download URLs, please refer to the `verification_databases <https://github.com/idiap/bob/wiki/Packages>`_.
+For a list of supported databases including their download URLs, please refer to the `verification_databases <https://gitlab.idiap.ch/bob/bob/wikis/Packages>`_.
 
 After downloading the original data for the databases, you will need to tell ``bob.bio``, where these databases can be found.
 For this purpose, we have decided to implement a special file, where you can set your directories.

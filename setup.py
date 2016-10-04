@@ -18,7 +18,7 @@ setup(
     version = open("version.txt").read().rstrip(),
     description = 'Tools for running biometric recognition experiments',
 
-    url = 'https://www.gitlab.idiap.ch/bob/bob.bio.base',
+    url = 'https://gitlab.idiap.ch/bob/bob.bio.base',
     license = 'BSD',
     author = 'Manuel Gunther',
     author_email = 'siebenkopf@googlemail.com',
@@ -49,7 +49,7 @@ setup(
     #
     # Our database packages are good examples of namespace implementations
     # using several layers. You can check them out here:
-    # https://github.com/idiap/bob/wiki/Satellite-Packages
+    # https://gitlab.idiap.ch/bob/bob/wikis/Packages
 
 
     # This entry defines which scripts you will have inside the 'bin' directory

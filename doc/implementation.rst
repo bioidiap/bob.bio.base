@@ -218,7 +218,7 @@ Verification Database Interface
 
 For most of the data sets, we rely on the database interfaces from Bob_.
 
-Particularly, all databases that are derived from the :py:class:`bob.bio.base.database.BioDatabase` (click `here <https://github.com/idiap/bob/wiki/Packages>`_ for a list of implemented databases) are supported by a special derivation of the databases from above.
+Particularly, all databases that are derived from the :py:class:`bob.bio.base.database.BioDatabase` (click `here <https://gitlab.idiap.ch/bob/bob/wikis/Packages>`_ for a list of implemented databases) are supported by a special derivation of the databases from above.
 For these databases, the special :py:class:`bob.bio.base.database.BioDatabase` interface is provided, which takes the Bob_ database as parameter.
 Several such databases are defined in the according packages, i.e., :ref:`bob.bio.spear <bob.bio.spear>`, :ref:`bob.bio.face <bob.bio.face>` and :ref:`bob.bio.video <bob.bio.video>`.
 For Bob_'s ZT-norm databases, we provide the :py:class:`bob.bio.base.database.ZTBioDatabase` interface.
@@ -325,7 +325,7 @@ Particularly, we use a specific list of entry points, which are:
 For each of the tools, several resources are defined, which you can list with the ``./bin/resources.py`` command line.
 
 When you want to register your own resource, make sure that your configuration file is importable (usually it is sufficient to have an empty ``__init__.py`` file in the same directory as your configuration file).
-Then, you can simply add a line inside the according ``entry_points`` section of the ``setup.py`` file (you might need to create that section, just follow the example of the ``setup.py`` file that you can find online in the base directory of our `bob.bio.base GitHub page <http://github.com/bioidiap/bob.bio.base>`__).
+Then, you can simply add a line inside the according ``entry_points`` section of the ``setup.py`` file (you might need to create that section, just follow the example of the ``setup.py`` file that you can find online in the base directory of our `bob.bio.base Gitlab page <http://gitlab.idiap.ch/bob/bob.bio.base>`__).
 
 After re-running ``./bin/buildout``, your new resource should be listed in the output of ``./bin/resources.py``.
 

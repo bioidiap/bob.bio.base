@@ -5,13 +5,10 @@
 .. This file contains all links we use for documentation in a centralized place
 
 .. _idiap: http://www.idiap.ch
-.. _github: http://www.github.com/idiap
 .. _bob: http://www.idiap.ch/software/bob
-.. _github bug reporting system: http://github.com/bioidiap/bob.bio.base/issues
-.. _idiap at github: http://www.github.com/bioidiap
+.. _idiap at gitlab: http://gitlab.idiap.ch/bob
 .. _at&t database: http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
-.. _bob's github page: http://idiap.github.com/bob
-.. _gridtk: http://github.com/idiap/gridtk
+.. _gridtk: http://gitlab.idiap.ch/bob/gridtk
 .. _buildout: http://www.buildout.org
 .. _setuptools: http://trac.edgewall.org/wiki/setuptools
 .. _nist: http://www.nist.gov/itl/iad/ig/focs.cfm
