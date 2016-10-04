@@ -18,3 +18,4 @@
 .. _xfacereclib.extension.csu: http://pypi.python.org/pypi/xfacereclib.extension.CSU
 .. _virtualbox: https://www.virtualbox.org
 .. _hdf5: http://www.hdfgroup.org/HDF5
+.. _mailing list: https://groups.google.com/forum/?fromgroups#!forum/bob-devel

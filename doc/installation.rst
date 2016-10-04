@@ -114,7 +114,7 @@ To avoid the download to happen each time you call the nose tests, please:
   To set the directory permanently, you can also change the ``atnt_default_directory`` in the file `bob/bio/base/test/utils.py <file:../bob/bio/base/test/utils.py>`_.
   In this case, there is no need to set the environment variable any more.
 
-In case any of the tests fail for unexplainable reasons, please file a bug report through the `GitHub bug reporting system`_.
+In case any of the tests fail for unexplainable reasons, please send a report through our `mailing list`_.
 
 .. note::
   Usually, all tests should pass with the latest stable versions of the Bob_ packages.
