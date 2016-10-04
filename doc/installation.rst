@@ -17,18 +17,17 @@ Please make sure that you have read the `Dependencies <https://gitlab.idiap.ch/b
   Currently, running Bob_ under MS Windows in not yet supported.
   However, we found that running Bob_ in a virtual Unix environment such as the one provided by VirtualBox_ is a good alternative.
 
-Installation via conda
+Installation via pip
 ----------------------
 
-The most simple and most convenient way to use the ``bob.bio`` tools is to install it using `conda <http://conda.pydata.org/docs/intro.html>`_.
-We offer pre-compiled binary installations of Bob_ and ``bob.bio`` with conda.
-After setting up your conda environment (you can find the instructions `here <https://gitlab.idiap.ch/bob/bob/wikis/Installation>`_), use the sequence of commands to
-first search the ``bob.bio`` in the conda-forge channel and then install it.
+The most simple and most convenient way to use the ``bob.bio`` tools is to install it using `pip`.
+After setting up your python environment (you can find the instructions `here <https://gitlab.idiap.ch/bob/bob/wikis/Installation>`_), use the sequence of commands to
+first search the ``bob.bio`` packages and then install it.
 
 .. code-block:: sh
 
-   $ conda search bob.bio # searching
-   $ conda install bob.bio.base # Install the base package
+   $ pip search bob.bio # searching
+   $ pip install bob.bio.base # Install the base package
 
 
 Installation via zc.buildout
