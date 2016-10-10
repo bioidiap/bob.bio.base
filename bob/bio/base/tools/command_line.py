@@ -56,7 +56,7 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
   config_group.add_argument('-a', '--algorithm', metavar = 'x', nargs = '+',
       help = 'Biometric recognition; registered algorithms are: %s' % utils.resource_keys('algorithm', exclude_resources_from))
   config_group.add_argument('-g', '--grid', metavar = 'x', nargs = '+',
-      help = 'Configuration for the grid setup; if not specified, the commands are executed sequentially on the local machine.')
+      help = 'Configuration for the grid setup; if not specified, the commands are executed sequentially on the local machine; registered grid resources are %s.' % utils.resource_keys('grid', exclude_resources_from))
   config_group.add_argument('-I', '--imports', metavar = 'LIB', nargs = '+', default = ['bob.bio.base'],
       help = 'If one of your configuration files is an actual command, please specify the lists of required libraries (imports) to execute this command')
   config_group.add_argument('-W', '--preferred-package', metavar = 'LIB',
