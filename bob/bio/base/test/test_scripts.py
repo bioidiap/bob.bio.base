@@ -275,6 +275,9 @@ def test_verify_execute_only():
   try:
     from bob.bio.base.script.verify import main
     main(parameters)
+  finally:
+    if os.path.exists(test_dir):
+      shutil.rmtree(test_dir)
 
 
 def test_internal_raises():
