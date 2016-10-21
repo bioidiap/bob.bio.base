@@ -271,7 +271,7 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   if skips is not None and args.execute_only is not None:
     for skip in skips:
       if skip not in args.execute_only:
-        setattr("args", "skip_%s" % skip.replace("-", "_"),  True)
+        setattr(args, "skip_%s" % skip.replace("-", "_"),  True)
 
   if args.parallel is not None:
     args.grid = bob.bio.base.grid.Grid("local", number_of_parallel_processes = args.parallel)
