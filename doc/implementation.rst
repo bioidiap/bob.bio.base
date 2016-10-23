@@ -226,7 +226,9 @@ For Bob_'s ZT-norm databases, we provide the :py:class:`bob.bio.base.database.ZT
 Defining your own Database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 ..
-    If you have your own database that you want to execute the recognition experiments on, you should first check if you could use the :ref:`Verifcation File List Database <bob.db.bio_filelist>` interface by defining appropriate file lists for the training set, the model set, and the probes.
+    If you have your own database that you want to execute the recognition experiments on, you should
+    first check if you could use the :ref:`Verifcation File List Database <bob.db.bio_filelist>` interface by
+    defining appropriate file lists for the training set, the model set, and the probes.
     In most of the cases, the :py:class:`bob.db.bio_filelist.Database` should be sufficient to run experiments.
     Please refer to the documentation :ref:`Documentation <bob.db.bio_filelist>` of this database for more instructions on how to configure this database.
 
@@ -239,7 +241,7 @@ In this case, you have to derive your class from the :py:class:`bob.bio.base.dat
   Usually, providing ids for the group ``'dev'`` should be sufficient.
 
 *  ``objects(self, groups=None, protocol=None, purposes=None, model_ids=None, **kwargs)``
-    This function must return a list of ``bob.db.base.database.BioFile`` objects with your data.
+    This function must return a list of ``bob.bio.base.database.BioFile`` objects with your data.
     The keyword arguments are possible filters that you may use.
 
 * ``model_ids_with_protocol(self, groups, protocol, **kwargs)``
@@ -251,10 +253,10 @@ If you don't know what ZT score normalization is, just forget about it and move 
 If you know and want to use it, just derive your class from :py:class:`bob.bio.base.database.ZTBioDatabase` instead, and additionally overwrite the following functions:
 
 * ``tobjects(self, groups=None, protocol=None, model_ids=None, **kwargs)``
-    This function must return a list of ``bob.db.base.database.BioFile`` objects used for `T` normalization.
+    This function must return a list of ``bob.bio.base.database.BioFile`` objects used for `T` normalization.
 
 * ``zobjects(self, groups=None, protocol=None, **kwargs)``
-     This function must return a list of ``bob.db.base.database.BioFile`` objects used for `Z` normalization.
+     This function must return a list of ``bob.bio.base.database.BioFile`` objects used for `Z` normalization.
 
 * ``tmodel_ids_with_protocol(self, protocol=None, groups=None, **kwargs)``
     The ids for the T norm models for the given group and protocol.
