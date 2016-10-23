@@ -8,7 +8,7 @@ import bob.learn.linear
 import numpy
 import math
 
-from .Algorithm import Algorithm
+from bob.bio.base.algorithm import Algorithm
 from .. import utils
 
 import logging
@@ -255,7 +255,8 @@ class BIC(Algorithm):
 
         Computes the BIC score between the model and the probe.
         First, the ``comparison_function`` is used to create the comparison vectors between all model features and the probe feature.
-        Then, a BIC score is computed for each comparison vector, and the BIC scores are fused using the :py:func:`model_fusion_function` defined in the :py:class:`Algorithm` base class.
+        Then, a BIC score is computed for each comparison vector, and the BIC scores are fused using
+        the `model_fusion_function` defined in the :py:class:`bob.bio.base.algorithm.Algorithm` base class.
 
         **Parameters:**
 
