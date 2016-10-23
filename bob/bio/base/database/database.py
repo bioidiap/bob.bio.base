@@ -65,7 +65,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
     This flag is used to avoid re-computation of models when running on the different protocols of the same database.
 
     kwargs : ``key=value`` pairs
-    The arguments of the :py:class:`Database` base class constructor.
+    The arguments of the `Database` base class constructor.
 
     """
     def __init__(
@@ -215,12 +215,12 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Parameters:**
 
-        files : [:py:class:`BioFile`]
+        files : [:py:class:`bob.bio.base.database.BioFile`]
           The list of files to be uniquified and sorted.
 
         **Returns:**
 
-        sorted : [:py:class:`BioFile`]
+        sorted : [:py:class:`bob.bio.base.database.BioFile`]
           The sorted list of files, with duplicate `BioFile.id`\s being removed.
         """
         # sort files using their sort function
@@ -243,12 +243,12 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Parameters:**
 
-        files : :py:class:`BioFile`
+        files : :py:class:`bob.bio.base.database.BioFile`
           A list of files that should be split up by `BioFile.client_id`.
 
         **Returns:**
 
-        files_by_client : [[:py:class:`BioFile`]]
+        files_by_client : [[:py:class:`bob.bio.base.database.BioFile`]]
           The list of lists of files, where each sub-list groups the files with the same `BioFile.client_id`
         """
         client_files = {}
@@ -269,7 +269,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Parameters:**
 
-        file : :py:class:`BioFile`
+        file : :py:class:`bob.bio.base.database.BioFile`
           The file for which annotations should be returned.
 
         **Returns:**
@@ -294,7 +294,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Parameters:**
 
-        files : [:py:class:`BioFile`]
+        files : [:py:class:`bob.bio.base.database.BioFile`]
           The list of file object to retrieve the file names for.
 
         directory : str
@@ -324,7 +324,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Parameters:**
 
-        files : [:py:class:`BioFile`]
+        files : [:py:class:`bob.bio.base.database.BioFile`]
           The list of file object to retrieve the original data file names for.
 
         **Returns:**
@@ -414,7 +414,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         Keyword parameters:
 
-        file : :py:class:`BioFile` or a derivative
+        file : :py:class:`bob.bio.base.database.BioFile` or a derivative
           The File objects for which the file name should be retrieved
 
         Return value : str
@@ -445,7 +445,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Returns:**
 
-        files : [:py:class:`BioFile`]
+        files : [:py:class:`bob.bio.base.database.BioFile`]
           The sorted and unique list of all files of the database.
         """
         return self.sort(self.objects(protocol=self.protocol, groups=groups, **self.all_files_options))
@@ -468,7 +468,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Returns:**
 
-        files : [:py:class:`BioFile`] or [[:py:class:`BioFile`]]
+        files : [:py:class:`bob.bio.base.database.BioFile`] or [[:py:class:`bob.bio.base.database.BioFile`]]
           The (arranged) list of files used for the training of the given step.
         """
         if step is None:
@@ -503,7 +503,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Returns:**
 
-        files : [:py:class:`BioFile`]
+        files : [:py:class:`bob.bio.base.database.BioFile`]
           The sorted and unique list of test files of the database.
         """
         return self.sort(self.objects(protocol=self.protocol, groups=groups, **self.all_files_options))
@@ -552,7 +552,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Returns:**
 
-        files : [:py:class:`BioFile`]
+        files : [:py:class:`bob.bio.base.database.BioFile`]
           The list of files used for to probe the model with the given model id.
         """
         if model_id is not None:
@@ -606,7 +606,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         **Returns:**
 
-        files : [:py:class:`BioFileSet`] or something similar
+        files : [:py:class:`bob.bio.base.database.BioFileSet`] or something similar
           The list of file sets used to probe the model with the given model id."""
         if model_id is not None:
             file_sets = self.object_sets(protocol=self.protocol, groups=group, model_ids=(model_id,), purposes='probe',
@@ -715,7 +715,7 @@ class ZTBioDatabase(BioDatabase):
 
         **Returns:**
 
-        files : [:py:class:`BioFile`]
+        files : [:py:class:`bob.bio.base.database.BioFile`]
           The sorted and unique list of all files of the database.
         """
         files = self.objects(protocol=self.protocol, groups=groups, **self.all_files_options)
@@ -777,7 +777,7 @@ class ZTBioDatabase(BioDatabase):
 
         **Returns:**
 
-        files : [:py:class:`BioFile`]
+        files : [:py:class:`bob.bio.base.database.BioFile`]
           The sorted list of files used for to enroll the model with the given model id.
         """
         return self.sort(self.tobjects(protocol=self.protocol, groups=group, model_ids=(t_model_id,)))
@@ -795,7 +795,7 @@ class ZTBioDatabase(BioDatabase):
 
         **Returns:**
 
-        files : [:py:class:`BioFile`]
+        files : [:py:class:`bob.bio.base.database.BioFile`]
           The unique list of files used to compute the Z-norm.
         """
         return self.sort(self.zobjects(protocol=self.protocol, groups=group, **self.z_probe_options))
@@ -813,7 +813,7 @@ class ZTBioDatabase(BioDatabase):
 
         **Returns:**
 
-        files : [:py:class:`BioFileSet`]
+        files : [:py:class:`bob.bio.base.database.BioFileSet`]
           The unique list of file sets used to compute the Z-norm.
         """
         raise NotImplementedError("Please implement this function in derived classes")
