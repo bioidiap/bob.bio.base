@@ -1,4 +1,2 @@
 py:class bob.bio.video.preprocessor.Video
-py:class bob.db.base.database.Database
-py:class bob.db.base.file.File
 py:exc ValueError

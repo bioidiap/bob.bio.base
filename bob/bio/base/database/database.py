@@ -49,7 +49,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
     The file name extension of the annotation files.
 
     annotation_type : str
-    The type of the annotation file to read, see `bob.db.base.annotations.read_annotation_file` for accepted formats.
+    The type of the annotation file to read, see `bob.db.base.read_annotation_file` for accepted formats.
 
     protocol : str or ``None``
     The name of the protocol that defines the default experimental setup for this database.
@@ -265,7 +265,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
     def annotations(self, file):
         """
         Returns the annotations for the given File object, if available.
-        It uses `bob.db.base.annotations.read_annotation_file` to load the annotations.
+        It uses `bob.db.base.read_annotation_file` to load the annotations.
 
         **Parameters:**
 
