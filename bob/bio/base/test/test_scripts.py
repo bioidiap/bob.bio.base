@@ -253,6 +253,33 @@ def test_verify_missing():
     shutil.rmtree(test_dir)
 
 
+def test_verify_execute_only():
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
+  # define dummy parameters
+  parameters = [
+      '-d', 'dummy',
+      '-p', 'dummy',
+      '-e', 'dummy',
+      '-a', 'dummy',
+      '--zt-norm',
+      '--allow-missing-files',
+      '-vs', 'test_missing',
+      '--temp-directory', test_dir,
+      '--result-directory', test_dir,
+      '--preferred-package', 'bob.bio.base',
+      '--imports', 'bob.bio.base.test.dummy',
+      '--execute-only', 'preprocessing', 'score-computation',
+      '--dry-run'
+  ]
+
+  try:
+    from bob.bio.base.script.verify import main
+    main(parameters)
+  finally:
+    if os.path.exists(test_dir):
+      shutil.rmtree(test_dir)
+
+
 def test_internal_raises():
   test_dir = tempfile.mkdtemp(prefix='bobtest_')
   # define dummy parameters
