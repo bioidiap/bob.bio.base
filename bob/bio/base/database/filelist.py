@@ -98,7 +98,7 @@ class FileListBioDatabase (ZTBioDatabase):
     return self.sort(self._make_bio(files))
 
 
-  def model_ids(self, groups=None, protocol=None, **kwargs):
+  def model_ids_with_protocol(self, groups=None, protocol=None, **kwargs):
     return self.__db.model_ids(self.protocol, groups, **kwargs)
 
   def tmodel_ids_with_protocol(self, protocol=None, groups=None, **kwargs):
