@@ -8,9 +8,6 @@ import six
 from numpy.testing.decorators import setastest
 import bob.db.base
 
-import bob.bio.base.database
-
-
 class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
     """This class represents the basic API for database access.
     Please use this class as a base class for your database access classes.
@@ -53,8 +50,6 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
     protocol : str or ``None``
     The name of the protocol that defines the default experimental setup for this database.
-
-    .. todo:: Check if the ``None`` protocol is supported.
 
     training_depends_on_protocol : bool
     Specifies, if the training set used for training the extractor and the projector depend on the protocol.
