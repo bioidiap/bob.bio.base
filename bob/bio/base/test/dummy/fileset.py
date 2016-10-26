@@ -22,9 +22,9 @@ class DummyDatabase(ZTBioDatabase):
     def _make_bio(self, files):
       return [BioFile(client_id=f.client_id, path=f.path, file_id=f.id) for f in files]
 
-    def probe_file_sets(self, model_id=None, group='dev'):
+    def object_sets(self, groups='dev', protocol=None, purposes=None, model_ids=None):
         """Returns the list of probe File objects (for the given model id, if given)."""
-        files = self.arrange_by_client(self.sort(self.objects(protocol=None, groups=group, purposes='probe')))
+        files = self.arrange_by_client(self.sort(self.objects(protocol=None, groups=groups, purposes=purposes)))
         # arrange files by clients
         file_sets = [BioFileSet(client_files[0].client_id, client_files) for client_files in files]
         return file_sets
