@@ -30,7 +30,7 @@ def check_database(database, groups=('dev',), protocol=None, training_depends=Fa
     for group in groups:
         model_ids = database.model_ids_with_protocol(group, protocol=protocol)
         assert len(model_ids) > 0
-        assert database.client_id_from_model_id(model_ids[0]) is not None
+        assert database.client_id_from_model_id(model_ids[0], group) is not None
         assert len(database.enroll_files(model_ids[0], group)) > 0
         assert len(database.probe_files(model_ids[0], group)) > 0
 
@@ -44,7 +44,7 @@ def check_database_zt(database, groups=('dev', 'eval'), protocol=None, training_
     for group in groups:
         t_model_ids = database.t_model_ids(group)
         assert len(t_model_ids) > 0
-        assert database.client_id_from_model_id(t_model_ids[0]) is not None
+        assert database.client_id_from_model_id(t_model_ids[0], group) is not None
         assert len(database.t_enroll_files(t_model_ids[0], group)) > 0
         assert len(database.z_probe_files(group)) > 0
 
