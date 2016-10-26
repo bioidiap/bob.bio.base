@@ -9,6 +9,7 @@ bob.learn.linear
 bob.math
 bob.measure
 bob.sp
+bob.db.bio_filelist
 gridtk
 scipy
 setuptools

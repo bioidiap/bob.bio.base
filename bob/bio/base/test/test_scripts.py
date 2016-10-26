@@ -214,6 +214,48 @@ def test_verify_fileset():
   _verify(parameters, test_dir, 'test_fileset', ref_modifier="-fileset")
 
 
+def test_verify_filelist():
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
+  # define dummy parameters
+  parameters = [
+      '-d', os.path.join(dummy_dir, 'filelist.py'),
+      '-p', 'dummy',
+      '-e', 'dummy',
+      '-a', 'dummy',
+      '--zt-norm',
+      '-vs', 'test_filelist',
+      '--temp-directory', test_dir,
+      '--result-directory', test_dir,
+      '--preferred-package', 'bob.bio.base'
+  ]
+
+  try:
+    from bob.bio.base.script.verify import main
+    main(parameters)
+
+    # assert that the score file exists
+    score_files = [os.path.join(test_dir, 'test_filelist', 'None', norm, 'scores-dev') for norm in ('nonorm', 'ztnorm')]
+    assert os.path.exists(score_files[0]), "Score file %s does not exist" % score_files[0]
+    assert os.path.exists(score_files[1]), "Score file %s does not exist" % score_files[1]
+
+    # assert that the scores are are identical (might be in a different order, though
+    reference_files = [os.path.join(data_dir, 'scores-%s-dev' % norm) for norm in ('nonorm', 'ztnorm')]
+
+    for i in (0,1):
+      # load scores
+      a1, b1 = bob.measure.load.split_four_column(score_files[i])
+      a2, b2 = bob.measure.load.split_four_column(reference_files[i])
+      # sort scores
+      a1 = sorted(a1); a2 = sorted(a2); b1 = sorted(b1); b2 = sorted(b2)
+
+      # assert that scores are almost equal
+      assert all(abs(a1[j] - a2[j]) < 1e-6 for j in range(len(a1)))
+      assert all(abs(b1[j] - b2[j]) < 1e-6 for j in range(len(b1)))
+
+  finally:
+    shutil.rmtree(test_dir)
+
+
 def test_verify_missing():
   test_dir = tempfile.mkdtemp(prefix='bobtest_')
   # define dummy parameters
