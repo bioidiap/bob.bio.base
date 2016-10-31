@@ -154,10 +154,10 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
 
 
 def _take_from_config_or_command_line(args, config, keyword, default, required=True, is_resource=True):
-
+  
   if getattr(args, keyword) != default:
     if is_resource:
-      setattr(args, keyword, utils.load_resource(' '.join(getattr(args, keyword)), keyword, imports = args.imports, preferred_package = args.preferred_package))
+      setattr(args, keyword, utils.load_resource(' '.join(getattr(args, keyword)), keyword, imports = args.imports, preferred_package = args.preferred_package))  
 
   elif config is not None and hasattr(config, keyword):
 
@@ -165,6 +165,10 @@ def _take_from_config_or_command_line(args, config, keyword, default, required=T
     if isinstance(val, str) and is_resource:
       val = utils.load_resource(val, keyword, imports = args.imports, preferred_package = args.preferred_package)
     setattr(args, keyword, val)
+    
+  elif default is not None:
+    if is_resource:
+      setattr(args, keyword, utils.load_resource(' '.join(default), keyword, imports = args.imports, preferred_package = args.preferred_package))
 
   elif required:
     raise ValueError("Please specify a %s either on command line (via --%s) or in a configuration file" %(keyword, keyword))
@@ -222,13 +226,13 @@ def initialize(parsers, command_line_parameters = None, skips = []):
         parser.get_default(keyword))
 
   _take_from_config_or_command_line(args, config, "grid",
-      parser.get_default(keyword), required=False)
+      parser.get_default('grid'), required=False)
 
   _take_from_config_or_command_line(args, config, "sub_directory",
-      parser.get_default(keyword), is_resource=False)
+      parser.get_default("sub_directory"), is_resource=False)
 
   skip_keywords = tuple(['skip_' + k.replace('-', '_') for k in skips])
-
+  
   for keyword in (
       "protocol",
       "groups",
