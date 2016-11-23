@@ -155,7 +155,7 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
 
 def _take_from_config_or_command_line(args, config, keyword, default, required=True, is_resource=True):
 
-  if getattr(args, keyword) != default:
+  if getattr(args, keyword) is not None and getattr(args, keyword) != default:
     if is_resource:
       setattr(args, keyword, utils.load_resource(' '.join(getattr(args, keyword)), keyword, imports = args.imports, preferred_package = args.preferred_package))
 
@@ -271,7 +271,7 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   if skips is not None and args.execute_only is not None:
     for skip in skips:
       if skip not in args.execute_only:
-        setattr("args", "skip_%s" % skip.replace("-", "_"),  True)
+        setattr(args, "skip_%s" % skip.replace("-", "_"),  True)
 
   if args.parallel is not None:
     args.grid = bob.bio.base.grid.Grid("local", number_of_parallel_processes = args.parallel)
