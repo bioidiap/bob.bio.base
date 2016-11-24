@@ -4,7 +4,7 @@ from .database import BioDatabase
 from .database import ZTBioDatabase
 from .filelist.query import FileListBioDatabase
 from .filelist.models import Client
-
+from . import filelist
 
 # gets sphinx autodoc done right - don't remove it
 def __appropriate__(*args):

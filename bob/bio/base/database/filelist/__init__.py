@@ -1,5 +1,6 @@
-from .models import ListReader, Client
+from .models import ListReader, Client, FileListFile
 from .query import FileListBioDatabase
+from .driver import Interface
 
 
 # gets sphinx autodoc done right - don't remove it
@@ -21,6 +22,8 @@ def __appropriate__(*args):
 __appropriate__(
     ListReader,
     Client,
+    FileListFile,
     FileListBioDatabase,
+    Interface,
 )
 __all__ = [_ for _ in dir() if not _.startswith('_')]

@@ -21,6 +21,16 @@ class FileListBioDatabase(ZTBioDatabase):
       attribute when querying the database, it will be appended to the base directory, such that
       several protocols are supported by the same class instance of `bob.bio.base`.
 
+    name : str
+      The name of the database
+
+    protocol : str
+      The protocol of the database. This should be a folder inside ``base_dir``.
+
+    biofilecls : class
+      The class that should be used for return the files.
+      This can be `BioFile`, `AudioBioFile`, `FaceBioFile`, or anything similar.
+
     original_directory : str or ``None``
       The directory, where the original data can be found
 
@@ -221,6 +231,17 @@ class FileListBioDatabase(ZTBioDatabase):
 
     def _make_bio(self, files):
         return [self.biofilecls(client_id=f.client_id, path=f.path, file_id=f.id) for f in files]
+
+    def all_files(self, groups=['dev']):
+        files = self.objects(groups, self.protocol, None, None, **self.all_files_options)
+        # add all files that belong to the ZT-norm
+        for group in groups:
+            if group == 'world':
+                continue
+            if self.implements_zt(self.protocol, group):
+                files += self.tobjects(group, self.protocol, None)
+                files += self.zobjects(group, self.protocol, **self.z_probe_options)
+        return self.sort(self._make_bio(files))
 
     def groups(self, protocol=None):
         """This function returns the list of groups for this database.
