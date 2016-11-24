@@ -219,20 +219,21 @@ Verification Database Interface
 For most of the data sets, we rely on the database interfaces from Bob_.
 
 Particularly, all databases that are derived from the :py:class:`bob.bio.base.database.BioDatabase` (click `here <https://gitlab.idiap.ch/bob/bob/wikis/Packages>`_ for a list of implemented databases) are supported by a special derivation of the databases from above.
-For these databases, the special :py:class:`bob.bio.base.database.BioDatabase` interface is provided, which takes the Bob_ database as parameter.
+For these databases, the special :py:class:`bob.bio.base.database.BioDatabase` interface is provided, which wraps the actual Bob_ databases with all their specificities.
 Several such databases are defined in the according packages, i.e., :ref:`bob.bio.spear <bob.bio.spear>`, :ref:`bob.bio.face <bob.bio.face>` and :ref:`bob.bio.video <bob.bio.video>`.
 For Bob_'s ZT-norm databases, we provide the :py:class:`bob.bio.base.database.ZTBioDatabase` interface.
 
 Defining your own Database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-..
+.. note::
     If you have your own database that you want to execute the recognition experiments on, you should
-    first check if you could use the :ref:`Verifcation File List Database <bob.db.bio_filelist>` interface by
-    defining appropriate file lists for the training set, the model set, and the probes.
-    In most of the cases, the :py:class:`bob.db.bio_filelist.Database` should be sufficient to run experiments.
-    Please refer to the documentation :ref:`Documentation <bob.db.bio_filelist>` of this database for more instructions on how to configure this database.
+    first check if you could use the ``Verification File List Database`` interface by defining appropriate
+    file lists for the training set, the model set, and the probes.
+    Please refer to the documentation :doc:`filelist-guide` of this database for more instructions on how to setup this database.
 
-To "plug" your own database in this framework you have to write your own database class by deriving :py:class:`bob.bio.base.database.BioDatabase`.
+    For an example, you might want to have a look into the implementation of the `BANCA FileList database <http://gitlab.idiap.ch/bob/bob.bio.spear/tree/master/bob/bio/spear/config/database/banca>`_, where the protocol with the name ``G`` is implemented, and its according `database configuration file <https://gitlab.idiap.ch/bob/bob.bio.spear/blob/master/bob/bio/spear/config/database/banca_audio_G.py>`_.
+
+To "plug" your own (non-file-list-based) database in this framework you have to write your own database class by deriving :py:class:`bob.bio.base.database.BioDatabase`.
 In this case, you have to derive your class from the :py:class:`bob.bio.base.database.BioDatabase`, and provide the following functions:
 
 
