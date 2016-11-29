@@ -73,7 +73,7 @@ class PLDA (Algorithm):
 
   def _train_pca(self, training_set):
     """Trains and returns a LinearMachine that is trained using PCA"""
-    data = numpy.vstack([feature for client in training_set for feature in client])
+    data = numpy.vstack([feature for feature in training_set])
 
     logger.info("  -> Training LinearMachine using PCA ")
     trainer = bob.learn.linear.PCATrainer()
@@ -92,20 +92,30 @@ class PLDA (Algorithm):
     machine.resize(machine.shape[0], self.subspace_dimension_pca)
     return machine
 
-  def _perform_pca_client(self, client):
-    """Perform PCA on an array"""
-    return numpy.vstack([self.pca_machine(feature) for feature in client])
-
   def _perform_pca(self, training_set):
     """Perform PCA on data"""
-    return [self._perform_pca_client(client) for client in training_set]
+    return [self.pca_machine(client) for client in training_set]
 
+  def _arrange_data(self, training_files):
+    """Arranges the data to train the PLDA """
+    data = []
+    for client_files in training_files:
+      # at least two files per client are required!
+      if len(client_files) < 2:
+        logger.warn("Skipping one client since the number of client files is only %d", len(client_files))
+        continue
+      data.append(numpy.vstack([feature.flatten() for feature in client_files]))
+
+    # Returns the list of lists of arrays
+    return data
 
   def train_enroller(self, training_features, projector_file):
     """Generates the PLDA base model from a list of arrays (one per identity),
        and a set of training parameters. If PCA is requested, it is trained on the same data.
        Both the trained PLDABase and the PCA machine are written."""
-
+    
+    # arrange PLDA training data
+    training_features = self._arrange_data(training_features)
 
     # train PCA and perform PCA on training data
     if self.subspace_dimension_pca is not None:
@@ -113,6 +123,7 @@ class PLDA (Algorithm):
       training_features = self._perform_pca(training_features)
 
     input_dimension = training_features[0].shape[1]
+
     logger.info("  -> Training PLDA base machine")
 
     # train machine
@@ -146,7 +157,7 @@ class PLDA (Algorithm):
     plda_machine = bob.learn.em.PLDAMachine(self.plda_base)
     # project features, if enabled
     if self.pca_machine is not None:
-      enroll_features = self._perform_pca_client(enroll_features)
+      enroll_features = self._perform_pca(enroll_features)
     # enroll
     self.plda_trainer.enroll(plda_machine, enroll_features)
     return plda_machine

@@ -358,3 +358,42 @@ def test_plda():
   reference_score = 0.
   assert abs(plda1.score(model, feature) - reference_score) < 1e-5, "The scores differ: %3.8f, %3.8f" % (plda1.score(model, feature), reference_score)
   assert abs(plda1.score_for_multiple_probes(model, [feature, feature]) - reference_score) < 1e-5
+  
+def test_plda_nopca():
+  temp_file = bob.io.base.test_utils.temporary_filename()
+  plda_ref = bob.bio.base.load_resource("plda", "algorithm", preferred_package = 'bob.bio.base')
+  reference_file = pkg_resources.resource_filename('bob.bio.base.test', 'data/plda_nopca_enroller.hdf5')
+  plda_ref.load_enroller(reference_file)
+
+  # generate a smaller PCA subspcae
+  plda = bob.bio.base.algorithm.PLDA(subspace_dimension_of_f = 2, subspace_dimension_of_g = 2, plda_training_iterations = 1, INIT_SEED = seed_value)
+
+  # create random training set
+  train_set = utils.random_training_set_by_id(200, count=20, minimum=0., maximum=255.)
+  # train the projector
+  try:
+    # train projector
+    plda.train_enroller(train_set, temp_file)       
+    assert os.path.exists(temp_file)
+
+    if regenerate_refs: shutil.copy(temp_file, reference_file)
+
+    # check projection matrix
+    assert plda.plda_base.is_similar_to(plda_ref.plda_base)
+
+  finally:
+    if os.path.exists(temp_file): os.remove(temp_file)
+
+  # generate and project random feature
+  feature = utils.random_array(200, 0., 255., seed=84)
+
+  # enroll model from random features
+  reference = pkg_resources.resource_filename('bob.bio.base.test', 'data/plda_nopca_model.hdf5')
+  model = plda.enroll([feature])
+  # execute the preprocessor
+  if regenerate_refs:
+    plda.write_model(model, reference)
+  reference = plda.read_model(reference)
+
+  assert model.is_similar_to(reference)
+
