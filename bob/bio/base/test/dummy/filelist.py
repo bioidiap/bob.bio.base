@@ -3,11 +3,11 @@ from bob.bio.base.test.utils import atnt_database_directory
 import pkg_resources
 
 database = FileListBioDatabase(
-    base_dir=pkg_resources.resource_filename('bob.bio.base.test', 'data/atnt'),
+    filelists_directory=pkg_resources.resource_filename('bob.bio.base.test', 'data/atnt'),
     original_directory=atnt_database_directory(),
     original_extension=".pgm",
-    dev_subdir='.',
-    eval_subdir='.',
+    dev_sub_directory='.',
+    eval_sub_directory='.',
     world_filename='world.lst',
     models_filename='models.lst',
     probes_filename='probes.lst',

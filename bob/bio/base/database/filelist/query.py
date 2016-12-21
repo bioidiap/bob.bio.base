@@ -16,7 +16,7 @@ class FileListBioDatabase(ZTBioDatabase):
 
     Keyword parameters:
 
-    base_dir : str
+    filelists_directory : str
       The directory that contains the filelists defining the protocol(s). If you use the protocol
       attribute when querying the database, it will be appended to the base directory, such that
       several protocols are supported by the same class instance of `bob.bio.base`.
@@ -25,9 +25,9 @@ class FileListBioDatabase(ZTBioDatabase):
       The name of the database
 
     protocol : str
-      The protocol of the database. This should be a folder inside ``base_dir``.
+      The protocol of the database. This should be a folder inside ``filelists_directory``.
 
-    biofilecls : class
+    bio_file_class : class
       The class that should be used for return the files.
       This can be `BioFile`, `AudioBioFile`, `FaceBioFile`, or anything similar.
 
@@ -48,10 +48,10 @@ class FileListBioDatabase(ZTBioDatabase):
       Currently, options are 'eyecenter', 'named', 'idiap'.
       See :py:func:`bob.db.base.read_annotation_file` for details.
 
-    dev_subdir : str or ``None``
+    dev_sub_directory : str or ``None``
       Specify a custom subdirectory for the filelists of the development set (default is 'dev')
 
-    eval_subdir : str or ``None``
+    eval_sub_directory : str or ``None``
       Specify a custom subdirectory for the filelists of the development set (default is 'eval')
 
     world_filename : str or ``None``
@@ -90,10 +90,10 @@ class FileListBioDatabase(ZTBioDatabase):
 
     def __init__(
             self,
-            base_dir,
+            filelists_directory,
             name,
             protocol=None,
-            biofilecls=BioFile,
+            bio_file_class=BioFile,
 
             original_directory=None,
             original_extension=None,
@@ -101,8 +101,8 @@ class FileListBioDatabase(ZTBioDatabase):
             annotation_extension='.pos',
             annotation_type='eyecenter',
 
-            dev_subdir=None,
-            eval_subdir=None,
+            dev_sub_directory=None,
+            eval_sub_directory=None,
 
             world_filename=None,
             optional_world_1_filename=None,
@@ -133,8 +133,8 @@ class FileListBioDatabase(ZTBioDatabase):
             annotation_extension=annotation_extension,
             annotation_type=annotation_type,
             # extra args for pretty printing
-            dev_subdir=dev_subdir,
-            eval_subdir=eval_subdir,
+            dev_sub_directory=dev_sub_directory,
+            eval_sub_directory=eval_sub_directory,
             world_filename=world_filename,
             optional_world_1_filename=optional_world_1_filename,
             optional_world_2_filename=optional_world_2_filename,
@@ -149,19 +149,19 @@ class FileListBioDatabase(ZTBioDatabase):
             **kwargs)
         # self.original_directory = original_directory
         # self.original_extension = original_extension
-        self.biofilecls = biofilecls
+        self.bio_file_class = bio_file_class
 
         self.m_annotation_directory = annotation_directory
         self.m_annotation_extension = annotation_extension
         self.m_annotation_type = annotation_type
 
-        self.m_base_dir = os.path.abspath(base_dir)
+        self.m_base_dir = os.path.abspath(filelists_directory)
         if not os.path.isdir(self.m_base_dir):
             raise RuntimeError('Invalid directory specified %s.' % (self.m_base_dir))
 
         # sub-directories for dev and eval set:
-        self.m_dev_subdir = dev_subdir if dev_subdir is not None else 'dev'
-        self.m_eval_subdir = eval_subdir if eval_subdir is not None else 'eval'
+        self.m_dev_subdir = dev_sub_directory if dev_sub_directory is not None else 'dev'
+        self.m_eval_subdir = eval_sub_directory if eval_sub_directory is not None else 'eval'
 
         # training list:     format:   filename client_id
         self.m_world_filename = world_filename if world_filename is not None else os.path.join('norm',
@@ -230,7 +230,7 @@ class FileListBioDatabase(ZTBioDatabase):
         self.m_list_reader = ListReader(keep_read_lists_in_memory)
 
     def _make_bio(self, files):
-        return [self.biofilecls(client_id=f.client_id, path=f.path, file_id=f.id) for f in files]
+        return [self.bio_file_class(client_id=f.client_id, path=f.path, file_id=f.id) for f in files]
 
     def all_files(self, groups=['dev']):
         files = self.objects(groups, self.protocol, None, None, **self.all_files_options)
@@ -307,12 +307,12 @@ class FileListBioDatabase(ZTBioDatabase):
            are located."""
         return self.m_base_dir
 
-    def set_base_directory(self, base_dir):
+    def set_base_directory(self, filelists_directory):
         """Resets the base directory where the filelists defining the database
           are located."""
-        self.m_base_dir = base_dir
-        if not os.path.isdir(self.base_dir):
-            raise RuntimeError('Invalid directory specified %s.' % (self.base_dir))
+        self.m_base_dir = filelists_directory
+        if not os.path.isdir(self.filelists_directory):
+            raise RuntimeError('Invalid directory specified %s.' % (self.filelists_directory))
 
     def get_list_file(self, group, type=None, protocol=None):
         if protocol:
