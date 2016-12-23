@@ -122,6 +122,10 @@ setup(
         'demanding         = bob.bio.base.config.grid.demanding:grid',
         'gpu               = bob.bio.base.config.grid.gpu:grid',
       ],
+      # declare database to bob
+      'bob.db': [
+        'bio_filelist = bob.bio.base.database.filelist.driver:Interface',
+      ],
    },
 
     # Classifiers are important if you plan to distribute this package through

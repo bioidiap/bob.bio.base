@@ -1,10 +1,7 @@
-from .file import BioFile
-from .file import BioFileSet
-from .database import BioDatabase
-from .database import ZTBioDatabase
-from .filelist.query import FileListBioDatabase
-from .filelist.models import Client
-from . import filelist
+from .models import ListReader, Client, FileListFile
+from .query import FileListBioDatabase
+from .driver import Interface
+
 
 # gets sphinx autodoc done right - don't remove it
 def __appropriate__(*args):
@@ -23,11 +20,10 @@ def __appropriate__(*args):
 
 
 __appropriate__(
-    BioFile,
-    BioFileSet,
-    BioDatabase,
-    ZTBioDatabase,
-    FileListBioDatabase,
+    ListReader,
     Client,
+    FileListFile,
+    FileListBioDatabase,
+    Interface,
 )
 __all__ = [_ for _ in dir() if not _.startswith('_')]

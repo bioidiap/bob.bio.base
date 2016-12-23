@@ -52,6 +52,7 @@ Users Guide
    installation
    experiments
    implementation
+   filelist-guide
    more
 
 ================
