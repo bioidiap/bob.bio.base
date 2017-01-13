@@ -154,76 +154,6 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
     ###########################################################################
     # Helper functions that you might want to use in derived classes
     ###########################################################################
-    def replace_directories(self, replacements=None):
-        """This helper function replaces the ``original_directory`` and the ``annotation_directory`` of the database with the directories read from the given replacement file.
-
-        This function is provided for convenience, so that the database configuration files do not need to be modified.
-        Instead, this function uses the given dictionary of replacements to change the original directory and the original extension (if given).
-
-        The given ``replacements`` can be of type ``dict``, including all replacements, or a file name (as a ``str``), in which case the file is read.
-        The structure of the file should be:
-
-        .. code-block:: text
-
-           # Comments starting with # and empty lines are ignored
-
-           [YOUR_..._DATA_DIRECTORY] = /path/to/your/data
-           [YOUR_..._ANNOTATION_DIRECTORY] = /path/to/your/annotations
-
-        If no annotation files are available (e.g. when they are stored inside the ``database``), the annotation directory can be left out.
-
-        **Parameters:**
-
-        replacements : dict or str
-          A dictionary with replacements, or a name of a file to read the dictionary from.
-          If the file name does not exist, no directories are replaced.
-        """
-        if replacements is None:
-            return
-        if isinstance(replacements, str):
-            if not os.path.exists(replacements):
-                return
-            # Open the database replacement file and reads its content
-            with open(replacements) as f:
-                replacements = {}
-                for line in f:
-                    if line.strip() and not line.startswith("#"):
-                        splits = line.split("=")
-                        assert len(splits) == 2
-                        replacements[splits[0].strip()] = splits[1].strip()
-
-        assert isinstance(replacements, dict)
-
-        if self.original_directory in replacements:
-            self.original_directory = replacements[self.original_directory]
-
-        try:
-            if self.annotation_directory in replacements:
-                self.annotation_directory = replacements[self.annotation_directory]
-        except AttributeError:
-            pass
-
-    def sort(self, files):
-        """sort(files) -> sorted
-
-        Returns a sorted version of the given list of File's (or other structures that define an 'id' data member).
-        The files will be sorted according to their id, and duplicate entries will be removed.
-
-        **Parameters:**
-
-        files : [:py:class:`bob.bio.base.database.BioFile`]
-          The list of files to be uniquified and sorted.
-
-        **Returns:**
-
-        sorted : [:py:class:`bob.bio.base.database.BioFile`]
-          The sorted list of files, with duplicate `BioFile.id`\s being removed.
-        """
-        # sort files using their sort function
-        sorted_files = sorted(files)
-        # remove duplicates
-        return [f for i, f in enumerate(sorted_files) if not i or sorted_files[i - 1].id != f.id]
-
     def uses_probe_file_sets(self, protocol=None):
         """Defines if, for the current protocol, the database uses several probe files to generate a score.
         Returns True if the given protocol specifies file sets for probes, instead of a single probe file.
@@ -313,26 +243,6 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
             # List of files, do not remove duplicates
             return [f.make_path(directory, extension) for f in files]
 
-    def original_file_names(self, files):
-        """original_file_names(files) -> paths
-
-        Returns the full path of the original data of the given File objects.
-
-        **Parameters:**
-
-        files : [:py:class:`bob.bio.base.database.BioFile`]
-          The list of file object to retrieve the original data file names for.
-
-        **Returns:**
-
-        paths : [str] or [[str]]
-          The paths extracted for the files, in the same order.
-          If this database provides file sets, a list of lists of file names is returned, one sub-list for each file set.
-        """
-        assert self.original_directory is not None
-        assert self.original_extension is not None
-        return self.file_names(files, self.original_directory, self.original_extension)
-
     #################################################################
     ###### Methods to be overwritten by derived classes #############
     #################################################################
@@ -404,28 +314,6 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
     #################################################################
     ######### Methods to provide common functionality ###############
     #################################################################
-
-    def original_file_name(self, file):
-        """This function returns the original file name for the given File object.
-
-        Keyword parameters:
-
-        file : :py:class:`bob.bio.base.database.BioFile` or a derivative
-          The File objects for which the file name should be retrieved
-
-        Return value : str
-          The original file name for the given File object
-        """
-        # check if directory is set
-        if not self.original_directory or not self.original_extension:
-            raise ValueError(
-                "The original_directory and/or the original_extension were not specified in the constructor.")
-        # extract file name
-        file_name = file.make_path(self.original_directory, self.original_extension)
-        if not self.check_existence or os.path.exists(file_name):
-            return file_name
-        raise ValueError("The file '%s' was not found. Please check the original directory '%s' and extension '%s'?" % (
-            file_name, self.original_directory, self.original_extension))
 
     def all_files(self, groups=None):
         """all_files(groups=None) -> files
