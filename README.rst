@@ -9,9 +9,9 @@
    :target: https://gitlab.idiap.ch/bob/bob.bio.base/commits/master
 .. image:: https://img.shields.io/badge/gitlab-project-0000c0.svg
    :target: https://gitlab.idiap.ch/bob/bob.bio.base
-.. image:: http://img.shields.io/pypi/v/bob.bio.base.png
+.. image:: http://img.shields.io/pypi/v/bob.bio.base.svg
    :target: https://pypi.python.org/pypi/bob.bio.base
-.. image:: http://img.shields.io/pypi/dm/bob.bio.base.png
+.. image:: http://img.shields.io/pypi/dm/bob.bio.base.svg
    :target: https://pypi.python.org/pypi/bob.bio.base
 
 
