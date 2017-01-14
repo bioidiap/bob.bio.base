@@ -151,9 +151,6 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         return "%s(%s)" % (str(self.__class__), params)
 
-    ###########################################################################
-    # Helper functions that you might want to use in derived classes
-    ###########################################################################
     def replace_directories(self, replacements=None):
         """This helper function replaces the ``original_directory`` and the ``annotation_directory`` of the database with the directories read from the given replacement file.
 
@@ -203,27 +200,9 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
         except AttributeError:
             pass
 
-    def sort(self, files):
-        """sort(files) -> sorted
-
-        Returns a sorted version of the given list of File's (or other structures that define an 'id' data member).
-        The files will be sorted according to their id, and duplicate entries will be removed.
-
-        **Parameters:**
-
-        files : [:py:class:`bob.bio.base.database.BioFile`]
-          The list of files to be uniquified and sorted.
-
-        **Returns:**
-
-        sorted : [:py:class:`bob.bio.base.database.BioFile`]
-          The sorted list of files, with duplicate `BioFile.id`\s being removed.
-        """
-        # sort files using their sort function
-        sorted_files = sorted(files)
-        # remove duplicates
-        return [f for i, f in enumerate(sorted_files) if not i or sorted_files[i - 1].id != f.id]
-
+    ###########################################################################
+    # Helper functions that you might want to use in derived classes
+    ###########################################################################
     def uses_probe_file_sets(self, protocol=None):
         """Defines if, for the current protocol, the database uses several probe files to generate a score.
         Returns True if the given protocol specifies file sets for probes, instead of a single probe file.
@@ -258,31 +237,6 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
             files_by_clients.append(client_files[client])
         return files_by_clients
 
-    def annotations(self, file):
-        """
-        Returns the annotations for the given File object, if available.
-        It uses `bob.db.base.read_annotation_file` to load the annotations.
-
-        **Parameters:**
-
-        file : :py:class:`bob.bio.base.database.BioFile`
-          The file for which annotations should be returned.
-
-        **Returns:**
-
-        annots : dict or None
-          The annotations for the file, if available.
-        """
-        if self.annotation_directory:
-            try:
-                from bob.db.base.annotations import read_annotation_file
-                annotation_path = os.path.join(self.annotation_directory, file.path + self.annotation_extension)
-                return read_annotation_file(annotation_path, self.annotation_type)
-            except ImportError as e:
-                raise NotImplementedError(str(e) + " Annotations are not read." % e)
-
-        return None
-
     def file_names(self, files, directory, extension):
         """file_names(files, directory, extension) -> paths
 
@@ -313,26 +267,6 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
             # List of files, do not remove duplicates
             return [f.make_path(directory, extension) for f in files]
 
-    def original_file_names(self, files):
-        """original_file_names(files) -> paths
-
-        Returns the full path of the original data of the given File objects.
-
-        **Parameters:**
-
-        files : [:py:class:`bob.bio.base.database.BioFile`]
-          The list of file object to retrieve the original data file names for.
-
-        **Returns:**
-
-        paths : [str] or [[str]]
-          The paths extracted for the files, in the same order.
-          If this database provides file sets, a list of lists of file names is returned, one sub-list for each file set.
-        """
-        assert self.original_directory is not None
-        assert self.original_extension is not None
-        return self.file_names(files, self.original_directory, self.original_extension)
-
     #################################################################
     ###### Methods to be overwritten by derived classes #############
     #################################################################
@@ -355,23 +289,6 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
           The list of (unique) model ids for the given groups.
         """
         raise NotImplementedError("Please implement this function in derived classes")
-
-    def model_ids(self, groups='dev'):
-        """model_ids(group = 'dev') -> ids
-
-        Returns a list of model ids for the given group, respecting the current protocol.
-
-        **Parameters:**
-
-        group : one of ``('dev', 'eval')``
-          The group to get the model ids for.
-
-        **Returns:**
-
-        ids : [int] or [str]
-          The list of (unique) model ids for models of the given group.
-        """
-        return sorted(self.model_ids_with_protocol(groups=groups, protocol=self.protocol))
 
     @abc.abstractmethod
     def objects(self, groups=None, protocol=None, purposes=None, model_ids=None, **kwargs):
@@ -401,31 +318,44 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
         """
         raise NotImplementedError("This function must be implemented in your derived class.")
 
+    @abc.abstractmethod
+    def annotations(self, file):
+        """
+        Returns the annotations for the given File object, if available.
+        It uses `bob.db.base.read_annotation_file` to load the annotations.
+
+        **Parameters:**
+
+        file : :py:class:`bob.bio.base.database.BioFile`
+          The file for which annotations should be returned.
+
+        **Returns:**
+
+        annots : dict or None
+          The annotations for the file, if available.
+        """
+        raise NotImplementedError("This function must be implemented in your derived class.")
+
     #################################################################
     ######### Methods to provide common functionality ###############
     #################################################################
 
-    def original_file_name(self, file):
-        """This function returns the original file name for the given File object.
+    def model_ids(self, groups='dev'):
+        """model_ids(group = 'dev') -> ids
 
-        Keyword parameters:
+        Returns a list of model ids for the given group, respecting the current protocol.
 
-        file : :py:class:`bob.bio.base.database.BioFile` or a derivative
-          The File objects for which the file name should be retrieved
+        **Parameters:**
 
-        Return value : str
-          The original file name for the given File object
+        group : one of ``('dev', 'eval')``
+          The group to get the model ids for.
+
+        **Returns:**
+
+        ids : [int] or [str]
+          The list of (unique) model ids for models of the given group.
         """
-        # check if directory is set
-        if not self.original_directory or not self.original_extension:
-            raise ValueError(
-                "The original_directory and/or the original_extension were not specified in the constructor.")
-        # extract file name
-        file_name = file.make_path(self.original_directory, self.original_extension)
-        if not self.check_existence or os.path.exists(file_name):
-            return file_name
-        raise ValueError("The file '%s' was not found. Please check the original directory '%s' and extension '%s'?" % (
-            file_name, self.original_directory, self.original_extension))
+        return sorted(self.model_ids_with_protocol(groups=groups, protocol=self.protocol))
 
     def all_files(self, groups=None):
         """all_files(groups=None) -> files

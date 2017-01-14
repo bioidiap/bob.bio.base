@@ -15,7 +15,7 @@ class DummyDatabase(ZTBioDatabase):
             models_depend_on_protocol=False
         )
         import bob.db.atnt
-        self.__db = bob.db.atnt.Database()
+        self._db = bob.db.atnt.Database()
 
     def uses_probe_file_sets(self):
         return True
@@ -31,10 +31,10 @@ class DummyDatabase(ZTBioDatabase):
         return file_sets
 
     def model_ids_with_protocol(self, groups=None, protocol=None, **kwargs):
-        return self.__db.model_ids(groups, protocol)
+        return self._db.model_ids(groups, protocol)
 
     def objects(self, groups=None, protocol=None, purposes=None, model_ids=None, **kwargs):
-        return self._make_bio(self.__db.objects(model_ids, groups, purposes, protocol, **kwargs))
+        return self._make_bio(self._db.objects(model_ids, groups, purposes, protocol, **kwargs))
 
     def tobjects(self, groups=None, protocol=None, model_ids=None, **kwargs):
         return []
@@ -43,7 +43,7 @@ class DummyDatabase(ZTBioDatabase):
         return []
 
     def tmodel_ids_with_protocol(self, protocol=None, groups=None, **kwargs):
-        return self.__db.model_ids(groups)
+        return self._db.model_ids(groups)
 
     def t_enroll_files(self, t_model_id, group='dev'):
         return self.enroll_files(t_model_id, group)
@@ -53,5 +53,9 @@ class DummyDatabase(ZTBioDatabase):
 
     def z_probe_file_sets(self, group='dev'):
         return self.probe_file_sets(None, group)
+
+    def annotations(self, file):
+        return None
+
 
 database = DummyDatabase()
