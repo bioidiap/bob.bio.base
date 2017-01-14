@@ -1,5 +1,6 @@
 from bob.bio.base.preprocessor import Preprocessor
 
+
 class DummyPreprocessor (Preprocessor):
   def __init__(self, return_none=False, **kwargs):
     Preprocessor.__init__(self)
@@ -10,5 +11,6 @@ class DummyPreprocessor (Preprocessor):
     if self.return_none:
       return None
     return data
+
 
 preprocessor = DummyPreprocessor()
