@@ -1,9 +1,9 @@
 .. vim: set fileencoding=utf-8 :
 .. Tue 16 Aug 15:00:20 CEST 2016
 
-.. image:: http://img.shields.io/badge/docs-stable-yellow.png
+.. image:: http://img.shields.io/badge/docs-stable-yellow.svg
    :target: http://pythonhosted.org/bob.bio.base/index.html
-.. image:: http://img.shields.io/badge/docs-latest-orange.png
+.. image:: http://img.shields.io/badge/docs-latest-orange.svg
    :target: https://www.idiap.ch/software/bob/docs/latest/bioidiap/bob.bio.base/master/index.html
 .. image:: https://gitlab.idiap.ch/bob/bob.bio.base/badges/master/build.svg
    :target: https://gitlab.idiap.ch/bob/bob.bio.base/commits/master
@@ -45,6 +45,6 @@ development `mailing list`_.
 
 .. Place your references here:
 .. _bob: https://www.idiap.ch/software/bob
-.. _installation: https://gitlab.idiap.ch/bob/bob/wikis/Installation
+.. _installation: https://www.idiap.ch/software/bob/install
 .. _mailing list: https://groups.google.com/forum/?fromgroups#!forum/bob-devel
 .. _user guide: http://pythonhosted.org/bob.bio.base

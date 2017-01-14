@@ -218,7 +218,7 @@ Verification Database Interface
 
 For most of the data sets, we rely on the database interfaces from Bob_.
 
-Particularly, all databases that are derived from the :py:class:`bob.bio.base.database.BioDatabase` (click `here <https://gitlab.idiap.ch/bob/bob/wikis/Packages>`_ for a list of implemented databases) are supported by a special derivation of the databases from above.
+Particularly, all databases that are derived from the :py:class:`bob.bio.base.database.BioDatabase` (click `here <https://www.idiap.ch/software/bob/packages>`_ for a list of implemented databases) are supported by a special derivation of the databases from above.
 For these databases, the special :py:class:`bob.bio.base.database.BioDatabase` interface is provided, which wraps the actual Bob_ databases with all their specificities.
 Several such databases are defined in the according packages, i.e., :ref:`bob.bio.spear <bob.bio.spear>`, :ref:`bob.bio.face <bob.bio.face>` and :ref:`bob.bio.video <bob.bio.video>`.
 For Bob_'s ZT-norm databases, we provide the :py:class:`bob.bio.base.database.ZTBioDatabase` interface.
