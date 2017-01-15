@@ -195,8 +195,17 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
             self.original_directory = replacements[self.original_directory]
 
         try:
+            self._db.original_directory = self.original_directory
+        except AttributeError:
+            pass
+
+        try:
             if self.annotation_directory in replacements:
                 self.annotation_directory = replacements[self.annotation_directory]
+                try:
+                    self._db.annotation_directory = self.annotation_directory
+                except AttributeError:
+                    pass
         except AttributeError:
             pass
 
