@@ -65,7 +65,8 @@ def preprocess(preprocessor, groups = None, indices = None, allow_missing_files 
     file_name = file_object.make_path(original_directory, original_extension)
 
     # check for existence
-    if not utils.check_file(preprocessed_data_file, force, 1000):
+    if not utils.check_file(preprocessed_data_file, force,
+                            preprocessor.min_preprocessed_file_size):
       logger.debug("... Processing original data file '%s'", file_name)
       data = preprocessor.read_original_data(file_object, original_directory, original_extension)
       # create output directory before reading the data file (is sometimes required, when relative directories are specified, especially, including a .. somewhere)

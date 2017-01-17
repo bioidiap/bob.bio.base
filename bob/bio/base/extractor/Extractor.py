@@ -23,6 +23,16 @@ class Extractor:
     Set this flag to ``True`` if your feature extractor requires the training data to be split by clients.
     Ignored, if ``requires_training`` is ``False``
 
+  min_extractor_file_size : int
+      The minimum file size of a saved extractor file for extractors that
+      require training in bytes. If the saved file size is smaller than this, it
+      is assumed to be a corrupt file and the extractor will be trained again.
+
+  min_feature_file_size : int
+      The minimum file size of extracted features in bytes. If the saved file
+      size is smaller than this, it is assumed to be a corrupt file and the
+      features will be extracted again.
+
   kwargs : ``key=value`` pairs
     A list of keyword arguments to be written in the `__str__` function.
   """
@@ -31,12 +41,16 @@ class Extractor:
       self,
       requires_training = False, # enable, if your extractor needs training
       split_training_data_by_client = False, # enable, if your extractor needs the training files sorted by client
+      min_extractor_file_size=1000,
+      min_feature_file_size=1000,
       **kwargs                   # the parameters of the extractor, to be written in the __str__() method
   ):
     # Each class needs to have a constructor taking
     # all the parameters that are required for the feature extraction as arguments
     self.requires_training = requires_training
     self.split_training_data_by_client = split_training_data_by_client
+    self.min_extractor_file_size = min_extractor_file_size
+    self.min_feature_file_size = min_feature_file_size
     self._kwargs = kwargs
 
 

@@ -19,17 +19,24 @@ class Preprocessor:
       This function is used to read the original data from file.
       It takes three inputs: A :py:class:`bob.bio.base.database.BioFile` (or one of its derivatives), the original directory (as ``str``) and the original extension (as ``str``).
 
+    min_preprocessed_file_size: int
+      The minimum file size of a saved preprocessd data in bytes. If the saved
+      preprocessed data file size is smaller than this, it is assumed to be a
+      corrupt file and the data will be processed again.
+
     kwargs : ``key=value`` pairs
       A list of keyword arguments to be written in the `__str__` function.
     """
 
-    def __init__(self, writes_data=True, read_original_data=None, **kwargs):
+    def __init__(self, writes_data=True, read_original_data=None,
+                 min_preprocessed_file_size=1000, **kwargs):
         # Each class needs to have a constructor taking
         # all the parameters that are required for the preprocessing as arguments
         self.writes_data = writes_data
         if read_original_data is None:
             read_original_data = utils.read_original_data
         self.read_original_data = read_original_data
+        self.min_preprocessed_file_size = min_preprocessed_file_size
         self._kwargs = kwargs
         pass
 

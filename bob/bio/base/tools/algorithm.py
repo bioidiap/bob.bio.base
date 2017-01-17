@@ -38,7 +38,8 @@ def train_projector(algorithm, extractor, allow_missing_files = False, force = F
   # the file selector object
   fs = FileSelector.instance()
 
-  if utils.check_file(fs.projector_file, force, 1000):
+  if utils.check_file(fs.projector_file, force,
+                      algorithm.min_projector_file_size):
     logger.info("- Projection: projector '%s' already exists.", fs.projector_file)
   else:
     bob.io.base.create_directories_safe(os.path.dirname(fs.projector_file))
@@ -120,7 +121,8 @@ def project(algorithm, extractor, groups = None, indices = None, allow_missing_f
         logger.error("Cannot find extracted feature file %s", feature_file)
 
 
-    if not utils.check_file(projected_file, force, 1000):
+    if not utils.check_file(projected_file, force,
+                            algorithm.min_projected_file_size):
       logger.debug("... Projecting features for file '%s'", feature_file)
       # create output directory before reading the data file (is sometimes required, when relative directories are specified, especially, including a .. somewhere)
       bob.io.base.create_directories_safe(os.path.dirname(projected_file))
@@ -175,7 +177,8 @@ def train_enroller(algorithm, extractor, allow_missing_files = False, force = Fa
   # the file selector object
   fs = FileSelector.instance()
 
-  if utils.check_file(fs.enroller_file, force, 1000):
+  if utils.check_file(fs.enroller_file, force,
+                      algorithm.min_enroller_file_size):
     logger.info("- Enrollment: enroller '%s' already exists.", fs.enroller_file)
   else:
     # define the tool that is required to read the features
@@ -258,7 +261,8 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
         model_file = fs.model_file(model_id, group)
 
         # Removes old file if required
-        if not utils.check_file(model_file, force, 1000):
+        if not utils.check_file(model_file, force,
+                                algorithm.min_model_file_size):
           enroll_files = fs.enroll_files(model_id, group, 'projected' if algorithm.use_projected_features_for_enrollment else 'extracted')
 
           if allow_missing_files:
@@ -305,7 +309,8 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
         t_model_file = fs.t_model_file(t_model_id, group)
 
         # Removes old file if required
-        if not utils.check_file(t_model_file, force, 1000):
+        if not utils.check_file(t_model_file, force,
+                                algorithm.min_t_model_file_size):
           t_enroll_files = fs.t_enroll_files(t_model_id, group, 'projected' if algorithm.use_projected_features_for_enrollment else 'extracted')
 
           if allow_missing_files:
