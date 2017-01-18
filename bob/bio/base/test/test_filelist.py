@@ -22,6 +22,7 @@
 import os
 import bob.io.base.test_utils
 from bob.bio.base.database import FileListBioDatabase
+import nose.tools
 
 
 example_dir = os.path.realpath(bob.io.base.test_utils.datafile('.', __name__, 'data/example_filelist'))
@@ -124,6 +125,8 @@ def test_query_protocol():
     assert db.client_id_from_model_id('6', group=None) == '6'
     assert db.client_id_from_t_model_id('7', group=None) == '7'
 
+    nose.tools.assert_raises(ValueError, db.objects, protocol='non-existent')
+
 
 def test_query_dense():
     db = FileListBioDatabase(example_dir, 'test', probes_filename='for_probes.lst')
@@ -162,13 +165,7 @@ def test_multiple_extensions():
     assert file_name == os.path.join(example_dir, file.path + '.pos')
 
     file = bob.bio.base.database.BioFile(4, "data/model4_session1_sample1", "data/model4_session1_sample1")
-    try:
-        file_name = db.original_file_name(file, False)
-        raised = False
-    except IOError as e:
-        raised = True
-
-    assert raised
+    nose.tools.assert_raises(IOError, db.original_file_name, file, False)
 
 
 def test_driver_api():

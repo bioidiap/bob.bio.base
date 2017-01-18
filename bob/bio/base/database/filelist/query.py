@@ -229,7 +229,12 @@ class FileListBioDatabase(ZTBioDatabase):
 
     def _list_reader(self, protocol):
       if protocol not in self.list_readers:
+        if protocol is not None:
+          protocol_dir = os.path.join(self.get_base_directory(), protocol)
+          if not os.path.isdir(protocol_dir):
+            raise ValueError("The directory %s for the given protocol '%s' does not exist" % (protocol_dir, protocol))
         self.list_readers[protocol] = ListReader(self.keep_read_lists_in_memory)
+
       return self.list_readers[protocol]
 
     def _make_bio(self, files):
