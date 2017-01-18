@@ -46,6 +46,25 @@ class Algorithm:
     The way, scores are fused when multiple probes are available.
     See :py:func:`bob.bio.base.score_fusion_strategy` for possible values.
 
+  min_projector_file_size : int
+    The minimum file size of projector_file in bytes. If the saved file is
+    smaller than this, it is assumed to be corrupt and it will be generated
+    again.
+
+  min_projected_file_size : int
+    The minimum file size of projected_file in bytes. If the saved file is
+    smaller than this, it is assumed to be corrupt and it will be generated
+    again.
+
+  min_enroller_file_size : int
+    The minimum file size of enroller_file in bytes. If the saved file is
+    smaller than this, it is assumed to be corrupt and it will be generated
+    again.
+
+  min_model_file_size : int
+    The minimum file size of model_file in bytes. If the saved file is smaller
+    than this, it is assumed to be corrupt and it will be generated again.
+
   kwargs : ``key=value`` pairs
     A list of keyword arguments to be written in the `__str__` function.
 
@@ -61,6 +80,11 @@ class Algorithm:
 
       multiple_model_scoring = 'average', # by default, compute the average between several models and the probe
       multiple_probe_scoring = 'average', # by default, compute the average between the model and several probes
+      min_projector_file_size=1000,
+      min_projected_file_size=1000,
+      min_enroller_file_size=1000,
+      min_model_file_size=1000,
+      min_t_model_file_size=1000,
       **kwargs                            # parameters from the derived class that should be reported in the __str__() function
   ):
     self.performs_projection = performs_projection
@@ -70,6 +94,10 @@ class Algorithm:
     self.requires_enroller_training = requires_enroller_training
     self.model_fusion_function = utils.score_fusion_strategy(multiple_model_scoring)
     self.probe_fusion_function = utils.score_fusion_strategy(multiple_probe_scoring)
+    self.min_projector_file_size = min_projector_file_size
+    self.min_projected_file_size = min_projected_file_size
+    self.min_enroller_file_size = min_enroller_file_size
+    self.min_model_file_size = min_model_file_size
     self._kwargs = kwargs
     self._kwargs.update({'multiple_model_scoring':multiple_model_scoring, 'multiple_probe_scoring':multiple_probe_scoring})
 

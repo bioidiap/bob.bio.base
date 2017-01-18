@@ -38,7 +38,8 @@ def train_extractor(extractor, preprocessor, allow_missing_files = False, force 
   # the file selector object
   fs = FileSelector.instance()
   # the file to write
-  if utils.check_file(fs.extractor_file, force, 1000):
+  if utils.check_file(fs.extractor_file, force,
+                      extractor.min_extractor_file_size):
     logger.info("- Extraction: extractor '%s' already exists.", fs.extractor_file)
   else:
     bob.io.base.create_directories_safe(os.path.dirname(fs.extractor_file))
@@ -109,7 +110,8 @@ def extract(extractor, preprocessor, groups=None, indices = None, allow_missing_
       else:
         logger.error("Cannot find preprocessed data file %s", data_file)
 
-    if not utils.check_file(feature_file, force, 1000):
+    if not utils.check_file(feature_file, force,
+                            extractor.min_feature_file_size):
       logger.debug("... Extracting features for data file '%s'", data_file)
       # create output directory before reading the data file (is sometimes required, when relative directories are specified, especially, including a .. somewhere)
       bob.io.base.create_directories_safe(os.path.dirname(feature_file))
