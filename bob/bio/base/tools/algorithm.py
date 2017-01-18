@@ -310,7 +310,7 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
 
         # Removes old file if required
         if not utils.check_file(t_model_file, force,
-                                algorithm.min_t_model_file_size):
+                                algorithm.min_model_file_size):
           t_enroll_files = fs.t_enroll_files(t_model_id, group, 'projected' if algorithm.use_projected_features_for_enrollment else 'extracted')
 
           if allow_missing_files:
