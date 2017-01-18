@@ -125,6 +125,7 @@ class FileListBioDatabase(ZTBioDatabase):
         and the given sub-directories and file names (which default to useful values if not given)."""
 
         super(FileListBioDatabase, self).__init__(
+            filelists_directory=filelists_directory,
             name=name,
             protocol=protocol,
             original_directory=original_directory,

@@ -24,7 +24,7 @@ import bob.io.base.test_utils
 from bob.bio.base.database import FileListBioDatabase
 
 
-example_dir = os.path.realpath(bob.io.base.test_utils.datafile('.', __name__, 'data/example_fielist'))
+example_dir = os.path.realpath(bob.io.base.test_utils.datafile('.', __name__, 'data/example_filelist'))
 
 
 def test_query():
@@ -77,7 +77,7 @@ def test_query():
 
 
 def test_query_protocol():
-    db = FileListBioDatabase(os.path.dirname(example_dir), 'test', protocol='example_fielist', use_dense_probe_file_list=False)
+    db = FileListBioDatabase(os.path.dirname(example_dir), 'test', protocol='example_filelist', use_dense_probe_file_list=False)
 
     assert len(db.groups()) == 5  # 5 groups (dev, eval, world, optional_world_1, optional_world_2)
 
