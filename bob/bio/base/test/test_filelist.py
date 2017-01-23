@@ -125,11 +125,19 @@ def test_query_protocol():
     assert db.client_id_from_model_id('6', group=None) == '6'
     assert db.client_id_from_t_model_id('7', group=None) == '7'
 
-    nose.tools.assert_raises(ValueError, db.objects, protocol='non-existent')
+
+    # check other protocols
+    assert len(db.objects(protocol='non-existent')) == 0
+
+    prot = 'example_filelist2'
+    assert len(db.model_ids_with_protocol(protocol=prot)) == 3  # 3 model ids for dev only
+    nose.tools.assert_raises(ValueError, db.model_ids_with_protocol, protocol=prot, groups='eval') # eval does not exist for this protocol
+    assert len(db.objects(protocol=prot, groups='dev', purposes='enroll')) == 12
+    assert len(db.objects(protocol=prot, groups='dev', purposes='probe')) == 9
 
 
 def test_query_dense():
-    db = FileListBioDatabase(example_dir, 'test', probes_filename='for_probes.lst')
+    db = FileListBioDatabase(example_dir, 'test', use_dense_probe_file_list=True)
 
     assert len(db.objects(groups='world')) == 8  # 8 samples in the world set
 
