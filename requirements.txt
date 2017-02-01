@@ -9,6 +9,5 @@ bob.learn.linear
 bob.math
 bob.measure
 bob.sp
-gridtk
 scipy
 setuptools
