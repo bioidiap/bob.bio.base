@@ -22,9 +22,10 @@
 import os
 import bob.io.base.test_utils
 from bob.bio.base.database import FileListBioDatabase
+import nose.tools
 
 
-example_dir = os.path.realpath(bob.io.base.test_utils.datafile('.', __name__, 'data/example_fielist'))
+example_dir = os.path.realpath(bob.io.base.test_utils.datafile('.', __name__, 'data/example_filelist'))
 
 
 def test_query():
@@ -77,7 +78,7 @@ def test_query():
 
 
 def test_query_protocol():
-    db = FileListBioDatabase(os.path.dirname(example_dir), 'test', protocol='example_fielist', use_dense_probe_file_list=False)
+    db = FileListBioDatabase(os.path.dirname(example_dir), 'test', protocol='example_filelist', use_dense_probe_file_list=False)
 
     assert len(db.groups()) == 5  # 5 groups (dev, eval, world, optional_world_1, optional_world_2)
 
@@ -125,8 +126,18 @@ def test_query_protocol():
     assert db.client_id_from_t_model_id('7', group=None) == '7'
 
 
+    # check other protocols
+    assert len(db.objects(protocol='non-existent')) == 0
+
+    prot = 'example_filelist2'
+    assert len(db.model_ids_with_protocol(protocol=prot)) == 3  # 3 model ids for dev only
+    nose.tools.assert_raises(ValueError, db.model_ids_with_protocol, protocol=prot, groups='eval') # eval does not exist for this protocol
+    assert len(db.objects(protocol=prot, groups='dev', purposes='enroll')) == 12
+    assert len(db.objects(protocol=prot, groups='dev', purposes='probe')) == 9
+
+
 def test_query_dense():
-    db = FileListBioDatabase(example_dir, 'test', probes_filename='for_probes.lst')
+    db = FileListBioDatabase(example_dir, 'test', use_dense_probe_file_list=True)
 
     assert len(db.objects(groups='world')) == 8  # 8 samples in the world set
 
@@ -162,13 +173,7 @@ def test_multiple_extensions():
     assert file_name == os.path.join(example_dir, file.path + '.pos')
 
     file = bob.bio.base.database.BioFile(4, "data/model4_session1_sample1", "data/model4_session1_sample1")
-    try:
-        file_name = db.original_file_name(file, False)
-        raised = False
-    except IOError as e:
-        raised = True
-
-    assert raised
+    nose.tools.assert_raises(IOError, db.original_file_name, file, False)
 
 
 def test_driver_api():
