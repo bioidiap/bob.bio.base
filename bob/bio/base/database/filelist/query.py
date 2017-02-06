@@ -289,7 +289,7 @@ class FileListBioDatabase(ZTBioDatabase):
         scores = True
         for group in self.groups(protocol, add_world=False):
             probes = probes and os.path.exists(self._get_list_file(group, type='for_probes', protocol=protocol))
-            scores = probes and os.path.exists(self._get_list_file(group, type='for_scores', protocol=protocol))
+            scores = scores and os.path.exists(self._get_list_file(group, type='for_scores', protocol=protocol))
         # decide, which score files are available
         if probes and not scores:
             return True
