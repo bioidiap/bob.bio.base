@@ -9,7 +9,7 @@ from .singleton import *
 
 import numpy
 
-def score_fusion_strategy(strategy_name = 'avarage'):
+def score_fusion_strategy(strategy_name = 'average'):
   """Returns a function to compute a fusion strategy between different scores.
 
   Different strategies are employed:
