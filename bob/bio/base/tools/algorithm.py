@@ -136,8 +136,8 @@ def project(algorithm, extractor, groups = None, indices = None, allow_missing_f
           logger.debug("... Projection for extracted file %s failed; skipping", feature_file)
           continue
         else:
-          logger.error("Projection of file '%s' was not successful", feature_file)
-        continue
+          raise RuntimeError("Projection of file '%s' was not successful" % feature_file)
+
 
       # write it
       algorithm.write_feature(projected, projected_file)
@@ -284,8 +284,7 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
               logger.debug("... Enrollment for model %s failed; skipping", model_id)
               continue
             else:
-              logger.error("Enrollemnt of model '%s' was not successful", model_id)
-            continue
+              raise RuntimeError("Enrollemnt of model '%s' was not successful" % model_id)
 
           # save the model
           algorithm.write_model(model, model_file)
@@ -332,8 +331,7 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
               logger.debug("... Enrollment for T-model %s failed; skipping", t_model_id)
               continue
             else:
-              logger.error("Enrollemnt of T-model '%s' was not successful", t_model_id)
-            continue
+              raise RuntimeError("Enrollemnt of T-model '%s' was not successful", t_model_id)
 
           # save model
           algorithm.write_model(t_model, t_model_file)

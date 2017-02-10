@@ -80,9 +80,9 @@ def preprocess(preprocessor, groups = None, indices = None, allow_missing_files 
       if preprocessed_data is None:
         if allow_missing_files:
           logger.debug("... Processing original data file '%s' was not successful", file_name)
+          continue
         else:
-          logger.error("Preprocessing of file '%s' was not successful", file_name)
-        continue
+          raise RuntimeError("Preprocessing of file '%s' was not successful" % file_name)
 
       # write the data
       preprocessor.write_data(preprocessed_data, preprocessed_data_file)
