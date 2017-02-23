@@ -21,7 +21,7 @@ PREDEFINED_QUEUES = {
 
 from . import utils
 
-class Grid:
+class Grid (object):
   """This class is defining the options that are required to submit parallel jobs to the SGE grid, or jobs to the local queue.
 
   If the given ``grid_type`` is ``'sge'`` (the default), this configuration is set up to submit algorithms to the SGE grid.
