@@ -65,8 +65,7 @@ class LDA (Algorithm):
   ):
 
     # call base class constructor and register that the LDA tool performs projection and need the training features split by client
-    Algorithm.__init__(
-        self,
+    super(LDA, self).__init__(
         performs_projection = True,
         split_training_features_by_client = True,
 

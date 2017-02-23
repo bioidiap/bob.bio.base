@@ -37,8 +37,7 @@ class PLDA (Algorithm):
 
     """Initializes the local (PCA-)PLDA tool chain with the given file selector object"""
     # call base class constructor and register that this class requires training for enrollment
-    Algorithm.__init__(
-        self,
+    super(PLDA, self).__init__(
         requires_enroller_training = True,
 
         subspace_dimension_of_f = subspace_dimension_of_f, # Size of subspace F
@@ -113,7 +112,7 @@ class PLDA (Algorithm):
     """Generates the PLDA base model from a list of arrays (one per identity),
        and a set of training parameters. If PCA is requested, it is trained on the same data.
        Both the trained PLDABase and the PCA machine are written."""
-    
+
     # arrange PLDA training data
     training_features = self._arrange_data(training_features)
 

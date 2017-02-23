@@ -37,8 +37,7 @@ class Distance (Algorithm):
   ):
 
     # call base class constructor and register that the algorithm performs a projection
-    Algorithm.__init__(
-        self,
+    super(Distance, self).__init__(
         distance_function = str(distance_function),
         is_distance_function = is_distance_function,
 
