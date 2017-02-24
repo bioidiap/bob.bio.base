@@ -176,6 +176,18 @@ def _take_from_config_or_command_line(args, config, keyword, default, required=T
   elif required:
     raise ValueError("Please specify a %s either on command line (via --%s) or in a configuration file" %(keyword, keyword))
 
+  if config is not None and hasattr(config, keyword):
+    setattr(config, keyword, None)
+
+def _check_config_consumed(config):
+  if config is not None:
+    import inspect
+    for keyword in dir(config):
+      if not keyword.startswith('_') and not keyword.isupper():
+        attr = getattr(config,keyword)
+        if attr is not None and not inspect.isclass(attr) and not inspect.ismodule(attr):
+          logger.warn("The variable '%s' in a configuration file is not known or not supported; use all uppercase variable names (e.g., '%s') to suppress this warning.", keyword, keyword.upper())
+
 
 def initialize(parsers, command_line_parameters = None, skips = []):
   """initialize(parsers, command_line_parameters = None, skips = []) -> args
@@ -278,6 +290,9 @@ def initialize(parsers, command_line_parameters = None, skips = []):
       ) + skip_keywords:
     _take_from_config_or_command_line(args, config, keyword,
         parser.get_default(keyword), required=False, is_resource=False)
+
+  # check that all variables in the config file are consumed by the above options
+  _check_config_consumed(config)
 
   # evaluate skips
   if skips is not None and args.execute_only is not None:
