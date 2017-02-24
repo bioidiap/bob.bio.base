@@ -3,6 +3,8 @@ import os
 import sys
 import socket
 
+import bob.extension
+
 import bob.core
 logger = bob.core.log.setup("bob.bio.base")
 
@@ -47,6 +49,7 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
   ############## options that are required to be specified #######################
   config_group = parser.add_argument_group('\nParameters defining the experiment. Most of these parameters can be a registered resource, a configuration file, or even a string that defines a newly created object')
   config_group.add_argument('configuration_file', metavar='PATH', nargs='*', help = 'A configuration file containing one or more of "database", "preprocessor", "extractor", "algorithm" and/or "grid"')
+  config_group.add_argument('-H', '--create-configuration-file', metavar='PATH', help = 'If selected, an empty configuration file will be created')
   config_group.add_argument('-d', '--database', metavar = 'x', nargs = '+',
       help = 'Database and the protocol; registered databases are: %s' % utils.resource_keys('database', exclude_resources_from))
   config_group.add_argument('-p', '--preprocessor', metavar = 'x', nargs = '+',
@@ -218,6 +221,11 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   # parse the arguments
   parser = parsers['main']
   args = parser.parse_args(command_line_parameters)
+
+  # check if the "create_configuration_file" function was requested
+  if args.create_configuration_file is not None:
+    # this will exit at the end
+    _create_configuration_file(parsers, args)
 
   # first, read the configuration file and set everything from the config file to the args -- as long as not overwritten on command line
   config = utils.read_config_file(args.configuration_file) if args.configuration_file else None
@@ -417,3 +425,28 @@ def write_info(args, command_line_parameters, executable):
     f.write("Algorithm:\n%s\n\n" % args.algorithm)
   except IOError:
     logger.error("Could not write the experimental setup into file '%s'", args.info_file)
+
+def _create_configuration_file(parsers, args):
+  """This function writes an empty configuration file with all possible options."""
+  logger.info("Writing configuration file %s", args.create_configuration_file)
+  import datetime
+  executables = bob.extension.find_executable(os.path.basename(sys.argv[0]), prefixes = [os.path.dirname(sys.argv[0]), 'bin'])
+  if not executables:
+    executables = [sys.argv[0]]
+
+  parser = parsers['main']
+
+  bob.io.base.create_directories_safe(os.path.dirname(args.create_configuration_file))
+  with open(args.create_configuration_file, 'w') as f:
+    f.write("# Configuration file automatically generated at %s for %s\n\n" % (datetime.date.today(), executables[0]))
+
+    for action in parser._actions[3:]:
+      if action.help == "==SUPPRESS==":
+        continue
+      f.write("# %s\n\n" % action.help)
+      if action.nargs is None and action.type is None and action.default is not None:
+        f.write("#%s = '%s'\n\n\n" % (action.dest, action.default))
+      else:
+        f.write("#%s = %s\n\n\n" % (action.dest, action.default))
+
+  parser.exit(1, "Configuration file '%s' was written; exiting\n" % args.create_configuration_file)
