@@ -49,8 +49,7 @@ class PCA (Algorithm):
   ):
 
     # call base class constructor and register that the algorithm performs a projection
-    Algorithm.__init__(
-        self,
+    super(PCA, self).__init__(
         performs_projection = True,
 
         subspace_dimension = subspace_dimension,

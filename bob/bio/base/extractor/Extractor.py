@@ -7,7 +7,7 @@ import os
 
 from .. import utils
 
-class Extractor:
+class Extractor (object):
   """This is the base class for all feature extractors.
   It defines the minimum requirements that a derived feature extractor class need to implement.
 

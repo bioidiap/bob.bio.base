@@ -7,7 +7,7 @@ import numpy
 import os
 from .. import utils
 
-class Algorithm:
+class Algorithm (object):
   """This is the base class for all biometric recognition algorithms.
   It defines the minimum requirements for all derived algorithm classes.
 

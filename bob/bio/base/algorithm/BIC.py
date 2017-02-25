@@ -73,8 +73,7 @@ class BIC(Algorithm):
     ):
 
         # call base class function and register that this tool requires training for the enrollment
-        Algorithm.__init__(
-            self,
+        super(BIC, self).__init__(
             requires_enroller_training=True,
 
             comparison_function=str(comparison_function),

@@ -6,7 +6,7 @@
 from .. import utils
 
 
-class Preprocessor:
+class Preprocessor (object):
     """This is the base class for all preprocessors.
     It defines the minimum requirements for all derived proprocessor classes.
 

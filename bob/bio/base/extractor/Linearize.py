@@ -15,7 +15,7 @@ class Linearize(Extractor):
 
     def __init__(self, dtype=None):
         """If the ``dtype`` parameter is given, it specifies the data type that is enforced for the features."""
-        Extractor.__init__(self, dtype=dtype)
+        super(Linearize, self).__init__(dtype=dtype)
         self.dtype = dtype
 
     def __call__(self, data):

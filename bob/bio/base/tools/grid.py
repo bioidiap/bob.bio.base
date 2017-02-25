@@ -32,7 +32,7 @@ def indices(list_to_split, number_of_parallel_jobs, task_id=None):
     return (start, end)
 
 
-class GridSubmission:
+class GridSubmission (object):
   def __init__(self, args, command_line_parameters, executable = 'verify.py', first_fake_job_id = 0):
     # find, where the executable is installed
     import bob.extension
@@ -49,7 +49,7 @@ class GridSubmission:
 
     if args.grid is not None:
       assert isinstance(args.grid, grid.Grid)
-      
+
       self.env = args.env #Fetching the enviroment variable
 
       # find, where jman is installed

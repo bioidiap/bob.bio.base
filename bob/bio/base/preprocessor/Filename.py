@@ -15,7 +15,7 @@ class Filename (Preprocessor):
 
   def __init__(self):
     # call base class constructor, using a custom ``read_original_data`` that does nothing and always returns None
-    Preprocessor.__init__(self, writes_data=False, read_original_data = lambda x,y,z: None)
+    super(Filename, self).__init__(writes_data=False, read_original_data = lambda x,y,z: None)
 
 
   # The call function (i.e. the operator() in C++ terms)
