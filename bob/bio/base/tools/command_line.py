@@ -451,31 +451,46 @@ def _create_configuration_file(parsers, args):
 
   parser = parsers['main']
 
-  #import ipdb; ipdb.set_trace();
-
   bob.io.base.create_directories_safe(os.path.dirname(args.create_configuration_file))
 
-  arguments = "# Configuration file automatically generated at %s for %s\n\n" % (datetime.date.today(), executables[0])
-  optional_arguments = "################################################## \n############### OPTIONAL ARGUMENTS ############### \n##################################################n\n\n"  
-  
+  required  = "# Configuration file automatically generated at %s for %s.\n\n" % (datetime.date.today(), executables[0])
+  required += "##################################################\n############### REQUIRED ARGUMENTS ###############\n##################################################\n\n"
+  required += "# These arguments need to be set.\n\n\n"
+  common    = "##################################################\n################ COMMON ARGUMENTS ################\n##################################################\n\n"
+  common   += "# These arguments are commonly changed.\n\n\n"
+  optional  = "##################################################\n############### OPTIONAL ARGUMENTS ###############\n##################################################\n\n"
+  optional += "# Files and directories might commonly be specified with absolute paths or relative to the temp_directory.\n# Change these options, e.g., to reuse parts of other experiments.\n\n\n"
+  rare      = "##################################################\n############ RARELY CHANGED ARGUMENTS ############\n##################################################\n\n\n"
+
+  required_list = set(['database', 'preprocessor', 'extractor', 'algorithm', 'sub_directory'])
+  common_list = set(['protocol', 'grid', 'parallel', 'verbose', 'groups', 'temp_directory', 'result_directory', 'zt_norm', 'allow_missing_files', 'dry_run', 'force'])
+  optional_list = set(['preprocessed_directory', 'extracted_directory', 'projected_directory', 'model_directories', 'extractor_file', 'projector_file', 'enroller_file'])
+
+
   with open(args.create_configuration_file, 'w') as f:
 
     for action in parser._actions[3:]:
       if action.help == "==SUPPRESS==":
         continue
-        
-      tmp_arguments = "# %s\n\n" % action.help
+
+      tmp = "# %s\n\n" % action.help
       if action.nargs is None and action.type is None and action.default is not None:
-        tmp_arguments +=  "#%s = '%s'\n\n\n" % (action.dest, action.default)
+        tmp +=  "#%s = '%s'\n\n\n" % (action.dest, action.default)
       else:
-        tmp_arguments += "#%s = %s\n\n\n" % (action.dest, action.default)
+        tmp += "#%s = %s\n\n\n" % (action.dest, action.default)
 
-      if action.metavar == "x":
-        arguments += tmp_arguments
+      if action.dest in required_list:
+        required += tmp
+      elif action.dest in common_list:
+        common += tmp
+      elif action.dest in optional_list:
+        optional += tmp
       else:
-        optional_arguments += tmp_arguments
+        rare += tmp
 
-    f.write(arguments)
-    f.write(optional_arguments)
+    f.write(required)
+    f.write(common)
+    f.write(optional)
+    f.write(rare)
 
   parser.exit(1, "Configuration file '%s' was written; exiting\n" % args.create_configuration_file)
