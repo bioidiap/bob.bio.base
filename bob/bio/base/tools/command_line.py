@@ -234,8 +234,15 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   parser = parsers['main']
   args = parser.parse_args(command_line_parameters)
 
+
   # check if the "create_configuration_file" function was requested
   if args.create_configuration_file is not None:
+    # update list of options to be written into the config file
+    set_required_common_optional_arguments(
+      required = ['database', 'preprocessor', 'extractor', 'algorithm', 'sub_directory'],
+      common = ['protocol', 'grid', 'parallel', 'verbose', 'groups', 'temp_directory', 'result_directory', 'zt_norm', 'allow_missing_files', 'dry_run', 'force'],
+      optional = ['preprocessed_directory', 'extracted_directory', 'projected_directory', 'model_directories', 'extractor_file', 'projector_file', 'enroller_file']
+    )
     # this will exit at the end
     _create_configuration_file(parsers, args)
 
@@ -441,6 +448,16 @@ def write_info(args, command_line_parameters, executable):
   except IOError:
     logger.error("Could not write the experimental setup into file '%s'", args.info_file)
 
+global _required_list, _common_list, _optional_list
+_required_list = set()
+_common_list = set()
+_optional_list = set()
+
+def set_required_common_optional_arguments(required = [], common = [], optional = []):
+  _required_list.update(required)
+  _common_list.update(common)
+  _optional_list.update(optional)
+
 def _create_configuration_file(parsers, args):
   """This function writes an empty configuration file with all possible options."""
   logger.info("Writing configuration file %s", args.create_configuration_file)
@@ -462,11 +479,6 @@ def _create_configuration_file(parsers, args):
   optional += "# Files and directories might commonly be specified with absolute paths or relative to the temp_directory.\n# Change these options, e.g., to reuse parts of other experiments.\n\n\n"
   rare      = "##################################################\n############ RARELY CHANGED ARGUMENTS ############\n##################################################\n\n\n"
 
-  required_list = set(['database', 'preprocessor', 'extractor', 'algorithm', 'sub_directory'])
-  common_list = set(['protocol', 'grid', 'parallel', 'verbose', 'groups', 'temp_directory', 'result_directory', 'zt_norm', 'allow_missing_files', 'dry_run', 'force'])
-  optional_list = set(['preprocessed_directory', 'extracted_directory', 'projected_directory', 'model_directories', 'extractor_file', 'projector_file', 'enroller_file'])
-
-
   with open(args.create_configuration_file, 'w') as f:
 
     for action in parser._actions[3:]:
@@ -479,11 +491,11 @@ def _create_configuration_file(parsers, args):
       else:
         tmp += "#%s = %s\n\n\n" % (action.dest, action.default)
 
-      if action.dest in required_list:
+      if action.dest in _required_list:
         required += tmp
-      elif action.dest in common_list:
+      elif action.dest in _common_list:
         common += tmp
-      elif action.dest in optional_list:
+      elif action.dest in _optional_list:
         optional += tmp
       else:
         rare += tmp
