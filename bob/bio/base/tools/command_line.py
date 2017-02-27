@@ -451,17 +451,31 @@ def _create_configuration_file(parsers, args):
 
   parser = parsers['main']
 
+  #import ipdb; ipdb.set_trace();
+
   bob.io.base.create_directories_safe(os.path.dirname(args.create_configuration_file))
+
+  arguments = "# Configuration file automatically generated at %s for %s\n\n" % (datetime.date.today(), executables[0])
+  optional_arguments = "################################################## \n############### OPTIONAL ARGUMENTS ############### \n##################################################n\n\n"  
+  
   with open(args.create_configuration_file, 'w') as f:
-    f.write("# Configuration file automatically generated at %s for %s\n\n" % (datetime.date.today(), executables[0]))
 
     for action in parser._actions[3:]:
       if action.help == "==SUPPRESS==":
         continue
-      f.write("# %s\n\n" % action.help)
+        
+      tmp_arguments = "# %s\n\n" % action.help
       if action.nargs is None and action.type is None and action.default is not None:
-        f.write("#%s = '%s'\n\n\n" % (action.dest, action.default))
+        tmp_arguments +=  "#%s = '%s'\n\n\n" % (action.dest, action.default)
       else:
-        f.write("#%s = %s\n\n\n" % (action.dest, action.default))
+        tmp_arguments += "#%s = %s\n\n\n" % (action.dest, action.default)
+
+      if action.metavar == "x":
+        arguments += tmp_arguments
+      else:
+        optional_arguments += tmp_arguments
+
+    f.write(arguments)
+    f.write(optional_arguments)
 
   parser.exit(1, "Configuration file '%s' was written; exiting\n" % args.create_configuration_file)
