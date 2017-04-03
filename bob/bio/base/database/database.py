@@ -331,7 +331,8 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
     def annotations(self, file):
         """
         Returns the annotations for the given File object, if available.
-        It uses `bob.db.base.read_annotation_file` to load the annotations.
+        You need to override this method in your high-level implementation.
+        If your database does not have annotations, it should return ``None``.
 
         **Parameters:**
 
