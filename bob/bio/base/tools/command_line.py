@@ -364,6 +364,7 @@ def initialize(parsers, command_line_parameters = None, skips = []):
     zt_score_directories = [os.path.join(args.temp_directory, protocol, s) for s in args.zt_directories],
     compressed_extension = '.tar.bz2' if args.write_compressed_score_files else '',
     default_extension = '.hdf5',
+    zt_norm = args.zt_norm
   )
 
   return args

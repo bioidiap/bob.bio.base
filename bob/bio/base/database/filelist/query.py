@@ -198,13 +198,15 @@ class FileListBioDatabase(ZTBioDatabase):
     def _make_bio(self, files):
         return [self.bio_file_class(client_id=f.client_id, path=f.path, file_id=f.id) for f in files]
 
-    def all_files(self, groups=['dev']):
+    def all_files(self, groups=['dev'], add_zt_files=True):
         files = self.objects(groups, self.protocol, **self.all_files_options)
         # add all files that belong to the ZT-norm
         for group in groups:
             if group == 'world':
                 continue
-            if self.implements_zt(self.protocol, group):
+            if add_zt_files:
+                if not self.implements_zt(self.protocol, group):
+                    raise ValueError("ZT score files are requested, but no such files are defined in group %s for protocol %s", group, self.protocol)
                 files += self.tobjects(group, self.protocol)
                 files += self.zobjects(group, self.protocol, **self.z_probe_options)
         return self.sort(self._make_bio(files))

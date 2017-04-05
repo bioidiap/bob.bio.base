@@ -367,7 +367,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
         """
         return sorted(self.model_ids_with_protocol(groups=groups, protocol=self.protocol))
 
-    def all_files(self, groups=None):
+    def all_files(self, groups=None, **kwargs):
         """all_files(groups=None) -> files
 
         Returns all files of the database, respecting the current protocol.
@@ -378,6 +378,8 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
         groups : some of ``('world', 'dev', 'eval')`` or ``None``
           The groups to get the data for.
           If ``None``, data for all groups is returned.
+
+        kwargs: ignored
 
         **Returns:**
 
@@ -637,7 +639,7 @@ class ZTBioDatabase(BioDatabase):
         """
         raise NotImplementedError("This function must be implemented in your derived class.")
 
-    def all_files(self, groups=['dev']):
+    def all_files(self, groups=['dev'], add_zt_files=True):
         """all_files(groups=None) -> files
 
         Returns all files of the database, including those for ZT norm, respecting the current protocol.
@@ -649,6 +651,9 @@ class ZTBioDatabase(BioDatabase):
           The groups to get the data for.
           If ``None``, data for all groups is returned.
 
+        add_zt_files: bool
+          If set (the default), files for ZT score normalization are added.
+
         **Returns:**
 
         files : [:py:class:`bob.bio.base.database.BioFile`]
@@ -657,11 +662,12 @@ class ZTBioDatabase(BioDatabase):
         files = self.objects(protocol=self.protocol, groups=groups, **self.all_files_options)
 
         # add all files that belong to the ZT-norm
-        for group in groups:
-            if group == 'world':
-                continue
-            files += self.tobjects(protocol=self.protocol, groups=group, model_ids=None)
-            files += self.zobjects(protocol=self.protocol, groups=group, **self.z_probe_options)
+        if add_zt_files:
+            for group in groups:
+                if group == 'world':
+                    continue
+                files += self.tobjects(protocol=self.protocol, groups=group, model_ids=None)
+                files += self.zobjects(protocol=self.protocol, groups=group, **self.z_probe_options)
         return self.sort(files)
 
     @abc.abstractmethod
