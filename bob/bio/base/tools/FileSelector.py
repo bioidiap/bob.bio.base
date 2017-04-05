@@ -68,7 +68,8 @@ class FileSelector(object):
     score_directories,
     zt_score_directories = None,
     default_extension = '.hdf5',
-    compressed_extension = ''
+    compressed_extension = '',
+    zt_norm = False
   ):
 
     """Initialize the file selector object with the current configuration."""
@@ -89,6 +90,7 @@ class FileSelector(object):
       'extracted'    : extracted_directory,
       'projected'    : projected_directory
     }
+    self.zt_norm = zt_norm
 
 
   def uses_probe_file_sets(self):
@@ -108,7 +110,7 @@ class FileSelector(object):
   ### List of files that will be used for all files
   def original_data_list(self, groups = None):
     """Returns the list of original ``BioFile`` objects that can be used for preprocessing."""
-    return self.database.all_files(groups=groups)
+    return self.database.all_files(groups=groups,add_zt_files=self.zt_norm)
 
   def original_directory_and_extension(self):
     """Returns the directory and extension of the original files."""
@@ -116,7 +118,7 @@ class FileSelector(object):
 
   def annotation_list(self, groups = None):
     """Returns the list of annotations objects."""
-    return self.database.all_files(groups=groups)
+    return self.database.all_files(groups=groups,add_zt_files=self.zt_norm)
 
   def get_annotations(self, annotation_file):
     """Returns the annotations of the given file."""
@@ -124,15 +126,15 @@ class FileSelector(object):
 
   def preprocessed_data_list(self, groups = None):
     """Returns the list of preprocessed data files."""
-    return self.get_paths(self.database.all_files(groups=groups), "preprocessed")
+    return self.get_paths(self.database.all_files(groups=groups,add_zt_files=self.zt_norm), "preprocessed")
 
   def feature_list(self, groups = None):
     """Returns the list of extracted feature files."""
-    return self.get_paths(self.database.all_files(groups=groups), "extracted")
+    return self.get_paths(self.database.all_files(groups=groups,add_zt_files=self.zt_norm), "extracted")
 
   def projected_list(self, groups = None):
     """Returns the list of projected feature files."""
-    return self.get_paths(self.database.all_files(groups=groups), "projected")
+    return self.get_paths(self.database.all_files(groups=groups,add_zt_files=self.zt_norm), "projected")
 
 
   ### Training lists
