@@ -3,6 +3,8 @@ import os
 import sys
 import socket
 
+import bob.extension
+
 import bob.core
 logger = bob.core.log.setup("bob.bio.base")
 
@@ -47,6 +49,7 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
   ############## options that are required to be specified #######################
   config_group = parser.add_argument_group('\nParameters defining the experiment. Most of these parameters can be a registered resource, a configuration file, or even a string that defines a newly created object')
   config_group.add_argument('configuration_file', metavar='PATH', nargs='*', help = 'A configuration file containing one or more of "database", "preprocessor", "extractor", "algorithm" and/or "grid"')
+  config_group.add_argument('-H', '--create-configuration-file', metavar='PATH', help = 'If selected, an empty configuration file will be created')
   config_group.add_argument('-d', '--database', metavar = 'x', nargs = '+',
       help = 'Database and the protocol; registered databases are: %s' % utils.resource_keys('database', exclude_resources_from))
   config_group.add_argument('-p', '--preprocessor', metavar = 'x', nargs = '+',
@@ -173,6 +176,18 @@ def _take_from_config_or_command_line(args, config, keyword, default, required=T
   elif required:
     raise ValueError("Please specify a %s either on command line (via --%s) or in a configuration file" %(keyword, keyword))
 
+  if config is not None and hasattr(config, keyword):
+    setattr(config, keyword, None)
+
+def _check_config_consumed(config):
+  if config is not None:
+    import inspect
+    for keyword in dir(config):
+      if not keyword.startswith('_') and not keyword.isupper():
+        attr = getattr(config,keyword)
+        if attr is not None and not inspect.isclass(attr) and not inspect.ismodule(attr):
+          logger.warn("The variable '%s' in a configuration file is not known or not supported; use all uppercase variable names (e.g., '%s') to suppress this warning.", keyword, keyword.upper())
+
 
 def initialize(parsers, command_line_parameters = None, skips = []):
   """initialize(parsers, command_line_parameters = None, skips = []) -> args
@@ -218,6 +233,18 @@ def initialize(parsers, command_line_parameters = None, skips = []):
   # parse the arguments
   parser = parsers['main']
   args = parser.parse_args(command_line_parameters)
+
+
+  # check if the "create_configuration_file" function was requested
+  if args.create_configuration_file is not None:
+    # update list of options to be written into the config file
+    set_required_common_optional_arguments(
+      required = ['database', 'preprocessor', 'extractor', 'algorithm', 'sub_directory'],
+      common = ['protocol', 'grid', 'parallel', 'verbose', 'groups', 'temp_directory', 'result_directory', 'zt_norm', 'allow_missing_files', 'dry_run', 'force'],
+      optional = ['preprocessed_directory', 'extracted_directory', 'projected_directory', 'model_directories', 'extractor_file', 'projector_file', 'enroller_file']
+    )
+    # this will exit at the end
+    _create_configuration_file(parsers, args)
 
   # first, read the configuration file and set everything from the config file to the args -- as long as not overwritten on command line
   config = utils.read_config_file(args.configuration_file) if args.configuration_file else None
@@ -270,6 +297,9 @@ def initialize(parsers, command_line_parameters = None, skips = []):
       ) + skip_keywords:
     _take_from_config_or_command_line(args, config, keyword,
         parser.get_default(keyword), required=False, is_resource=False)
+
+  # check that all variables in the config file are consumed by the above options
+  _check_config_consumed(config)
 
   # evaluate skips
   if skips is not None and args.execute_only is not None:
@@ -417,3 +447,62 @@ def write_info(args, command_line_parameters, executable):
     f.write("Algorithm:\n%s\n\n" % args.algorithm)
   except IOError:
     logger.error("Could not write the experimental setup into file '%s'", args.info_file)
+
+global _required_list, _common_list, _optional_list
+_required_list = set()
+_common_list = set()
+_optional_list = set()
+
+def set_required_common_optional_arguments(required = [], common = [], optional = []):
+  _required_list.update(required)
+  _common_list.update(common)
+  _optional_list.update(optional)
+
+def _create_configuration_file(parsers, args):
+  """This function writes an empty configuration file with all possible options."""
+  logger.info("Writing configuration file %s", args.create_configuration_file)
+  import datetime
+  executables = bob.extension.find_executable(os.path.basename(sys.argv[0]), prefixes = [os.path.dirname(sys.argv[0]), 'bin'])
+  if not executables:
+    executables = [sys.argv[0]]
+
+  parser = parsers['main']
+
+  bob.io.base.create_directories_safe(os.path.dirname(args.create_configuration_file))
+
+  required  = "# Configuration file automatically generated at %s for %s.\n\n" % (datetime.date.today(), executables[0])
+  required += "##################################################\n############### REQUIRED ARGUMENTS ###############\n##################################################\n\n"
+  required += "# These arguments need to be set.\n\n\n"
+  common    = "##################################################\n################ COMMON ARGUMENTS ################\n##################################################\n\n"
+  common   += "# These arguments are commonly changed.\n\n\n"
+  optional  = "##################################################\n############### OPTIONAL ARGUMENTS ###############\n##################################################\n\n"
+  optional += "# Files and directories might commonly be specified with absolute paths or relative to the temp_directory.\n# Change these options, e.g., to reuse parts of other experiments.\n\n\n"
+  rare      = "##################################################\n############ RARELY CHANGED ARGUMENTS ############\n##################################################\n\n\n"
+
+  with open(args.create_configuration_file, 'w') as f:
+
+    for action in parser._actions[3:]:
+      if action.help == "==SUPPRESS==":
+        continue
+
+      tmp = "# %s\n\n" % action.help
+      if action.nargs is None and action.type is None and action.default is not None:
+        tmp +=  "#%s = '%s'\n\n\n" % (action.dest, action.default)
+      else:
+        tmp += "#%s = %s\n\n\n" % (action.dest, action.default)
+
+      if action.dest in _required_list:
+        required += tmp
+      elif action.dest in _common_list:
+        common += tmp
+      elif action.dest in _optional_list:
+        optional += tmp
+      else:
+        rare += tmp
+
+    f.write(required)
+    f.write(common)
+    f.write(optional)
+    f.write(rare)
+
+  parser.exit(1, "Configuration file '%s' was written; exiting\n" % args.create_configuration_file)
