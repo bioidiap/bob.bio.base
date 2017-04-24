@@ -42,7 +42,7 @@ class Preprocessor (object):
 
     # The call function (i.e. the operator() in C++ terms)
     def __call__(self, data, annotations):
-        """__call__(data, annotations) -> dara
+        """__call__(data, annotations) -> data
 
         This is the call function that you have to overwrite in the derived class.
         The parameters that this function will receive are:
