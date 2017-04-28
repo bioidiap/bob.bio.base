@@ -57,6 +57,7 @@ def command_line_arguments(command_line_parameters):
   parser.add_argument('-D', '--det', help = "If given, DET curves will be plotted into the given pdf file.")
   parser.add_argument('-C', '--cmc', help = "If given, CMC curves will be plotted into the given pdf file.")
   parser.add_argument('-E', '--epc', help = "If given, EPC curves will be plotted into the given pdf file. For this plot --eval-files is mandatory.")
+  parser.add_argument('-M', '--min-far-value', type=float, default=1e-4, help = "Select the minimum FAR value used in ROC plots; should be a power of 10.")
   parser.add_argument('--parser', default = '4column', choices = ('4column', '5column'), help="The style of the resulting score files. The default fits to the usual output of score files.")
 
   # add verbose option
@@ -102,9 +103,10 @@ def command_line_arguments(command_line_parameters):
 def _plot_roc(frrs, colors, labels, title, fontsize=18, position=None, farfrrs=None):
   if position is None: position = 'lower right'
   figure = pyplot.figure()
+
   # plot FAR and CAR for each algorithm
   for i in range(len(frrs)):
-    pyplot.semilogx([100.0*f for f in frrs[i][0]], [100. - 100.0*f for f in frrs[i][1]], color=colors[i], lw=2, ms=10, mew=1.5, label=labels[i])
+    pyplot.semilogx([f for f in frrs[i][0]], [1. - f for f in frrs[i][1]], color=colors[i], lw=2, ms=10, mew=1.5, label=labels[i])
     if farfrrs is not None:
       pyplot.plot(farfrrs[i][0]*100, (1-farfrrs[i][1])*100, 'o', color=colors[i], markeredgecolor='black')
 
@@ -114,8 +116,11 @@ def _plot_roc(frrs, colors, labels, title, fontsize=18, position=None, farfrrs=N
   # finalize plot
   if farfrrs is None:
     pyplot.plot([0.1,0.1],[0,100], "--", color='black')
-  pyplot.axis([frrs[0][0][0]*100,100,0,100])
-  pyplot.xticks((0.01, 0.1, 1, 10, 100), ('0.01', '0.1', '1', '10', '100'))
+  min_far = frrs[0][0][0]
+  ticks = [min_far]
+  while ticks[-1] < 1: ticks.append(ticks[-1] * 10)
+  pyplot.axis([min_far,1,0,1])
+  pyplot.xticks(ticks)
   pyplot.xlabel('FMR (%)')
   pyplot.ylabel('1 - FNMR (%)')
   pyplot.grid(True, color=(0.6,0.6,0.6))
@@ -138,7 +143,7 @@ def _plot_det(dets, colors, labels, title, fontsize=18, position=None):
   # change axes accordingly
   det_list = [0.0002, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.7, 0.9, 0.95]
   ticks = [bob.measure.ppndf(d) for d in det_list]
-  labels = [("%.5f" % (d*100)).rstrip('0').rstrip('.') for d in det_list]
+  labels = [("%.5f" % d).rstrip('0').rstrip('.') for d in det_list]
   pyplot.xticks(ticks, labels)
   pyplot.yticks(ticks, labels)
   pyplot.axis((ticks[0], ticks[-1], ticks[0], ticks[-1]))
@@ -303,7 +308,8 @@ def main(command_line_parameters=None):
 
     if args.roc:
       logger.info("Computing CAR curves on the development " + ("and on the evaluation set" if args.eval_files else "set"))
-      fars = [math.pow(10., i * 0.25) for i in range(-17,0)] + [1.]
+      min_far = int(math.floor(math.log(args.min_far_value, 10)))
+      fars = bob.measure.plot.log_values(min_far)
       frrs_dev = [bob.measure.roc_for_far(scores[0], scores[1], fars) for scores in scores_dev]
       if args.eval_files:
         frrs_eval = [bob.measure.roc_for_far(scores[0], scores[1], fars) for scores in scores_eval]
