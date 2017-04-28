@@ -57,6 +57,7 @@ def command_line_arguments(command_line_parameters):
   parser.add_argument('-D', '--det', help = "If given, DET curves will be plotted into the given pdf file.")
   parser.add_argument('-C', '--cmc', help = "If given, CMC curves will be plotted into the given pdf file.")
   parser.add_argument('-E', '--epc', help = "If given, EPC curves will be plotted into the given pdf file. For this plot --eval-files is mandatory.")
+  parser.add_argument('-M', '--min-far-value', type=float, default=1e-4, help = "Select the minimum FAR value used in ROC plots; should be a power of 10.")
   parser.add_argument('--parser', default = '4column', choices = ('4column', '5column'), help="The style of the resulting score files. The default fits to the usual output of score files.")
 
   # add verbose option
@@ -102,20 +103,24 @@ def command_line_arguments(command_line_parameters):
 def _plot_roc(frrs, colors, labels, title, fontsize=18, position=None):
   if position is None: position = 4
   figure = pyplot.figure()
+
   # plot FAR and CAR for each algorithm
   for i in range(len(frrs)):
-    pyplot.semilogx([100.0*f for f in frrs[i][0]], [100. - 100.0*f for f in frrs[i][1]], color=colors[i], lw=2, ms=10, mew=1.5, label=labels[i])
+    pyplot.semilogx([f for f in frrs[i][0]], [1. - f for f in frrs[i][1]], color=colors[i], lw=2, ms=10, mew=1.5, label=labels[i])
 
   # finalize plot
-  pyplot.plot([0.1,0.1],[0,100], "--", color=(0.3,0.3,0.3))
-  pyplot.axis([frrs[0][0][0]*100,100,0,100])
-  pyplot.xticks((0.01, 0.1, 1, 10, 100), ('0.01', '0.1', '1', '10', '100'))
-  pyplot.xlabel('FAR (\%)')
-  pyplot.ylabel('CAR (\%)')
+  min_far = frrs[0][0][0]
+  ticks = [min_far]
+  while ticks[-1] < 1: ticks.append(ticks[-1] * 10)
+  pyplot.axis([min_far,1,0,1])
+  pyplot.xticks(ticks)
+  pyplot.xlabel('False Acceptance Rate')
+  pyplot.ylabel('Correct Acceptance Rate')
   pyplot.grid(True, color=(0.6,0.6,0.6))
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
 
+  pyplot.tight_layout()
   return figure
 
 
@@ -131,16 +136,17 @@ def _plot_det(dets, colors, labels, title, fontsize=18, position=None):
   # change axes accordingly
   det_list = [0.0002, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.7, 0.9, 0.95]
   ticks = [bob.measure.ppndf(d) for d in det_list]
-  labels = [("%.5f" % (d*100)).rstrip('0').rstrip('.') for d in det_list]
+  labels = [("%.5f" % d).rstrip('0').rstrip('.') for d in det_list]
   pyplot.xticks(ticks, labels)
   pyplot.yticks(ticks, labels)
   pyplot.axis((ticks[0], ticks[-1], ticks[0], ticks[-1]))
 
-  pyplot.xlabel('FAR (\%)')
-  pyplot.ylabel('FRR (\%)')
+  pyplot.xlabel('False Acceptance Rate')
+  pyplot.ylabel('False Rejection Rate')
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
 
+  pyplot.tight_layout()
   return figure
 
 def _plot_cmc(cmcs, colors, labels, title, fontsize=18, position=None):
@@ -163,6 +169,7 @@ def _plot_cmc(cmcs, colors, labels, title, fontsize=18, position=None):
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
 
+  pyplot.tight_layout()
   return figure
 
 
@@ -184,6 +191,7 @@ def _plot_epc(scores_dev, scores_eval, colors, labels, title, fontsize=18, posit
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
 
+  pyplot.tight_layout()
   return figure
 
 
@@ -262,7 +270,8 @@ def main(command_line_parameters=None):
 
     if args.roc:
       logger.info("Computing CAR curves on the development " + ("and on the evaluation set" if args.eval_files else "set"))
-      fars = [math.pow(10., i * 0.25) for i in range(-16,0)] + [1.]
+      min_far = int(math.floor(math.log(args.min_far_value, 10)))
+      fars = bob.measure.plot.log_values(min_far)
       frrs_dev = [bob.measure.roc_for_far(scores[0], scores[1], fars) for scores in scores_dev]
       if args.eval_files:
         frrs_eval = [bob.measure.roc_for_far(scores[0], scores[1], fars) for scores in scores_eval]
