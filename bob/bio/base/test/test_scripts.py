@@ -478,7 +478,7 @@ def test_evaluate():
     '--cmc', plots[2],
     '--rr',
     '--thresholds', '5000', '0',
-    '--min-farvalue', '1e-6',
+    '--min-far-value', '1e-6',
     '-v',
   ]
 
