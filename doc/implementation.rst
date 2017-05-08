@@ -325,12 +325,12 @@ Particularly, we use a specific list of entry points, which are:
 * ``bob.bio.config`` to register a Python module that contains the values of
   resources and parameters to use for an experiment
 
-For each of the tools, several resources are defined, which you can list with the ``./bin/resources.py`` command line.
+For each of the tools, several resources are defined, which you can list with the ``resources.py`` command line.
 
 When you want to register your own resource, make sure that your configuration file is importable (usually it is sufficient to have an empty ``__init__.py`` file in the same directory as your configuration file).
 Then, you can simply add a line inside the according ``entry_points`` section of the ``setup.py`` file (you might need to create that section, just follow the example of the ``setup.py`` file that you can find online in the base directory of our `bob.bio.base Gitlab page <http://gitlab.idiap.ch/bob/bob.bio.base>`__).
 
-After re-running ``./bin/buildout``, your new resource should be listed in the output of ``./bin/resources.py``.
+After re-running ``buildout``, your new resource should be listed in the output of ``resources.py``.
 
 
 .. include:: links.rst

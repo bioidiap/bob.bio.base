@@ -500,7 +500,7 @@ def test_grid_search():
 
 
 def test_scripts():
-  # Tests the bin/preprocess.py, bin/extract.py, bin/enroll.py and bin/score.py scripts
+  # Tests the preprocess.py, extract.py, enroll.py and score.py scripts
   test_dir = tempfile.mkdtemp(prefix='bobtest_')
   data_file = os.path.join(test_dir, "data.hdf5")
   annotation_file = os.path.join(test_dir, "annotatations.txt")

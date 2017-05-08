@@ -1,6 +1,6 @@
 #!/bin/python
 
-# This file describes an exemplary configuration file that can be used in combination with the bin/parameter_test.py script.
+# This file describes an exemplary configuration file that can be used in combination with the parameter_test.py script.
 
 
 # The preprocessor uses two fake parameters, which are called #1 and #4

@@ -51,10 +51,9 @@ Running the simple command line:
 
 .. code-block:: sh
 
-   $ python bootstrap-buildout.py
-   $ ./bin/buildout
+   $ buildout
 
-will the download and install all dependent packages locally (relative to your current working directory), and create a ``./bin`` directory containing all the necessary scripts to run the experiments.
+will the download and install all dependent packages locally (relative to your current working directory), and add them to your environment.
 
 
 Databases
@@ -77,7 +76,7 @@ By default, this file is located in ``~/.bob_bio_databases.txt``, and it contain
    If this file does not exist, feel free to create and populate it yourself.
 
 
-Please use ``./bin/databases.py`` for a list of known databases, where you can see the raw ``[YOUR_DATABASE_PATH]`` entries for all databases that you haven't updated, and the corrected paths for those you have.
+Please use ``databases.py`` for a list of known databases, where you can see the raw ``[YOUR_DATABASE_PATH]`` entries for all databases that you haven't updated, and the corrected paths for those you have.
 
 
 .. note::
@@ -92,8 +91,8 @@ To verify your installation, you should run the script running the nose tests fo
 
 .. code-block:: sh
 
-  $ ./bin/nosetests -vs bob.bio.base
-  $ ./bin/nosetests -vs bob.bio.gmm
+  $ nosetests -vs bob.bio.base
+  $ nosetests -vs bob.bio.gmm
   ...
 
 Some of the tests that are run require the images of the `AT&T database`_ database.
@@ -129,7 +128,7 @@ However, to generate this documentation locally, you call:
 
 .. code-block:: sh
 
-  $ ./bin/sphinx-build doc sphinx
+  $ sphinx-build doc sphinx
 
 Afterward, the documentation is available and you can read it, e.g., by using:
 
