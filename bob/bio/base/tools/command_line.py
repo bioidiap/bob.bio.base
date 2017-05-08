@@ -130,7 +130,7 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
   flag_group.add_argument('-B', '--timer', choices=('real', 'system', 'user'), nargs = '*',
       help = 'Measure and report the time required by the execution of the tool chain (only on local machine)')
   flag_group.add_argument('-L', '--run-local-scheduler', action='store_true',
-      help = 'Starts the local scheduler after submitting the jobs to the local queue (by default, local jobs must be started by hand, e.g., using ./bin/jman --local -vv run-scheduler -x)')
+      help = 'Starts the local scheduler after submitting the jobs to the local queue (by default, local jobs must be started by hand, e.g., using jman --local -vv run-scheduler -x)')
   flag_group.add_argument('-N', '--nice', type=int, default=10,
       help = 'Runs the local scheduler with the given nice value')
   flag_group.add_argument('-D', '--delete-jobs-finished-with-status', choices = ('all', 'failure', 'success'),
@@ -429,7 +429,7 @@ def write_info(args, command_line_parameters, executable):
     If ``None``, the parameters specified by the user on command line are considered.
 
   executable : str
-    The name of the executable (such as ``'./bin/verify.py'``) that is used to run the experiments.
+    The name of the executable (such as ``'verify.py'``) that is used to run the experiments.
   """
   if command_line_parameters is None:
     command_line_parameters = sys.argv[1:]

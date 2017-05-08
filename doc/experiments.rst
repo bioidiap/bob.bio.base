@@ -49,19 +49,19 @@ In these cases, the according steps are skipped.
 Running Experiments (part I)
 ----------------------------
 
-To run an experiment, we provide a generic script ``./bin/verify.py``, which is highly parametrizable.
+To run an experiment, we provide a generic script ``verify.py``, which is highly parametrizable.
 To get a complete list of command line options, please run:
 
 .. code-block:: sh
 
-   $ ./bin/verify.py --help
+   $ verify.py --help
 
 Whoops, that's a lot of options.
 But, no worries, most of them have proper default values.
 
 .. note::
    Sometimes, command line options have a long version starting with ``--`` and a short one starting with a single ``-``.
-   In this section, only the long names of the arguments are listed, please refer to ``./bin/verify.py --help`` (or short: ``./bin/faceverify.py -h``) for the abbreviations.
+   In this section, only the long names of the arguments are listed, please refer to ``verify.py --help`` (or short: ``faceverify.py -h``) for the abbreviations.
 
 There are five command line options, which are required and sufficient to define the complete biometric recognition experiment.
 These five options are:
@@ -79,7 +79,7 @@ To get a list of registered resources, please call:
 
 .. code-block:: sh
 
-   $ ./bin/resources.py
+   $ resources.py
 
 Each package in ``bob.bio`` defines its own resources, and the printed list of registered resources differs according to the installed packages.
 If only ``bob.bio.base`` is installed, no databases and only one preprocessor will be listed.
@@ -87,7 +87,7 @@ To see more details about the resources, i.e., the full constructor call fo the 
 
 .. code-block:: sh
 
-   $ ./bin/resources.py -dt algorithm
+   $ resources.py -dt algorithm
 
 
 .. note::
@@ -109,7 +109,7 @@ So, a typical biometric recognition experiment (in this case, face recognition) 
 
 .. code-block:: sh
 
-   $ ./bin/verify.py --database mobio-image --preprocessor face-crop-eyes --extractor linearize --algorithm pca --sub-directory pca-experiment -vv
+   $ verify.py --database mobio-image --preprocessor face-crop-eyes --extractor linearize --algorithm pca --sub-directory pca-experiment -vv
 
 .. note::
    To be able to run exactly the command line from above, it requires to have :ref:`bob.bio.face <bob.bio.face>` installed.
@@ -121,7 +121,7 @@ Usually, they will be called something like ``scores-dev``.
 By default, you can find them in a sub-directory the ``result`` directory, but you can change this option using the ``--result-directory`` command line option.
 
 .. note::
-   At Idiap_, the default result directory differs, see ``./bin/verify.py --help`` for your directory.
+   At Idiap_, the default result directory differs, see ``verify.py --help`` for your directory.
 
 
 .. _bob.bio.base.evaluate:
@@ -131,14 +131,14 @@ Evaluating Experiments
 
 After the experiment has finished successfully, one or more text file containing all the scores are written.
 
-To evaluate the experiment, you can use the generic ``./bin/evaluate.py`` script, which has properties for all prevalent evaluation types, such as CMC, ROC and DET plots, as well as computing recognition rates, EER/HTER, Cllr and minDCF.
+To evaluate the experiment, you can use the generic ``evaluate.py`` script, which has properties for all prevalent evaluation types, such as CMC, ROC and DET plots, as well as computing recognition rates, EER/HTER, Cllr and minDCF.
 Additionally, a combination of different algorithms can be plotted into the same files.
 Just specify all the score files that you want to evaluate using the ``--dev-files`` option, and possible legends for the plots (in the same order) using the ``--legends`` option, and the according plots will be generated.
 For example, to create a ROC curve for the experiment above, use:
 
 .. code-block:: sh
 
-   $ ./bin/evaluate.py --dev-files results/pca-experiment/male/nonorm/scores-dev --legend MOBIO --roc MOBIO_MALE_ROC.pdf -vv
+   $ evaluate.py --dev-files results/pca-experiment/male/nonorm/scores-dev --legend MOBIO --roc MOBIO_MALE_ROC.pdf -vv
 
 Please note that there exists another file called ``Experiment.info`` inside the result directory.
 This file is a pure text file and contains the complete configuration of the experiment.
@@ -150,24 +150,24 @@ With this configuration it is possible to inspect all default parameters of the 
 Running in Parallel
 -------------------
 
-One important property of the ``./bin/verify.py`` script is that it can run in parallel, using either several threads on the local machine, or an SGE grid.
+One important property of the ``verify.py`` script is that it can run in parallel, using either several threads on the local machine, or an SGE grid.
 To achieve that, ``bob.bio`` is well-integrated with our SGE grid toolkit GridTK_, which we have selected as a python package in the :ref:`Installation <bob.bio.base.installation>` section.
-The ``./bin/verify.py`` script can submit jobs either to the SGE grid, or to a local scheduler, keeping track of dependencies between the jobs.
+The ``verify.py`` script can submit jobs either to the SGE grid, or to a local scheduler, keeping track of dependencies between the jobs.
 
 The GridTK_ keeps a list of jobs in a local database, which by default is called ``submitted.sql3``, but which can be overwritten with the ``--gridtk-database-file`` option.
-Please refer to the `GridTK documentation <http://pythonhosted.org/gridtk>`_ for more details on how to use the Job Manager ``./bin/jman``.
+Please refer to the `GridTK documentation <http://pythonhosted.org/gridtk>`_ for more details on how to use the Job Manager ``jman``.
 
 Two different types of ``grid`` resources are defined, which can be used with the ``--grid`` command line option.
 The first type of resources will submit jobs to an SGE grid.
 They are mainly designed to run in the Idiap_ SGE grid and might need some adaptations to run on your grid.
-The second type of resources will submit jobs to a local queue, which needs to be run by hand (e.g., using ``./bin/jman --local run-scheduler --parallel 4``), or by using the command line option ``--run-local-scheduler``.
+The second type of resources will submit jobs to a local queue, which needs to be run by hand (e.g., using ``jman --local run-scheduler --parallel 4``), or by using the command line option ``--run-local-scheduler``.
 The difference between the two types of resources is that the local submission usually starts with ``local-``, while the SGE resource does not.
 
 Hence, to run the same experiment as above using four parallel threads on the local machine, re-nicing the jobs to level 10, simply call:
 
 .. code-block:: sh
 
-   $ ./bin/verify.py --database mobio-image --preprocessor face-crop-eyes --extractor linearize --algorithm pca --sub-directory pca-experiment -vv --grid local-p4 --run-local-scheduler --nice 10
+   $ verify.py --database mobio-image --preprocessor face-crop-eyes --extractor linearize --algorithm pca --sub-directory pca-experiment -vv --grid local-p4 --run-local-scheduler --nice 10
 
 .. note::
    You might realize that the second execution of the same experiment is much faster than the first one.

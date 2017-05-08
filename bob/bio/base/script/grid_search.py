@@ -103,7 +103,7 @@ def command_line_options(command_line_parameters):
       help = 'Use the given variable instead of the "replace" keyword in the configuration file')
 
   parser.add_argument('parameters', nargs = argparse.REMAINDER,
-      help = "Parameters directly passed to the verify.py script. Use -- to separate this parameters from the parameters of this script. See './bin/verify.py --help' for a complete list of options.")
+      help = "Parameters directly passed to the verify.py script. Use -- to separate this parameters from the parameters of this script. See 'verify.py --help' for a complete list of options.")
 
   bob.core.log.add_command_line_option(parser)
 
