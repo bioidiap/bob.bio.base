@@ -16,32 +16,39 @@ Just a little bit of theory, and then: off we go.
 Structure of a Biometric Recognition Experiment
 -----------------------------------------------
 
-Each biometric recognition experiment that is run with ``bob.bio`` is divided into several steps.
-The steps are:
+Each biometric recognition experiment that is run with ``bob.bio`` is divided four main steps, which are divided into several sub-steps.  These steps are:
 
-1. Data preprocessing: Raw data is preprocessed, e.g., for face recognition, faces are detected, images are aligned and photometrically enhanced.
-2. Feature extractor training: Feature extraction parameters are learned.
-3. Feature extraction: Features are extracted from the preprocessed data.
-4. Feature projector training: Parameters of a subspace-projection of the features are learned.
-5. Feature projection: The extracted features are projected into a subspace.
-6. Model enroller training: The ways how to enroll models from extracted or projected features is learned.
-7. Model enrollment: One model is enrolled from the features of one or more images.
-8. Scoring: The verification scores between various models and probe features are computed.
-9. Evaluation: The computed scores are evaluated and curves are plotted.
+1. PRE-PROCESSING: Raw biometric data -> Enhanced (cleaned up) biometric data
+    (i) Raw data is pre-processed, e.g., for face recognition, faces are detected, images are aligned and photometrically enhanced.
+    
+2. FEATURE EXTRACTION: Enhanced biometric data -> Features important for recognition
+    (i) Feature extractor training: The feature extractor is trained to learn which features should be extracted.
+    (ii) Feature extraction: Features are extracted from the pre-processed data.
+    (iii) *Feature projector training: Sometimes, you may wish to project the extracted features into a lower-dimensional subspace (e.g., PCA on face images to produce 
+          Eigenfaces).  In this case, the first step after feature extraction is to train your feature projector so that it knows how to perform the subspace projection.
+    (iv) *Feature projection: The extracted features are projected into a subspace.
+    
+3. ENROLLMENT: Features -> Models (biometric templates)
+    (i) **Model enroller training: The model enroller is trained to learn how to fit a model to a set of biometric features.
+    (ii) Model enrollment: One model from one or more biometric samples is computed.  This model is enrolled as the representative template of a particular identity. 
+    
+4. VERIFICATION: New biometric features + Enrolled models -> Comparison
+    (i) Scoring: Various biometric features (probes) are compared to the enrolled models and a match score for each comparison is calculated.
+    (ii) Evaluation: The computed match scores are evaluated to determine whether they indicate a Match (the probe and model come from the same biometric 
+         sample) or No Match (the probe and model come from different biometric samples).  Curves, such as DET and ROC, are also plotted.
 
-These 9 steps are divided into four distinct groups, which are discussed in more detail later:
+*Steps 2 (iii) and (iv) are optional, so they can be skipped.
+** Step 3 (i) is only necessary when you are trying to fit an existing model to a set of biometric features, e.g., fitting a UBM to features extracted from a speech 
+   signal.  In other cases, the model is calculated from the features themselves, e.g., by averaging the feature vectors from multiple samples of the same biometric.
 
-* Preprocessing (only step 1)
-* Feature extraction (steps 2 and 3)
-* Biometric recognition (steps 4 to 8)
-* Evaluation (step 9)
 
-The communication between two steps is file-based, usually using a binary HDF5_ interface, which is implemented in the :py:class:`bob.io.base.HDF5File` class.
+The communication between two steps (and sub-steps) is file-based, usually using a binary HDF5_ interface, which is implemented in the :py:class:`bob.io.base.HDF5File` class.
 The output of one step usually serves as the input of the subsequent step(s).
-Depending on the algorithm, some of the steps are not applicable/available.
-E.g. most of the feature extractors do not need a special training step, or some algorithms do not require a subspace projection.
-In these cases, the according steps are skipped.
-``bob.bio`` takes care that always the correct files are forwarded to the subsequent steps.
+
+Depending on the algorithm, some of the steps are not applicable/available.  For example, most of the feature extractors do not need a special training step, and 
+subspace projection is often not applied to the extracted features.  In these cases, the corresponding steps are skipped.
+
+``bob.bio`` ensures that the correct files are always forwarded to the subsequent steps.
 
 
 .. _running_part_1:
