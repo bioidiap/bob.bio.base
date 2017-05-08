@@ -301,7 +301,8 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
     @abc.abstractmethod
     def objects(self, groups=None, protocol=None, purposes=None, model_ids=None, **kwargs):
-        """This function returns lists of File objects, which fulfill the given restrictions.
+        """This function returns a list of :py:class:`bob.bio.base.database.BioFile` objects or the list
+        of objects which inherit from this class. Returned files fulfill the given restrictions.
 
         Keyword parameters:
 
