@@ -5,43 +5,127 @@
 .. _bob.bio.base.experiments:
 
 
-=========================================
-Running Biometric Recognition Experiments
-=========================================
+===========================================
+Running Biometric Verification Experiments
+===========================================
 
-Now, you are almost ready to run your first biometric recognition experiment.
+Now, you are almost ready to run your first biometric verification experiment.
 Just a little bit of theory, and then: off we go.
 
-
-Structure of a Biometric Recognition Experiment
+Structure of a Biometric Verification System
 -----------------------------------------------
 
-Each biometric recognition experiment that is run with ``bob.bio`` is divided into several steps.
-The steps are:
+"Biometric verification" refers to the process of confirming that an invidual is who they say they are, 
+based on their biometric data.  This implies that we have access to both the person's biometric data and 
+their identity (e.g., a numerical ID, name, etc.).
 
-1. Data preprocessing: Raw data is preprocessed, e.g., for face recognition, faces are detected, images are aligned and photometrically enhanced.
-2. Feature extractor training: Feature extraction parameters are learned.
-3. Feature extraction: Features are extracted from the preprocessed data.
-4. Feature projector training: Parameters of a subspace-projection of the features are learned.
-5. Feature projection: The extracted features are projected into a subspace.
-6. Model enroller training: The ways how to enroll models from extracted or projected features is learned.
-7. Model enrollment: One model is enrolled from the features of one or more images.
-8. Scoring: The verification scores between various models and probe features are computed.
-9. Evaluation: The computed scores are evaluated and curves are plotted.
+A biometric verification system has two stages: 
 
-These 9 steps are divided into four distinct groups, which are discussed in more detail later:
+1. **Enrollment:** A person's biometric data is added to the system's biometric database alongside the person's ID.
+2. **Verification:** A person's biometric data is compared to the biometric data with the same ID in the system database, and a match score is generated.  The match score tells us how similar the two biometric samples are.  Based on a match threshold, we then decide whether or not the two biometric samples come from the same person (ID).
 
-* Preprocessing (only step 1)
-* Feature extraction (steps 2 and 3)
-* Biometric recognition (steps 4 to 8)
-* Evaluation (step 9)
+Fig. 1 shows the enrollment and verification stages in a typical biometric verification system:
 
-The communication between two steps is file-based, usually using a binary HDF5_ interface, which is implemented in the :py:class:`bob.io.base.HDF5File` class.
-The output of one step usually serves as the input of the subsequent step(s).
-Depending on the algorithm, some of the steps are not applicable/available.
-E.g. most of the feature extractors do not need a special training step, or some algorithms do not require a subspace projection.
-In these cases, the according steps are skipped.
-``bob.bio`` takes care that always the correct files are forwarded to the subsequent steps.
+.. figure:: /img/bio_ver_sys.svg
+   :align: center
+
+   Enrollment and verification in a typical biometric verification system.
+
+* The "Pre-processor" cleans up the raw biometric data to make recognition easier (e.g., crops the face image to get rid of the background).
+* The "Feature Extractor" extracts the most important features for recognition, from the pre-processed biometric data.
+* The "Template Database" stores each person's extracted feature set (often referred to as a "template") along with their user ID.
+* The "Matcher" compares a new biometric feature set to the template in the database that has the same user ID, and outputs a similarity score.
+* The "Decision Maker" decides whether or not the new biometric sample and the template from the database match, based on whether the similarity score is above or below a pre-defined match threshold. 
+
+
+Biometric Verification Experiments in bob.bio.base
+--------------------------------------------------
+
+In general, the goal of a biometric verification experiment is to quantify the verification accuracy of a biometric verification system, i.e., we wish to find out how good the system is at deciding whether a person is who they claim to be, based on their biometric data.
+
+To conduct a biometric verification experiment, we need biometric data.  So, we use a biometric database.  A biometric database generally consists of multiple samples of a particular biometric, from multiple people.  For example, a face database could contain 5 different images of a person's face, from 100 people.  We then simulate "genuine" verification attempts by comparing each person's biometric samples to their other samples.  We simulate "impostor" verification attempts by comparing biometric samples across different people.
+
+In bob.bio.base, biometric verification experiments are split up into four main stages, similar to the stages in a typical biometric verification system as illustrated in Fig. 1:
+
+1. Data preprocessing
+2. Feature extraction
+3. Matching
+4. Decision making
+
+Each of these stages is discussed below:
+
+*Data Preprocessing:*
+
+Biometric measurements are often noisy, containing redundant information that is not necessary (and can be misleading) for verification.  For example, face images contain non-face background information, vein images can be unevenly illuminated, speech signals can be littered with background noise, etc.  The aim of the data preprocessing stage is to clean up the raw biometric data so that it is in the best possible state to make verification easier.  For example, biometric data is cropped from the background, the images are photometrically enhanced, etc.
+
+All the biometric samples in the input biometric database go through the preprocessing stage.  The results are stored in a directory entitled "preprocessed".  This process is illustrated in Fig. 2:
+
+.. figure:: /img/preprocessor.svg
+   :align: center
+
+   Preprocessing stage in bob.bio.base's biometric verification experiment framework.
+
+
+*Feature Extraction:*
+
+Although the preprocessing stage produces cleaner biometric data, the resulting data is usually very large and still contains much redundant information.  For example, only a few points in a person's face (e.g., eyes, nose, mouth, chin) are actually used for recognition purposes.  The aim of the feature extraction stage is to detect and extract only those features that are absolutely necessary for recognising a person.
+
+All the biometric features stored in the "preprocessed" directory go through the feature extraction stage.  The results are stored in a directory entitled "extracted".  This process is illustrated in Fig. 3:
+
+.. figure:: /img/extractor.svg
+   :align: center
+
+   Feature extraction stage in bob.bio.base's biometric verification experiment framework.
+
+Note that there is sometimes a feature extractor training stage prior to the feature extraction (to help the extractor learn which features to extract), but this is not always the case.
+
+
+*Matching:*
+
+The matching stage in bob.bio.base is referred to as the "Algorithm".  Fig. 4 illustrates the Algorithm stage: 
+
+.. figure:: /img/algorithm.svg
+   :align: center
+
+   Algorithm (matching) stage in bob.bio.base's biometric verification experiment framework.
+
+From Fig. 4, we can see that the Algorithm stage consists of three main parts: 
+
+(i) An optional "projection" stage after the feature extraction.  This would be used if, for example, you wished to project your extracted biometric features into a lower-dimensional subspace prior to verification.
+
+(ii) Enrollment: The enrollment part of the Algorithm stage essentially works as follows.  One or more biometric samples per person is used to compute a representative "model" for that person.  This is the same as the "template" in our illustration of a typical biometric verification system in Fig. 1 and it essentially represents that person's identity.  To determine which of a person's biometric samples should be used to generate their model, we query our input biometric database.  The model is then calculated using the corresponding biometric features extracted in the Feature Extraction stage (or, optionally, our "projected" features).  Fig. 5 illustrates the enrollment part of the Algorithm module:
+
+.. figure:: /img/algorithm_enrollment.svg
+   :align: center
+
+   The enrollment part of the Algorithm stage in bob.bio.base's biometric verification experiment framework.
+
+Note that there is sometimes a model enroller training stage prior to enrollment.  This is only necessary when you are trying to fit an existing model to a set of biometric features, e.g., fitting a UBM to features extracted from a speech signal.  In other cases, the model is calculated from the features themselves, e.g., by averaging the feature vectors from multiple samples of the same biometric, in which case model enroller training is not necessary.
+
+
+(iii) Scoring: The scoring part of the Algorithm stage essentially works as follows.  Each model is associated with a number of "probes".  In a biometric verification system, a probe is a biometric sample acquired during the verification stage (as opposed to the sample acquired during enrollment).  In the Scoring stage, we first query the input biometric database to determine which biometric samples should be used as the probes for each model.  Every model is then compared to its associated probes (some of which come from the same person, and some of which come from different people), and a score is calculated for each comparison.  The score may be a distance, and it tells us how similar or dissimilar the model and probe biometrics are.  Ideally, if the model and probe come from the same biometric (e.g., two images of the same finger), they should be very similar, and if they come from different biometrics (e.g., two images of different fingers) then they should be very different.  Fig. 6 illustrates the scoring part of the Algorithm module:
+
+.. figure:: /img/algorithm_scoring.svg
+   :align: center
+
+   The scoring part of the Algorithm stage in bob.bio.base's biometric verification experiment framework.
+ 
+
+*Decision Making:*
+
+The decision making stage in bob.bio.base is referred to as "Evaluation".  The aim of this stage is to make a decision as to whether each score calculated in the Matching stage indicates a "Match" or "No Match" between the particular model and probe biometrics.  Once a decision has been made for each score, we can quantify the overall performance of the particular biometric verification system in terms of common metrics like the False Match Rate (FMR), False Non Match Rate (FNMR), and Equal Error Rate (EER).  We can also view a visual representation of the performance in terms of plots like the Receiver Operating Characteristic (ROC) and Detection Error Trade-off (DET).  Fig. 7 illustrates the Evaluation stage:
+
+.. figure:: /img/evaluation.svg
+   :align: center
+
+   Evaluation stage in bob.bio.base's biometric verification experiment framework.
+
+
+*Notes:*
+
+* The communication between any two steps in the verification framework is file-based, usually using a binary HDF5_ interface, which is implemented in the :py:class:`bob.io.base.HDF5File` class.
+* The output of one step usually serves as the input of the subsequent step(s), as portrayed in Fig. 2 -- Fig. 7.
+* ``bob.bio`` ensures that the correct files are always forwarded to the subsequent steps.  For example, if you choose to implement a feature projection after the feature extraction stage, as illustrated in Fig. 4, ``bob.bio`` will make sure that the files in the "projected" directory are passed on as the input to the Enrollment stage; otherwise, the "extracted" directory will become the input to the Enrollment stage.
 
 
 .. _running_part_1:
