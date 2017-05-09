@@ -4,9 +4,9 @@
 
 .. This file contains all links we use for documentation in a centralized place
 
-.. _idiap: http://www.idiap.ch
-.. _bob: http://www.idiap.ch/software/bob
-.. _idiap at gitlab: http://gitlab.idiap.ch/bob
+.. _idiap: https://www.idiap.ch
+.. _bob: https://www.idiap.ch/software/bob
+.. _idiap at gitlab: https://gitlab.idiap.ch/bob
 .. _at&t database: http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
 .. _gridtk: https://pypi.python.org/pypi/gridtk
 .. _buildout: http://www.buildout.org
@@ -19,3 +19,6 @@
 .. _virtualbox: https://www.virtualbox.org
 .. _hdf5: http://www.hdfgroup.org/HDF5
 .. _mailing list: https://www.idiap.ch/software/bob/discuss
+.. _packages: https://www.idiap.ch/software/bob/packages
+.. _bobinstall: https://www.idiap.ch/software/bob/install
+.. _conda: https://conda.io

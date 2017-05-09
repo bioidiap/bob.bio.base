@@ -12,7 +12,10 @@ import numpy
 
 import bob.core
 import bob.io.base
-import bob.io.image
+try:
+  import bob.io.image
+except ImportError:
+  pass
 
 
 def command_line_arguments(command_line_parameters):

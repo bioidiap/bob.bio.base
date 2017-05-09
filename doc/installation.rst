@@ -8,86 +8,102 @@
 Installation Instructions
 =========================
 
-As noted before, this package is part of the ``bob.bio`` packages, which in turn are part of the signal-processing and machine learning toolbox Bob_.
-To install `Packages of Bob <https://www.idiap.ch/software/bob/packages>`_, please read the `Installation Instructions <https://www.idiap.ch/software/bob/install>`_.
-For Bob_ to be able to work properly, some dependent packages are required to be installed.
-Please make sure that you have read the `Dependencies <https://gitlab.idiap.ch/bob/bob/wikis/Dependencies>`_ for your operating system.
+As noted before, this package is part of the ``bob.bio`` packages, which in
+turn are part of the signal-processing and machine learning toolbox Bob_. To
+install Bob_, please read the `Installation Instructions <bobinstall_>`_.
 
 .. note::
-  Currently, running Bob_ under MS Windows in not yet supported.
-  However, we found that running Bob_ in a virtual Unix environment such as the one provided by VirtualBox_ is a good alternative.
+  Currently, running Bob_ under MS Windows in not yet supported. However, we
+  found that running Bob_ in a virtual Unix environment such as the one
+  provided by VirtualBox_ is a good alternative.
 
-Installation via pip
-----------------------
-
-The most simple and most convenient way to use the ``bob.bio`` tools is to install it using `pip`.
-After setting up your python environment (you can find the instructions `here <https://www.idiap.ch/software/bob/install>`_), use the sequence of commands to
-first search the ``bob.bio`` packages and then install it.
+Then, to install the ``bob.bio`` packages and in turn maybe the database
+packages that you want to use, use conda_ to install them:
 
 .. code-block:: sh
 
-   $ pip search bob.bio # searching
-   $ pip install bob.bio.base # Install the base package
+    $ conda search bob.bio  # searching
+    $ conda search bob.db  # searching
+    $ conda install bob.bio.base bob.bio.<bioname> bob.db.<dbname>
 
+where you would replace ``<bioname>`` and ``<dbname>`` with the name of
+packages that you want to use.
 
-Installation via zc.buildout
-----------------------------
+An example installation
+-----------------------
 
-Another convenient way to use the ``bob.bio`` tools is to use a ``zc.buildout`` package, as explained in more detail `here <https://www.idiap.ch/software/bob/install#using-zcbuildout-for-production>`__.
-There, in the ``eggs`` section of the ``buildout.cfg`` file, simply list the ``bob.bio`` packages that you want, like:
-
-.. code-block:: python
-
-   eggs = bob.bio.base
-          bob.bio.face
-          bob.bio.gmm
-          bob.bio.video
-          bob.db.youtube
-          gridtk
-
-in order to download and install all packages that are required for your experiments.
-In the example above, you might want to run a video face recognition experiments using the :py:class:`bob.bio.face.preprocessor.FaceDetect` and the :py:class:`bob.bio.face.extractor.DCTBlocks` feature extractor defined in :ref:`bob.bio.face <bob.bio.face>`, the :py:class:`bob.bio.gmm.algorithm.IVector` algorithm defined in :ref:`bob.bio.gmm <bob.bio.gmm>` and the video extensions defined in :ref:`bob.bio.video <bob.bio.video>`, using the YouTube faces database interface defined in :ref:`bob.db.youtube <bob.db.youtube>`.
-Running the simple command line:
+For example, you might want to run a video face recognition experiments using
+the :py:class:`bob.bio.face.preprocessor.FaceDetect` and the
+:py:class:`bob.bio.face.extractor.DCTBlocks` feature extractor defined in
+:ref:`bob.bio.face <bob.bio.face>`, the
+:py:class:`bob.bio.gmm.algorithm.IVector` algorithm defined in
+:ref:`bob.bio.gmm <bob.bio.gmm>` and the video extensions defined in
+:ref:`bob.bio.video <bob.bio.video>`, using the YouTube faces database
+interface defined in :ref:`bob.db.youtube <bob.db.youtube>`. Running the
+command line below will install all the required packages:
 
 .. code-block:: sh
 
-   $ buildout
-
-will the download and install all dependent packages locally (relative to your current working directory), and add them to your environment.
+    $ source activate <bob_conda_environment>
+    $ conda install bob.bio.base \
+                    bob.bio.face \
+                    bob.bio.gmm \
+                    bob.bio.video \
+                    bob.db.youtube \
+                    gridtk
 
 
 Databases
 ---------
 
-With ``bob.bio`` you will run biometric recognition experiments using some default biometric recognition databases.
-Though the verification protocols are implemented in ``bob.bio``, the original data are **not included**.
-To download the original data of the databases, please refer to the according Web-pages.
-For a list of supported databases including their download URLs, please refer to the `verification_databases <https://www.idiap.ch/software/bob/packages>`_.
+With ``bob.bio`` you will run biometric recognition experiments using some
+default biometric recognition databases. Though the verification protocols are
+implemented in ``bob.bio``, the original data are **not included**. To download
+the original data of the databases, please refer to the according Web-pages.
+For a list of supported databases including their download URLs, please refer
+to the `verification_databases <packages_>`_.
 
-After downloading the original data for the databases, you will need to tell ``bob.bio``, where these databases can be found.
-For this purpose, we have decided to implement a special file, where you can set your directories.
-By default, this file is located in ``~/.bob_bio_databases.txt``, and it contains several lines, each line looking somewhat like:
+After downloading the original data for the databases, you will need to tell
+``bob.bio``, where these databases can be found. For this purpose, we have
+decided to implement a special file, where you can set your directories. By
+default, this file is located in ``~/.bob_bio_databases.txt``, and it contains
+several lines, each line looking somewhat like:
 
 .. code-block:: text
 
    [YOUR_ATNT_DIRECTORY] = /path/to/your/directory
 
 .. note::
+
    If this file does not exist, feel free to create and populate it yourself.
 
 
-Please use ``databases.py`` for a list of known databases, where you can see the raw ``[YOUR_DATABASE_PATH]`` entries for all databases that you haven't updated, and the corrected paths for those you have.
-
+Please use ``databases.py`` for a list of known databases, where you can see
+the raw ``[YOUR_DATABASE_PATH]`` entries for all databases that you haven't
+updated, and the corrected paths for those you have.
 
 .. note::
-   If you have installed only ``bob.bio.base``, there is no database listed -- as all databases are included in other packages, such as :ref:`bob.bio.face <bob.bio.face>` or :ref:`bob.bio.spear <bob.bio.spear>`.
+
+   If you have installed only ``bob.bio.base``, there is no database listed --
+   as all databases are included in other packages, such as
+   :ref:`bob.bio.face <bob.bio.face>` or :ref:`bob.bio.spear <bob.bio.spear>`.
 
 
 Test your Installation
 ----------------------
 
-One of the scripts that were generated during the bootstrap/buildout step is a test script.
-To verify your installation, you should run the script running the nose tests for each of the ``bob.bio`` packages:
+You can also install the ``nose`` package to test your installation and use
+that to verify your installation:
+
+.. code-block:: sh
+
+  $ conda install nose  # install nose
+  $ nosetests -vs bob.bio.base
+  $ nosetests -vs bob.bio.gmm
+  ...
+
+You should run the script running the nose tests for each of the ``bob.bio``
+packages separately.
 
 .. code-block:: sh
 
@@ -95,39 +111,49 @@ To verify your installation, you should run the script running the nose tests fo
   $ nosetests -vs bob.bio.gmm
   ...
 
-Some of the tests that are run require the images of the `AT&T database`_ database.
-If the database is not found on your system, it will automatically download and extract the `AT&T database`_ a temporary directory, **which will not be erased**.
+Some of the tests that are run require the images of the `AT&T database`_
+database. If the database is not found on your system, it will automatically
+download and extract the `AT&T database`_ a temporary directory, **which will
+not be erased**.
 
 To avoid the download to happen each time you call the nose tests, please:
 
-1. Download the `AT&T database`_ database and extract it to the directory of your choice.
-2. Set an environment variable ``ATNT_DATABASE_DIRECTORY`` to the directory, where you extracted the database to.
-   For example, in a ``bash`` you can call:
+1. Download the `AT&T database`_ database and extract it to the directory of
+   your choice.
+2. Set an environment variable ``ATNT_DATABASE_DIRECTORY`` to the directory,
+   where you extracted the database to. For example, in a ``bash`` you can
+   call:
 
 .. code-block:: sh
 
   $ export ATNT_DATABASE_DIRECTORY=/path/to/your/copy/of/atnt
 
 .. note::
-  To set the directory permanently, you can also change the ``atnt_default_directory`` in the file `bob/bio/base/test/utils.py <file:../bob/bio/base/test/utils.py>`_.
-  In this case, there is no need to set the environment variable any more.
 
-In case any of the tests fail for unexplainable reasons, please send a report through our `mailing list`_.
+  To set the directory permanently, you can also change the
+  ``atnt_default_directory`` in the file `bob/bio/base/test/utils.py
+  <file:../bob/bio/base/test/utils.py>`_. In this case, there is no need to set
+  the environment variable any more.
+
+In case any of the tests fail for unexplainable reasons, please send a report
+through our `mailing list`_.
 
 .. note::
-  Usually, all tests should pass with the latest stable versions of the Bob_ packages.
-  In other versions, some of the tests may fail.
-
+  Usually, all tests should pass with the latest stable versions of Bob_
+  packages. In other versions, some of the tests may fail.
 
 
 Generate this documentation
 ---------------------------
 
-Generally, the documentation of this package is `available online <http://pythonhosted.org/bob.bio.base>`__, and this should be your preferred resource.
-However, to generate this documentation locally, you call:
+Generally, the documentation of this package is
+`available online <http://pythonhosted.org/bob.bio.base>`__, and this should be
+your preferred resource. However, to generate this documentation locally, you
+call:
 
 .. code-block:: sh
 
+  $ conda install sphinx  # install sphinx
   $ sphinx-build doc sphinx
 
 Afterward, the documentation is available and you can read it, e.g., by using:
@@ -136,7 +162,5 @@ Afterward, the documentation is available and you can read it, e.g., by using:
 
   $ firefox sphinx/index.html
 
-
-.. _buildout.cfg: file:../buildout.cfg
 
 .. include:: links.rst
