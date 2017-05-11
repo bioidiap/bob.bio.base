@@ -240,9 +240,10 @@ def extensions(keywords=valid_keywords, package_prefix='bob.bio.'):
 def resource_keys(keyword, exclude_packages=[], package_prefix='bob.bio.', strip=['dummy']):
   """Reads and returns all resources that are registered with the given keyword.
   Entry points from the given ``exclude_packages`` are ignored."""
-  return sorted([entry_point.name for entry_point in
+  ret_list = [entry_point.name for entry_point in
                  _get_entry_points(keyword, strip=strip, package_prefix=package_prefix)
-                 if entry_point.dist.project_name not in exclude_packages])
+                 if entry_point.dist.project_name not in exclude_packages]
+  return sorted(ret_list)
 
 
 def list_resources(keyword, strip=['dummy'], package_prefix='bob.bio.', verbose=False, packages=None):
