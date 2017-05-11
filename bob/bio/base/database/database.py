@@ -88,6 +88,10 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         assert isinstance(name, str)
 
+        super(BioDatabase, self).__init__(
+            original_directory=original_directory,
+            original_extension=original_extension)
+
         self.name = name
 
         self.all_files_options = all_files_options
@@ -98,8 +102,6 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         self._kwargs = kwargs
 
-        self.original_directory = original_directory
-        self.original_extension = original_extension
         self.annotation_directory = annotation_directory
         self.annotation_extension = annotation_extension
         self.annotation_type = annotation_type
