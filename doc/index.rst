@@ -12,13 +12,13 @@ The ``bob.bio`` packages provide open source tools to run comparable and reprodu
 To design a biometric recognition experiment, one has to choose:
 
 * a databases containing the original data, and a protocol that defines how to use the data,
-* a data preprocessing algorithm, i.e., face detection for face recognition experiments or voice activity detection for speaker recognition,
+* a data preprocessing algorithm, e.g., face detection for face recognition experiments or voice activity detection for speaker recognition,
 * the type of features to extract from the preprocessed data,
 * the biometric recognition algorithm to employ,
 * the score fusion to combine outputs from different systems, and
 * the way to evaluate the results
 
-For any of these parts, several different types are implemented in the ``bob.bio`` packages, and basically any combination of the five parts can be executed.
+For any of these parts, several different types are implemented in the ``bob.bio`` packages, and basically any combination of the six parts can be executed.
 For each type, several meta-parameters can be tested.
 This results in a nearly infinite amount of possible experiments that can be run using the current setup.
 But it is also possible to use your own database, preprocessor, feature extractor, or biometric recognition algorithm and test this against the baseline algorithms implemented in the our packages.
@@ -27,7 +27,7 @@ But it is also possible to use your own database, preprocessor, feature extracto
    The ``bob.bio`` packages are derived from the former `FaceRecLib <http://pypi.python.org/pypi/facereclib>`__, which is herewith outdated.
 
 This package :py:mod:`bob.bio.base` includes the basic definition of a biometric recognition experiment, as well as a generic script, which can execute the full biometric experiment in a single command line.
-Changing the employed tolls such as the database, protocol, preprocessor, feature extractor or recognition algorithm is as simple as changing a command line parameter.
+Changing the employed tools such as the database, protocol, preprocessor, feature extractor or recognition algorithm is as simple as changing a parameter in a configuration file or on the command line.
 
 The implementation of (most of) the tools is separated into other packages in the ``bob.bio`` namespace.
 All these packages can be easily combined.
@@ -38,8 +38,6 @@ Here is a growing list of derived packages:
 * :ref:`bob.bio.video <bob.bio.video>` An extension of face recognition algorithms to run on video data, and the according video databases
 * :ref:`bob.bio.gmm <bob.bio.gmm>` Algorithms based on Gaussian Mixture Modeling (GMM) such as Inter-Session Variability modeling (ISV) or Total Variability modeling (TV, aka. I-Vector)
 * `bob.bio.csu <http://pypi.python.org/pypi/bob.bio.csu>`__ for wrapper classes of the `CSU Face Recognition Resources <http://www.cs.colostate.edu/facerec>`__ (see `Installation Instructions <http://pythonhosted.org/bob.bio.csu/installation.html>`__ of ``bob.bio.csu``).
-
-If you are interested, please continue reading:
 
 
 ===========

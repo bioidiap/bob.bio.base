@@ -17,10 +17,10 @@ Structure of a Biometric Recognition System
 
 "Biometric recognition" refers to the process of establishing a person's identity based on their biometric data.
 
-A biometric recognition system has two stages: 
+A biometric recognition system has two stages:
 
-1. **Enrollment:** A person's biometric data is added to the system's biometric database.
-2. **Recognition:** A person's newly acquired biometric data is compared to the biometric data in the system database, and a match score is generated.  The match score tells us how similar the two biometric samples are.  Based on a match threshold, we then decide whether or not the two biometric samples come from the same person.
+1. **Enrollment:** A person's biometric data is enrolled to the system's biometric database (for identification) or on a chip card (for verification).
+2. **Recognition:** A person's newly acquired biometric data (which we call a *probe*) is compared to the enrolled biometric data, and a match score is generated.  The match score tells us how similar the enrolled *model* and the probe are.  Based on match scores, we then decide, which gallery identity should to be assigned (identification), or whether or not model and probe come from the same person (verification).
 
 Fig. 1 shows the enrollment and recognition stages in a typical biometric recognition system:
 
@@ -33,17 +33,17 @@ Fig. 1 shows the enrollment and recognition stages in a typical biometric recogn
 * The "Feature Extractor" extracts the most important features for recognition, from the pre-processed biometric data.
 * The "Template Database" stores each person's extracted feature set (often referred to as a "template") in the system database, typically alongside the person's ID.
 * The "Matcher" compares a new biometric feature set to one or more templates in the database, and outputs a similarity score for each comparison.
-* The "Decision Maker" decides whether or not the new biometric sample and the template from the database match, based on whether the similarity score is above or below a pre-defined match threshold, thereby establishing the person's identity. 
+* The "Decision Maker" decides whether or not the new biometric sample and the template from the database match, based on whether the similarity score is above or below a pre-defined match threshold, thereby establishing the person's identity.
 
 
-Biometric Recognition Experiments in bob.bio.base
---------------------------------------------------
+Biometric Recognition Experiments in the ``bob.bio`` Framework
+--------------------------------------------------------------
 
-In general, the goal of a biometric recognition experiment is to quantify the recognition accuracy of a biometric recognition system, i.e., we wish to find out how good the system is at deciding whether or not two biometric samples come from the same person.
+In general, the goal of a biometric recognition experiment is to quantify the recognition accuracy of a biometric recognition system, e.g., we wish to find out how good the system is at deciding whether or not two biometric samples come from the same person.
 
-To conduct a biometric recognition experiment, we need biometric data.  So, we use a biometric database.  A biometric database generally consists of multiple samples of a particular biometric, from multiple people.  For example, a face database could contain 5 different images of a person's face, from 100 people.  We then simulate "genuine" recognition attempts by comparing each person's biometric samples to their other samples.  We simulate "impostor" recognition attempts by comparing biometric samples across different people.
+To conduct a biometric recognition experiment, we need biometric data.  So, we use a biometric database.  A biometric database generally consists of multiple samples of a particular biometric, from multiple people.  For example, a face database could contain 5 different images of a person's face, from 100 people.  The dataset is split up into samples used for enrollment, and samples used for probing. We then simulate "genuine" recognition attempts by comparing each person's probe samples to their enrolled models.  We simulate "impostor" recognition attempts by comparing the same probe samples to models of different people.
 
-In bob.bio.base, biometric recognition experiments are split up into four main stages, similar to the stages in a typical biometric recognition system as illustrated in Fig. 1:
+In ``bob.bio``, biometric recognition experiments are split up into four main stages, similar to the stages in a typical biometric recognition system as illustrated in Fig. 1:
 
 1. Data preprocessing
 2. Feature extraction
@@ -52,7 +52,8 @@ In bob.bio.base, biometric recognition experiments are split up into four main s
 
 Each of these stages is discussed below:
 
-*Data Preprocessing:*
+Data Preprocessing:
+~~~~~~~~~~~~~~~~~~~
 
 Biometric measurements are often noisy, containing redundant information that is not necessary (and can be misleading) for recognition.  For example, face images contain non-face background information, vein images can be unevenly illuminated, speech signals can be littered with background noise, etc.  The aim of the data preprocessing stage is to clean up the raw biometric data so that it is in the best possible state to make recognition easier.  For example, biometric data is cropped from the background, the images are photometrically enhanced, etc.
 
@@ -61,33 +62,35 @@ All the biometric samples in the input biometric database go through the preproc
 .. figure:: /img/preprocessor.svg
    :align: center
 
-   Preprocessing stage in bob.bio.base's biometric recognition experiment framework.
+   Preprocessing stage in ``bob.bio``'s biometric recognition experiment framework.
 
 
-*Feature Extraction:*
+Feature Extraction:
+~~~~~~~~~~~~~~~~~~~
 
-Although the preprocessing stage produces cleaner biometric data, the resulting data is usually very large and still contains much redundant information.  For example, only a few points in a person's face (e.g., eyes, nose, mouth, chin) are actually used for recognition purposes.  The aim of the feature extraction stage is to detect and extract only those features that are absolutely necessary for recognising a person.
+Although the preprocessing stage produces cleaner biometric data, the resulting data is usually very large and still contains much redundant information.  The aim of the feature extraction stage is to extract features that are necessary for recognizing a person.
 
 All the biometric features stored in the "preprocessed" directory go through the feature extraction stage.  The results are stored in a directory entitled "extracted".  This process is illustrated in Fig. 3:
 
 .. figure:: /img/extractor.svg
    :align: center
 
-   Feature extraction stage in bob.bio.base's biometric recognition experiment framework.
+   Feature extraction stage in ``bob.bio``'s biometric recognition experiment framework.
 
 Note that there is sometimes a feature extractor training stage prior to the feature extraction (to help the extractor learn which features to extract), but this is not always the case.
 
 
-*Matching:*
+Matching:
+~~~~~~~~~
 
-The matching stage in bob.bio.base is referred to as the "Algorithm".  Fig. 4 illustrates the Algorithm stage: 
+The matching stage in ``bob.bio`` is referred to as the "Algorithm".  Fig. 4 illustrates the Algorithm stage:
 
 .. figure:: /img/algorithm.svg
    :align: center
 
-   Algorithm (matching) stage in bob.bio.base's biometric recognition experiment framework.
+   Algorithm (matching) stage in ``bob.bio``'s biometric recognition experiment framework.
 
-From Fig. 4, we can see that the Algorithm stage consists of three main parts: 
+From Fig. 4, we can see that the Algorithm stage consists of three main parts:
 
 (i) An optional "projection" stage after the feature extraction.  This would be used if, for example, you wished to project your extracted biometric features into a lower-dimensional subspace prior to recognition.
 
@@ -96,32 +99,33 @@ From Fig. 4, we can see that the Algorithm stage consists of three main parts:
 .. figure:: /img/algorithm_enrollment.svg
    :align: center
 
-   The enrollment part of the Algorithm stage in bob.bio.base's biometric recognition experiment framework.
+   The enrollment part of the Algorithm stage in ``bob.bio``'s biometric recognition experiment framework.
 
 Note that there is sometimes a model enroller training stage prior to enrollment.  This is only necessary when you are trying to fit an existing model to a set of biometric features, e.g., fitting a UBM to features extracted from a speech signal.  In other cases, the model is calculated from the features themselves, e.g., by averaging the feature vectors from multiple samples of the same biometric, in which case model enroller training is not necessary.
 
 
-(iii) Scoring: The scoring part of the Algorithm stage essentially works as follows.  Each model is associated with a number of "probes".  In a biometric verification system, a probe is a biometric sample acquired during the recognition stage (as opposed to the sample acquired during enrollment).  In the Scoring stage, we first query the input biometric database to determine which biometric samples should be used as the probes for each model.  Every model is then compared to its associated probes (some of which come from the same person, and some of which come from different people), and a score is calculated for each comparison.  The score may be a distance, and it tells us how similar or dissimilar the model and probe biometrics are.  Ideally, if the model and probe come from the same biometric (e.g., two images of the same finger), they should be very similar, and if they come from different biometrics (e.g., two images of different fingers) then they should be very different.  Fig. 6 illustrates the scoring part of the Algorithm module:
+(iii) Scoring: The scoring part of the Algorithm stage essentially works as follows.  Each model is associated with a number of "probes".  In a biometric verification system, a probe is a biometric sample acquired during the recognition stage (as opposed to the sample acquired during enrollment).  In the Scoring stage, we first query the input biometric database to determine which biometric samples should be used as the probes for each model.  Every model is then compared to its associated probes (some of which come from the same person, and some of which come from different people), and a score is calculated for each comparison.  The score may be a distance, and it tells us how similar or dissimilar the model and probe biometrics are.  Ideally, if the model and probe come from the same biometric (e.g., two images of the same finger), they should be very similar, and if they come from different sources (e.g., two images of different fingers) then they should be very different.  Fig. 6 illustrates the scoring part of the Algorithm module:
 
 .. figure:: /img/algorithm_scoring.svg
    :align: center
 
-   The scoring part of the Algorithm stage in bob.bio.base's biometric recognition experiment framework.
- 
+   The scoring part of the Algorithm stage in ``bob.bio``'s biometric recognition experiment framework.
 
-*Decision Making:*
 
-The decision making stage in bob.bio.base is referred to as "Evaluation".  The aim of this stage is to make a decision as to whether each score calculated in the Matching stage indicates a "Match" or "No Match" between the particular model and probe biometrics.  Once a decision has been made for each score, we can quantify the overall performance of the particular biometric recognition system in terms of common metrics like the False Match Rate (FMR), False Non Match Rate (FNMR), and Equal Error Rate (EER).  We can also view a visual representation of the performance in terms of plots like the Receiver Operating Characteristic (ROC) and Detection Error Trade-off (DET).  Fig. 7 illustrates the Evaluation stage:
+Decision Making:
+~~~~~~~~~~~~~~~~
+
+The decision making stage in ``bob.bio`` is referred to as "Evaluation".  The aim of this stage is to make a decision as to whether each score calculated in the Matching stage indicates a "Match" or "No Match" between the particular model and probe biometrics.  Once a decision has been made for each score, we can quantify the overall performance of the particular biometric recognition system in terms of common metrics like the False Match Rate (FMR), False Non Match Rate (FNMR), and Equal Error Rate (EER).  We can also view a visual representation of the performance in terms of plots like the Receiver Operating Characteristic (ROC) and Detection Error Trade-off (DET).  Fig. 7 illustrates the Evaluation stage:
 
 .. figure:: /img/evaluation.svg
    :align: center
 
-   Evaluation stage in bob.bio.base's biometric recognition experiment framework.
+   Evaluation stage in ``bob.bio``'s biometric recognition experiment framework.
 
 
 *Notes:*
 
-* The communication between any two steps in the recognition framework is file-based, usually using a binary HDF5_ interface, which is implemented in the :py:class:`bob.io.base.HDF5File` class.
+* The communication between any two steps in the recognition framework is file-based, usually using a binary HDF5_ interface, which is implemented, for example, in the :py:class:`bob.io.base.HDF5File` class.
 * The output of one step usually serves as the input of the subsequent step(s), as portrayed in Fig. 2 -- Fig. 7.
 * ``bob.bio`` ensures that the correct files are always forwarded to the subsequent steps.  For example, if you choose to implement a feature projection after the feature extraction stage, as illustrated in Fig. 4, ``bob.bio`` will make sure that the files in the "projected" directory are passed on as the input to the Enrollment stage; otherwise, the "extracted" directory will become the input to the Enrollment stage.
 
