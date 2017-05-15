@@ -755,15 +755,17 @@ class FileListBioDatabase(ZTBioDatabase):
     def original_file_name(self, file, check_existence=True):
         """Returns the original file name of the given file.
 
-        This interface supports several original extensions, so that file lists can contain images of different data types.
+        This interface supports several original extensions, so that file lists can contain images
+        of different data types.
 
-        When multiple original extensions are specified, this function will check the existence of any of these file names, and return the first one that actually exists.
+        When multiple original extensions are specified, this function will check the existence of any of
+        these file names, and return the first one that actually exists.
         In this case, the ``check_existence`` flag is ignored.
 
         **Keyword parameters**
 
         file : :py:class:`bob.bio.base.database.BioFile`
-          The py:class:`File` object for which the file name should be returned.
+          The BioFile object for which the file name should be returned.
 
         check_existence : bool
           Should the existence of the original file be checked?
