@@ -737,7 +737,7 @@ class FileListBioDatabase(ZTBioDatabase):
 
         Keyword parameters:
 
-        file :py:class:`bob.bio.base.database.BioFile`
+        file : :py:class:`bob.bio.base.database.BioFile`
           The BioFile object for which the annotations should be read.
 
         Return value
@@ -764,7 +764,7 @@ class FileListBioDatabase(ZTBioDatabase):
 
         **Keyword parameters**
 
-        file :py:class:`bob.bio.base.database.BioFile`
+        file : :py:class:`bob.bio.base.database.BioFile`
           The BioFile object for which the file name should be returned.
 
         check_existence : bool
