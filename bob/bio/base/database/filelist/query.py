@@ -393,7 +393,7 @@ class FileListBioDatabase(ZTBioDatabase):
             "The given T-norm model id '%s' cannot be found in one of the groups '%s'" % (t_model_id, groups))
 
     def clients(self, protocol=None, groups=None):
-        """Returns a list of :py:class:`Client` objects for the specific query by the user.
+        """Returns a list of :py:class:`bob.bio.base.database.Client` objects for the specific query by the user.
 
         Keyword Parameters:
 
@@ -403,7 +403,7 @@ class FileListBioDatabase(ZTBioDatabase):
         groups : str or [str] or ``None``
           The groups to which the clients belong ("dev", "eval", "world", "optional_world_1", "optional_world_2").
 
-        Returns: A list containing all the :py:class:`Client` objects which have the given properties.
+        Returns: A list containing all the :py:class:`bob.bio.base.database.Client` objects which have the given properties.
         """
 
         protocol = protocol or self.protocol
@@ -411,7 +411,7 @@ class FileListBioDatabase(ZTBioDatabase):
         return [Client(id) for id in client_ids]
 
     def tclients(self, protocol=None, groups=None):
-        """Returns a list of T-Norm :py:class:`Client` objects for the specific query by the user.
+        """Returns a list of T-Norm :py:class:`bob.bio.base.database.Client` objects for the specific query by the user.
 
         Keyword Parameters:
 
@@ -421,7 +421,7 @@ class FileListBioDatabase(ZTBioDatabase):
         groups : str or [str] or ``None``
           The groups to which the clients belong ("dev", "eval").
 
-        Returns: A list containing all the T-Norm :py:class:`Client` objects which have the given properties.
+        Returns: A list containing all the T-Norm :py:class:`bob.bio.base.database.Client` objects which have the given properties.
         """
         protocol = protocol or self.protocol
         tclient_ids = self.tclient_ids(protocol, groups)
@@ -559,7 +559,7 @@ class FileListBioDatabase(ZTBioDatabase):
         return self.__model_id_list__(groups, 'for_tnorm', protocol)
 
     def objects(self, groups=None, protocol=None, purposes=None, model_ids=None, classes=None, **kwargs):
-        """Returns a set of :py:class:`BioFile` objects for the specific query by the user.
+        """Returns a set of :py:class:`bob.bio.base.database.BioFile` objects for the specific query by the user.
 
         Keyword Parameters:
 
@@ -587,7 +587,7 @@ class FileListBioDatabase(ZTBioDatabase):
           default), it is considered the same as a tuple with all possible values.
           Note: classes are not allowed to be specified when the 'probes_filename' is used.
 
-        Returns: A list of :py:class:`BioFile` objects considering all the filtering criteria.
+        Returns: A list of :py:class:`bob.bio.base.database.BioFile` objects considering all the filtering criteria.
         """
 
         protocol = protocol or self.protocol
@@ -669,7 +669,7 @@ class FileListBioDatabase(ZTBioDatabase):
         return self._make_bio(retval)
 
     def tobjects(self, groups=None, protocol=None, model_ids=None, **kwargs):
-        """Returns a list of :py:class:`BioFile` objects for enrolling T-norm models for score normalization.
+        """Returns a list of :py:class:`bob.bio.base.database.BioFile` objects for enrolling T-norm models for score normalization.
 
         Keyword Parameters:
 
@@ -684,7 +684,7 @@ class FileListBioDatabase(ZTBioDatabase):
         groups : str or [str] or ``None``
           The groups to which the models belong ("dev", "eval").
 
-        Returns: A list of :py:class:`BioFile` objects considering all the filtering criteria.
+        Returns: A list of :py:class:`bob.bio.base.database.BioFile` objects considering all the filtering criteria.
         """
         protocol = protocol or self.protocol
         groups = self.check_parameters_for_validity(groups, "group", self.groups(protocol, add_world=False))
@@ -704,7 +704,7 @@ class FileListBioDatabase(ZTBioDatabase):
         return self._make_bio(retval)
 
     def zobjects(self, groups=None, protocol=None, **kwargs):
-        """Returns a list of :py:class:`BioFile` objects to perform Z-norm score normalization.
+        """Returns a list of :py:class:`bob.bio.base.database.BioFile` objects to perform Z-norm score normalization.
 
         Keyword Parameters:
 
@@ -737,8 +737,8 @@ class FileListBioDatabase(ZTBioDatabase):
 
         Keyword parameters:
 
-        file : :py:class:`bob.bio.base.database.BioFile`
-          The :py:class:`BioFile` object for which the annotations should be read.
+        file :py:class:`bob.bio.base.database.BioFile`
+          The BioFile object for which the annotations should be read.
 
         Return value
           The annotations as a dictionary: {'reye':(re_y,re_x), 'leye':(le_y,le_x)}
@@ -764,7 +764,7 @@ class FileListBioDatabase(ZTBioDatabase):
 
         **Keyword parameters**
 
-        file : :py:class:`bob.bio.base.database.BioFile`
+        file :py:class:`bob.bio.base.database.BioFile`
           The BioFile object for which the file name should be returned.
 
         check_existence : bool
