@@ -26,6 +26,7 @@ Fig. 2 shows the enrollment and identification stages in a typical biometric *id
 
    Enrollment and identification in a typical biometric identification system.
 
+In the figures above:
 * The "Pre-processor" cleans up the raw biometric data to make recognition easier (e.g., crops the face image to get rid of the background).
 * The "Feature Extractor" extracts the most important features for recognition, from the pre-processed biometric data.
 * The "Model Database" stores each person's extracted feature set in the form of a representative model for that person in the system database, typically alongside the person's ID.
