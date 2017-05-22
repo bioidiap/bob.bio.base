@@ -48,6 +48,7 @@ Users Guide
    :maxdepth: 2
 
    installation
+   struct_bio_rec_sys
    experiments
    implementation
    filelist-guide
