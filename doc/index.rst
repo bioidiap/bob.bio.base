@@ -9,28 +9,24 @@
 ===========================================
 
 The ``bob.bio`` packages provide open source tools to run comparable and reproducible biometric recognition experiments.
-To design a biometric recognition experiment, one has to choose:
+To design a biometric recognition experiment, you must choose:
 
-* a databases containing the original data, and a protocol that defines how to use the data,
-* a data preprocessing algorithm, e.g., face detection for face recognition experiments or voice activity detection for speaker recognition,
-* the type of features to extract from the preprocessed data,
-* the biometric recognition algorithm to employ,
-* the score fusion to combine outputs from different systems, and
-* the way to evaluate the results
+* A database to use for the raw biometric data and a protocol that defines how to use that data,
+* A data preprocessing algorithm to clean up the raw biometric data,
+* A feature extractor to extract the desired type of features from the preprocessed data,
+* A biometric matching algorithm,
+* An evaluation method to make sense of the matching scores.
 
-For any of these parts, several different types are implemented in the ``bob.bio`` packages, and basically any combination of the six parts can be executed.
-For each type, several meta-parameters can be tested.
-This results in a nearly infinite amount of possible experiments that can be run using the current setup.
-But it is also possible to use your own database, preprocessor, feature extractor, or biometric recognition algorithm and test this against the baseline algorithms implemented in the our packages.
+The ``bob.bio`` packages contain several implementations of each of the above steps, so you can either choose from the existing methods or use your own.   
 
 .. note::
    The ``bob.bio`` packages are derived from the former `FaceRecLib <http://pypi.python.org/pypi/facereclib>`__, which is herewith outdated.
 
-This package :py:mod:`bob.bio.base` includes the basic definition of a biometric recognition experiment, as well as a generic script, which can execute the full biometric experiment in a single command line.
-Changing the employed tools such as the database, protocol, preprocessor, feature extractor or recognition algorithm is as simple as changing a parameter in a configuration file or on the command line.
+The :py:mod:`bob.bio.base` package includes the basic definition of a biometric recognition experiment, as well as a generic script, which can execute the full biometric experiment in a single command line.
+Changing the employed tools, such as the database, protocol, preprocessor, feature extractor or matching algorithm is as simple as changing a parameter in a configuration file or on the command line.
 
 The implementation of (most of) the tools is separated into other packages in the ``bob.bio`` namespace.
-All these packages can be easily combined.
+All of these packages can be easily combined.
 Here is a growing list of derived packages:
 
 * :ref:`bob.bio.spear <bob.bio.spear>` Tools to run speaker recognition experiments, including voice activity detection, Cepstral feature extraction, and speaker databases

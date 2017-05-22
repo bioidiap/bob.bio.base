@@ -9,15 +9,14 @@
 Running Biometric Recognition Experiments
 ==========================================
 
-Now, you are almost ready to run your first biometric recognition experiment.
-Just a little bit of theory, and then: off we go.
+Now, you are ready to run your first biometric recognition experiment.
 
 .. _running_part_1:
 
 Running Experiments (part I)
 ----------------------------
 
-To run an experiment, we provide a generic script ``verify.py``, which is highly parametrizable.
+To run an experiment, we provide a generic script ``verify.py``, which is highly parameterizable.
 To get a complete list of command line options, please run:
 
 .. code-block:: sh
@@ -51,7 +50,7 @@ To get a list of registered resources, please call:
 
 Each package in ``bob.bio`` defines its own resources, and the printed list of registered resources differs according to the installed packages.
 If only ``bob.bio.base`` is installed, no databases and only one preprocessor will be listed.
-To see more details about the resources, i.e., the full constructor call fo the respective class, use the ``--details`` (or shortly ``-d``) option, and to sub-select only specific types of resources, use the ``--types`` (or ``-t``) option:
+To see more details about the resources, i.e., the full constructor call for the respective class, use the ``--details`` (or shortly ``-d``) option, and to sub-select only specific types of resources, use the ``--types`` (or ``-t``) option:
 
 .. code-block:: sh
 
