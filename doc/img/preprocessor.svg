@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.2" width="159.02mm" height="44.02mm" viewBox="999 1000 15902 4402" preserveAspectRatio="xMidYMid" fill-rule="evenodd" stroke-width="28.222" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" xmlns:ooo="http://xml.openoffice.org/svg/export" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:presentation="http://sun.com/xmlns/staroffice/presentation" xmlns:smil="http://www.w3.org/2001/SMIL20/" xmlns:anim="urn:oasis:names:tc:opendocument:xmlns:animation:1.0" xml:space="preserve">
+ <defs class="ClipPathGroup">
+  <clipPath id="presentation_clip_path" clipPathUnits="userSpaceOnUse">
+   <rect x="999" y="1000" width="15902" height="4402"/>
+  </clipPath>
+  <clipPath id="presentation_clip_path_shrink" clipPathUnits="userSpaceOnUse">
+   <rect x="1014" y="1004" width="15871" height="4394"/>
+  </clipPath>
+ </defs>
+ <defs>
+  <font id="EmbeddedFont_1" horiz-adv-x="2048">
+   <font-face font-family="Liberation Sans embedded" units-per-em="2048" font-weight="normal" font-style="normal" ascent="1864" descent="432"/>
+   <missing-glyph horiz-adv-x="2048" d="M 0,0 L 2047,0 2047,2047 0,2047 0,0 Z"/>
+   <glyph unicode="t" horiz-adv-x="541" d="M 554,8 C 495,-8 434,-16 372,-16 228,-16 156,66 156,229 L 156,951 31,951 31,1082 163,1082 216,1324 336,1324 336,1082 536,1082 536,951 336,951 336,268 C 336,216 345,180 362,159 379,138 408,127 450,127 474,127 509,132 554,141 L 554,8 Z"/>
+   <glyph unicode="s" horiz-adv-x="920" d="M 950,299 C 950,197 912,118 835,63 758,8 650,-20 511,-20 376,-20 273,2 200,47 127,91 79,160 57,254 L 216,285 C 231,227 263,185 311,158 359,131 426,117 511,117 602,117 669,131 712,159 754,187 775,229 775,285 775,328 760,362 731,389 702,416 654,438 589,455 L 460,489 C 357,516 283,542 240,568 196,593 162,624 137,661 112,698 100,743 100,796 100,895 135,970 206,1022 276,1073 378,1099 513,1099 632,1099 727,1078 798,1036 868,994 912,927 931,834 L 769,814 C 759,862 732,899 689,925 645,950 586,963 513,963 432,963 372,951 333,926 294,901 275,864 275,814 275,783 283,758 299,738 315,718 339,701 370,687 401,673 467,654 568,629 663,605 732,583 774,563 816,542 849,520 874,495 898,470 917,442 930,410 943,377 950,340 950,299 Z"/>
+   <glyph unicode="r" horiz-adv-x="542" d="M 142,0 L 142,830 C 142,906 140,990 136,1082 L 306,1082 C 311,959 314,886 314,861 L 318,861 C 347,954 380,1017 417,1051 454,1085 507,1102 575,1102 599,1102 623,1099 648,1092 L 648,927 C 624,934 592,937 552,937 477,937 420,905 381,841 342,776 322,684 322,564 L 322,0 142,0 Z"/>
+   <glyph unicode="p" horiz-adv-x="974" d="M 1053,546 C 1053,169 920,-20 655,-20 488,-20 376,43 319,168 L 314,168 C 317,163 318,106 318,-2 L 318,-425 138,-425 138,861 C 138,972 136,1046 132,1082 L 306,1082 C 307,1079 308,1070 309,1054 310,1037 312,1012 314,978 315,944 316,921 316,908 L 320,908 C 352,975 394,1024 447,1055 500,1086 569,1101 655,1101 788,1101 888,1056 954,967 1020,878 1053,737 1053,546 Z M 864,542 C 864,693 844,800 803,865 762,930 698,962 609,962 538,962 482,947 442,917 401,887 371,840 350,777 329,713 318,630 318,528 318,386 341,281 386,214 431,147 505,113 607,113 696,113 762,146 803,212 844,277 864,387 864,542 Z"/>
+   <glyph unicode="o" horiz-adv-x="1001" d="M 1053,542 C 1053,353 1011,212 928,119 845,26 724,-20 565,-20 407,-20 288,28 207,125 126,221 86,360 86,542 86,915 248,1102 571,1102 736,1102 858,1057 936,966 1014,875 1053,733 1053,542 Z M 864,542 C 864,691 842,800 798,868 753,935 679,969 574,969 469,969 393,935 346,866 299,797 275,689 275,542 275,399 298,292 345,221 391,149 464,113 563,113 671,113 748,148 795,217 841,286 864,395 864,542 Z"/>
+   <glyph unicode="m" horiz-adv-x="1460" d="M 768,0 L 768,686 C 768,791 754,863 725,903 696,943 645,963 570,963 493,963 433,934 388,875 343,816 321,734 321,627 L 321,0 142,0 142,851 C 142,977 140,1054 136,1082 L 306,1082 C 307,1079 307,1070 308,1055 309,1040 310,1024 311,1005 312,986 313,950 314,897 L 317,897 C 356,974 400,1027 450,1057 500,1087 561,1102 633,1102 715,1102 780,1086 828,1053 875,1020 908,968 927,897 L 930,897 C 967,970 1013,1022 1066,1054 1119,1086 1183,1102 1258,1102 1367,1102 1447,1072 1497,1013 1546,954 1571,856 1571,721 L 1571,0 1393,0 1393,686 C 1393,791 1379,863 1350,903 1321,943 1270,963 1195,963 1116,963 1055,934 1012,876 968,817 946,734 946,627 L 946,0 768,0 Z"/>
+   <glyph unicode="i" horiz-adv-x="190" d="M 137,1312 L 137,1484 317,1484 317,1312 137,1312 Z M 137,0 L 137,1082 317,1082 317,0 137,0 Z"/>
+   <glyph unicode="e" horiz-adv-x="974" d="M 276,503 C 276,379 302,283 353,216 404,149 479,115 578,115 656,115 719,131 766,162 813,193 844,233 861,281 L 1019,236 C 954,65 807,-20 578,-20 418,-20 296,28 213,123 129,218 87,360 87,548 87,727 129,864 213,959 296,1054 416,1102 571,1102 889,1102 1048,910 1048,527 L 1048,503 276,503 Z M 862,641 C 852,755 823,838 775,891 727,943 658,969 568,969 481,969 412,940 361,882 310,823 282,743 278,641 L 862,641 Z"/>
+   <glyph unicode="d" horiz-adv-x="947" d="M 821,174 C 788,105 744,55 689,25 634,-5 565,-20 484,-20 347,-20 247,26 183,118 118,210 86,349 86,536 86,913 219,1102 484,1102 566,1102 634,1087 689,1057 744,1027 788,979 821,914 L 823,914 821,1035 821,1484 1001,1484 1001,223 C 1001,110 1003,36 1007,0 L 835,0 C 833,11 831,35 829,74 826,113 825,146 825,174 L 821,174 Z M 275,542 C 275,391 295,282 335,217 375,152 440,119 530,119 632,119 706,154 752,225 798,296 821,405 821,554 821,697 798,802 752,869 706,936 633,969 532,969 441,969 376,936 336,869 295,802 275,693 275,542 Z"/>
+   <glyph unicode="c" horiz-adv-x="893" d="M 275,546 C 275,402 298,295 343,226 388,157 457,122 548,122 612,122 666,139 709,173 752,206 778,258 788,328 L 970,328 C 956,222 912,138 837,75 762,12 668,-20 553,-20 402,-20 286,28 207,124 127,219 87,359 87,542 87,724 127,863 207,959 287,1054 402,1102 551,1102 662,1102 754,1073 827,1016 900,959 945,880 964,779 L 779,765 C 770,825 746,873 708,908 670,943 616,961 546,961 451,961 382,929 339,866 296,803 275,696 275,546 Z"/>
+   <glyph unicode="b" horiz-adv-x="974" d="M 1053,546 C 1053,169 920,-20 655,-20 573,-20 505,-5 451,25 396,54 352,102 318,168 L 316,168 C 316,147 315,116 312,74 309,31 307,7 306,0 L 132,0 C 136,36 138,110 138,223 L 138,1484 318,1484 318,1061 C 318,1018 317,967 314,908 L 318,908 C 351,977 396,1027 451,1057 506,1087 574,1102 655,1102 792,1102 892,1056 957,964 1021,872 1053,733 1053,546 Z M 864,540 C 864,691 844,800 804,865 764,930 699,963 609,963 508,963 434,928 388,859 341,790 318,680 318,529 318,387 341,282 386,215 431,147 505,113 607,113 698,113 763,147 804,214 844,281 864,389 864,540 Z"/>
+   <glyph unicode="a" horiz-adv-x="1082" d="M 414,-20 C 305,-20 224,9 169,67 114,124 87,204 87,304 87,417 124,504 198,564 271,625 390,655 554,655 L 797,655 797,715 C 797,804 778,868 741,907 704,946 645,965 565,965 484,965 426,951 389,924 352,897 330,853 323,793 L 135,810 C 166,1005 310,1102 569,1102 705,1102 807,1071 876,1009 945,946 979,856 979,738 L 979,272 C 979,219 986,179 1000,152 1014,125 1041,111 1080,111 1097,111 1117,113 1139,118 L 1139,6 C 1094,-5 1047,-10 1000,-10 933,-10 885,8 855,43 824,78 807,132 803,207 L 797,207 C 751,124 698,66 637,32 576,-3 501,-20 414,-20 Z M 455,115 C 521,115 580,130 631,160 682,189 723,230 753,282 782,334 797,388 797,443 L 797,531 600,531 C 515,531 451,523 408,507 364,491 330,466 307,432 284,399 272,355 272,300 272,241 288,196 320,163 351,131 396,115 455,115 Z"/>
+   <glyph unicode="P" horiz-adv-x="1109" d="M 1258,985 C 1258,852 1215,746 1128,667 1041,588 922,549 773,549 L 359,549 359,0 168,0 168,1409 761,1409 C 919,1409 1041,1372 1128,1298 1215,1224 1258,1120 1258,985 Z M 1066,983 C 1066,1165 957,1256 738,1256 L 359,1256 359,700 746,700 C 959,700 1066,794 1066,983 Z"/>
+   <glyph unicode="B" horiz-adv-x="1109" d="M 1258,397 C 1258,272 1212,174 1121,105 1030,35 903,0 740,0 L 168,0 168,1409 680,1409 C 1011,1409 1176,1295 1176,1067 1176,984 1153,914 1106,857 1059,800 993,762 908,743 1020,730 1106,692 1167,631 1228,569 1258,491 1258,397 Z M 984,1044 C 984,1120 958,1174 906,1207 854,1240 779,1256 680,1256 L 359,1256 359,810 680,810 C 782,810 858,829 909,868 959,906 984,965 984,1044 Z M 1065,412 C 1065,578 948,661 715,661 L 359,661 359,153 730,153 C 847,153 932,175 985,218 1038,261 1065,326 1065,412 Z"/>
+   <glyph unicode=" " horiz-adv-x="567"/>
+  </font>
+ </defs>
+ <defs>
+  <font id="EmbeddedFont_2" horiz-adv-x="2048">
+   <font-face font-family="Liberation Sans embedded" units-per-em="2048" font-weight="bold" font-style="normal" ascent="1864" descent="432"/>
+   <missing-glyph horiz-adv-x="2048" d="M 0,0 L 2047,0 2047,2047 0,2047 0,0 Z"/>
+   <glyph unicode="." horiz-adv-x="298" d="M 139,0 L 139,305 428,305 428,0 139,0 Z"/>
+  </font>
+ </defs>
+ <defs class="TextShapeIndex">
+  <g ooo:slide="id1" ooo:id-list="id3 id4 id5 id6 id7 id8 id9 id10 id11 id12 id13 id14"/>
+ </defs>
+ <defs class="EmbeddedBulletChars">
+  <g id="bullet-char-template(57356)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 580,1141 L 1163,571 580,0 -4,571 580,1141 Z"/>
+  </g>
+  <g id="bullet-char-template(57354)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 8,1128 L 1137,1128 1137,0 8,0 8,1128 Z"/>
+  </g>
+  <g id="bullet-char-template(10146)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 174,0 L 602,739 174,1481 1456,739 174,0 Z M 1358,739 L 309,1346 659,739 1358,739 Z"/>
+  </g>
+  <g id="bullet-char-template(10132)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 2015,739 L 1276,0 717,0 1260,543 174,543 174,936 1260,936 717,1481 1274,1481 2015,739 Z"/>
+  </g>
+  <g id="bullet-char-template(10007)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 0,-2 C -7,14 -16,27 -25,37 L 356,567 C 262,823 215,952 215,954 215,979 228,992 255,992 264,992 276,990 289,987 310,991 331,999 354,1012 L 381,999 492,748 772,1049 836,1024 860,1049 C 881,1039 901,1025 922,1006 886,937 835,863 770,784 769,783 710,716 594,584 L 774,223 C 774,196 753,168 711,139 L 727,119 C 717,90 699,76 672,76 641,76 570,178 457,381 L 164,-76 C 142,-110 111,-127 72,-127 30,-127 9,-110 8,-76 1,-67 -2,-52 -2,-32 -2,-23 -1,-13 0,-2 Z"/>
+  </g>
+  <g id="bullet-char-template(10004)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 285,-33 C 182,-33 111,30 74,156 52,228 41,333 41,471 41,549 55,616 82,672 116,743 169,778 240,778 293,778 328,747 346,684 L 369,508 C 377,444 397,411 428,410 L 1163,1116 C 1174,1127 1196,1133 1229,1133 1271,1133 1292,1118 1292,1087 L 1292,965 C 1292,929 1282,901 1262,881 L 442,47 C 390,-6 338,-33 285,-33 Z"/>
+  </g>
+  <g id="bullet-char-template(9679)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 813,0 C 632,0 489,54 383,161 276,268 223,411 223,592 223,773 276,916 383,1023 489,1130 632,1184 813,1184 992,1184 1136,1130 1245,1023 1353,916 1407,772 1407,592 1407,412 1353,268 1245,161 1136,54 992,0 813,0 Z"/>
+  </g>
+  <g id="bullet-char-template(8226)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 346,457 C 273,457 209,483 155,535 101,586 74,649 74,723 74,796 101,859 155,911 209,963 273,989 346,989 419,989 480,963 531,910 582,859 608,796 608,723 608,648 583,586 532,535 482,483 420,457 346,457 Z"/>
+  </g>
+  <g id="bullet-char-template(8211)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M -4,459 L 1135,459 1135,606 -4,606 -4,459 Z"/>
+  </g>
+  <g id="bullet-char-template(61548)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 173,740 C 173,903 231,1043 346,1159 462,1274 601,1332 765,1332 928,1332 1067,1274 1183,1159 1299,1043 1357,903 1357,740 1357,577 1299,437 1183,322 1067,206 928,148 765,148 601,148 462,206 346,322 231,437 173,577 173,740 Z"/>
+  </g>
+ </defs>
+ <defs class="TextEmbeddedBitmaps"/>
+ <g class="SlideGroup">
+  <g>
+   <g id="container-id1">
+    <g id="id1" class="Slide" clip-path="url(#presentation_clip_path)">
+     <g class="Page">
+      <g class="com.sun.star.drawing.CustomShape">
+       <g id="id3">
+        <rect class="BoundingBox" stroke="none" fill="none" x="1699" y="1849" width="2304" height="2904"/>
+        <path fill="none" stroke="rgb(0,0,0)" d="M 1700,2306 C 1700,2078 2275,1850 2850,1850 3425,1850 4001,2078 4001,2306 L 4001,4294 C 4001,4522 3425,4751 2850,4751 2275,4751 1700,4522 1700,4294 L 1700,2306 Z"/>
+        <path fill="none" stroke="rgb(0,0,0)" d="M 1700,1850 L 1700,1850 Z"/>
+        <path fill="none" stroke="rgb(0,0,0)" d="M 4001,4751 L 4001,4751 Z"/>
+        <path fill="none" stroke="rgb(0,0,0)" d="M 1700,2306 C 1700,2534 2275,2763 2850,2763 3425,2763 4001,2534 4001,2306"/>
+        <path fill="none" stroke="rgb(0,0,0)" d="M 1700,1850 L 1700,1850 Z"/>
+        <path fill="none" stroke="rgb(0,0,0)" d="M 4001,4751 L 4001,4751 Z"/>
+        <text class="TextShape"><tspan class="TextParagraph" font-family="Liberation Sans, sans-serif" font-size="423px" font-weight="400"><tspan class="TextPosition" x="1908" y="3440"><tspan fill="rgb(0,0,0)" stroke="none">Biometric </tspan></tspan><tspan class="TextPosition" x="1974" y="3914"><tspan fill="rgb(0,0,0)" stroke="none">database</tspan></tspan></tspan></text>
+       </g>
+      </g>
+      <g class="com.sun.star.drawing.CustomShape">
+       <g id="id4">
+        <rect class="BoundingBox" stroke="none" fill="none" x="6899" y="2849" width="3104" height="904"/>
+        <path fill="none" stroke="rgb(0,0,0)" d="M 6900,2850 L 10001,2850 10001,3751 6900,3751 6900,2850 6900,2850 Z"/>
+        <path fill="none" stroke="rgb(0,0,0)" d="M 6900,2850 L 6900,2850 Z"/>
+        <path fill="none" stroke="rgb(0,0,0)" d="M 10001,3751 L 10001,3751 Z"/>
+        <text class="TextShape"><tspan class="TextParagraph" font-family="Liberation Sans, sans-serif" font-size="423px" font-weight="400"><tspan class="TextPosition" x="7189" y="3448"><tspan fill="rgb(0,0,0)" stroke="none">Preprocessor</tspan></tspan></tspan></text>
+       </g>
+      </g>
+      <g class="Group">
+       <g class="com.sun.star.drawing.LineShape">
+        <g id="id5">
+         <rect class="BoundingBox" stroke="none" fill="none" x="4299" y="2398" width="2202" height="301"/>
+         <path fill="none" stroke="rgb(0,0,0)" d="M 4300,2548 L 6070,2548"/>
+         <path fill="rgb(0,0,0)" stroke="none" d="M 6500,2548 L 6050,2398 6050,2698 6500,2548 Z"/>
+        </g>
+       </g>
+       <g class="com.sun.star.drawing.LineShape">
+        <g id="id6">
+         <rect class="BoundingBox" stroke="none" fill="none" x="4299" y="2898" width="2202" height="301"/>
+         <path fill="none" stroke="rgb(0,0,0)" d="M 4300,3048 L 6070,3048"/>
+         <path fill="rgb(0,0,0)" stroke="none" d="M 6500,3048 L 6050,2898 6050,3198 6500,3048 Z"/>
+        </g>
+       </g>
+       <g class="com.sun.star.drawing.LineShape">
+        <g id="id7">
+         <rect class="BoundingBox" stroke="none" fill="none" x="4299" y="3898" width="2202" height="301"/>
+         <path fill="none" stroke="rgb(0,0,0)" d="M 4300,4048 L 6070,4048"/>
+         <path fill="rgb(0,0,0)" stroke="none" d="M 6500,4048 L 6050,3898 6050,4198 6500,4048 Z"/>
+        </g>
+       </g>
+       <g class="com.sun.star.drawing.TextShape">
+        <g id="id8">
+         <rect class="BoundingBox" stroke="none" fill="none" x="4950" y="2848" width="901" height="1206"/>
+         <text class="TextShape"><tspan class="TextParagraph" font-family="Liberation Sans, sans-serif" font-size="282px" font-weight="700"><tspan class="TextPosition" x="5360" y="3231"><tspan fill="rgb(0,0,0)" stroke="none">.</tspan></tspan></tspan><tspan class="TextParagraph" font-family="Liberation Sans, sans-serif" font-size="282px" font-weight="700"><tspan class="TextPosition" x="5360" y="3549"><tspan fill="rgb(0,0,0)" stroke="none">.</tspan></tspan></tspan><tspan class="TextParagraph" font-family="Liberation Sans, sans-serif" font-size="282px" font-weight="700"><tspan class="TextPosition" x="5360" y="3867"><tspan fill="rgb(0,0,0)" stroke="none">.</tspan></tspan></tspan></text>
+        </g>
+       </g>
+      </g>
+      <g class="Group">
+       <g class="com.sun.star.drawing.LineShape">
+        <g id="id9">
+         <rect class="BoundingBox" stroke="none" fill="none" x="10399" y="2398" width="2202" height="301"/>
+         <path fill="none" stroke="rgb(0,0,0)" d="M 10400,2548 L 12170,2548"/>
+         <path fill="rgb(0,0,0)" stroke="none" d="M 12600,2548 L 12150,2398 12150,2698 12600,2548 Z"/>
+        </g>
+       </g>
+       <g class="com.sun.star.drawing.LineShape">
+        <g id="id10">
+         <rect class="BoundingBox" stroke="none" fill="none" x="10399" y="2898" width="2202" height="301"/>
+         <path fill="none" stroke="rgb(0,0,0)" d="M 10400,3048 L 12170,3048"/>
+         <path fill="rgb(0,0,0)" stroke="none" d="M 12600,3048 L 12150,2898 12150,3198 12600,3048 Z"/>
+        </g>
+       </g>
+       <g class="com.sun.star.drawing.LineShape">
+        <g id="id11">
+         <rect class="BoundingBox" stroke="none" fill="none" x="10399" y="3898" width="2202" height="301"/>
+         <path fill="none" stroke="rgb(0,0,0)" d="M 10400,4048 L 12170,4048"/>
+         <path fill="rgb(0,0,0)" stroke="none" d="M 12600,4048 L 12150,3898 12150,4198 12600,4048 Z"/>
+        </g>
+       </g>
+       <g class="com.sun.star.drawing.TextShape">
+        <g id="id12">
+         <rect class="BoundingBox" stroke="none" fill="none" x="11050" y="2848" width="901" height="1206"/>
+         <text class="TextShape"><tspan class="TextParagraph" font-family="Liberation Sans, sans-serif" font-size="282px" font-weight="700"><tspan class="TextPosition" x="11460" y="3231"><tspan fill="rgb(0,0,0)" stroke="none">.</tspan></tspan></tspan><tspan class="TextParagraph" font-family="Liberation Sans, sans-serif" font-size="282px" font-weight="700"><tspan class="TextPosition" x="11460" y="3549"><tspan fill="rgb(0,0,0)" stroke="none">.</tspan></tspan></tspan><tspan class="TextParagraph" font-family="Liberation Sans, sans-serif" font-size="282px" font-weight="700"><tspan class="TextPosition" x="11460" y="3867"><tspan fill="rgb(0,0,0)" stroke="none">.</tspan></tspan></tspan></text>
+        </g>
+       </g>
+      </g>
+      <g class="Group">
+       <g class="Graphic">
+        <g>
+         <rect class="BoundingBox" stroke="none" fill="none" x="13068" y="1850" width="2652" height="2341"/>
+         <image x="13068" y="1850" width="2652" height="2341" xlink:href="data:image/png;base64,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"/>
+        </g>
+       </g>
+       <g class="com.sun.star.drawing.TextShape">
+        <g id="id13">
+         <rect class="BoundingBox" stroke="none" fill="none" x="12900" y="4010" width="3101" height="741"/>
+         <text class="TextShape"><tspan class="TextParagraph" font-family="Liberation Sans, sans-serif" font-size="423px" font-weight="400"><tspan class="TextPosition" x="13163" y="4520"><tspan fill="rgb(0,0,0)" stroke="none">preprocessed</tspan></tspan></tspan></text>
+        </g>
+       </g>
+      </g>
+      <g class="com.sun.star.drawing.CustomShape">
+       <g id="id14">
+        <rect class="BoundingBox" stroke="none" fill="none" x="999" y="999" width="15904" height="4404"/>
+        <path fill="none" stroke="rgb(255,255,255)" d="M 1000,1000 L 16901,1000 16901,5401 1000,5401 1000,1000 1000,1000 Z"/>
+        <path fill="none" stroke="rgb(255,255,255)" d="M 1000,1000 L 1000,1000 Z"/>
+        <path fill="none" stroke="rgb(255,255,255)" d="M 16901,5401 L 16901,5401 Z"/>
+       </g>
+      </g>
+     </g>
+    </g>
+   </g>
+  </g>
+ </g>
+</svg>

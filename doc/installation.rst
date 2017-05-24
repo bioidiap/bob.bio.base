@@ -13,9 +13,10 @@ turn are part of the signal-processing and machine learning toolbox Bob_. To
 install Bob_, please read the `Installation Instructions <bobinstall_>`_.
 
 .. note::
-  Currently, running Bob_ under MS Windows in not yet supported. However, we
-  found that running Bob_ in a virtual Unix environment such as the one
-  provided by VirtualBox_ is a good alternative.
+
+    Running Bob_ under MS Windows in not yet supported. However, we found that
+    running Bob_ in a virtual Unix environment such as the one provided by
+    VirtualBox_ is a good alternative.
 
 Then, to install the ``bob.bio`` packages and in turn maybe the database
 packages that you want to use, use conda_ to install them:

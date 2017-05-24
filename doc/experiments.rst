@@ -5,51 +5,18 @@
 .. _bob.bio.base.experiments:
 
 
-=========================================
+==========================================
 Running Biometric Recognition Experiments
-=========================================
+==========================================
 
-Now, you are almost ready to run your first biometric recognition experiment.
-Just a little bit of theory, and then: off we go.
-
-
-Structure of a Biometric Recognition Experiment
------------------------------------------------
-
-Each biometric recognition experiment that is run with ``bob.bio`` is divided into several steps.
-The steps are:
-
-1. Data preprocessing: Raw data is preprocessed, e.g., for face recognition, faces are detected, images are aligned and photometrically enhanced.
-2. Feature extractor training: Feature extraction parameters are learned.
-3. Feature extraction: Features are extracted from the preprocessed data.
-4. Feature projector training: Parameters of a subspace-projection of the features are learned.
-5. Feature projection: The extracted features are projected into a subspace.
-6. Model enroller training: The ways how to enroll models from extracted or projected features is learned.
-7. Model enrollment: One model is enrolled from the features of one or more images.
-8. Scoring: The verification scores between various models and probe features are computed.
-9. Evaluation: The computed scores are evaluated and curves are plotted.
-
-These 9 steps are divided into four distinct groups, which are discussed in more detail later:
-
-* Preprocessing (only step 1)
-* Feature extraction (steps 2 and 3)
-* Biometric recognition (steps 4 to 8)
-* Evaluation (step 9)
-
-The communication between two steps is file-based, usually using a binary HDF5_ interface, which is implemented in the :py:class:`bob.io.base.HDF5File` class.
-The output of one step usually serves as the input of the subsequent step(s).
-Depending on the algorithm, some of the steps are not applicable/available.
-E.g. most of the feature extractors do not need a special training step, or some algorithms do not require a subspace projection.
-In these cases, the according steps are skipped.
-``bob.bio`` takes care that always the correct files are forwarded to the subsequent steps.
-
+Now, you are ready to run your first biometric recognition experiment.
 
 .. _running_part_1:
 
 Running Experiments (part I)
 ----------------------------
 
-To run an experiment, we provide a generic script ``verify.py``, which is highly parametrizable.
+To run an experiment, we provide a generic script ``verify.py``, which is highly parameterizable.
 To get a complete list of command line options, please run:
 
 .. code-block:: sh
@@ -83,7 +50,7 @@ To get a list of registered resources, please call:
 
 Each package in ``bob.bio`` defines its own resources, and the printed list of registered resources differs according to the installed packages.
 If only ``bob.bio.base`` is installed, no databases and only one preprocessor will be listed.
-To see more details about the resources, i.e., the full constructor call fo the respective class, use the ``--details`` (or shortly ``-d``) option, and to sub-select only specific types of resources, use the ``--types`` (or ``-t``) option:
+To see more details about the resources, i.e., the full constructor call for the respective class, use the ``--details`` (or shortly ``-d``) option, and to sub-select only specific types of resources, use the ``--types`` (or ``-t``) option:
 
 .. code-block:: sh
 
