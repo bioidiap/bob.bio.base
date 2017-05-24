@@ -46,7 +46,7 @@ The ``bob.bio`` framework has the capability to perform both *verification* and 
 
 In general, the goal of a biometric recognition experiment is to quantify the recognition accuracy of a biometric recognition system, e.g., we wish to find out how good the system is at deciding whether or not two biometric samples come from the same person.
 
-To conduct a biometric recognition experiment, we need biometric data.  So, we use a biometric database.  A biometric database generally consists of multiple samples of a particular biometric, from multiple people.  For example, a face database could contain 5 different images of a person's face, from 100 people.  The dataset is split up into samples used for enrollment, and samples used for probing.  We enroll a model for each identity from one or more of its faces. We then simulate "genuine" recognition attempts by comparing each person's probe samples to their enrolled models.  We simulate "impostor" recognition attempts by comparing the same probe samples to models of different people.
+To conduct a biometric recognition experiment, we need biometric data.  So, we use a biometric database.  A biometric database generally consists of multiple samples of a particular biometric, from multiple people.  For example, a face database could contain 5 different images of a person's face, from 100 people.  The dataset is split up into samples used for enrollment, and samples used for probing.  We enroll a model for each identity from one or more of its faces. We then simulate "genuine" recognition attempts by comparing each person's probe samples to their enrolled models.  We simulate "impostor" recognition attempts by comparing the same probe samples to models of different people. Which data is used for training, enrollment and probing is defined by the evaluation *protocol* of the database. The protocol also defines, which models should be compared to which probes.
 
 In ``bob.bio``, biometric recognition experiments are split up into four main stages, similar to the stages in a typical verification or identification system as illustrated in Fig. 1 and Fig. 2, respectively:
 
@@ -82,7 +82,8 @@ All the biometric features stored in the "preprocessed" directory go through the
 
    Feature extraction stage in ``bob.bio``'s biometric recognition experiment framework.
 
-Note that there is sometimes a feature extractor training stage prior to the feature extraction (to help the extractor learn which features to extract), but this is not always the case.
+.. note::
+   Prior to the feature extraction there is an *optional* feature extractor training stage (to help the extractor to learn which features to extract) that uses the training data provided by the database.
 
 
 Matching:
@@ -97,6 +98,9 @@ The matching stage in ``bob.bio`` is referred to as the "Algorithm".  The Algori
 
    The projection part of the Algorithm stage in ``bob.bio``'s biometric recognition experiment framework.
 
+.. note::
+   In most cases when a feature projection is applied, there is a feature projection training stage that works on the training data provided by the database.
+   In the example above, prior to the "projection" stage, the subspace projection matrix is computed from the extracted training features.
 
 (ii) Enrollment: The enrollment part of the Algorithm stage essentially works as follows.  One or more biometric samples per person are used to compute a representative "model" for that person, which essentially represents that person's identity.  To determine which of a person's biometric samples should be used to generate their model, we query the protocol of our input biometric database.  The model is then calculated using the corresponding biometric features extracted in the Feature Extraction stage (or, optionally, our "projected" features).  Fig. 6 illustrates the enrollment part of the Algorithm module:
 
@@ -105,10 +109,11 @@ The matching stage in ``bob.bio`` is referred to as the "Algorithm".  The Algori
 
    The enrollment part of the Algorithm stage in ``bob.bio``'s biometric recognition experiment framework.
 
-Note that there is sometimes a model enroller training stage prior to enrollment.  This is only necessary when you are trying to fit an existing model to a set of biometric features, e.g., fitting a UBM (Universal Background Model) to features extracted from a speech signal.  In other cases, the model is calculated from the features themselves, e.g., by averaging the feature vectors from multiple samples of the same biometric, in which case model enroller training is not necessary.
+.. note::
+   There is sometimes a model enroller training stage prior to enrollment, which uses the databases training data.  This is only necessary when you are trying to fit an existing model to a set of biometric features, e.g., fitting a UBM (Universal Background Model) to features extracted from a speech signal.  In other cases, the model is calculated from the features themselves, e.g., by averaging the feature vectors from multiple samples of the same biometric, in which case model enroller training is not necessary.
 
 
-(iii) Scoring: The scoring part of the Algorithm stage essentially works as follows.  Each model is associated with a number of probes, so we first query the input biometric database to determine which biometric samples should be used as the probes for each model.  Every model is then compared to its associated probes (some of which come from the same person, and some of which come from different people), and a score is calculated for each comparison.  The score describes the similarity between the model and the probe (higher scores indicate greater similarity); for example, it can be computed as a negative distance between the model and probe features.  Ideally, if the model and probe come from the same biometric (e.g., two images of the same finger), they should be very similar, and if they come from different sources (e.g., two images of different fingers) then they should be very different.  Fig. 7 illustrates the scoring part of the Algorithm module:
+(iii) Scoring: The scoring part of the Algorithm stage essentially works as follows.  Each model is associated with a number of probes, so we first query the input biometric database to determine which biometric samples should be used as the probes for each model.  Every model is then compared to its associated probes (some of which come from the same person, and some of which come from different people), and a score is calculated for each comparison.  The score describes the similarity between the model and the probe (higher scores indicate greater similarity); for example, it can be computed as a negative distance between the model and probe features.  Ideally, if the model and probe come from the same biometric (e.g., two images of the same finger), they should be very similar, and if they come from different sources (e.g., two images of different fingers) then their similarity should be low.  Fig. 7 illustrates the scoring part of the Algorithm module:
 
 .. figure:: /img/algorithm_scoring.svg
    :align: center
@@ -132,7 +137,7 @@ Once a decision has been made, we can quantify the overall performance of the pa
 .. note::
 
    * The "Data Preprocessing" to "Matching" steps are carried out by ``bob.bio.base``'s ``verify.py`` script.  The "Decision Making" step is carried out by ``bob.bio.base``'s ``evaluate.py`` script.  These scripts will be discussed in the next sections.
-   * The communication between any two steps in the recognition framework is file-based, usually using a binary HDF5_ interface, which is implemented, for example, in the :py:class:`bob.io.base.HDF5File` class.
+   * The communication between any two steps in the recognition framework is file-based, usually using a binary HDF5_ interface, which is implemented, for example, in the :py:class:`bob.io.base.HDF5File` class. One exception is the "Decision Making" step, which uses score file in text format, i.e., to allow to incorporate other systems' results, which are computed outside of ``bob.bio``, but uses the same database and evaluation protocol.
    * The output of one step usually serves as the input of the subsequent step(s), as portrayed in Fig. 3 -- Fig. 8.
    * ``bob.bio`` ensures that the correct files are always forwarded to the subsequent steps.  For example, if you choose to implement a feature projection after the feature extraction stage, as illustrated in Fig. 5, ``bob.bio`` will make sure that the files in the "projected" directory are passed on as the input to the Enrollment stage; otherwise, the "extracted" directory will become the input to the Enrollment stage.
 
