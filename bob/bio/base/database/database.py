@@ -760,7 +760,7 @@ class ZTBioDatabase(BioDatabase):
     def client_id_from_t_model_id(self, t_model_id, group='dev'):
         """client_id_from_t_model_id(t_model_id, group = 'dev') -> client_id
         Returns the client id for the given T-Norm model id.
-        In this base class implementation, we just use the :py:meth:`client_id_from_model_id` function.
+        In this base class implementation, we just use the :py:meth:`BioDatabase.client_id_from_model_id` function.
         Overload this function if you need another behavior.
 
         **Parameters:**
