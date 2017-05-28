@@ -22,3 +22,4 @@
 .. _packages: https://www.idiap.ch/software/bob/packages
 .. _bobinstall: https://www.idiap.ch/software/bob/install
 .. _conda: https://conda.io
+.. _biometric recognition databases: https://www.idiap.ch/software/bob/packages/#biometric-recognition-database-frontends
