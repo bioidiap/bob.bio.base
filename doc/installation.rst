@@ -12,12 +12,6 @@ As noted before, this package is part of the ``bob.bio`` packages, which in
 turn are part of the signal-processing and machine learning toolbox Bob_. To
 install Bob_, please read the `Installation Instructions <bobinstall_>`_.
 
-.. note::
-
-    Running Bob_ under MS Windows in not yet supported. However, we found that
-    running Bob_ in a virtual Unix environment such as the one provided by
-    VirtualBox_ is a good alternative.
-
 Then, to install the ``bob.bio`` packages and in turn maybe the database
 packages that you want to use, use conda_ to install them:
 
@@ -57,14 +51,14 @@ command line below will install all the required packages:
 Databases
 ---------
 
-With ``bob.bio`` you will run biometric recognition experiments using some
-default biometric recognition databases. Though the verification protocols are
-implemented in ``bob.bio``, the original data are **not included**. To download
-the original data of the databases, please refer to the according Web-pages.
-For a list of supported databases including their download URLs, please refer
-to the `verification_databases <packages_>`_.
+With ``bob.bio`` you will run biometric recognition experiments using biometric
+recognition databases. Though the verification protocols are implemented in
+``bob.bio``, the raw data are **not included**. To download the raw
+data of the databases, please refer to the according Web-pages. For a list of
+supported databases including their download URLs, please refer to the
+`biometric recognition databases`_.
 
-After downloading the original data for the databases, you will need to tell
+After downloading the raw data for the databases, you will need to tell
 ``bob.bio``, where these databases can be found. For this purpose, we have
 decided to implement a special file, where you can set your directories. By
 default, this file is located in ``~/.bob_bio_databases.txt``, and it contains
@@ -93,8 +87,13 @@ updated, and the corrected paths for those you have.
 Test your Installation
 ----------------------
 
-You can also install the ``nose`` package to test your installation and use
-that to verify your installation:
+.. note::
+
+   For some of the tests to pass, you need to install
+   `LaTeX <https://en.wikipedia.org/wiki/LaTeX>`_ on your machine.
+
+You can install the ``nose`` package to test your installation and use that to
+verify your installation:
 
 .. code-block:: sh
 
@@ -129,12 +128,6 @@ To avoid the download to happen each time you call the nose tests, please:
 
   $ export ATNT_DATABASE_DIRECTORY=/path/to/your/copy/of/atnt
 
-.. note::
-
-  To set the directory permanently, you can also change the
-  ``atnt_default_directory`` in the file `bob/bio/base/test/utils.py
-  <file:../bob/bio/base/test/utils.py>`_. In this case, there is no need to set
-  the environment variable any more.
 
 In case any of the tests fail for unexplainable reasons, please send a report
 through our `mailing list`_.
@@ -142,26 +135,6 @@ through our `mailing list`_.
 .. note::
   Usually, all tests should pass with the latest stable versions of Bob_
   packages. In other versions, some of the tests may fail.
-
-
-Generate this documentation
----------------------------
-
-Generally, the documentation of this package is
-`available online <http://pythonhosted.org/bob.bio.base>`__, and this should be
-your preferred resource. However, to generate this documentation locally, you
-call:
-
-.. code-block:: sh
-
-  $ conda install sphinx  # install sphinx
-  $ sphinx-build doc sphinx
-
-Afterward, the documentation is available and you can read it, e.g., by using:
-
-.. code-block:: sh
-
-  $ firefox sphinx/index.html
 
 
 .. include:: links.rst
