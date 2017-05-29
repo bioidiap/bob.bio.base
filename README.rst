@@ -4,7 +4,7 @@
 .. image:: http://img.shields.io/badge/docs-stable-yellow.svg
    :target: http://pythonhosted.org/bob.bio.base/index.html
 .. image:: http://img.shields.io/badge/docs-latest-orange.svg
-   :target: https://www.idiap.ch/software/bob/docs/latest/bioidiap/bob.bio.base/master/index.html
+   :target: https://www.idiap.ch/software/bob/docs/latest/bob/bob.bio.base/master/index.html
 .. image:: https://gitlab.idiap.ch/bob/bob.bio.base/badges/master/build.svg
    :target: https://gitlab.idiap.ch/bob/bob.bio.base/commits/master
 .. image:: https://gitlab.idiap.ch/bob/bob.bio.base/badges/master/coverage.svg
