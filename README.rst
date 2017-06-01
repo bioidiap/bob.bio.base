@@ -5,10 +5,10 @@
    :target: http://pythonhosted.org/bob.bio.base/index.html
 .. image:: http://img.shields.io/badge/docs-latest-orange.svg
    :target: https://www.idiap.ch/software/bob/docs/latest/bob/bob.bio.base/master/index.html
-.. image:: https://gitlab.idiap.ch/bob/bob.bio.base/badges/master/build.svg
-   :target: https://gitlab.idiap.ch/bob/bob.bio.base/commits/master
-.. image:: https://gitlab.idiap.ch/bob/bob.bio.base/badges/master/coverage.svg
-   :target: https://gitlab.idiap.ch/bob/bob.bio.base/commits/master
+.. image:: https://gitlab.idiap.ch/bob/bob.bio.base/badges/v3.1.2/build.svg
+   :target: https://gitlab.idiap.ch/bob/bob.bio.base/commits/v3.1.2
+.. image:: https://gitlab.idiap.ch/bob/bob.bio.base/badges/v3.1.2/coverage.svg
+   :target: https://gitlab.idiap.ch/bob/bob.bio.base/commits/v3.1.2
 .. image:: https://img.shields.io/badge/gitlab-project-0000c0.svg
    :target: https://gitlab.idiap.ch/bob/bob.bio.base
 .. image:: http://img.shields.io/pypi/v/bob.bio.base.svg
