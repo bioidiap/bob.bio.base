@@ -337,12 +337,60 @@ def test_internal_raises():
       '--imports', 'bob.bio.base.test.dummy'
   ]
 
-  from bob.bio.base.script.verify import main
-  for option, value in (("--group", "dev"), ("--model-type", "N"), ("--score-type", "A")):
-    internal = parameters + [option, value]
+  try:
+    from bob.bio.base.script.verify import main
+    for option, value in (("--group", "dev"), ("--model-type", "N"), ("--score-type", "A")):
+      internal = parameters + [option, value]
 
-    nose.tools.assert_raises(ValueError, main, internal)
-  shutil.rmtree(test_dir)
+      nose.tools.assert_raises(ValueError, main, internal)
+  finally:
+    shutil.rmtree(test_dir)
+
+
+def test_verify_generate_config():
+  # tests the config file generation
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
+  config_file = os.path.join(test_dir, 'config.py')
+  # define dummy parameters
+  parameters = [
+      '-H', config_file
+  ]
+  try:
+    from bob.bio.base.script.verify import main
+    nose.tools.assert_raises(SystemExit, main, parameters)
+    assert os.path.exists(config_file)
+    from bob.bio.base.tools.command_line import _required_list, _common_list, _optional_list
+    assert all(a in _required_list for a in ['database', 'preprocessor', 'extractor', 'algorithm', 'sub_directory'])
+    assert all(a in _common_list for a in ['protocol', 'grid', 'parallel', 'verbose', 'groups', 'temp_directory', 'result_directory', 'zt_norm', 'allow_missing_files', 'dry_run', 'force'])
+    assert all(a in _optional_list for a in ['preprocessed_directory', 'extracted_directory', 'projected_directory', 'model_directories', 'extractor_file', 'projector_file', 'enroller_file'])
+    # todo: this list is actually much longer...
+    _rare_list = ['imports', 'experiment_info_file', 'write_compressed_score_files', 'skip_preprocessing', 'skip_calibration', 'execute_only']
+
+    lines = open(config_file).readlines()
+
+    # split into four lists (required, common, optional, rare)
+    last_lines = None
+    split_lines = []
+    for line in lines:
+      if line.startswith("#####"):
+        if last_lines:
+          split_lines.append(last_lines)
+        last_lines = []
+      else:
+        if last_lines is not None:
+          last_lines.append(line)
+    split_lines.append(last_lines)
+    assert len(split_lines) == 4
+
+    for _list, lines in zip((_required_list, _common_list, _optional_list, _rare_list), split_lines):
+      for a in _list:
+        assert any(l.startswith("#%s =" %a) for l in lines), a
+  finally:
+    shutil.rmtree(test_dir)
+
+
+
+
 
 
 def test_fusion():

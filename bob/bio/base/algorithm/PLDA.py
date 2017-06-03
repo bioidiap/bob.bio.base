@@ -168,10 +168,6 @@ class PLDA (Algorithm):
     plda_machine = bob.learn.em.PLDAMachine(bob.io.base.HDF5File(model_file), self.plda_base)
     return plda_machine
 
-  def read_probe(self, probe_file):
-    """Reads the probe using :py:func:`bob.bio.base.load`."""
-    return bob.bio.base.load(probe_file)
-
 
   def score(self, model, probe):
     """Computes the PLDA score for the given model and probe"""

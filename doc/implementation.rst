@@ -173,10 +173,6 @@ If the ``score`` function expects models and probe features to be of a different
 
 * ``write_model(self, model, model_file)``: writes the model (as returned by the ``enroll`` function).
 * ``read_model(self, model_file) -> model``: reads the model (as written by the ``write_model`` function) from file.
-* ``read_probe(self, probe_file) -> feature``: reads the probe feature from file.
-
-  .. note::
-     In many cases, the ``read_feature`` and ``read_probe`` functions are identical (if both are present).
 
 Finally, the :py:class:`bob.bio.base.algorithm.Algorithm` class provides default implementations for the case that models store several features, or that several probe features should be combined into one score.
 These two functions are:

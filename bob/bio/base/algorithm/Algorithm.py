@@ -172,7 +172,8 @@ class Algorithm (object):
 
     probe : object
       The probe object to compare the model with.
-      The ``probe`` was read using the :py:meth:`read_probe` function.
+      The ``probe`` was read using the :py:meth:`read_feature` function
+      (or the :py:meth:`bob.bio.base.extractor.Extractor.read_feature` function, if this algorithm does not perform projection.
 
     **Returns:**
 
@@ -328,29 +329,6 @@ class Algorithm (object):
       The model that was read from file.
     """
     return utils.load(model_file)
-
-
-  def read_probe(self, probe_file):
-    """read_probe(probe_file) -> probe
-
-    Reads the probe feature from file.
-    By default, the probe feature is identical to the projected feature.
-    Hence, this base class implementation simply calls :py:meth:`read_feature`.
-
-    If your algorithm requires different behavior, please overwrite this function.
-
-    **Parameters:**
-
-    probe_file : str or :py:class:`bob.io.base.HDF5File`
-      The file open for reading, or the file name to read from.
-
-    **Returns:**
-
-    probe : object
-      The probe that was read from file.
-    """
-    return self.read_feature(probe_file)
-
 
 
   def train_projector(self, training_features, projector_file):

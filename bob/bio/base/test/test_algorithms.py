@@ -109,7 +109,7 @@ def test_pca():
   _compare(model, pkg_resources.resource_filename('bob.bio.base.test', 'data/pca_model.hdf5'), pca1.write_model, pca1.read_model)
 
   # compare model with probe
-  probe = pca1.read_probe(pkg_resources.resource_filename('bob.bio.base.test', 'data/pca_projected.hdf5'))
+  probe = pca1.read_feature(pkg_resources.resource_filename('bob.bio.base.test', 'data/pca_projected.hdf5'))
   reference_score = -251.53563107
   assert abs(pca1.score(model, probe) - reference_score) < 1e-5, "The scores differ: %3.8f, %3.8f" % (pca1.score(model, probe), reference_score)
   assert abs(pca1.score_for_multiple_probes(model, [probe, probe]) - reference_score) < 1e-5
@@ -183,7 +183,7 @@ def test_lda():
   _compare(model, pkg_resources.resource_filename('bob.bio.base.test', 'data/lda_model.hdf5'), lda1.write_model, lda1.read_model)
 
   # compare model with probe
-  probe = lda1.read_probe(pkg_resources.resource_filename('bob.bio.base.test', 'data/lda_projected.hdf5'))
+  probe = lda1.read_feature(pkg_resources.resource_filename('bob.bio.base.test', 'data/lda_projected.hdf5'))
   reference_score = -233.30450012
   assert abs(lda1.score(model, probe) - reference_score) < 1e-5, "The scores differ: %3.8f, %3.8f" % (lda1.score(model, probe), reference_score)
   assert abs(lda1.score_for_multiple_probes(model, [probe, probe]) - reference_score) < 1e-5
@@ -226,7 +226,7 @@ def test_distance():
   # compare model with probe
   enroll = utils.random_training_set(5, 5, 0., 255., seed=21);
   model = numpy.mean(distance.enroll(enroll),axis=0)
-  probe = distance.read_probe(pkg_resources.resource_filename('bob.bio.base.test', 'data/lda_projected.hdf5'))
+  probe = bob.io.base.load(pkg_resources.resource_filename('bob.bio.base.test', 'data/lda_projected.hdf5'))
 
   reference_score = -0.1873371
   assert abs(distance.score(model, probe) - reference_score) < 1e-5, "The scores differ: %3.8f, %3.8f" % (distance.score(model, probe), reference_score)
@@ -358,7 +358,7 @@ def test_plda():
   reference_score = 0.
   assert abs(plda1.score(model, feature) - reference_score) < 1e-5, "The scores differ: %3.8f, %3.8f" % (plda1.score(model, feature), reference_score)
   assert abs(plda1.score_for_multiple_probes(model, [feature, feature]) - reference_score) < 1e-5
-  
+
 def test_plda_nopca():
   temp_file = bob.io.base.test_utils.temporary_filename()
   plda_ref = bob.bio.base.load_resource("plda", "algorithm", preferred_package = 'bob.bio.base')
@@ -373,7 +373,7 @@ def test_plda_nopca():
   # train the projector
   try:
     # train projector
-    plda.train_enroller(train_set, temp_file)       
+    plda.train_enroller(train_set, temp_file)
     assert os.path.exists(temp_file)
 
     if regenerate_refs: shutil.copy(temp_file, reference_file)
@@ -396,4 +396,3 @@ def test_plda_nopca():
   reference = plda.read_model(reference)
 
   assert model.is_similar_to(reference)
-

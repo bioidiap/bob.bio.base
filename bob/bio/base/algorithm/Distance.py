@@ -73,24 +73,6 @@ class Distance (Algorithm):
     return numpy.vstack([f.flatten() for f in enroll_features])
 
 
-  def read_probe(self, probe_file):
-    """read_probe(probe_file) -> probe
-
-    Reads the probe feature from the given HDF5 file.
-
-    **Parameters:**
-
-    probe_file : str or :py:class:`bob.io.base.HDF5File`
-      The file (open for reading) or the name of an existing file to read from.
-
-    **Returns:**
-
-    probe : object
-      The probe.
-    """
-    return utils.load(probe_file)
-
-
   def score(self, model, probe):
     """score(model, probe) -> float
 
