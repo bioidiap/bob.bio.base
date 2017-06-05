@@ -13,7 +13,7 @@ from .FileSelector import FileSelector
 from .extractor import read_features
 from .. import utils
 
-def _scores(algorithm, model, probes, allow_missing_files):
+def _scores(algorithm, reader, model, probes, allow_missing_files):
   """Compute scores for the given model and a list of probes.
   """
   # the file selector object
@@ -36,7 +36,7 @@ def _scores(algorithm, model, probes, allow_missing_files):
           # we keep the NaN score
           continue
       # read probe from probe_set
-      probe = [algorithm.read_probe(probe_file) for probe_file in probe_element]
+      probe = [reader.read_feature(probe_file) for probe_file in probe_element]
       # compute score
       scores[0,i] = algorithm.score_for_multiple_probes(model, probe)
     else:
@@ -44,7 +44,7 @@ def _scores(algorithm, model, probes, allow_missing_files):
         # we keep the NaN score
         continue
       # read probe
-      probe = algorithm.read_probe(probe_element)
+      probe = reader.read_feature(probe_element)
       # compute score
       scores[0,i] = algorithm.score(model, probe)
   # Returns the scores
@@ -111,7 +111,7 @@ def _save_scores(score_file, scores, probe_objects, client_id, write_compressed)
   _close_written(score_file, f, write_compressed)
 
 
-def _scores_a(algorithm, model_ids, group, compute_zt_norm, force, write_compressed, allow_missing_files):
+def _scores_a(algorithm, reader, model_ids, group, compute_zt_norm, force, write_compressed, allow_missing_files):
   """Computes A scores for the models with the given model_ids. If ``compute_zt_norm = False``, these are the only scores that are actually computed."""
   # the file selector object
   fs = FileSelector.instance()
@@ -138,7 +138,7 @@ def _scores_a(algorithm, model_ids, group, compute_zt_norm, force, write_compres
       # get the probe files
       current_probe_files = fs.get_paths(current_probe_objects, 'projected' if algorithm.performs_projection else 'extracted')
       # compute scores
-      a = _scores(algorithm, model, current_probe_files, allow_missing_files)
+      a = _scores(algorithm, reader, model, current_probe_files, allow_missing_files)
 
       if compute_zt_norm:
         # write A matrix only when you want to compute zt norm afterwards
@@ -148,7 +148,7 @@ def _scores_a(algorithm, model_ids, group, compute_zt_norm, force, write_compres
       _save_scores(fs.no_norm_file(model_id, group), a, current_probe_objects, fs.client_id(model_id, group), write_compressed)
 
 
-def _scores_b(algorithm, model_ids, group, force, allow_missing_files):
+def _scores_b(algorithm, reader, model_ids, group, force, allow_missing_files):
   """Computes B scores for the given model ids."""
   # the file selector object
   fs = FileSelector.instance()
@@ -171,10 +171,10 @@ def _scores_b(algorithm, model_ids, group, force, allow_missing_files):
         model = None
       else:
         model = algorithm.read_model(model_file)
-      b = _scores(algorithm, model, z_probe_files, allow_missing_files)
+      b = _scores(algorithm, reader, model, z_probe_files, allow_missing_files)
       bob.io.base.save(b, score_file, True)
 
-def _scores_c(algorithm, t_model_ids, group, force, allow_missing_files):
+def _scores_c(algorithm, reader, t_model_ids, group, force, allow_missing_files):
   """Computes C scores for the given t-norm model ids."""
   # the file selector object
   fs = FileSelector.instance()
@@ -197,10 +197,10 @@ def _scores_c(algorithm, t_model_ids, group, force, allow_missing_files):
         t_model = None
       else:
         t_model = algorithm.read_model(t_model_file)
-      c = _scores(algorithm, t_model, probe_files, allow_missing_files)
+      c = _scores(algorithm, reader, t_model, probe_files, allow_missing_files)
       bob.io.base.save(c, score_file, True)
 
-def _scores_d(algorithm, t_model_ids, group, force, allow_missing_files):
+def _scores_d(algorithm, reader, t_model_ids, group, force, allow_missing_files):
   """Computes D scores for the given t-norm model ids. Both the D matrix and the D-samevalue matrix are written."""
   # the file selector object
   fs = FileSelector.instance()
@@ -227,7 +227,7 @@ def _scores_d(algorithm, t_model_ids, group, force, allow_missing_files):
         t_model = None
       else:
         t_model = algorithm.read_model(t_model_file)
-      d = _scores(algorithm, t_model, z_probe_files, allow_missing_files)
+      d = _scores(algorithm, reader, t_model, z_probe_files, allow_missing_files)
       bob.io.base.save(d, score_file, True)
 
       t_client_id = [fs.client_id(t_model_id, group, True)]
@@ -235,7 +235,7 @@ def _scores_d(algorithm, t_model_ids, group, force, allow_missing_files):
       bob.io.base.save(d_same_value_tm, same_score_file, True)
 
 
-def compute_scores(algorithm, compute_zt_norm, indices = None, groups = ['dev', 'eval'], types = ['A', 'B', 'C', 'D'], write_compressed = False, allow_missing_files = False, force = False):
+def compute_scores(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev', 'eval'], types = ['A', 'B', 'C', 'D'], write_compressed = False, allow_missing_files = False, force = False):
   """Computes the scores for the given groups.
 
   This function computes all scores for the experiment, and writes them to files, one per model.
@@ -246,6 +246,10 @@ def compute_scores(algorithm, compute_zt_norm, indices = None, groups = ['dev', 
 
   algorithm : py:class:`bob.bio.base.algorithm.Algorithm` or derived
     The algorithm, used for enrolling model and writing them to file.
+
+  extractor : py:class:`bob.bio.base.extractor.Extractor` or derived
+    The extractor, used for extracting the features.
+    The extractor is only used to read features, if the algorithm does not perform projection.
 
   compute_zt_norm : bool
     If set to ``True``, also ZT-norm scores are computed.
@@ -280,6 +284,14 @@ def compute_scores(algorithm, compute_zt_norm, indices = None, groups = ['dev', 
     algorithm.load_projector(fs.projector_file)
   algorithm.load_enroller(fs.enroller_file)
 
+  # which tool to use to read the probes
+  if algorithm.performs_projection:
+    reader = algorithm
+  else:
+    reader = extractor
+    # make sure that the extractor is loaded
+    extractor.load(fs.extractor_file)
+
   for group in groups:
     # get model ids
     model_ids = fs.model_ids(group)
@@ -293,20 +305,20 @@ def compute_scores(algorithm, compute_zt_norm, indices = None, groups = ['dev', 
 
     # compute A scores
     if 'A' in types:
-      _scores_a(algorithm, model_ids, group, compute_zt_norm, force, write_compressed, allow_missing_files)
+      _scores_a(algorithm, reader, model_ids, group, compute_zt_norm, force, write_compressed, allow_missing_files)
 
     if compute_zt_norm:
       # compute B scores
       if 'B' in types:
-        _scores_b(algorithm, model_ids, group, force, allow_missing_files)
+        _scores_b(algorithm, reader, model_ids, group, force, allow_missing_files)
 
       # compute C scores
       if 'C' in types:
-        _scores_c(algorithm, t_model_ids, group, force, allow_missing_files)
+        _scores_c(algorithm, reader, t_model_ids, group, force, allow_missing_files)
 
       # compute D scores
       if 'D' in types:
-        _scores_d(algorithm, t_model_ids, group, force, allow_missing_files)
+        _scores_d(algorithm, reader, t_model_ids, group, force, allow_missing_files)
 
 
 

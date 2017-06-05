@@ -336,6 +336,7 @@ def execute(args):
     if args.score_type in ['A', 'B']:
       tools.compute_scores(
           args.algorithm,
+          args.extractor,
           args.zt_norm,
           indices = tools.indices(fs.model_ids(args.group), None if args.grid is None else args.grid.number_of_scoring_jobs),
           groups = [args.group],
@@ -347,6 +348,7 @@ def execute(args):
     elif args.score_type in ['C', 'D']:
       tools.compute_scores(
           args.algorithm,
+          args.extractor,
           args.zt_norm,
           indices = tools.indices(fs.t_model_ids(args.group), None if args.grid is None else args.grid.number_of_scoring_jobs),
           groups = [args.group],

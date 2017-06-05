@@ -230,25 +230,6 @@ class BIC(Algorithm):
             i += 1
         return model
 
-    def read_probe(self, probe_file):
-        """read_probe(probe_file) -> probe
-
-        Reads the probe feature from the given HDF5 file.
-
-        To read the feature, the ``read_function`` specified in the constructor is employed.
-
-        **Parameters:**
-
-        probe_file : str or :py:class:`bob.io.base.HDF5File`
-          The file (open for reading) or the name of an existing file to read from.
-
-        **Returns:**
-
-        probe : object
-          The read probe, which is a feature.
-        """
-        return self.read_function(bob.io.base.HDF5File(probe_file))
-
     def score(self, model, probe):
         """score(model, probe) -> float
 
