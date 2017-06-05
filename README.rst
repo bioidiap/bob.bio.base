@@ -26,12 +26,36 @@ Bob_. It provides tools to run comparable and reproducible biometric
 recognition experiments on publicly available databases.
 
 The `User Guide`_ provides installation and usage instructions.
+If you run biometric recognition experiments using the bob.bio framework, please cite at least one of the following in your scientific publication::
 
+  @inbook{guenther2016face,
+    chapter = {Face Recognition in Challenging Environments: An Experimental and Reproducible Research Survey},
+    author = {G\"unther, Manuel and El Shafey, Laurent and Marcel, S\'ebastien},
+    editor = {Bourlai, Thirimachos},
+    title = {Face Recognition Across the Imaging Spectrum},
+    edition = {1},
+    year = {2016},
+    month = feb,
+    publisher = {Springer}
+  }
+
+  @inproceedings{guenther2012facereclib,
+    title = {An Open Source Framework for Standardized Comparisons of Face Recognition Algorithms},
+    author = {G\"unther, Manuel and Wallace, Roy and Marcel, S\'ebastien},
+    editor = {Fusiello, Andrea and Murino, Vittorio and Cucchiara, Rita},
+    booktitle = {European Conference on Computer Vision (ECCV) Workshops and Demonstrations},
+    series = {Lecture Notes in Computer Science},
+    volume = {7585},
+    year = {2012},
+    month = oct,
+    pages = {547-556},
+    publisher = {Springer},
+  }
 
 Installation
 ------------
 
-Complete Bob's `installation`_ instructions. Then, to install this pacakge,
+Complete Bob's `installation`_ instructions. Then, to install this package,
 run::
 
   $ conda install bob.bio.base

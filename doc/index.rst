@@ -17,7 +17,7 @@ To design a biometric recognition experiment, you must choose:
 * A biometric matching algorithm,
 * An evaluation method to make sense of the matching scores.
 
-The ``bob.bio`` packages contain several implementations of each of the above steps, so you can either choose from the existing methods or use your own.   
+The ``bob.bio`` packages contain several implementations of each of the above steps, so you can either choose from the existing methods or use your own.
 
 .. note::
    The ``bob.bio`` packages are derived from the former `FaceRecLib <http://pypi.python.org/pypi/facereclib>`__, which is herewith outdated.
@@ -34,6 +34,35 @@ Here is a growing list of derived packages:
 * :ref:`bob.bio.video <bob.bio.video>` An extension of face recognition algorithms to run on video data, and the according video databases
 * :ref:`bob.bio.gmm <bob.bio.gmm>` Algorithms based on Gaussian Mixture Modeling (GMM) such as Inter-Session Variability modeling (ISV) or Total Variability modeling (TV, aka. I-Vector)
 * `bob.bio.csu <http://pypi.python.org/pypi/bob.bio.csu>`__ for wrapper classes of the `CSU Face Recognition Resources <http://www.cs.colostate.edu/facerec>`__ (see `Installation Instructions <http://pythonhosted.org/bob.bio.csu/installation.html>`__ of ``bob.bio.csu``).
+
+
+If you run biometric recognition experiments using the bob.bio framework, please cite at least one of the following in your scientific publication:
+
+.. code-block:: tex
+
+  @inbook{guenther2016face,
+    chapter = {Face Recognition in Challenging Environments: An Experimental and Reproducible Research Survey},
+    author = {G\"unther, Manuel and El Shafey, Laurent and Marcel, S\'ebastien},
+    editor = {Bourlai, Thirimachos},
+    title = {Face Recognition Across the Imaging Spectrum},
+    edition = {1},
+    year = {2016},
+    month = feb,
+    publisher = {Springer}
+  }
+
+  @inproceedings{guenther2012facereclib,
+    title = {An Open Source Framework for Standardized Comparisons of Face Recognition Algorithms},
+    author = {G\"unther, Manuel and Wallace, Roy and Marcel, S\'ebastien},
+    editor = {Fusiello, Andrea and Murino, Vittorio and Cucchiara, Rita},
+    booktitle = {European Conference on Computer Vision (ECCV) Workshops and Demonstrations},
+    series = {Lecture Notes in Computer Science},
+    volume = {7585},
+    year = {2012},
+    month = oct,
+    pages = {547-556},
+    publisher = {Springer},
+  }
 
 
 ===========
