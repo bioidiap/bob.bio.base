@@ -21,24 +21,26 @@ regenerate_reference = False
 dummy_dir = pkg_resources.resource_filename('bob.bio.base', 'test/dummy')
 data_dir = pkg_resources.resource_filename('bob.bio.base', 'test/data')
 
-def _verify(parameters, test_dir, sub_dir, ref_modifier="", score_modifier=('scores',''), counts=3):
+def _verify(parameters, test_dir, sub_dir, ref_modifier="", score_modifier=('scores',''), counts=3, check_zt=True):
   from bob.bio.base.script.verify import main
   try:
     main(parameters)
 
+    Range = (0,1) if check_zt else (0,)
+
     # assert that the score file exists
     score_files = [os.path.join(test_dir, sub_dir, 'Default', norm, '%s-dev%s'%score_modifier) for norm in ('nonorm',  'ztnorm')]
-    assert os.path.exists(score_files[0]), "Score file %s does not exist" % score_files[0]
-    assert os.path.exists(score_files[1]), "Score file %s does not exist" % score_files[1]
+    for i in Range:
+      assert os.path.exists(score_files[i]), "Score file %s does not exist" % score_files[i]
 
     # also assert that the scores are still the same -- though they have no real meaning
     reference_files = [os.path.join(data_dir, 'scores-%s%s-dev'%(norm, ref_modifier)) for norm in ('nonorm',  'ztnorm')]
 
     if regenerate_reference:
-      for i in (0,1):
+      for i in Range:
         shutil.copy(score_files[i], reference_files[i])
 
-    for i in (0,1):
+    for i in Range:
       d = []
       # read reference and new data
       for score_file in (score_files[i], reference_files[i]):
@@ -93,6 +95,23 @@ def test_verify_algorithm_noprojection():
   ]
 
   _verify(parameters, test_dir, 'algorithm_noprojection')
+
+
+def test_verify_no_ztnorm():
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
+  # define dummy parameters
+  parameters = [
+      '-d', os.path.join(dummy_dir, 'database.py'),
+      '-p', os.path.join(dummy_dir, 'preprocessor.py'),
+      '-e', os.path.join(dummy_dir, 'extractor.py'),
+      '-a', os.path.join(dummy_dir, 'algorithm_noprojection.py'),
+      '-vs', 'test_nozt',
+      '--temp-directory', test_dir,
+      '--result-directory', test_dir
+  ]
+
+  _verify(parameters, test_dir, 'test_nozt', check_zt=False)
+
 
 
 def test_verify_resources():
