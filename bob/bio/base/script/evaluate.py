@@ -20,7 +20,7 @@ from matplotlib import pyplot
 from matplotlib.backends.backend_pdf import PdfPages
 
 # enable LaTeX interpreter
-matplotlib.rc('text', usetex=True)
+matplotlib.rc('text', usetex=False)
 matplotlib.rc('font', family='serif')
 matplotlib.rc('lines', linewidth = 4)
 # increase the default font size
@@ -110,11 +110,12 @@ def _plot_roc(frrs, colors, labels, title, fontsize=18, position=None):
   pyplot.plot([0.1,0.1],[0,100], "--", color=(0.3,0.3,0.3))
   pyplot.axis([frrs[0][0][0]*100,100,0,100])
   pyplot.xticks((0.01, 0.1, 1, 10, 100), ('0.01', '0.1', '1', '10', '100'))
-  pyplot.xlabel('FAR (\%)')
-  pyplot.ylabel('CAR (\%)')
+  pyplot.xlabel('FAR (%)')
+  pyplot.ylabel('CAR (%)')
   pyplot.grid(True, color=(0.6,0.6,0.6))
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
+  figure.set_tight_layout(True)
 
   return figure
 
@@ -136,10 +137,11 @@ def _plot_det(dets, colors, labels, title, fontsize=18, position=None):
   pyplot.yticks(ticks, labels)
   pyplot.axis((ticks[0], ticks[-1], ticks[0], ticks[-1]))
 
-  pyplot.xlabel('FAR (\%)')
-  pyplot.ylabel('FRR (\%)')
+  pyplot.xlabel('FAR (%)')
+  pyplot.ylabel('FRR (%)')
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
+  figure.set_tight_layout(True)
 
   return figure
 
@@ -157,11 +159,12 @@ def _plot_cmc(cmcs, colors, labels, title, fontsize=18, position=None):
   # change axes accordingly
   ticks = [int(t) for t in pyplot.xticks()[0]]
   pyplot.xlabel('Rank')
-  pyplot.ylabel('Probability (\%)')
+  pyplot.ylabel('Probability (%)')
   pyplot.xticks(ticks, [str(t) for t in ticks])
   pyplot.axis([0, max_x, 0, 100])
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
+  figure.set_tight_layout(True)
 
   return figure
 
@@ -178,11 +181,12 @@ def _plot_epc(scores_dev, scores_eval, colors, labels, title, fontsize=18, posit
 
   # change axes accordingly
   pyplot.xlabel('alpha')
-  pyplot.ylabel('HTER (\\%)')
+  pyplot.ylabel('HTER (%)')
   pyplot.title(title)
   pyplot.grid(True)
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
+  figure.set_tight_layout(True)
 
   return figure
 
