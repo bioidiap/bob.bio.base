@@ -19,13 +19,6 @@ import matplotlib; matplotlib.use('pdf') #avoids TkInter threaded start
 from matplotlib import pyplot
 from matplotlib.backends.backend_pdf import PdfPages
 
-# enable LaTeX interpreter
-matplotlib.rc('text', usetex=False)
-matplotlib.rc('font', family='serif')
-matplotlib.rc('lines', linewidth = 4)
-# increase the default font size
-matplotlib.rc('font', size=18)
-
 import bob.core
 logger = bob.core.log.setup("bob.bio.base")
 
