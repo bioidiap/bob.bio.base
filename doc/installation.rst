@@ -123,7 +123,7 @@ To avoid the download to happen each time you call the nose tests, please:
 
 .. code-block:: sh
 
-  $ export ATNT_DATABASE_DIRECTORY=/path/to/your/copy/of/atnt/orl_faces
+  $ export ATNT_DATABASE_DIRECTORY=/path/to/your/copy/of/atnt
 
 
 In case any of the tests fail for unexplainable reasons, please send a report
