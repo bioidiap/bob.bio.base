@@ -17,6 +17,7 @@ IO-related functions
    bob.bio.base.open_compressed
    bob.bio.base.close_compressed
    bob.bio.base.check_file
+   bob.bio.base.vstack_features
 
 
 Functions dealing with resources

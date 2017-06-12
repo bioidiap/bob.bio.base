@@ -190,7 +190,7 @@ def _generate_features(reader, paths):
   Yields
   ------
   object
-      The first object returned is the :py:type:`numpy.dtype` of features. The
+      The first object returned is the :py:class:`numpy.dtype` of features. The
       second objects returned is the shape of the first feature. The rest of
       objects are the actual values in features. The features are returned in
       C order.
@@ -272,11 +272,11 @@ def vstack_features(reader, paths, same_size=False):
   ----------
   reader : collections.Callable
       The function to load the features. The function should only take one
-      argument being the path to the features. Use :py:type:`functools.partial`
-      to accommodate your reader to this format. The features returned by
-      ``reader`` are expected to have the same :py:type:`numpy.dtype` and the
-      same shape except for their first dimension. First dimension is should
-      correspond to the number of samples.
+      argument being the path to the features. Use
+      :any:`functools.partial` to accommodate your reader to this format.
+      The features returned by ``reader`` are expected to have the same
+      :py:class:`numpy.dtype` and the same shape except for their first
+      dimension. First dimension is should correspond to the number of samples.
   paths : collections.Iterable
       An iterable of paths to iterate on. Whatever is inside path is given to
       ``reader``. If ``same_size`` is ``True``, ``len(paths)`` must be valid.
@@ -288,7 +288,7 @@ def vstack_features(reader, paths, same_size=False):
   Returns
   -------
   numpy.ndarray
-      The read features with the shape (n_samples, *features_shape[1:]).
+      The read features with the shape (n_samples, \*features_shape[1:]).
   """
   iterable = _generate_features(reader, paths)
   dtype = next(iterable)
