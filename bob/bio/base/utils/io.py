@@ -289,6 +289,49 @@ def vstack_features(reader, paths, same_size=False):
   -------
   numpy.ndarray
       The read features with the shape (n_samples, \*features_shape[1:]).
+
+  Examples
+  --------
+  This function is equivalent to calling
+  ``numpy.vstack(reader(p) for p in paths)``.
+
+  >>> import numpy
+  >>> from bob.bio.base import vstack_features
+  >>> def reader(path):
+  ...     # in each file, there are 5 samples and features are 2 dimensional.
+  ...     return numpy.arange(10).reshape(5,2)
+  >>> paths = ['path1', 'path2']
+  >>> all_features = vstack_features(reader, paths)
+  >>> all_features
+  array([[0, 1],
+         [2, 3],
+         [4, 5],
+         [6, 7],
+         [8, 9],
+         [0, 1],
+         [2, 3],
+         [4, 5],
+         [6, 7],
+         [8, 9]])
+  >>> all_features_with_more_memory = numpy.vstack(reader(p) for p in paths)
+  >>> numpy.allclose(all_features, all_features_with_more_memory)
+  True
+
+  You can allocate the array at once to improve the performance if you know
+  that all features in paths have the same shape and you know the total number
+  of the paths:
+
+  >>> vstack_features(reader, paths, same_size=True)
+  array([[0, 1],
+         [2, 3],
+         [4, 5],
+         [6, 7],
+         [8, 9],
+         [0, 1],
+         [2, 3],
+         [4, 5],
+         [6, 7],
+         [8, 9]])
   """
   iterable = _generate_features(reader, paths)
   dtype = next(iterable)
