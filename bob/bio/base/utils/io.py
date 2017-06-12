@@ -1,10 +1,7 @@
 import os
 import tempfile
 import tarfile
-try:  # this is needed for the sphinx documentation
-  from collections.abc import Callable, Iterable
-except ImportError:
-  from collections import Callable, Iterable
+import collections  # this is needed for the sphinx documentation
 import functools  # this is needed for the sphinx documentation
 import numpy
 import logging
@@ -185,9 +182,9 @@ def _generate_features(reader, paths):
 
   Parameters
   ----------
-  reader : Callable
+  reader : ``collections.Callable``
       See the documentation of :py:func:`vstack_features`.
-  paths : Iterable
+  paths : ``collections.Iterable``
       See the documentation of :py:func:`vstack_features`.
 
   Yields
@@ -273,14 +270,14 @@ def vstack_features(reader, paths, same_size=False):
 
   Parameters
   ----------
-  reader : Callable
+  reader : ``collections.Callable``
       The function to load the features. The function should only take one
       argument being the path to the features. Use
       :any:`functools.partial` to accommodate your reader to this format.
       The features returned by ``reader`` are expected to have the same
       :py:class:`numpy.dtype` and the same shape except for their first
       dimension. First dimension is should correspond to the number of samples.
-  paths : Iterable
+  paths : ``collections.Iterable``
       An iterable of paths to iterate on. Whatever is inside path is given to
       ``reader``. If ``same_size`` is ``True``, ``len(paths)`` must be valid.
   same_size : :obj:`bool`, optional
