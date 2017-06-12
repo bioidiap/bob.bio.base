@@ -109,7 +109,7 @@ class LDA (Algorithm):
       if len(client_files) < 2:
         logger.warn("Skipping one client since the number of client files is only %d", len(client_files))
         continue
-      data.append(numpy.vstack([feature.flatten() for feature in client_files]))
+      data.append(numpy.vstack(feature.flatten() for feature in client_files))
 
     # Returns the list of lists of arrays
     return data
@@ -117,7 +117,7 @@ class LDA (Algorithm):
 
   def _train_pca(self, training_set):
     """Trains and returns a LinearMachine that is trained using PCA"""
-    data_list = [feature for client in training_set for feature in client]
+    data_list = (feature for client in training_set for feature in client)
     data = numpy.vstack(data_list)
 
     logger.info("  -> Training Linear Machine using PCA")
@@ -145,7 +145,7 @@ class LDA (Algorithm):
 
   def _perform_pca(self, machine, training_set):
     """Perform PCA on data of the training set"""
-    return [numpy.vstack([machine(feature) for feature in client_features]) for client_features in training_set]
+    return [numpy.vstack(machine(feature) for feature in client_features) for client_features in training_set]
 
 
   def train_projector(self, training_features, projector_file):

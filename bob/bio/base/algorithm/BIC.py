@@ -103,7 +103,7 @@ class BIC(Algorithm):
 
     def _trainset_for(self, pairs):
         """Computes the array containing the comparison results for the given set of image pairs."""
-        return numpy.vstack([self.comparison_function(f1, f2) for (f1, f2) in pairs])
+        return numpy.vstack(self.comparison_function(f1, f2) for (f1, f2) in pairs)
 
     def train_enroller(self, train_features, enroller_file):
         """Trains the BIC by computing intra-personal and extra-personal subspaces.

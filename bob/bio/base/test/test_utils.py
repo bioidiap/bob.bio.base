@@ -3,7 +3,7 @@ import bob.learn.linear
 import pkg_resources
 import os
 import numpy
-
+import nose
 import bob.io.base.test_utils
 
 from . import utils
@@ -83,6 +83,81 @@ def test_io():
     # cleanup
     if os.path.exists(filename):
       os.remove(filename)
+
+
+def test_io_vstack():
+
+  paths = [1, 2, 3, 4, 5]
+
+  def oracle(reader, paths):
+    return numpy.vstack([reader(p) for p in paths])
+
+  def reader_same_size_C(path):
+    return numpy.arange(10).reshape(5, 2)
+
+  def reader_different_size_C(path):
+    return numpy.arange(2 * path).reshape(path, 2)
+
+  def reader_same_size_F(path):
+    return numpy.asfortranarray(numpy.arange(10).reshape(5, 2))
+
+  def reader_different_size_F(path):
+    return numpy.asfortranarray(numpy.arange(2 * path).reshape(path, 2))
+
+  def reader_same_size_C2(path):
+    return numpy.arange(30).reshape(5, 2, 3)
+
+  def reader_different_size_C2(path):
+    return numpy.arange(6 * path).reshape(path, 2, 3)
+
+  def reader_same_size_F2(path):
+    return numpy.asfortranarray(numpy.arange(30).reshape(5, 2, 3))
+
+  def reader_different_size_F2(path):
+    return numpy.asfortranarray(numpy.arange(6 * path).reshape(path, 2, 3))
+
+  def reader_wrong_size(path):
+    return numpy.arange(2 * path).reshape(2, path)
+
+  # test C and F readers
+  numpy.all(bob.bio.base.vstack_features(reader_different_size_C,
+                                         paths, False) ==
+            oracle(reader_different_size_C, paths))
+  numpy.all(bob.bio.base.vstack_features(reader_different_size_F,
+                                         paths, False) ==
+            oracle(reader_different_size_F, paths))
+
+  numpy.all(bob.bio.base.vstack_features(reader_same_size_C, paths, False) ==
+            oracle(reader_same_size_C, paths))
+  numpy.all(bob.bio.base.vstack_features(reader_same_size_F, paths, False) ==
+            oracle(reader_same_size_F, paths))
+
+  numpy.all(bob.bio.base.vstack_features(reader_same_size_C, paths, True) ==
+            oracle(reader_same_size_C, paths))
+  numpy.all(bob.bio.base.vstack_features(reader_same_size_F, paths, True) ==
+            oracle(reader_same_size_F, paths))
+
+  # test 3 dimensional readers
+  numpy.all(bob.bio.base.vstack_features(reader_different_size_C2,
+                                         paths, False) ==
+            oracle(reader_different_size_C2, paths))
+  numpy.all(bob.bio.base.vstack_features(reader_different_size_F2,
+                                         paths, False) ==
+            oracle(reader_different_size_F2, paths))
+
+  numpy.all(bob.bio.base.vstack_features(reader_same_size_C2, paths, False) ==
+            oracle(reader_same_size_C2, paths))
+  numpy.all(bob.bio.base.vstack_features(reader_same_size_F2, paths, False) ==
+            oracle(reader_same_size_F2, paths))
+
+  numpy.all(bob.bio.base.vstack_features(reader_same_size_C2, paths, True) ==
+            oracle(reader_same_size_C2, paths))
+  numpy.all(bob.bio.base.vstack_features(reader_same_size_F2, paths, True) ==
+            oracle(reader_same_size_F2, paths))
+
+  with nose.tools.assert_raises(AssertionError):
+    bob.bio.base.vstack_features(reader_wrong_size, paths)
+
 
 def test_sampling():
   # test selection of elements

@@ -70,7 +70,7 @@ class Distance (Algorithm):
     assert len(enroll_features)
     [self._check_feature(feature) for feature in enroll_features]
     # just store all the features
-    return numpy.vstack([f.flatten() for f in enroll_features])
+    return numpy.vstack(f.flatten() for f in enroll_features)
 
 
   def score(self, model, probe):

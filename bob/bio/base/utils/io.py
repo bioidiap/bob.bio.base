@@ -1,11 +1,15 @@
 import os
-import tempfile, tarfile
-
+import tempfile
+import tarfile
+import collections  # this is needed for the sphinx documentation
+import functools  # this is needed for the sphinx documentation
+import numpy
 import logging
-logger = logging.getLogger("bob.bio.base")
+logger = logging.getLogger(__name__)
 
 from .. import database
 import bob.io.base
+
 
 def filter_missing_files(file_names, split_by_client=False, allow_missing_files=True):
   """This function filters out files that do not exist, but only if ``allow_missing_files`` is set to ``True``, otherwise the list of ``file_names`` is returned unaltered."""
@@ -15,8 +19,10 @@ def filter_missing_files(file_names, split_by_client=False, allow_missing_files=
 
   if split_by_client:
     # filter out missing files and empty clients
-    existing_files = [[f for f in client_files if os.path.exists(f)] for client_files in file_names]
-    existing_files = [client_files for client_files in existing_files if client_files]
+    existing_files = [
+        [f for f in client_files if os.path.exists(f)] for client_files in file_names]
+    existing_files = [
+        client_files for client_files in existing_files if client_files]
   else:
     # filter out missing files
     existing_files = [f for f in file_names if os.path.exists(f)]
@@ -28,17 +34,17 @@ def filter_none(data, split_by_client=False):
 
   if split_by_client:
     # filter out missing files and empty clients
-    existing_data = [[d for d in client_data if d is not None] for client_data in data]
-    existing_data = [client_data for client_data in existing_data if client_data]
+    existing_data = [[d for d in client_data if d is not None]
+                     for client_data in data]
+    existing_data = [
+        client_data for client_data in existing_data if client_data]
   else:
     # filter out missing files
     existing_data = [d for d in data if d is not None]
   return existing_data
 
 
-
-
-def check_file(filename, force, expected_file_size = 1):
+def check_file(filename, force, expected_file_size=1):
   """Checks if the file with the given ``filename`` exists and has size greater or equal to ``expected_file_size``.
   If the file is to small, **or** if the ``force`` option is set to ``True``, the file is removed.
   This function returns ``True`` is the file exists (and has not been removed), otherwise ``False``"""
@@ -86,18 +92,20 @@ def load(file):
   else:
     return bob.io.base.load(file)
 
+
 def save(data, file, compression=0):
   """Saves the data to file using HDF5. The given file might be an HDF5 file open for writing, or a string.
   If the given data contains a ``save`` method, this method is called with the given HDF5 file.
   Otherwise the data is written to the HDF5 file using the given compression."""
-  f = file if isinstance(file, bob.io.base.HDF5File) else bob.io.base.HDF5File(file, 'w')
+  f = file if isinstance(
+      file, bob.io.base.HDF5File) else bob.io.base.HDF5File(file, 'w')
   if hasattr(data, 'save'):
     data.save(f)
   else:
     f.set("array", data, compression=compression)
 
 
-def open_compressed(filename, open_flag = 'r', compression_type='bz2'):
+def open_compressed(filename, open_flag='r', compression_type='bz2'):
   """Opens a compressed HDF5File with the given opening flags.
   For the 'r' flag, the given compressed file will be extracted to a local space.
   For 'w', an empty HDF5File is created.
@@ -108,7 +116,7 @@ def open_compressed(filename, open_flag = 'r', compression_type='bz2'):
 
   if open_flag == 'r':
     # extract the HDF5 file from the given file name into a temporary file name
-    tar = tarfile.open(filename, mode="r:"+compression_type)
+    tar = tarfile.open(filename, mode="r:" + compression_type)
     memory_file = tar.extractfile(tar.next())
     real_file = open(hdf5_file_name, 'wb')
     real_file.write(memory_file.read())
@@ -130,13 +138,14 @@ def close_compressed(filename, hdf5_file, compression_type='bz2', create_link=Fa
 
   if is_writable:
     # create compressed tar file
-    tar = tarfile.open(filename, mode="w:"+compression_type)
+    tar = tarfile.open(filename, mode="w:" + compression_type)
     tar.add(hdf5_file_name, os.path.basename(filename))
     tar.close()
 
   if create_link:
-    extension = {'':'.tar', 'bz2':'.tar.bz2', 'gz':'tar.gz'}[compression_type]
-    link_file = filename+extension
+    extension = {'': '.tar', 'bz2': '.tar.bz2',
+                 'gz': 'tar.gz'}[compression_type]
+    link_file = filename + extension
     if not os.path.exists(link_file):
       os.symlink(os.path.basename(filename), link_file)
 
@@ -165,3 +174,132 @@ def save_compressed(data, filename, compression_type='bz2', create_link=False):
   hdf5 = open_compressed(filename, 'w')
   save(data, hdf5)
   close_compressed(filename, hdf5, compression_type, create_link)
+
+
+def _generate_features(reader, paths):
+  """Load and stack features a memory efficient way. This function is meant to
+  be used inside :py:func:`vstack_features`.
+
+  Parameters
+  ----------
+  reader : collections.Callable
+      See the documentation of :py:func:`vstack_features`.
+  paths : collections.Iterable
+      See the documentation of :py:func:`vstack_features`.
+
+  Yields
+  ------
+  object
+      The first object returned is the :py:type:`numpy.dtype` of features. The
+      second objects returned is the shape of the first feature. The rest of
+      objects are the actual values in features. The features are returned in
+      C order.
+
+  Examples
+  --------
+  This function can be used to with :py:func:`numpy.fromiter`:
+
+  >>> def reader(path):
+  ...     # in each file, there are 5 samples and features are 2 dimensional.
+  ...     return numpy.arange(10).reshape(5,2)
+  >>> paths = ['path1', 'path2']
+  >>> iterator = _generate_features(reader, paths)
+  >>> dtype = next(iterator)
+  >>> dtype
+  dtype('int64')
+  >>> first_feature_shape = next(iterator)
+  >>> first_feature_shape
+  (5, 2)
+  >>> all_features_flat = numpy.fromiter(iterator, dtype)
+  >>> all_features_flat
+  array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+  >>> all_features = all_features_flat.reshape(-1, first_feature_shape[1])
+  >>> all_features
+  array([[0, 1],
+         [2, 3],
+         [4, 5],
+         [6, 7],
+         [8, 9],
+         [0, 1],
+         [2, 3],
+         [4, 5],
+         [6, 7],
+         [8, 9]])
+  >>> all_features_with_more_memory = numpy.vstack([reader(p) for p in paths])
+  >>> assert numpy.allclose(all_features == all_features_with_more_memory)
+
+  You can allocate the array at once to improve the performance if you know
+  that all features in paths have the same shape and you know the total number
+  of the paths:
+  >>> iterator = _generate_features(reader, paths)
+  >>> dtype = next(iterator)
+  >>> first_feature_shape = next(iterator)
+  >>> total_size = len(paths) * numpy.prod(first_feature_shape)
+  >>> all_features_flat = numpy.fromiter(iterator, dtype, total_size)
+  >>> all_features = all_features_flat.reshape(-1, first_feature_shape[1])
+  >>> all_features
+  array([[0, 1],
+         [2, 3],
+         [4, 5],
+         [6, 7],
+         [8, 9],
+         [0, 1],
+         [2, 3],
+         [4, 5],
+         [6, 7],
+         [8, 9]])
+  """
+  for i, path in enumerate(paths):
+    feature = numpy.atleast_2d(reader(path))
+    feature = numpy.ascontiguousarray(feature)
+    if i == 0:
+      dtype = feature.dtype
+      shape = list(feature.shape)
+      yield dtype
+      yield shape
+    else:
+      # make sure all features have the same shape[1:]
+      assert shape[1:] == list(feature.shape[1:])
+
+    for value in feature.flat:
+      yield value
+
+
+def vstack_features(reader, paths, same_size=False):
+  """Stacks all features in a memory efficient way.
+
+  Parameters
+  ----------
+  reader : collections.Callable
+      The function to load the features. The function should only take one
+      argument being the path to the features. Use :py:type:`functools.partial`
+      to accommodate your reader to this format. The features returned by
+      ``reader`` are expected to have the same :py:type:`numpy.dtype` and the
+      same shape except for their first dimension. First dimension is should
+      correspond to the number of samples.
+  paths : collections.Iterable
+      An iterable of paths to iterate on. Whatever is inside path is given to
+      ``reader``. If ``same_size`` is ``True``, ``len(paths)`` must be valid.
+  same_size : :obj:`bool`, optional
+      If ``True``, it assumes that arrays inside all the paths are the same
+      shape. If you know the features are the same size in all paths, set this
+      to ``True`` to improve the performance.
+
+  Returns
+  -------
+  numpy.ndarray
+      The read features with the shape (n_samples, *features_shape[1:]).
+  """
+  iterable = _generate_features(reader, paths)
+  dtype = next(iterable)
+  shape = next(iterable)
+  if same_size:
+    total_size = int(len(paths) * numpy.prod(shape))
+    all_features = numpy.fromiter(iterable, dtype, total_size)
+  else:
+    all_features = numpy.fromiter(iterable, dtype)
+
+  # the shape is assumed to be (n_samples, ...) it can be (5, 2) or (5, 3, 3).
+  shape = list(shape)
+  shape[0] = -1
+  return numpy.reshape(all_features, shape, order='C')
