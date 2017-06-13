@@ -127,7 +127,7 @@ class PLDA (Algorithm):
 
     # train machine
     self.plda_base = bob.learn.em.PLDABase(input_dimension, self.subspace_dimension_of_f, self.subspace_dimension_of_g)
-    bob.learn.em.train(self.plda_trainer, self.plda_base, training_features, self.plda_training_iterations, self.rng)
+    bob.learn.em.train(self.plda_trainer, self.plda_base, training_features, self.plda_training_iterations, rng=self.rng)
 
     # write machines to file
     proj_hdf5file = bob.io.base.HDF5File(str(projector_file), "w")
