@@ -5,7 +5,7 @@ import collections  # this is needed for the sphinx documentation
 import functools  # this is needed for the sphinx documentation
 import numpy
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("bob.bio.base")
 
 from .. import database
 import bob.io.base
@@ -97,8 +97,7 @@ def save(data, file, compression=0):
   """Saves the data to file using HDF5. The given file might be an HDF5 file open for writing, or a string.
   If the given data contains a ``save`` method, this method is called with the given HDF5 file.
   Otherwise the data is written to the HDF5 file using the given compression."""
-  f = file if isinstance(
-      file, bob.io.base.HDF5File) else bob.io.base.HDF5File(file, 'w')
+  f = file if isinstance(file, bob.io.base.HDF5File) else bob.io.base.HDF5File(file, 'w')
   if hasattr(data, 'save'):
     data.save(f)
   else:
@@ -190,64 +189,9 @@ def _generate_features(reader, paths):
   Yields
   ------
   object
-      The first object returned is the :py:class:`numpy.dtype` of features. The
-      second objects returned is the shape of the first feature. The rest of
-      objects are the actual values in features. The features are returned in
-      C order.
-
-  Examples
-  --------
-  This function can be used to with :py:func:`numpy.fromiter`:
-
-  >>> def reader(path):
-  ...     # in each file, there are 5 samples and features are 2 dimensional.
-  ...     return numpy.arange(10).reshape(5,2)
-  >>> paths = ['path1', 'path2']
-  >>> iterator = _generate_features(reader, paths)
-  >>> dtype = next(iterator)
-  >>> dtype
-  dtype('int64')
-  >>> first_feature_shape = next(iterator)
-  >>> first_feature_shape
-  (5, 2)
-  >>> all_features_flat = numpy.fromiter(iterator, dtype)
-  >>> all_features_flat
-  array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-  >>> all_features = all_features_flat.reshape(-1, first_feature_shape[1])
-  >>> all_features
-  array([[0, 1],
-         [2, 3],
-         [4, 5],
-         [6, 7],
-         [8, 9],
-         [0, 1],
-         [2, 3],
-         [4, 5],
-         [6, 7],
-         [8, 9]])
-  >>> all_features_with_more_memory = numpy.vstack([reader(p) for p in paths])
-  >>> assert numpy.allclose(all_features == all_features_with_more_memory)
-
-  You can allocate the array at once to improve the performance if you know
-  that all features in paths have the same shape and you know the total number
-  of the paths:
-  >>> iterator = _generate_features(reader, paths)
-  >>> dtype = next(iterator)
-  >>> first_feature_shape = next(iterator)
-  >>> total_size = len(paths) * numpy.prod(first_feature_shape)
-  >>> all_features_flat = numpy.fromiter(iterator, dtype, total_size)
-  >>> all_features = all_features_flat.reshape(-1, first_feature_shape[1])
-  >>> all_features
-  array([[0, 1],
-         [2, 3],
-         [4, 5],
-         [6, 7],
-         [8, 9],
-         [0, 1],
-         [2, 3],
-         [4, 5],
-         [6, 7],
-         [8, 9]])
+      The first object returned is a tuple of :py:class:`numpy.dtype` of
+      features and the shape of the first feature. The rest of objects are
+      the actual values in features. The features are returned in C order.
   """
   for i, path in enumerate(paths):
     feature = numpy.atleast_2d(reader(path))
@@ -255,11 +199,11 @@ def _generate_features(reader, paths):
     if i == 0:
       dtype = feature.dtype
       shape = list(feature.shape)
-      yield dtype
-      yield shape
+      yield (dtype, shape)
     else:
-      # make sure all features have the same shape[1:]
+      # make sure all features have the same shape[1:] and dtype
       assert shape[1:] == list(feature.shape[1:])
+      assert dtype == feature.dtype
 
     for value in feature.flat:
       yield value
@@ -334,8 +278,7 @@ def vstack_features(reader, paths, same_size=False):
          [8, 9]])
   """
   iterable = _generate_features(reader, paths)
-  dtype = next(iterable)
-  shape = next(iterable)
+  dtype, shape = next(iterable)
   if same_size:
     total_size = int(len(paths) * numpy.prod(shape))
     all_features = numpy.fromiter(iterable, dtype, total_size)
