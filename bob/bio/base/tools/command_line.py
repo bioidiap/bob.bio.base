@@ -267,9 +267,7 @@ def check_config_consumed(config):
             if not keyword.startswith('_') and not keyword.isupper():
                 attr = getattr(config, keyword)
                 if attr is not None and not inspect.isclass(attr) and not inspect.ismodule(attr):
-                    logger.warn("The variable '%s' in a configuration file is not known or not supported; use all "
-                                "uppercase variable names (e.g., '%s') to suppress this warning.", keyword,
-                                keyword.upper())
+                    logger.warn("The variable '%s' in a configuration file is not known or not supported by this application; use a '_' prefix to the variable name (e.g., _%s) to suppress this warning", keyword, keyword)
 
 
 def parse_config_file(parsers, args, args_dictionary, keywords, skips):
