@@ -70,4 +70,4 @@ development `mailing list`_.
 .. _bob: https://www.idiap.ch/software/bob
 .. _installation: https://www.idiap.ch/software/bob/install
 .. _mailing list: https://www.idiap.ch/software/bob/discuss
-.. _user guide: http://pythonhosted.org/bob.bio.base
+.. _user guide: https://www.idiap.ch/software/bob/docs/bob/bob.bio.base/stable/index.html
