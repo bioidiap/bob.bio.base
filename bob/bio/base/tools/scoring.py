@@ -442,20 +442,28 @@ def zt_norm(groups = ['dev', 'eval'], write_compressed = False, allow_missing_fi
 
 
 
-def _concat(score_files, output, write_compressed):
+def _concat(score_files, output, write_compressed, model_ids):
   """Concatenates a list of score files into a single score file."""
   f = _open_to_write(output, write_compressed)
 
   # Concatenates the scores
-  for score_file in score_files:
-    i = _open_to_read(score_file)
-    f.write(i.read())
+  if model_ids is None:
+    for score_file in score_files:
+      i = _open_to_read(score_file)
+      f.write(i.read())
+  else:
+    for score_file, model_id in zip(score_files, model_ids):
+      i = _open_to_read(score_file)
+      for l in i:
+        s = l.split()
+        s.insert(1, str(model_id))
+        f.write(" ".join(s) + "\n")
 
   _close_written(output, f, write_compressed)
 
 
 
-def concatenate(compute_zt_norm, groups = ['dev', 'eval'], write_compressed = False):
+def concatenate(compute_zt_norm, groups = ['dev', 'eval'], write_compressed = False, add_model_id = False):
   """Concatenates all results into one (or two) score files per group.
 
   Score files, which were generated per model, are concatenated into a single score file, which can be interpreter by :py:func:`bob.measure.load.split_four_column`.
@@ -477,15 +485,16 @@ def concatenate(compute_zt_norm, groups = ['dev', 'eval'], write_compressed = Fa
   for group in groups:
     logger.info("- Scoring: concatenating score files for group '%s'", group)
     # (sorted) list of models
-    model_files = [fs.no_norm_file(model_id, group) for model_id in fs.model_ids(group)]
+    model_ids = fs.model_ids(group)
+    model_files = [fs.no_norm_file(model_id, group) for model_id in model_ids]
     result_file = fs.no_norm_result_file(group)
-    _concat(model_files, result_file, write_compressed)
+    _concat(model_files, result_file, write_compressed, model_ids if add_model_id else None)
     logger.info("- Scoring: wrote score file '%s'", result_file)
 
     if compute_zt_norm:
-      model_files = [fs.zt_norm_file(model_id, group) for model_id in fs.model_ids(group)]
+      model_files = [fs.zt_norm_file(model_id, group) for model_id in model_ids]
       result_file = fs.zt_norm_result_file(group)
-      _concat(model_files, result_file, write_compressed)
+      _concat(model_files, result_file, write_compressed, model_ids if add_model_id else None)
       logger.info("- Scoring: wrote score file '%s'", result_file)
 
 
