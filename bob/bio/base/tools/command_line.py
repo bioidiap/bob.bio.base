@@ -171,6 +171,8 @@ def command_line_parser(description=__doc__, exclude_resources_from=[]):
                             help='Only report the commands that will be executed, but do not execute them.')
     flag_group.add_argument('-F', '--force', action='store_true',
                             help='Force to erase former data if already exist')
+    flag_group.add_argument('-U', '--write-five-column-score-files', action='store_true',
+                            help='Writes score files in five-column format (including the model id)')
     flag_group.add_argument('-Z', '--write-compressed-score-files', action='store_true',
                             help='Writes score files which are compressed with tar.bz2.')
     flag_group.add_argument('-S', '--stop-on-failure', action='store_true',

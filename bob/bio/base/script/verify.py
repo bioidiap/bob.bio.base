@@ -368,7 +368,8 @@ def execute(args):
     tools.concatenate(
         args.zt_norm,
         groups = [args.group],
-        write_compressed = args.write_compressed_score_files)
+        write_compressed = args.write_compressed_score_files,
+        add_model_id = args.write_five_column_score_files)
 
   # calibrate scores
   elif args.sub_task == 'calibrate':

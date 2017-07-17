@@ -21,7 +21,7 @@ regenerate_reference = False
 dummy_dir = pkg_resources.resource_filename('bob.bio.base', 'test/dummy')
 data_dir = pkg_resources.resource_filename('bob.bio.base', 'test/data')
 
-def _verify(parameters, test_dir, sub_dir, ref_modifier="", score_modifier=('scores','')):
+def _verify(parameters, test_dir, sub_dir, ref_modifier="", score_modifier=('scores',''), counts=3):
   from bob.bio.base.script.verify import main
   try:
     main(parameters)
@@ -51,9 +51,9 @@ def _verify(parameters, test_dir, sub_dir, ref_modifier="", score_modifier=('sco
 
       assert d[0].shape == d[1].shape
       # assert that the data order is still correct
-      assert (d[0][:,0:3] == d[1][:, 0:3]).all()
+      assert (d[0][:,0:counts] == d[1][:, 0:counts]).all()
       # assert that the values are OK
-      assert numpy.allclose(d[0][:,3].astype(float), d[1][:,3].astype(float), 1e-5)
+      assert numpy.allclose(d[0][:,counts].astype(float), d[1][:,counts].astype(float), 1e-5)
 
       assert not os.path.exists(os.path.join(test_dir, 'submitted.sql3'))
 
@@ -293,6 +293,25 @@ def test_verify_missing():
 
   finally:
     shutil.rmtree(test_dir)
+
+
+def test_verify_five_col():
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
+  # define dummy parameters
+  parameters = [
+      '-d', 'dummy',
+      '-p', 'dummy',
+      '-e', 'dummy',
+      '-a', 'dummy',
+      '--zt-norm',
+      '--write-five-column-score-files',
+      '-vs', 'test_missing',
+      '--temp-directory', test_dir,
+      '--result-directory', test_dir,
+      '--preferred-package', 'bob.bio.base',
+      '--imports', 'bob.bio.base.test.dummy'
+  ]
+  _verify(parameters, test_dir, 'test_missing', ref_modifier="-fivecol", counts=4)
 
 
 def test_verify_execute_only():
