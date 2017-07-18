@@ -72,7 +72,7 @@ class PLDA (Algorithm):
 
   def _train_pca(self, training_set):
     """Trains and returns a LinearMachine that is trained using PCA"""
-    data = numpy.vstack([feature for feature in training_set])
+    data = numpy.vstack(feature for feature in training_set)
 
     logger.info("  -> Training LinearMachine using PCA ")
     trainer = bob.learn.linear.PCATrainer()
@@ -103,7 +103,7 @@ class PLDA (Algorithm):
       if len(client_files) < 2:
         logger.warn("Skipping one client since the number of client files is only %d", len(client_files))
         continue
-      data.append(numpy.vstack([feature.flatten() for feature in client_files]))
+      data.append(numpy.vstack(feature.flatten() for feature in client_files))
 
     # Returns the list of lists of arrays
     return data
@@ -127,7 +127,7 @@ class PLDA (Algorithm):
 
     # train machine
     self.plda_base = bob.learn.em.PLDABase(input_dimension, self.subspace_dimension_of_f, self.subspace_dimension_of_g)
-    bob.learn.em.train(self.plda_trainer, self.plda_base, training_features, self.plda_training_iterations, self.rng)
+    bob.learn.em.train(self.plda_trainer, self.plda_base, training_features, self.plda_training_iterations, rng=self.rng)
 
     # write machines to file
     proj_hdf5file = bob.io.base.HDF5File(str(projector_file), "w")
@@ -179,7 +179,7 @@ class PLDA (Algorithm):
     In this base class implementation, it computes the scores for each probe file using the 'score' method,
     and fuses the scores using the fusion method specified in the constructor of this class."""
     if self.pca_machine is not None:
-      probes = [self.pca_machine(probe) for probe in probes]
+      probes = (self.pca_machine(probe) for probe in probes)
     # forward
     if self.score_set == 'joint_likelihood':
       return model.log_likelihood_ratio(numpy.vstack(probes))

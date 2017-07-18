@@ -70,8 +70,8 @@ def main(command_line_options = None):
   import numpy
 
   trainer = bob.learn.linear.CGLogRegTrainer(0.5, args.convergence_threshold, args.max_iterations, mean_std_norm=not args.no_whitening)
-  data_neg = numpy.vstack([data[k][0] for k in range(n_systems)]).T
-  data_pos = numpy.vstack([data[k][1] for k in range(n_systems)]).T
+  data_neg = numpy.vstack(data[k][0] for k in range(n_systems)).T
+  data_pos = numpy.vstack(data[k][1] for k in range(n_systems)).T
   machine = trainer.train(data_neg, data_pos)
 
   # fuse development scores
