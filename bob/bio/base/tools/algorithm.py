@@ -191,7 +191,7 @@ def train_enroller(algorithm, extractor, allow_missing_files = False, force = Fa
 
     # load training data
     train_files = fs.training_list('projected' if algorithm.use_projected_features_for_enrollment else 'extracted', 'train_enroller', arrange_by_client = True)
-    logger.info("- Enrollment: loading %d enroller training files", len(train_files))
+    logger.info("- Enrollment: loading %d enroller training files of %d identities", sum(len(client_files) for client_files in train_files), len(train_files))
     train_features = read_features(train_files, reader, True, allow_missing_files)
 
     # perform training
