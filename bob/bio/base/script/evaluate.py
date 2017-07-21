@@ -1,30 +1,30 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8 :
-# Manuel Guenther <manuel.guenther@idiap.ch>
-# Tue Jul 2 14:52:49 CEST 2013
-
-from __future__ import print_function
 
 """This script evaluates the given score files and computes EER, HTER.
-It also is able to plot CMC and ROC curves."""
+It also is able to plot CMC and ROC curves.
+You can set the environment variable BOB_NO_STYLE_CHANGES to any value to avoid
+this script from changing the matplotlib style values. """
 
+from __future__ import print_function
 import bob.measure
 
 import argparse
-import numpy, math
+import numpy
+import math
 import os
 
 # matplotlib stuff
-import matplotlib; matplotlib.use('pdf') #avoids TkInter threaded start
+import matplotlib
+matplotlib.use('pdf')  # avoids TkInter threaded start
 from matplotlib import pyplot
 from matplotlib.backends.backend_pdf import PdfPages
 
-# enable LaTeX interpreter
-matplotlib.rc('text', usetex=True)
-matplotlib.rc('font', family='serif')
-matplotlib.rc('lines', linewidth = 4)
-# increase the default font size
-matplotlib.rc('font', size=18)
+if not os.environ.get('BOB_NO_STYLE_CHANGES'):
+  # increase the default line width and font size
+  matplotlib.rc('lines', linewidth=4)
+  matplotlib.rc('font', size=18)
+
 
 import bob.core
 logger = bob.core.log.setup("bob.bio.base")
@@ -110,11 +110,12 @@ def _plot_roc(frrs, colors, labels, title, fontsize=18, position=None):
   pyplot.plot([0.1,0.1],[0,100], "--", color=(0.3,0.3,0.3))
   pyplot.axis([frrs[0][0][0]*100,100,0,100])
   pyplot.xticks((0.01, 0.1, 1, 10, 100), ('0.01', '0.1', '1', '10', '100'))
-  pyplot.xlabel('FAR (\%)')
-  pyplot.ylabel('CAR (\%)')
+  pyplot.xlabel('FAR (%)')
+  pyplot.ylabel('CAR (%)')
   pyplot.grid(True, color=(0.6,0.6,0.6))
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
+  figure.set_tight_layout(True)
 
   return figure
 
@@ -136,10 +137,11 @@ def _plot_det(dets, colors, labels, title, fontsize=18, position=None):
   pyplot.yticks(ticks, labels)
   pyplot.axis((ticks[0], ticks[-1], ticks[0], ticks[-1]))
 
-  pyplot.xlabel('FAR (\%)')
-  pyplot.ylabel('FRR (\%)')
+  pyplot.xlabel('FAR (%)')
+  pyplot.ylabel('FRR (%)')
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
+  figure.set_tight_layout(True)
 
   return figure
 
@@ -157,11 +159,12 @@ def _plot_cmc(cmcs, colors, labels, title, fontsize=18, position=None):
   # change axes accordingly
   ticks = [int(t) for t in pyplot.xticks()[0]]
   pyplot.xlabel('Rank')
-  pyplot.ylabel('Probability (\%)')
+  pyplot.ylabel('Probability (%)')
   pyplot.xticks(ticks, [str(t) for t in ticks])
   pyplot.axis([0, max_x, 0, 100])
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
+  figure.set_tight_layout(True)
 
   return figure
 
@@ -178,11 +181,12 @@ def _plot_epc(scores_dev, scores_eval, colors, labels, title, fontsize=18, posit
 
   # change axes accordingly
   pyplot.xlabel('alpha')
-  pyplot.ylabel('HTER (\\%)')
+  pyplot.ylabel('HTER (%)')
   pyplot.title(title)
   pyplot.grid(True)
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
+  figure.set_tight_layout(True)
 
   return figure
 

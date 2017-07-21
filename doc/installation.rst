@@ -82,15 +82,12 @@ updated, and the corrected paths for those you have.
    If you have installed only ``bob.bio.base``, there is no database listed --
    as all databases are included in other packages, such as
    :ref:`bob.bio.face <bob.bio.face>` or :ref:`bob.bio.spear <bob.bio.spear>`.
+   Also, please don't forget that you need to install the corresponding
+   ``bob.db.<name>`` package as well.
 
 
 Test your Installation
 ----------------------
-
-.. note::
-
-   For some of the tests to pass, you need to install
-   `LaTeX <https://en.wikipedia.org/wiki/LaTeX>`_ on your machine.
 
 You can install the ``nose`` package to test your installation and use that to
 verify your installation:
