@@ -1,23 +1,30 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8 :
-# Manuel Guenther <manuel.guenther@idiap.ch>
-# Tue Jul 2 14:52:49 CEST 2013
-
-from __future__ import print_function
 
 """This script evaluates the given score files and computes EER, HTER.
-It also is able to plot CMC and ROC curves."""
+It also is able to plot CMC and ROC curves.
+You can set the environment variable BOB_NO_STYLE_CHANGES to any value to avoid
+this script from changing the matplotlib style values. """
 
+from __future__ import print_function
 import bob.measure
 
 import argparse
-import numpy, math
+import numpy
+import math
 import os
 
 # matplotlib stuff
-import matplotlib; matplotlib.use('pdf') #avoids TkInter threaded start
+import matplotlib
+matplotlib.use('pdf')  # avoids TkInter threaded start
 from matplotlib import pyplot
 from matplotlib.backends.backend_pdf import PdfPages
+
+if not os.environ.get('BOB_NO_STYLE_CHANGES'):
+  # increase the default line width and font size
+  matplotlib.rc('lines', linewidth=4)
+  matplotlib.rc('font', size=18)
+
 
 import bob.core
 logger = bob.core.log.setup("bob.bio.base")
