@@ -225,10 +225,12 @@ def main(command_line_parameters=None):
   args = command_line_arguments(command_line_parameters)
 
   # get some colors for plotting
-  # cmap = pyplot.cm.get_cmap(name='magma')
-  # colors = [cmap(i) for i in numpy.linspace(0, 1.0, len(args.dev_files)+1)]
-  # matplotlib 2.0 default color cycler list: Vega category10 palette
-  colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
+  if len(args.dev_files) > 10:
+    cmap = pyplot.cm.get_cmap(name='magma')
+    colors = [cmap(i) for i in numpy.linspace(0, 1.0, len(args.dev_files) + 1)]
+  else:
+    # matplotlib 2.0 default color cycler list: Vega category10 palette
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
               '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
               '#bcbd22', '#17becf']
 
