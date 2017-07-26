@@ -100,7 +100,7 @@ def command_line_arguments(command_line_parameters):
 
 
 def _plot_roc(frrs, colors, labels, title, fontsize=18, position=None, farfrrs=None):
-  if position is None: position = 'best'
+  if position is None: position = 'lower right'
   figure = pyplot.figure()
   # plot FAR and CAR for each algorithm
   for i in range(len(frrs)):
