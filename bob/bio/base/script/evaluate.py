@@ -313,7 +313,7 @@ def main(command_line_parameters=None):
     if args.roc:
       logger.info("Computing CAR curves on the development " + ("and on the evaluation set" if args.eval_files else "set"))
       min_far = int(math.floor(math.log(args.min_far_value, 10)))
-      fars = bob.measure.plot.log_values(min_far)
+      fars = [math.pow(10., i * 0.25) for i in range(min_far * 4, 0)] + [1.]
       frrs_dev = [bob.measure.roc_for_far(scores[0], scores[1], fars) for scores in scores_dev]
       if args.eval_files:
         frrs_eval = [bob.measure.roc_for_far(scores[0], scores[1], fars) for scores in scores_eval]
