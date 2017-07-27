@@ -466,7 +466,7 @@ def test_evaluate():
   # tests our 'evaluate' script using the reference files
   test_dir = tempfile.mkdtemp(prefix='bobtest_')
   reference_files = ('scores-nonorm-dev', 'scores-ztnorm-dev')
-  plots = [os.path.join(test_dir, '%s.pdf')%f for f in ['roc', 'cmc', 'det']]
+  plots = [os.path.join(test_dir, '%s.pdf')%f for f in ['roc', 'cmc', 'det', 'epc']]
   parameters = [
     '--dev-files', reference_files[0], reference_files[1],
     '--eval-files', reference_files[0], reference_files[1],
@@ -474,21 +474,27 @@ def test_evaluate():
     '--legends', 'no norm', 'ZT norm',
     '--criterion', 'HTER',
     '--roc', plots[0],
-    '--det', plots[1],
-    '--cmc', plots[2],
+    '--cmc', plots[1],
+    '--det', plots[2],
+    '--epc', plots[3],
     '--rr',
     '--thresholds', '5000', '0',
     '--min-far-value', '1e-6',
+    '--far-line-at', '1e-5',
     '-v',
   ]
 
   # execute the script
   from bob.bio.base.script.evaluate import main
-  main(parameters)
-  for i in range(3):
-    assert os.path.exists(plots[i])
-    os.remove(plots[i])
-  os.rmdir(test_dir)
+  try:
+    main(parameters)
+    for i in range(4):
+      assert os.path.exists(plots[i])
+      os.remove(plots[i])
+  finally:
+    if os.path.exists(test_dir):
+      shutil.rmtree(test_dir)
+
 
 
 def test_resources():
