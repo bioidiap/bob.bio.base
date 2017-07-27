@@ -99,19 +99,25 @@ def command_line_arguments(command_line_parameters):
   return args
 
 
-def _plot_roc(frrs, colors, labels, title, fontsize=18, position=None):
-  if position is None: position = 4
+def _plot_roc(frrs, colors, labels, title, fontsize=18, position=None, farfrrs=None):
+  if position is None: position = 'lower right'
   figure = pyplot.figure()
   # plot FAR and CAR for each algorithm
   for i in range(len(frrs)):
     pyplot.semilogx([100.0*f for f in frrs[i][0]], [100. - 100.0*f for f in frrs[i][1]], color=colors[i], lw=2, ms=10, mew=1.5, label=labels[i])
+    if farfrrs is not None:
+      pyplot.plot(farfrrs[i][0]*100, (1-farfrrs[i][1])*100, 'o', color=colors[i], markeredgecolor='black')
+
+  if farfrrs is not None:
+    pyplot.plot([x[0]*100 for x in farfrrs], [(1-x[1])*100 for x in farfrrs], '--', color='black', linewidth=1.5)
 
   # finalize plot
-  pyplot.plot([0.1,0.1],[0,100], "--", color=(0.3,0.3,0.3))
+  if farfrrs is None:
+    pyplot.plot([0.1,0.1],[0,100], "--", color='black')
   pyplot.axis([frrs[0][0][0]*100,100,0,100])
   pyplot.xticks((0.01, 0.1, 1, 10, 100), ('0.01', '0.1', '1', '10', '100'))
-  pyplot.xlabel('FAR (%)')
-  pyplot.ylabel('CAR (%)')
+  pyplot.xlabel('FMR (%)')
+  pyplot.ylabel('1 - FNMR (%)')
   pyplot.grid(True, color=(0.6,0.6,0.6))
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
@@ -137,8 +143,8 @@ def _plot_det(dets, colors, labels, title, fontsize=18, position=None):
   pyplot.yticks(ticks, labels)
   pyplot.axis((ticks[0], ticks[-1], ticks[0], ticks[-1]))
 
-  pyplot.xlabel('FAR (%)')
-  pyplot.ylabel('FRR (%)')
+  pyplot.xlabel('FMR (%)')
+  pyplot.ylabel('FNMR (%)')
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
   figure.set_tight_layout(True)
@@ -171,7 +177,7 @@ def _plot_cmc(cmcs, colors, labels, title, fontsize=18, position=None):
 
 
 def _plot_epc(scores_dev, scores_eval, colors, labels, title, fontsize=18, position=None):
-  if position is None: position = 4
+  if position is None: position = 'upper center'
   # open new page for current plot
   figure = pyplot.figure()
 
@@ -186,10 +192,31 @@ def _plot_epc(scores_dev, scores_eval, colors, labels, title, fontsize=18, posit
   pyplot.grid(True)
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
+  pyplot.xlim([-0.01, 1.01])
+  pyplot.ylim([0, 51])
   figure.set_tight_layout(True)
 
   return figure
 
+
+def remove_nan(scores):
+    """removes the NaNs from the scores"""
+    nans = numpy.isnan(scores)
+    sum_nans = sum(nans)
+    total = len(scores)
+    return scores[numpy.where(~nans)], sum_nans, total
+
+
+def get_fta(scores):
+    """calculates the Failure To Acquire (FtA) rate"""
+    fta_sum, fta_total = 0, 0
+    neg, sum_nans, total = remove_nan(scores[0])
+    fta_sum += sum_nans
+    fta_total += total
+    pos, sum_nans, total = remove_nan(scores[1])
+    fta_sum += sum_nans
+    fta_total += total
+    return (neg, pos, fta_sum * 100 / float(fta_total))
 
 
 def main(command_line_parameters=None):
@@ -198,8 +225,14 @@ def main(command_line_parameters=None):
   args = command_line_arguments(command_line_parameters)
 
   # get some colors for plotting
-  cmap = pyplot.cm.get_cmap(name='hsv')
-  colors = [cmap(i) for i in numpy.linspace(0, 1.0, len(args.dev_files)+1)]
+  if len(args.dev_files) > 10:
+    cmap = pyplot.cm.get_cmap(name='magma')
+    colors = [cmap(i) for i in numpy.linspace(0, 1.0, len(args.dev_files) + 1)]
+  else:
+    # matplotlib 2.0 default color cycler list: Vega category10 palette
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
+              '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
+              '#bcbd22', '#17becf']
 
   if args.criterion or args.roc or args.det or args.epc or args.cllr or args.mindcf:
     score_parser = {'4column' : bob.measure.load.split_four_column, '5column' : bob.measure.load.split_five_column}[args.parser]
@@ -207,10 +240,14 @@ def main(command_line_parameters=None):
     # First, read the score files
     logger.info("Loading %d score files of the development set", len(args.dev_files))
     scores_dev = [score_parser(os.path.join(args.directory, f)) for f in args.dev_files]
+    # remove nans
+    scores_dev = [get_fta(s) for s in scores_dev]
 
     if args.eval_files:
       logger.info("Loading %d score files of the evaluation set", len(args.eval_files))
       scores_eval = [score_parser(os.path.join(args.directory, f)) for f in args.eval_files]
+      # remove nans
+      scores_eval = [get_fta(s) for s in scores_eval]
 
 
     if args.criterion:
@@ -266,7 +303,7 @@ def main(command_line_parameters=None):
 
     if args.roc:
       logger.info("Computing CAR curves on the development " + ("and on the evaluation set" if args.eval_files else "set"))
-      fars = [math.pow(10., i * 0.25) for i in range(-16,0)] + [1.]
+      fars = [math.pow(10., i * 0.25) for i in range(-17,0)] + [1.]
       frrs_dev = [bob.measure.roc_for_far(scores[0], scores[1], fars) for scores in scores_dev]
       if args.eval_files:
         frrs_eval = [bob.measure.roc_for_far(scores[0], scores[1], fars) for scores in scores_eval]
@@ -276,10 +313,14 @@ def main(command_line_parameters=None):
         # create a multi-page PDF for the ROC curve
         pdf = PdfPages(args.roc)
         # create a separate figure for dev and eval
-        pdf.savefig(_plot_roc(frrs_dev, colors, args.legends, args.title[0] if args.title is not None else "ROC curve for development set", args.legend_font_size, args.legend_position))
+        pdf.savefig(_plot_roc(frrs_dev, colors, args.legends, args.title[0] if args.title is not None else "ROC for development set", args.legend_font_size, args.legend_position), bbox_inches='tight')
         del frrs_dev
         if args.eval_files:
-          pdf.savefig(_plot_roc(frrs_eval, colors, args.legends, args.title[1] if args.title is not None else "ROC curve for evaluation set", args.legend_font_size, args.legend_position))
+          farfrrs = []
+          for i, scores in enumerate(scores_eval):
+            threshold = bob.measure.far_threshold(scores_dev[i][0], scores_dev[i][1], float(args.far_value) / 100)
+            farfrrs.append(bob.measure.farfrr(scores_eval[i][0], scores_eval[i][1], threshold))
+          pdf.savefig(_plot_roc(frrs_eval, colors, args.legends, args.title[1] if args.title is not None else "ROC for evaluation set", args.legend_font_size, args.legend_position, farfrrs), bbox_inches='tight')
           del frrs_eval
         pdf.close()
       except RuntimeError as e:
@@ -296,10 +337,10 @@ def main(command_line_parameters=None):
         # create a multi-page PDF for the ROC curve
         pdf = PdfPages(args.det)
         # create a separate figure for dev and eval
-        pdf.savefig(_plot_det(dets_dev, colors, args.legends, args.title[0] if args.title is not None else "DET plot for development set", args.legend_font_size, args.legend_position))
+        pdf.savefig(_plot_det(dets_dev, colors, args.legends, args.title[0] if args.title is not None else "DET for development set", args.legend_font_size, args.legend_position), bbox_inches='tight')
         del dets_dev
         if args.eval_files:
-          pdf.savefig(_plot_det(dets_eval, colors, args.legends, args.title[1] if args.title is not None else "DET plot for evaluation set", args.legend_font_size, args.legend_position))
+          pdf.savefig(_plot_det(dets_eval, colors, args.legends, args.title[1] if args.title is not None else "DET for evaluation set", args.legend_font_size, args.legend_position), bbox_inches='tight')
           del dets_eval
         pdf.close()
       except RuntimeError as e:
@@ -315,7 +356,7 @@ def main(command_line_parameters=None):
       try:
         # create a multi-page PDF for the ROC curve
         pdf = PdfPages(args.epc)
-        pdf.savefig(_plot_epc(scores_dev, scores_eval, colors, args.legends, args.title if args.title is not None else "EPC Curves" , args.legend_font_size, args.legend_position))
+        pdf.savefig(_plot_epc(scores_dev, scores_eval, colors, args.legends, args.title if args.title is not None else "" , args.legend_font_size, args.legend_position), bbox_inches='tight')
         pdf.close()
       except RuntimeError as e:
         raise RuntimeError("During plotting of EPC curves, the following exception occured:\n%s\nUsually this happens when the label contains characters that LaTeX cannot parse." % e)
