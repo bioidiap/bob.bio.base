@@ -121,7 +121,7 @@ def _plot_roc(frrs, colors, labels, title, fontsize=10, position=None, farfrrs=N
   min_far = frrs[0][0][0]
   ticks = [min_far]
   while ticks[-1] < 1.: ticks.append(ticks[-1] * 10.)
-  pyplot.axis([min_far,1.,0.,1.])
+  pyplot.axis([min_far, 1., -0.01, 1.01])
   pyplot.xticks(ticks)
 
   # set label, legend and title
@@ -130,7 +130,6 @@ def _plot_roc(frrs, colors, labels, title, fontsize=10, position=None, farfrrs=N
   pyplot.grid(True, color=(0.6,0.6,0.6))
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
-  pyplot.ylim([0., 1.01])
 
   return figure
 
@@ -180,7 +179,7 @@ def _plot_cmc(cmcs, colors, labels, title, fontsize=10, position=None):
   pyplot.xlabel('Rank')
   pyplot.ylabel('Probability')
   pyplot.xticks(ticks, [str(t) for t in ticks])
-  pyplot.axis([0, max_R, 0., 1.])
+  pyplot.axis([0, max_R, -0.01, 1.01])
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
 
@@ -201,11 +200,10 @@ def _plot_epc(scores_dev, scores_eval, colors, labels, title, fontsize=10, posit
   pyplot.xlabel('alpha')
   pyplot.ylabel('HTER')
   pyplot.title(title)
+  pyplot.axis([-0.01, 1.01, -0.01, 0.51])
   pyplot.grid(True)
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
-  pyplot.xlim([-0.01, 1.01])
-  pyplot.ylim([-0.01, 0.51])
 
   return figure
 
