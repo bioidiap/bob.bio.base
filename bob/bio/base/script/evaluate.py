@@ -57,7 +57,6 @@ def command_line_arguments(command_line_parameters):
   parser.add_argument('-D', '--det', help = "If given, DET curves will be plotted into the given pdf file.")
   parser.add_argument('-C', '--cmc', help = "If given, CMC curves will be plotted into the given pdf file.")
   parser.add_argument('-E', '--epc', help = "If given, EPC curves will be plotted into the given pdf file. For this plot --eval-files is mandatory.")
-  parser.add_argument('--parser', default = '4column', choices = ('4column', '5column'), help="The style of the resulting score files. The default fits to the usual output of score files.")
 
   # add verbose option
   bob.core.log.add_command_line_option(parser)
@@ -235,17 +234,16 @@ def main(command_line_parameters=None):
               '#bcbd22', '#17becf']
 
   if args.criterion or args.roc or args.det or args.epc or args.cllr or args.mindcf:
-    score_parser = {'4column' : bob.measure.load.split_four_column, '5column' : bob.measure.load.split_five_column}[args.parser]
 
     # First, read the score files
     logger.info("Loading %d score files of the development set", len(args.dev_files))
-    scores_dev = [score_parser(os.path.join(args.directory, f)) for f in args.dev_files]
+    scores_dev = [bob.measure.load.split(os.path.join(args.directory, f)) for f in args.dev_files]
     # remove nans
     scores_dev = [get_fta(s) for s in scores_dev]
 
     if args.eval_files:
       logger.info("Loading %d score files of the evaluation set", len(args.eval_files))
-      scores_eval = [score_parser(os.path.join(args.directory, f)) for f in args.eval_files]
+      scores_eval = [bob.measure.load.split(os.path.join(args.directory, f)) for f in args.eval_files]
       # remove nans
       scores_eval = [get_fta(s) for s in scores_eval]
 
@@ -366,10 +364,9 @@ def main(command_line_parameters=None):
 
   if args.cmc or args.rr:
     logger.info("Loading CMC data on the development " + ("and on the evaluation set" if args.eval_files else "set"))
-    cmc_parser = {'4column' : bob.measure.load.cmc_four_column, '5column' : bob.measure.load.cmc_five_column}[args.parser]
-    cmcs_dev = [cmc_parser(os.path.join(args.directory, f)) for f in args.dev_files]
+    cmcs_dev = [bob.measure.load.cmc(os.path.join(args.directory, f)) for f in args.dev_files]
     if args.eval_files:
-      cmcs_eval = [cmc_parser(os.path.join(args.directory, f)) for f in args.eval_files]
+      cmcs_eval = [bob.measure.load.cmc(os.path.join(args.directory, f)) for f in args.eval_files]
 
     if args.cmc:
       logger.info("Plotting CMC curves to file '%s'", args.cmc)
