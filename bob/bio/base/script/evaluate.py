@@ -21,9 +21,8 @@ from matplotlib import pyplot
 from matplotlib.backends.backend_pdf import PdfPages
 
 if not os.environ.get('BOB_NO_STYLE_CHANGES'):
-  # increase the default line width and font size
-  matplotlib.rc('lines', linewidth=4)
-  matplotlib.rc('font', size=18)
+  # make the fig size smaller so that everything becomes bigger
+  matplotlib.rc('figure', figsize=(4, 3))
 
 
 import bob.core
@@ -50,7 +49,7 @@ def command_line_arguments(command_line_parameters):
   parser.add_argument('-r', '--rr', action = 'store_true', help = "If given, the Recognition Rate will be computed.")
   parser.add_argument('-t', '--thresholds', type=float, nargs='+', help = "If given, the Recognition Rate will incorporate an Open Set handling, rejecting all scores that are below the given threshold; when multiple thresholds are given, they are applied in the same order as the --dev-files.")
   parser.add_argument('-l', '--legends', nargs='+', help = "A list of legend strings used for ROC, CMC and DET plots; if given, must be the same number than --dev-files.")
-  parser.add_argument('-F', '--legend-font-size', type=int, default=18, help = "Set the font size of the legends.")
+  parser.add_argument('-F', '--legend-font-size', type=int, default=10, help = "Set the font size of the legends.")
   parser.add_argument('-P', '--legend-position', type=int, help = "Set the font size of the legends.")
   parser.add_argument('-T', '--title', nargs = '+', help = "Overwrite the default title of the plot for development (and evaluation) set")
   parser.add_argument('-R', '--roc', help = "If given, ROC curves will be plotted into the given pdf file.")
@@ -101,22 +100,22 @@ def command_line_arguments(command_line_parameters):
   return args
 
 
-def _plot_roc(frrs, colors, labels, title, fontsize=18, position=None, farfrrs=None):
+def _plot_roc(frrs, colors, labels, title, fontsize=10, position=None, farfrrs=None):
   if position is None: position = 'lower right'
   figure = pyplot.figure()
 
   # plot FAR and CAR for each algorithm
   for i in range(len(frrs)):
-    pyplot.semilogx([f for f in frrs[i][0]], [1. - f for f in frrs[i][1]], color=colors[i], lw=2, ms=10, mew=1.5, label=labels[i])
+    pyplot.semilogx([f for f in frrs[i][0]], [1. - f for f in frrs[i][1]], color=colors[i], label=labels[i])
     if isinstance(farfrrs, list):
-      pyplot.plot(farfrrs[i][0], (1.-farfrrs[i][1]), 'o', color=colors[i], markeredgecolor='black')
+      pyplot.plot(farfrrs[i][0], (1.-farfrrs[i][1]), 'o', color=colors[i], markeredgecolor=colors[i])
 
   # plot vertical bar, if desired
   if farfrrs is not None:
     if isinstance(farfrrs, float):
       pyplot.plot([farfrrs,farfrrs],[0.,1.], "--", color='black')
     else:
-      pyplot.plot([x[0] for x in farfrrs], [(1.-x[1]) for x in farfrrs], '--', color='black', linewidth=1.5)
+      pyplot.plot([x[0] for x in farfrrs], [(1.-x[1]) for x in farfrrs], '--', color='black')
 
   # compute and apply tick marks
   min_far = frrs[0][0][0]
@@ -135,14 +134,16 @@ def _plot_roc(frrs, colors, labels, title, fontsize=18, position=None, farfrrs=N
   return figure
 
 
-def _plot_det(dets, colors, labels, title, fontsize=18, position=None):
+def _plot_det(dets, colors, labels, title, fontsize=10, position=None):
   if position is None: position = 'upper right'
   # open new page for current plot
-  figure = pyplot.figure(figsize=(8.2,8))
+  figure = pyplot.figure(figsize=(matplotlib.rcParams['figure.figsize'][0],
+                                  matplotlib.rcParams['figure.figsize'][0] * 0.975))
+  pyplot.grid(True)
 
   # plot the DET curves
   for i in range(len(dets)):
-    pyplot.plot(dets[i][0], dets[i][1], color=colors[i], lw=2, ms=10, mew=1.5, label=labels[i])
+    pyplot.plot(dets[i][0], dets[i][1], color=colors[i], label=labels[i])
 
   # change axes accordingly
   det_list = [0.0002, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.7, 0.9, 0.95]
@@ -160,7 +161,7 @@ def _plot_det(dets, colors, labels, title, fontsize=18, position=None):
   return figure
 
 
-def _plot_cmc(cmcs, colors, labels, title, fontsize=18, position=None):
+def _plot_cmc(cmcs, colors, labels, title, fontsize=10, position=None):
   if position is None: position = 'lower right'
   # open new page for current plot
   figure = pyplot.figure()
@@ -170,7 +171,7 @@ def _plot_cmc(cmcs, colors, labels, title, fontsize=18, position=None):
   for i in range(len(cmcs)):
     probs = bob.measure.cmc(cmcs[i])
     R = len(probs)
-    pyplot.semilogx(range(1, R+1), probs, figure=figure, color=colors[i], lw=2, ms=10, mew=1.5, label=labels[i])
+    pyplot.semilogx(range(1, R+1), probs, figure=figure, color=colors[i], label=labels[i])
     max_R = max(R, max_R)
 
   # change axes accordingly
@@ -185,7 +186,7 @@ def _plot_cmc(cmcs, colors, labels, title, fontsize=18, position=None):
   return figure
 
 
-def _plot_epc(scores_dev, scores_eval, colors, labels, title, fontsize=18, position=None):
+def _plot_epc(scores_dev, scores_eval, colors, labels, title, fontsize=10, position=None):
   if position is None: position = 'upper center'
   # open new page for current plot
   figure = pyplot.figure()
@@ -193,7 +194,7 @@ def _plot_epc(scores_dev, scores_eval, colors, labels, title, fontsize=18, posit
   # plot the DET curves
   for i in range(len(scores_dev)):
     x,y = bob.measure.epc(scores_dev[i][0], scores_dev[i][1], scores_eval[i][0], scores_eval[i][1], 100)
-    pyplot.plot(x, y, color=colors[i], label=labels[i], lw=2)
+    pyplot.plot(x, y, color=colors[i], label=labels[i])
 
   # change axes accordingly
   pyplot.xlabel('alpha')
