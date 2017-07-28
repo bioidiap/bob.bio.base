@@ -130,6 +130,7 @@ def _plot_roc(frrs, colors, labels, title, fontsize=10, position=None, farfrrs=N
   pyplot.grid(True, color=(0.6,0.6,0.6))
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
+  pyplot.ylim([0., 1.01])
 
   return figure
 
@@ -204,7 +205,7 @@ def _plot_epc(scores_dev, scores_eval, colors, labels, title, fontsize=10, posit
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
   pyplot.xlim([-0.01, 1.01])
-  pyplot.ylim([0., 0.51])
+  pyplot.ylim([-0.01, 0.51])
 
   return figure
 
