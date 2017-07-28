@@ -270,7 +270,7 @@ def main(command_line_parameters=None):
         # apply threshold to development set
         far, frr = bob.measure.farfrr(scores_dev[i][0], scores_dev[i][1], threshold)
         if args.criterion == 'FAR':
-          print("The FRR at FAR=%2.3f%% of the development set of '%s' is %2.3f%% (CAR: %2.3f%%)" % (args.far_value, args.legends[i], frr * 100., 100.*(1-frr)))
+          print("The FRR at FAR=%.1E of the development set of '%s' is %2.3f%% (CAR: %2.3f%%)" % (args.far_value, args.legends[i], frr * 100., 100.*(1-frr)))
         else:
           print("The %s of the development set of '%s' is %2.3f%%" % (args.criterion, args.legends[i], (far + frr) * 50.)) # / 2 * 100%
         if args.eval_files:
