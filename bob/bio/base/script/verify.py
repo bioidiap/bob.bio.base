@@ -206,7 +206,7 @@ def add_jobs(args, submitter):
                   dependencies = score_deps[group])
           concat_deps[group].extend([job_ids['score-%s-B'%group], job_ids['score-%s-C'%group], job_ids['score-%s-D'%group], job_ids['score-%s-Z'%group]])
     else:
-      concat_deps[group] = []
+      concat_deps[group] = deps[:]
 
     # concatenate results
     if not args.skip_concatenation:
@@ -309,48 +309,26 @@ def execute(args):
 
   # enroll the models
   elif args.sub_task == 'enroll':
-    if args.model_type == 'N':
-      tools.enroll(
-          args.algorithm,
-          args.extractor,
-          args.zt_norm,
-          indices = tools.indices(fs.model_ids(args.group), None if args.grid is None else args.grid.number_of_enrollment_jobs),
-          groups = [args.group],
-          types = ['N'],
-          allow_missing_files = args.allow_missing_files,
-          force = args.force)
-
-    else:
-      tools.enroll(
-          args.algorithm,
-          args.extractor,
-          args.zt_norm,
-          indices = tools.indices(fs.t_model_ids(args.group), None if args.grid is None else args.grid.number_of_enrollment_jobs),
-          groups = [args.group],
-          types = ['T'],
-          allow_missing_files = args.allow_missing_files,
-          force = args.force)
+    model_ids = fs.model_ids(args.group) if args.model_type == 'N' else fs.t_model_ids(args.group)
+    tools.enroll(
+        args.algorithm,
+        args.extractor,
+        args.zt_norm,
+        indices = tools.indices(model_ids, None if args.grid is None else args.grid.number_of_enrollment_jobs),
+        groups = [args.group],
+        types = [args.model_type],
+        allow_missing_files = args.allow_missing_files,
+        force = args.force)
 
   # compute scores
   elif args.sub_task == 'compute-scores':
-    if args.score_type in ['A', 'B']:
+    if args.score_type != 'Z':
+      model_ids = fs.model_ids(args.group) if args.score_type in ('A', 'B') else fs.t_model_ids(args.group)
       tools.compute_scores(
           args.algorithm,
           args.extractor,
           args.zt_norm,
-          indices = tools.indices(fs.model_ids(args.group), None if args.grid is None else args.grid.number_of_scoring_jobs),
-          groups = [args.group],
-          types = [args.score_type],
-          force = args.force,
-          allow_missing_files = args.allow_missing_files,
-          write_compressed = args.write_compressed_score_files)
-
-    elif args.score_type in ['C', 'D']:
-      tools.compute_scores(
-          args.algorithm,
-          args.extractor,
-          args.zt_norm,
-          indices = tools.indices(fs.t_model_ids(args.group), None if args.grid is None else args.grid.number_of_scoring_jobs),
+          indices = tools.indices(model_ids, None if args.grid is None else args.grid.number_of_scoring_jobs),
           groups = [args.group],
           types = [args.score_type],
           force = args.force,
