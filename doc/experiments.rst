@@ -134,8 +134,8 @@ The exact same experiment as above can, hence, be executed using:
    This is due to the fact that those parts of the experiment, which have been successfully executed before (i.e., the according files already exist), are skipped.
    To override this behavior, i.e., to always regenerate all parts of the experiments, you can set ``force = True``.
 
-
-While we recommend to use a configuration file to declare your experiment, some variables might be faster to be changed on the command line, such as ``--dry-run`, ``--verbose``, ``--force`` (see above), ``--parallel``, or ``--skip-...`` (see below).
+While we recommend to use a configuration file to declare your experiment, some variables might be faster to be changed on the command line, such as ``--dry-run`, ``--verbose``, ``--force`` (see above), ``--parallel N``, or ``--skip-...`` (see below).
+However, to be consistent, throughout this documentation we document the options as variables.
 
 
 .. _bob.bio.base.evaluate:
@@ -177,9 +177,10 @@ The difference between the two types of resources is that the local submission u
 You can also re-nice the parallel jobs by setting the ``nice`` variable accordingly.
 
 To run an experiment parallel on the local machine, you can also use the simple variable ``parallel = N``, which will run the experiments in ``N`` parallel processes on your machine.
+Here, ``N`` can be any positive integer -- but providing ``N`` greater than the number of processor threads of your machine will rather slow down processing.
 Basically, ``parallel = N`` is a shortcut for:
 
-.. code-block: py
+.. code-block:: py
 
    grid = bob.bio.base.grid.Grid("local", number_of_parallel_processes=N)
    run_local_scheduler = True
