@@ -134,7 +134,7 @@ The exact same experiment as above can, hence, be executed using:
    This is due to the fact that those parts of the experiment, which have been successfully executed before (i.e., the according files already exist), are skipped.
    To override this behavior, i.e., to always regenerate all parts of the experiments, you can set ``force = True``.
 
-While we recommend to use a configuration file to declare your experiment, some variables might be faster to be changed on the command line, such as ``--dry-run`, ``--verbose``, ``--force`` (see above), ``--parallel N``, or ``--skip-...`` (see below).
+While we recommend to use a configuration file to declare your experiment, some variables might be faster to be changed on the command line, such as ``--dry-run``, ``--verbose``, ``--force`` (see above), ``--parallel N``, or ``--skip-...`` (see below).
 However, to be consistent, throughout this documentation we document the options as variables.
 
 
@@ -241,11 +241,11 @@ Some databases define several kinds of evaluation setups.
 For example, often two groups of data are defined, a so-called *development set* and an *evaluation set*.
 The scores of the two groups will be concatenated into two files called **scores-dev** and **scores-eval**, which are located in the score directory (see above).
 In this case, by default only the development set is employed.
-To use both groups, just specify ``groups =['dev', 'eval']`` (of course, you can also only use the ``'eval'`` set by setting ``groups =['eval']``).
+To use both groups, just specify ``groups = ['dev', 'eval']`` (of course, you can also only use the ``'eval'`` set by setting ``groups = ['eval']``).
 
 One score normalization technique is the so-called ZT score normalization.
 To enable this, simply use the ``zt_norm`` variable.
-If the ZT-norm is enabled, two sets of scores will be computed, and they will be placed in two different sub-directories of the score directory, which are by default called **nonorm** and **ztnorm**, but which can be changed using the ``--zt-score-directories`` option.
+If the ZT-norm is enabled, two sets of scores will be computed, and they will be placed in two different sub-directories of the score directory, which are by default called **nonorm** and **ztnorm**, but which can be changed using the ``zt_score_directories`` variable.
 
 
 Other Variables
