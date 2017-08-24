@@ -1,5 +1,3 @@
-#!/bin/python
-
 # This file describes an exemplary configuration file that can be used in combination with the parameter_test.py script.
 
 

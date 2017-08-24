@@ -59,12 +59,11 @@ def check_file(filename, force, expected_file_size=1):
 
 
 def read_original_data(biofile, directory, extension):
-  """read_original_data(biofile, directory, extension) -> data
-
-  This function reads the original data using the given ``biofile`` instance.
+  """This function reads the original data using the given ``biofile`` instance.
   It simply calls ``load(directory, extension)`` from :py:class:`bob.bio.base.database.BioFile` or one of its derivatives.
 
-  **Parameters:**
+  Parameters
+  ----------
 
   ``biofile`` : :py:class:`bob.bio.base.database.BioFile` or one of its derivatives
     The file to read the original data.
@@ -76,9 +75,10 @@ def read_original_data(biofile, directory, extension):
     The extension of the original data.
     Might be ``None`` if the ``biofile`` itself has the extension stored.
 
-  **Returns**
+  Returns
+  -------
 
-  ``data`` : object
+  object:
     Whatver ``biofile.load`` returns; usually a :py:class:`numpy.ndarray`
   """
   assert isinstance(biofile, database.BioFile)

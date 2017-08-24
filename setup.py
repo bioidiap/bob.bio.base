@@ -94,7 +94,7 @@ setup(
 
       'bob.bio.preprocessor': [
         'dummy             = bob.bio.base.test.dummy.preprocessor:preprocessor', # for test purposes only
-        'filename          = bob.bio.base.config.preprocessor.filename:preprocessor', # for test purposes only
+        'filename          = bob.bio.base.config.preprocessor.filename:preprocessor',
       ],
 
       'bob.bio.extractor': [

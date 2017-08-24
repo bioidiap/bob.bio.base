@@ -12,33 +12,49 @@ Now that we have learned the implementation details, we can have a closer look i
 
 Running Experiments (part II)
 -----------------------------
-
-As mentioned before, running biometric recognition experiments can be achieved using the ``verify.py`` command line.
+As mentioned before, running biometric recognition experiments can be achieved using configuration files for the ``verify.py`` script.
 In section :ref:`running_part_1`, we have used registered resources to run an experiment.
-However, the command line options of ``verify.py`` is more flexible, as you can have three different ways of defining tools:
+However, the variables (and also the :ref:`bob.bio.base.command_line` of ``verify.py``) are more flexible, as you can have three different ways of defining tools:
 
-1. Choose a resource (see ``resources.py`` or ``verify.py --help`` for a list of registered resources):
+1. Choose a resource (see ``resources.py`` or ``verify.py --help`` or the result of ``verify.py --create-configuration-file`` for a list of registered resources):
 
-   .. code-block:: sh
+   .. code-block:: py
 
-      $ verify.py --algorithm pca
-
-
-2. Use a configuration file. Make sure that your configuration file has the correct variable name:
-
-   .. code-block:: sh
-
-      $ verify.py --algorithm bob/bio/base/config/algorithm/pca.py
+      algorithm = "pca"
 
 
-3. Instantiate a class on the command line. Usually, quotes ``"..."`` are required, and the ``--imports`` need to be specified:
+2. Use a (pre-defined) configuration file, see: :ref:`bob.bio.base.configuration-files`.
+   In case several tools are specified inside the configuration file, only the variable that matches to your variable will be used.
+   For example, the file "bob/bio/base/config/algorithm/pca.py" might define several variables, but only the ``algorithm`` variable is used when setting:
 
-   .. code-block:: sh
+   .. code-block:: py
 
-      $ verify.py --algorithm "bob.bio.base.algorithm.PCA(subspace_dimension = 30, distance_function = scipy.spatial.distance.euclidean, is_distance_function = True)" --imports bob.bio.base scipy.spatial
+      algorithm = "bob/bio/base/config/algorithm/pca.py"
 
-All these three ways can be used for any of the five command line options: ``--database``, ``--preprocessor``, ``--extractor``, ``--algorithm`` and ``--grid``.
-You can even mix these three types freely in a single command line.
+
+3. Instantiate a class and pass all desired parameters to its constructor:
+
+   .. code-block:: py
+
+      import bob.bio.base
+      import scipy.spatial
+      algorithm = bob.bio.base.algorithm.PCA(
+          subspace_dimension = 30,
+          distance_function = scipy.spatial.distance.euclidean,
+          is_distance_function = True
+      )
+
+   .. note::
+
+      When specified on the command line, usually quotes ``"..."`` are required, and the ``--imports`` need to be provided:
+
+      .. code-block:: sh
+
+         $ verify.py --algorithm "bob.bio.base.algorithm.PCA(subspace_dimension = 30, distance_function = scipy.spatial.distance.euclidean, is_distance_function = True)" --imports bob.bio.base scipy.spatial
+
+
+All these three ways can be used for any of the five variables: ``database``, ``preprocessor``, ``extractor``, ``algorithm`` and ``grid``.
+You can even mix these three types freely in a single configuration file.
 
 
 Score Level Fusion of Different Algorithms on the same Database
@@ -57,16 +73,15 @@ Afterwards, the fusion is applied to the ``--dev-files`` and the resulting score
 If ``--eval-files`` are specified, the same fusion that is trained on the development set is now applied to the evaluation set as well, and the ``--fused-eval-file`` is written.
 
 .. note::
-   When ``--eval-files`` are specified, they need to be in the same order as the ``dev-files``, otherwise the result is undefined.
+   When ``--eval-files`` are specified, they need to be in the same order as the ``--dev-files``, otherwise the result is undefined.
 
-The resulting ``--fused-dev-file`` and ``fused-eval-file`` can then be evaluated normally, e.g., using the ``evaluate.py`` script.
+The resulting ``--fused-dev-file`` and ``--fused-eval-file`` can then be evaluated normally, e.g., using the ``evaluate.py`` script.
 
 
 .. _grid-search:
 
 Finding the Optimal Configuration
 ---------------------------------
-
 Sometimes, configurations of tools (preprocessors, extractors or algorithms) are highly dependent on the database or even the employed protocol.
 Additionally, configuration parameters depend on each other.
 ``bob.bio`` provides a relatively simple set up that allows to test different configurations in the same task, and find out the best set of configurations.
@@ -90,7 +105,7 @@ The configuration file is a common python file, which can contain certain variab
 
 The variables from 1. to 3. usually contain instantiations for classes of :ref:`bob.bio.base.preprocessors`, :ref:`bob.bio.base.extractors` and :ref:`bob.bio.base.algorithms`, but also registered :ref:`bob.bio.base.resources` can be used.
 For any of the parameters of the classes, a *placeholder* can be put.
-By default, these place holders start with a # character, followed by a digit or character.
+By default, these place holders start with a ``#`` character, followed by a digit or character.
 The variables 1. to 3. can also be overridden by the command line options ``--preprocessor``, ``--extractor`` and ``--algorithm`` of the ``grid_search.py`` script.
 
 The ``replace`` variable has to be set as a dictionary.
@@ -130,7 +145,7 @@ In the above example, the results of the experiments will be placed into a direc
 .. note::
    Please note that we are using a dictionary structure to define the replacements.
    Hence, the order of the directories inside the same step might not be in the same order as written in the configuration file.
-   For the above example, a directory structure of `results/[...]/Dir_b1/Dir_a1/Dir_c1/[...]`` might be possible as well.
+   For the above example, a directory structure of ``results/[...]/Dir_b1/Dir_a1/Dir_c1/[...]`` might be possible as well.
 
 
 Additionally, tuples of place holders can be defined, in which case always the full tuple will be replaced in one shot.
@@ -147,7 +162,7 @@ Continuing the above example, it is possible to add:
       }
 
 .. warning::
-   *All possible combinations* of the configuration parameters are tested, which might result in a *huge number of executed experiments*.
+   **All possible combinations** of the configuration parameters are tested, which might result in a **huge number of executed experiments**.
 
 Some combinations of parameters might not make any sense.
 In this case, a set of requirements on the parameters can be set, using the ``requirement`` variable.
@@ -164,6 +179,8 @@ If you, e.g., test, which ``scipy.spatial`` distance function works best for you
 
   imports = ['scipy', 'bob.bio.base', 'bob.bio.face']
 
+
+For a complete example of the grid search configuration file, you might want to have a look into `the actual file that is used to test the grid search <https://gitlab.idiap.ch/bob/bob.bio.base/blob/master/bob/bio/base/test/dummy/grid_search.py>`__.
 
 Further Command Line Options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -184,10 +201,8 @@ The ``grid_search.py`` script has a further set of command line options.
 - With the ``--executable`` flag, you might select a different script rather that ``bob.bio.base.script.verify`` to run the experiments (such as the ``bob.bio.gmm.script.verify_gmm``).
 - Finally, additional options might be sent to the ``verify.py`` script directly. These options might be put after a ``--`` separation.
 
-
 Evaluation of Results
 ~~~~~~~~~~~~~~~~~~~~~
-
 To evaluate a series of experiments, a special script iterates through all the results and computes EER on the development set and HTER on the evaluation set, for both the ``nonorm`` and the ``ztnorm`` directories.
 Simply call:
 
@@ -201,8 +216,6 @@ Hence, to find the best results of your grid search experiments (with default di
 .. code-block:: sh
 
   $ collect_results.py -vv --directory results/grid_search --sort --criterion EER --sort-key nonorm-dev
-
-
 
 
 .. include:: links.rst
