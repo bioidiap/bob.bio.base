@@ -74,22 +74,22 @@ To change this behavior, you can set the ``verbose`` variable to show:
 3) Debug messages (``logging.DEBUG``)
 
 When running experiments, my personal preference is verbosity level ``2``.
-So, a minimal configuration file (say: ``pca_mobio_cropped.py``) would look something like:
+So, a minimal configuration file (say: ``pca_atnt.py``) would look something like:
 
 .. code-block:: py
 
-   database = 'mobio-image'
-   preprocessor = 'face-crop-eyes'
+   database = 'atnt'
+   preprocessor = 'face-detect'
    extractor = 'linearize'
    algorithm = 'pca'
-   sub_directory = 'PCA_MOBIO_cropped'
+   sub_directory = 'PCA_ATNT'
    verbose = 2
 
 Running the experiment is then as simple as:
 
 .. code-block:: sh
 
-   $ verify.py pca_mobio_cropped.py
+   $ verify.py pca_atnt.py
 
 .. note::
    To be able to run exactly the command line from above, it requires to have :ref:`bob.bio.face <bob.bio.face>` installed.
