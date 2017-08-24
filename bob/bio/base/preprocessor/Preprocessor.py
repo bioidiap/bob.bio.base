@@ -15,9 +15,10 @@ class Preprocessor (object):
     writes_data : bool
       Select, if the preprocessor actually writes preprocessed images, or if it is simply returning values.
 
-    read_original_data: callable
+    read_original_data: callable or ``None``
       This function is used to read the original data from file.
       It takes three inputs: A :py:class:`bob.bio.base.database.BioFile` (or one of its derivatives), the original directory (as ``str``) and the original extension (as ``str``).
+      If ``None``, the default function :py:func:`bob.bio.base.read_original_data` is used.
 
     min_preprocessed_file_size: int
       The minimum file size of a saved preprocessd data in bytes. If the saved

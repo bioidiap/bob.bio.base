@@ -52,11 +52,11 @@ If a class returns data that is **not** of type :py:class:`numpy.ndarray`, it ov
 * ``write_data(data, data_file)``: Writes the given data (that has been generated using the ``__call__`` function of this class) to file.
 * ``read_data(data_file)``: Reads the preprocessed data from file.
 
-By default, the original data is read by :py:func:`bob.io.base.load`.
-Hence, data is given as :py:class:`numpy.ndarray`\s.
-When a different IO for the original data is required (for example to read videos in :py:class:`bob.bio.video.preprocessor.Video`), the following function is overridden:
-
-* ``read_original_data(filename)``: Reads the original data from file.
+The preprocessor is also responsible for reading the original data.
+How to read original data can be specified by the ``read_original_data`` parameter of the constructor.
+The ``read_original_data`` function gets three parameters: the :py:class:`bob.bio.base.database.BioFile` object from the database, the base ``directory`` where to read the data from, and the ``extension`` in which the original data is stored.
+By default, this function is :py:func:`bob.bio.base.read_original_data`, which simply calls: ``biofile.load(directory, extension)``, so that each database implementation can define an appropriate way, how data is read or written.
+In the rare case that this is not the way that the preprocessor expects the data, another function can be passed to the constructor, i.e., in a configuration file of an experiment.
 
 
 .. _bob.bio.base.extractors:
@@ -222,28 +222,24 @@ For Bob_'s ZT-norm databases, we provide the :py:class:`bob.bio.base.database.ZT
 Defining your own Database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. note::
-    If you have your own database that you want to execute the recognition experiments on, you should
-    first check if you could use the ``Verification File List Database`` interface by defining appropriate
-    file lists for the training set, the model set, and the probes.
+    If you have your own database that you want to execute the recognition experiments on, you should first check if you could use the `File List Database` interface by defining appropriate file lists for the training set, the model set, and the probes.
     Please refer to the documentation :doc:`filelist-guide` of this database for more instructions on how to setup this database.
 
-    For an example, you might want to have a look into the implementation of the `BANCA FileList database <http://gitlab.idiap.ch/bob/bob.bio.spear/tree/master/bob/bio/spear/config/database/banca>`_, where the protocol with the name ``G`` is implemented, and its according `database configuration file <https://gitlab.idiap.ch/bob/bob.bio.spear/blob/master/bob/bio/spear/config/database/banca_audio_G.py>`_.
+    For an example, you might want to have a look into the implementation of the `Timit FileList database <http://gitlab.idiap.ch/bob/bob.bio.spear/tree/master/bob/bio/spear/config/database/timit>`_, where the protocol with the name ``2`` is implemented, and its according `database configuration file <https://gitlab.idiap.ch/bob/bob.bio.spear/blob/master/bob/bio/spear/config/database/timit.py>`_.
 
 To "plug" your own (non-file-list-based) database in this framework you have to write your own database class by deriving :py:class:`bob.bio.base.database.BioDatabase`.
 In this case, you have to derive your class from the :py:class:`bob.bio.base.database.BioDatabase`, and provide the following functions:
-
 
 * ``__init__(self, <your-parameters>, **kwargs)`` Constructor of your database interface.
   Please call the base class constructor, providing all the required parameters, e.g. by ``super(<your_db>,self).__init__(self, **kwargs)``.
   Usually, providing ids for the group ``'dev'`` should be sufficient.
 
-*  ``objects(self, groups=None, protocol=None, purposes=None, model_ids=None, **kwargs)``
+* ``objects(self, groups=None, protocol=None, purposes=None, model_ids=None, **kwargs)``
     This function must return a list of ``bob.bio.base.database.BioFile`` objects with your data.
-    The keyword arguments are possible filters that you may use.
+    The keyword arguments are filters that you should use.
 
 * ``model_ids_with_protocol(self, groups, protocol, **kwargs)``
    This function must return a list of model ids for the given groups and given protocol.
-   In this context models are basically them "templates" used for enrollment.
 
 Additionally, you can define more lists that can be used for ZT score normalization.
 If you don't know what ZT score normalization is, just forget about it and move on.
@@ -258,16 +254,15 @@ If you know and want to use it, just derive your class from :py:class:`bob.bio.b
 * ``tmodel_ids_with_protocol(self, protocol=None, groups=None, **kwargs)``
     The ids for the T norm models for the given group and protocol.
 
-.. note:
+.. note::
    For a proper biometric recognition protocol, the identities from the models and the T-Norm models, as well as the Z-probes should be different.
 
-..
-    For some protocols, a single probe consists of several features, see :ref:`bob.bio.base.algorithms` about strategies how to incorporate several probe files into one score.
-    If your database should provide this functionality, please overwrite:
+For some protocols, a single probe consists of several features, see :ref:`bob.bio.base.algorithms` about strategies how to incorporate several probe files into one score.
+If your database should provide this functionality, please overwrite:
 
-    * ``uses_probe_file_sets(self)``: Return ``True`` if the current protocol of the database provides multiple files for one probe.
-    * ``probe_file_sets(self, model_id=None, group='dev')``: Returns a list of lists of :py:class:`bob.bio.base.database.FileSet` objects.
-    * ``z_probe_file_sets(self, model_id=None, group='dev')``: Returns a list of lists of Z-probe :py:class:`bob.bio.base.database.FileSet` objects (only needed if the base class is :py:class:`bob.bio.base.database.DatabaseZT`).
+* ``uses_probe_file_sets(self)``: Return ``True`` if the current protocol of the database provides multiple files for one probe.
+* ``probe_file_sets(self, model_id=None, group='dev')``: Returns a list of lists of :py:class:`bob.bio.base.database.BioFileSet` objects.
+* ``z_probe_file_sets(self, model_id=None, group='dev')``: Returns a list of lists of Z-probe :py:class:`bob.bio.base.database.BioFileSet` objects.
 
 
 .. _bob.bio.base.configuration-files:
@@ -298,7 +293,6 @@ For example, the configuration file for a PCA algorithm, which uses 80% of varia
    algorithm = bob.bio.base.algorithm.PCA(subspace_dimension = 0.8, distance_function = scipy.spatial.distance.cosine, is_distance_function = True)
 
 Some default configuration files can be found in the ``bob/bio/*/config`` directories of all ``bob.bio`` packages, but you can create configuration files in any directory you like.
-In fact, since all tools have a different keyword, you can define a complete experiment in a single configuration file.
 
 
 .. _bob.bio.base.resources:
@@ -324,7 +318,7 @@ Particularly, we use a specific list of entry points, which are:
 For each of the tools, several resources are defined, which you can list with the ``resources.py`` command line.
 
 When you want to register your own resource, make sure that your configuration file is importable (usually it is sufficient to have an empty ``__init__.py`` file in the same directory as your configuration file).
-Then, you can simply add a line inside the according ``entry_points`` section of the ``setup.py`` file (you might need to create that section, just follow the example of the ``setup.py`` file that you can find online in the base directory of our `bob.bio.base Gitlab page <http://gitlab.idiap.ch/bob/bob.bio.base>`__).
+Then, you can simply add a line inside the according ``entry_points`` section of the ``setup.py`` file (you might need to create that section, just follow the example of the ``setup.py`` file `that you can find online in bob.bio.base Gitlab page <https://gitlab.idiap.ch/bob/bob.bio.base/blob/master/setup.py>`__).
 
 After re-running ``buildout``, your new resource should be listed in the output of ``resources.py``.
 
