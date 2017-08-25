@@ -255,8 +255,8 @@ def take_from_config_or_command_line(args, config, keyword, default, required=Tr
                                                        preferred_package=args.preferred_package))
 
     elif required:
-        raise ValueError("Please specify a %s either on command line (via --%s) or in a configuration file" %
-                         (keyword, keyword))
+        raise ValueError("Please specify '%s' either on command line (via '--%s') or in a configuration file" %
+                         (keyword, keyword.replace("_","-")))
 
     if config is not None and hasattr(config, keyword):
         setattr(config, keyword, None)
@@ -269,7 +269,7 @@ def check_config_consumed(config):
             if not keyword.startswith('_') and not keyword.isupper():
                 attr = getattr(config, keyword)
                 if attr is not None and not inspect.isclass(attr) and not inspect.ismodule(attr):
-                    logger.warn("The variable '%s' in a configuration file is not known or not supported by this application; use a '_' prefix to the variable name (e.g., _%s) to suppress this warning", keyword, keyword)
+                    logger.warn("The variable '%s' in a configuration file is not known or not supported by this application; use a '_' prefix to the variable name (e.g., '_%s') to suppress this warning", keyword, keyword)
 
 
 def parse_config_file(parsers, args, args_dictionary, keywords, skips):
@@ -432,7 +432,7 @@ def initialize(parsers, command_line_parameters=None, skips=[]):
     # result files
     args.info_file = os.path.join(args.result_directory, protocol, args.experiment_info_file)
 
-    # sub-directorues that depend on the database
+    # sub-directories that depend on the database
     extractor_sub_dir = protocol if args.database.training_depends_on_protocol and \
                                     args.extractor.requires_training else '.'
     projector_sub_dir = protocol if args.database.training_depends_on_protocol and \
