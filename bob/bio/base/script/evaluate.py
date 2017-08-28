@@ -47,6 +47,7 @@ def command_line_arguments(command_line_parameters):
   parser.add_argument('-m', '--mindcf', action = 'store_true', help = "If given, minDCF will be computed.")
   parser.add_argument('--cost', default=0.99,  help='Cost for FAR in minDCF')
   parser.add_argument('-r', '--rr', action = 'store_true', help = "If given, the Recognition Rate will be computed.")
+  parser.add_argument('-o', '--rank', type=int, default=1, help = "The rank for which to plot the DIR curve")
   parser.add_argument('-t', '--thresholds', type=float, nargs='+', help = "If given, the Recognition Rate will incorporate an Open Set handling, rejecting all scores that are below the given threshold; when multiple thresholds are given, they are applied in the same order as the --dev-files.")
   parser.add_argument('-l', '--legends', nargs='+', help = "A list of legend strings used for ROC, CMC and DET plots; if given, must be the same number than --dev-files.")
   parser.add_argument('-F', '--legend-font-size', type=int, default=10, help = "Set the font size of the legends.")
@@ -55,6 +56,7 @@ def command_line_arguments(command_line_parameters):
   parser.add_argument('-R', '--roc', help = "If given, ROC curves will be plotted into the given pdf file.")
   parser.add_argument('-D', '--det', help = "If given, DET curves will be plotted into the given pdf file.")
   parser.add_argument('-C', '--cmc', help = "If given, CMC curves will be plotted into the given pdf file.")
+  parser.add_argument('-O', '--dir', help = "If given, DIR curves will be plotted into the given pdf file; This is an open-set measure, which cannot be applied to closed set score files.")
   parser.add_argument('-E', '--epc', help = "If given, EPC curves will be plotted into the given pdf file. For this plot --eval-files is mandatory.")
   parser.add_argument('-M', '--min-far-value', type=float, default=1e-4, help = "Select the minimum FAR value used in ROC plots; should be a power of 10.")
   parser.add_argument('-L', '--far-line-at', type=float, help = "If given, draw a veritcal line at this FAR value in the ROC plots.")
@@ -68,8 +70,11 @@ def command_line_arguments(command_line_parameters):
   # set verbosity level
   bob.core.log.set_verbosity_level(logger, args.verbose)
 
-
   # some sanity checks:
+  for f in args.dev_files + (args.eval_files or []):
+    if not os.path.exists(f):
+      raise ValueError("The provided score file '%s' does not exist", f)
+
   if args.eval_files is not None and len(args.dev_files) != len(args.eval_files):
     logger.error("The number of --dev-files (%d) and --eval-files (%d) are not identical", len(args.dev_files), len(args.eval_files))
 
@@ -98,6 +103,14 @@ def command_line_arguments(command_line_parameters):
 
   return args
 
+def _add_far_labels(min_far):
+  # compute and apply tick marks
+  ticks = [min_far]
+  while ticks[-1] < 1.: ticks.append(ticks[-1] * 10.)
+  pyplot.xticks(ticks)
+  pyplot.axis([min_far, 1., -0.01, 1.01])
+
+
 
 def _plot_roc(frrs, colors, labels, title, fontsize=10, position=None, farfrrs=None):
   if position is None: position = 'lower right'
@@ -116,12 +129,7 @@ def _plot_roc(frrs, colors, labels, title, fontsize=10, position=None, farfrrs=N
     else:
       pyplot.plot([x[0] for x in farfrrs], [(1.-x[1]) for x in farfrrs], '--', color='black')
 
-  # compute and apply tick marks
-  min_far = frrs[0][0][0]
-  ticks = [min_far]
-  while ticks[-1] < 1.: ticks.append(ticks[-1] * 10.)
-  pyplot.axis([min_far, 1., -0.01, 1.01])
-  pyplot.xticks(ticks)
+  _add_far_labels(frrs[0][0][0])
 
   # set label, legend and title
   pyplot.xlabel('FMR')
@@ -179,6 +187,39 @@ def _plot_cmc(cmcs, colors, labels, title, fontsize=10, position=None):
   pyplot.ylabel('Probability')
   pyplot.xticks(ticks, [str(t) for t in ticks])
   pyplot.axis([0, max_R, -0.01, 1.01])
+  pyplot.legend(loc=position, prop = {'size':fontsize})
+  pyplot.title(title)
+
+  return figure
+
+
+def _plot_dir(cmc_scores, far_values, rank, colors, labels, title, fontsize=10, position=None):
+  if position is None: position = 'lower right'
+  # open new page for current plot
+  figure = pyplot.figure()
+
+  # for each probe, for which no positives exists, get the highest negative
+  # score; and sort them to compute the FAR thresholds
+  for i, cmcs in enumerate(cmc_scores):
+    negatives = sorted(max(neg) for neg, pos in cmcs if (pos is None or not numpy.array(pos).size) and neg is not None)
+    if not negatives:
+      raise ValueError("There need to be at least one pair with only negative scores")
+
+    # compute thresholds based on FAR values
+    thresholds = [bob.measure.far_threshold(negatives, [], v, True) for v in far_values]
+
+    # compute detection and identification rate based on the thresholds for
+    # the given rank
+    rates = [bob.measure.detection_identification_rate(cmcs, t, rank) for t in thresholds]
+
+    # plot DIR curve
+    pyplot.semilogx(far_values, rates, figure=figure, color=colors[i], label=labels[i])
+
+  # finalize plot
+  _add_far_labels(far_values[0])
+
+  pyplot.xlabel('FAR')
+  pyplot.ylabel('DIR')
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
 
@@ -367,15 +408,14 @@ def main(command_line_parameters=None):
       try:
         # create a multi-page PDF for the EPC curve
         pdf = PdfPages(args.epc)
-        pdf.savefig(_plot_epc(scores_dev, scores_eval, colors, args.legends, args.title if args.title is not None else "" , args.legend_font_size, args.legend_position), bbox_inches='tight')
+        pdf.savefig(_plot_epc(scores_dev, scores_eval, colors, args.legends, args.title[0] if args.title is not None else "" , args.legend_font_size, args.legend_position), bbox_inches='tight')
         pdf.close()
       except RuntimeError as e:
         raise RuntimeError("During plotting of EPC curves, the following exception occured:\n%s" % e)
 
 
 
-
-  if args.cmc or args.rr:
+  if args.cmc or args.rr or args.dir:
     logger.info("Loading CMC data on the development " + ("and on the evaluation set" if args.eval_files else "set"))
     cmcs_dev = [bob.measure.load.cmc(os.path.join(args.directory, f)) for f in args.dev_files]
     if args.eval_files:
@@ -384,7 +424,7 @@ def main(command_line_parameters=None):
     if args.cmc:
       logger.info("Plotting CMC curves to file '%s'", args.cmc)
       try:
-        # create a multi-page PDF for the ROC curve
+        # create a multi-page PDF for the CMC curve
         pdf = PdfPages(args.cmc)
         # create a separate figure for dev and eval
         pdf.savefig(_plot_cmc(cmcs_dev, colors, args.legends, args.title[0] if args.title is not None else "CMC curve for development set", args.legend_font_size, args.legend_position), bbox_inches='tight')
@@ -392,7 +432,7 @@ def main(command_line_parameters=None):
           pdf.savefig(_plot_cmc(cmcs_eval, colors, args.legends, args.title[1] if args.title is not None else "CMC curve for evaluation set", args.legend_font_size, args.legend_position), bbox_inches='tight')
         pdf.close()
       except RuntimeError as e:
-        raise RuntimeError("During plotting of ROC curves, the following exception occured:\n%s\nUsually this happens when the label contains characters that LaTeX cannot parse." % e)
+        raise RuntimeError("During plotting of CMC curves, the following exception occured:\n%s\nUsually this happens when the label contains characters that LaTeX cannot parse." % e)
 
     if args.rr:
       logger.info("Computing recognition rate on the development " + ("and on the evaluation set" if args.eval_files else "set"))
@@ -402,3 +442,19 @@ def main(command_line_parameters=None):
         if args.eval_files:
           rr = bob.measure.recognition_rate(cmcs_eval[i], args.thresholds[i])
           print("The Recognition Rate of the development set of '%s' is %2.3f%%" % (args.legends[i], rr * 100.))
+
+    if args.dir:
+      # compute false alarm values to evaluate
+      min_far = int(math.floor(math.log(args.min_far_value, 10)))
+      fars = [math.pow(10., i * 0.25) for i in range(min_far * 4, 0)] + [1.]
+      logger.info("Plotting DIR curves to file '%s'", args.dir)
+      try:
+        # create a multi-page PDF for the DIR curve
+        pdf = PdfPages(args.dir)
+        # create a separate figure for dev and eval
+        pdf.savefig(_plot_dir(cmcs_dev, fars, args.rank, colors, args.legends, args.title[0] if args.title is not None else "DIR curve for development set", args.legend_font_size, args.legend_position), bbox_inches='tight')
+        if args.eval_files:
+          pdf.savefig(_plot_dir(cmcs_eval, fars, args.rank, colors, args.legends, args.title[1] if args.title is not None else "DIR curve for evaluation set", args.legend_font_size, args.legend_position), bbox_inches='tight')
+        pdf.close()
+      except RuntimeError as e:
+        raise RuntimeError("During plotting of DIR curves, the following exception occured:\n%s")

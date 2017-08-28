@@ -144,7 +144,7 @@ Evaluating Experiments
 ----------------------
 After the experiment has finished successfully, one or more text file containing all the scores are written.
 
-To evaluate the experiment, you can use the generic ``evaluate.py`` script, which has properties for all prevalent evaluation types, such as CMC, ROC and DET plots, as well as computing recognition rates, EER/HTER, Cllr and minDCF.
+To evaluate the experiment, you can use the generic ``evaluate.py`` script, which has properties for all prevalent evaluation types, such as CMC, DIR, ROC and DET plots, as well as computing recognition rates, EER/HTER, Cllr and minDCF.
 Additionally, a combination of different algorithms can be plotted into the same files.
 Just specify all the score files that you want to evaluate using the ``--dev-files`` option, and possible legends for the plots (in the same order) using the ``--legends`` option, and the according plots will be generated.
 For example, to create a ROC curve for the experiment above, use:
