@@ -18,22 +18,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-This file defines simple Client and File interfaces that are comparable with other bob.db databases.
+This file defines a simple interface that are comparable with other bob.db databases.
 """
 
 import os
 import fileinput
 import re
-
-
-class Client(object):
-    """
-    The clients of this database contain ONLY client ids. Nothing special.
-    """
-
-    def __init__(self, client_id):
-        self.id = client_id
-        """The ID of the client, which is stored as a :py:class:`str` object."""
 
 
 class FileListFile(object):
@@ -43,16 +33,19 @@ class FileListFile(object):
      If the ``model_id`` is not specified, ``model_id`` and ``client_id`` are identical.
      If the ``claimed_id`` is not specified, it is expected to be the ``client_id``.
 
-     **Parameters**
+     Parameters
+     ----------
 
      client_id : various type
        The id of the client, this file belongs to.
        The type of it is dependent on your implementation.
        If you use an SQL database, this should be an SQL type like Integer or String.
+
      path : str
        The path of this file, relative to the basic directory.
        If you use an SQL database, this should be the SQL type String.
        Please do not specify any file extensions.
+
      file_id : various type
        The id of the file.
        The type of it is dependent on your implementation.
