@@ -498,7 +498,7 @@ def test_evaluate_closedset():
 def test_evaluate_openset():
   # tests our 'evaluate' script using the reference files
   test_dir = tempfile.mkdtemp(prefix='bobtest_')
-  reference_file = os.path.join(data_dir, 'scores-nonorm-dev-openset')
+  reference_file = os.path.join(data_dir, 'scores-nonorm-openset-dev')
   plot = os.path.join(test_dir, 'dir.pdf')
   parameters = [
     '--dev-files', reference_file,
