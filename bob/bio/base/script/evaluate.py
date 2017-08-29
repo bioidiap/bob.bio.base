@@ -193,7 +193,7 @@ def _plot_cmc(cmcs, colors, labels, title, fontsize=10, position=None):
   return figure
 
 
-def _plot_dir(cmc_scores, far_values, rank, colors, labels, title, fontsize=10, position=None, thresholds=None):
+def _plot_dir(cmc_scores, far_values, rank, colors, labels, title, fontsize=10, position=None):
   if position is None: position = 'lower right'
   # open new page for current plot
   figure = pyplot.figure()
@@ -206,8 +206,7 @@ def _plot_dir(cmc_scores, far_values, rank, colors, labels, title, fontsize=10, 
       raise ValueError("There need to be at least one pair with only negative scores")
 
     # compute thresholds based on FAR values
-    if thresholds is None:
-      thresholds = [bob.measure.far_threshold(negatives, [], v, True) for v in far_values]
+    thresholds = [bob.measure.far_threshold(negatives, [], v, True) for v in far_values]
 
     # compute detection and identification rate based on the thresholds for
     # the given rank
@@ -224,7 +223,7 @@ def _plot_dir(cmc_scores, far_values, rank, colors, labels, title, fontsize=10, 
   pyplot.legend(loc=position, prop = {'size':fontsize})
   pyplot.title(title)
 
-  return figure, thresholds
+  return figure
 
 
 def _plot_epc(scores_dev, scores_eval, colors, labels, title, fontsize=10, position=None):
@@ -453,10 +452,9 @@ def main(command_line_parameters=None):
         # create a multi-page PDF for the DIR curve
         pdf = PdfPages(args.dir)
         # create a separate figure for dev and eval
-        figure, thresholds = _plot_dir(cmcs_dev, fars, args.rank, colors, args.legends, args.title[0] if args.title is not None else "DIR curve for development set", args.legend_font_size, args.legend_position)
-        pdf.savefig(figure, bbox_inches='tight')
+        pdf.savefig(_plot_dir(cmcs_dev, fars, args.rank, colors, args.legends, args.title[0] if args.title is not None else "DIR curve for development set", args.legend_font_size, args.legend_position), bbox_inches='tight')
         if args.eval_files:
-          pdf.savefig(_plot_dir(cmcs_eval, fars, args.rank, colors, args.legends, args.title[1] if args.title is not None else "DIR curve for evaluation set", args.legend_font_size, args.legend_position, thresholds=thresholds)[0], bbox_inches='tight')
+          pdf.savefig(_plot_dir(cmcs_eval, fars, args.rank, colors, args.legends, args.title[1] if args.title is not None else "DIR curve for evaluation set", args.legend_font_size, args.legend_position), bbox_inches='tight')
         pdf.close()
       except RuntimeError as e:
         raise RuntimeError("During plotting of DIR curves, the following exception occured:\n%s")
