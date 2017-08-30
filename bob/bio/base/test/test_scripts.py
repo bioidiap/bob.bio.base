@@ -462,10 +462,10 @@ def test_fusion():
 
 
 
-def test_evaluate():
+def test_evaluate_closedset():
   # tests our 'evaluate' script using the reference files
   test_dir = tempfile.mkdtemp(prefix='bobtest_')
-  reference_files = ('scores-nonorm-dev', 'scores-ztnorm-dev')
+  reference_files = [os.path.join(data_dir, s) for s in ('scores-nonorm-dev', 'scores-ztnorm-dev')]
   plots = [os.path.join(test_dir, '%s.pdf')%f for f in ['roc', 'cmc', 'det', 'epc']]
   parameters = [
     '--dev-files', reference_files[0], reference_files[1],
@@ -494,6 +494,32 @@ def test_evaluate():
   finally:
     if os.path.exists(test_dir):
       shutil.rmtree(test_dir)
+
+def test_evaluate_openset():
+  # tests our 'evaluate' script using the reference files
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
+  reference_file = os.path.join(data_dir, 'scores-nonorm-openset-dev')
+  plot = os.path.join(test_dir, 'dir.pdf')
+  parameters = [
+    '--dev-files', reference_file,
+    '--eval-files', reference_file,
+    '--directory', os.path.join(data_dir),
+    '--legends', 'Test',
+    '--dir', plot,
+    '--min-far-value', '1e-6',
+    '-v',
+  ]
+
+  # execute the script
+  from bob.bio.base.script.evaluate import main
+  try:
+    main(parameters)
+    assert os.path.exists(plot)
+    os.remove(plot)
+  finally:
+    if os.path.exists(test_dir):
+      shutil.rmtree(test_dir)
+
 
 
 
