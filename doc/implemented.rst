@@ -28,8 +28,10 @@ Implementations
    bob.bio.base.algorithm.LDA
    bob.bio.base.algorithm.PLDA
    bob.bio.base.algorithm.BIC
+   bob.bio.base.database.BioFile
    bob.bio.base.database.BioDatabase
    bob.bio.base.database.ZTBioDatabase
+   bob.bio.base.database.FileListBioDatabase
 
 
 Preprocessors

@@ -1,4 +1,4 @@
-from .models import ListReader, Client, FileListFile
+from .models import FileListFile
 from .query import FileListBioDatabase
 from .driver import Interface
 
@@ -20,8 +20,6 @@ def __appropriate__(*args):
 
 
 __appropriate__(
-    ListReader,
-    Client,
     FileListFile,
     FileListBioDatabase,
     Interface,

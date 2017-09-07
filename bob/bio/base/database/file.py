@@ -5,21 +5,24 @@ import bob.db.base
 
 
 class BioFile(bob.db.base.File):
-    """A simple base class that defines basic properties of File object for the use in verification experiments"""
+    """A simple base class that defines basic properties of File object for the use in verification experiments
+
+    Parameters
+    ----------
+
+    client_id : object
+      The id of the client this file belongs to.
+      Its type depends on your implementation.
+      If you use an SQL database, this should be an SQL type like Integer or String.
+
+    file_id : object
+      see :py:class:`bob.db.base.File` constructor
+
+    path : object
+      see :py:class:`bob.db.base.File` constructor
+    """
 
     def __init__(self, client_id, path, file_id=None):
-        """**Constructor Documentation**
-
-        Initialize the File object with the minimum required data.
-
-        Parameters:
-
-        client_id : various type
-          The id of the client this file belongs to.
-          Its type depends on your implementation.
-          If you use an SQL database, this should be an SQL type like Integer or String.
-        For path and file_id, please refer to :py:class:`bob.db.base.File` constructor
-        """
         bob.db.base.File.__init__(self, path, file_id)
 
         # just copy the information
@@ -34,18 +37,18 @@ class BioFileSet(BioFile):
     type :py:class:`bob.bio.base.database.BioFile` of the same client.
     The file set id can be anything hashable, but needs to be unique all over the database.
 
-    **Parameters:**
+    Parameters
+    ----------
 
     file_set_id : str or int
       A unique ID that identifies the file set.
+
     files : [:py:class:`bob.bio.base.database.BioFile`]
       A non-empty list of BioFile objects that should be stored inside this file.
       All files of that list need to have the same client ID.
     """
 
     def __init__(self, file_set_id, files, path=None):
-        """The list of :py:class:`bob.bio.base.database.BioFile` objects stored in this file set"""
-
         # don't accept empty file lists
         assert len(files), "Cannot create an empty BioFileSet"
 

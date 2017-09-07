@@ -8,13 +8,14 @@ import bob.db.base
 from .. import ZTBioDatabase
 from .. import BioFile
 
-from . import ListReader, Client
+from .models import ListReader
 
 
 class FileListBioDatabase(ZTBioDatabase):
     """This class provides a user-friendly interface to databases that are given as file lists.
 
-    Keyword parameters:
+    Parameters
+    ----------
 
     filelists_directory : str
       The directory that contains the filelists defining the protocol(s). If you use the protocol
@@ -27,65 +28,66 @@ class FileListBioDatabase(ZTBioDatabase):
     protocol : str
       The protocol of the database. This should be a folder inside ``filelists_directory``.
 
-    bio_file_class : class
-      The class that should be used for return the files.
-      This can be `BioFile`, `AudioBioFile`, `FaceBioFile`, or anything similar.
+    bio_file_class : ``class``
+      The class that should be used to return the files.
+      This can be :py:class:`bob.bio.base.database.BioFile`, :py:class:`bob.bio.spear.database.AudioBioFile`, :py:class:`bob.bio.face.database.FaceBioFile`, or anything similar.
 
     original_directory : str or ``None``
-      The directory, where the original data can be found
+      The directory, where the original data can be found.
 
     original_extension : str or [str] or ``None``
-      The filename extension of the original data, or multiple extensions
+      The filename extension of the original data, or multiple extensions.
 
     annotation_directory : str or ``None``
-      The directory, where additional annotation files can be found
+      The directory, where additional annotation files can be found.
 
     annotation_extension : str or ``None``
-      The filename extension of the annoation files
+      The filename extension of the annotation files.
 
     annotation_type : str or ``None``
       The type of annotation that can be read.
-      Currently, options are 'eyecenter', 'named', 'idiap'.
+      Currently, options are ``'eyecenter', 'named', 'idiap'``.
       See :py:func:`bob.db.base.read_annotation_file` for details.
 
     dev_sub_directory : str or ``None``
-      Specify a custom subdirectory for the filelists of the development set (default is 'dev')
+      Specify a custom subdirectory for the filelists of the development set (default is ``'dev'``)
 
     eval_sub_directory : str or ``None``
-      Specify a custom subdirectory for the filelists of the development set (default is 'eval')
+      Specify a custom subdirectory for the filelists of the development set (default is ``'eval'``)
 
     world_filename : str or ``None``
-      Specify a custom filename for the training filelist (default is 'norm/train_world.lst')
+      Specify a custom filename for the training filelist (default is ``'norm/train_world.lst'``)
 
     optional_world_1_filename : str or ``None``
       Specify a custom filename for the (first optional) training filelist
-      (default is 'norm/train_optional_world_1.lst')
+      (default is ``'norm/train_optional_world_1.lst'``)
 
     optional_world_2_filename : str or ``None``
       Specify a custom filename for the (second optional) training filelist
-      (default is 'norm/train_optional_world_2.lst')
+      (default is ``'norm/train_optional_world_2.lst'``)
 
     models_filename : str or ``None``
-      Specify a custom filename for the model filelists (default is 'for_models.lst')
+      Specify a custom filename for the model filelists (default is ``'for_models.lst'``)
 
     probes_filename : str or ``None``
-      Specify a custom filename for the probes filelists (default is 'for_probes.lst')
+      Specify a custom filename for the probes filelists (default is ``'for_probes.lst'``)
 
     scores_filename : str or ``None``
-      Specify a custom filename for the scores filelists (default is 'for_scores.lst')
+      Specify a custom filename for the scores filelists (default is ``'for_scores.lst'``)
 
     tnorm_filename : str or ``None``
-      Specify a custom filename for the T-norm scores filelists (default is 'for_tnorm.lst')
+      Specify a custom filename for the T-norm scores filelists (default is ``'for_tnorm.lst'``)
 
     znorm_filename : str or ``None``
-      Specify a custom filename for the Z-norm scores filelists (default is 'for_znorm.lst')
+      Specify a custom filename for the Z-norm scores filelists (default is ``'for_znorm.lst'``)
 
     use_dense_probe_file_list : bool or None
-      Specify which list to use among 'probes_filename' (dense) or 'scores_filename'.
+      Specify which list to use among ``probes_filename`` (dense) or ``scores_filename``.
       If ``None`` it is tried to be estimated based on the given parameters.
 
     keep_read_lists_in_memory : bool
-      If set to true, the lists are read only once and stored in memory
+      If set to ``True`` (the default), the lists are read only once and stored in memory.
+      Otherwise the lists will be re-read for every query (not recommended).
     """
 
     def __init__(
@@ -198,7 +200,26 @@ class FileListBioDatabase(ZTBioDatabase):
     def _make_bio(self, files):
         return [self.bio_file_class(client_id=f.client_id, path=f.path, file_id=f.id) for f in files]
 
+
     def all_files(self, groups=['dev'], add_zt_files=True):
+        """Returns all files for the given group. The internally stored protocol is used, throughout.
+
+        Parameters
+        ----------
+
+        groups : [str]
+          A list of groups to retrieve the files for.
+
+        add_zt_files : bool
+          If selected, also files for ZT-norm scoring will be added.
+          Please select this option only if this dataset provides ZT-norm files, see :py:meth:`implements_zt`.
+
+        Returns
+        -------
+
+        [BioFile]
+          A list of all files that fulfill your query.
+        """
         files = self.objects(groups, self.protocol, **self.all_files_options)
         # add all files that belong to the ZT-norm
         for group in groups:
@@ -211,11 +232,16 @@ class FileListBioDatabase(ZTBioDatabase):
                 files += self.zobjects(group, self.protocol, **self.z_probe_options)
         return self.sort(self._make_bio(files))
 
+
     def groups(self, protocol=None, add_world=True, add_subworld=True):
         """This function returns the list of groups for this database.
 
+        Parameters
+        ----------
+
         protocol : str or ``None``
           The protocol for which the groups should be retrieved.
+          If ``None``, the internally stored protocol is used.
 
         add_world : bool
           Add the world groups?
@@ -223,9 +249,12 @@ class FileListBioDatabase(ZTBioDatabase):
         add_subworld : bool
           Add the sub-world groups? Only valid, when ``add_world=True``
 
-        Returns: a list of groups
-        """
+        Returns
+        -------
 
+        [str]
+          A list of groups
+        """
         groups = []
         protocol = protocol or self.protocol
         if protocol is not None:
@@ -256,18 +285,23 @@ class FileListBioDatabase(ZTBioDatabase):
                     groups.append('optional_world_2')
         return groups
 
+
     def implements_zt(self, protocol=None, groups=None):
         """Checks if the file lists for the ZT score normalization are available.
 
-        Keyword Parameters:
+        Parameters
+        ----------
 
         protocol : str or ``None``
           The protocol for which the groups should be retrieved.
 
         groups : str or [str] or ``None``
-          The groups for which the ZT score normalization file lists should be checked ("dev", "eval").
+          The groups for which the ZT score normalization file lists should be checked ``('dev', 'eval')``.
 
-        Returns:
+        Returns
+        -------
+
+        bool
           ``True`` if the all file lists for ZT score normalization exist, otherwise ``False``.
         """
         protocol = protocol or self.protocol
@@ -336,20 +370,25 @@ class FileListBioDatabase(ZTBioDatabase):
     def client_id_from_model_id(self, model_id, group='dev'):
         """Returns the client id that is connected to the given model id.
 
-        Keyword parameters:
+        Parameters
+        ----------
 
         model_id : str or ``None``
           The model id for which the client id should be returned.
 
         groups : str or [str] or ``None``
           (optional) the groups, the client belongs to.
-          Might be one or more of ('dev', 'eval', 'world', 'optional_world_1', 'optional_world_2').
+          Might be one or more of ``('dev', 'eval', 'world', 'optional_world_1', 'optional_world_2')``.
           If groups are given, only these groups are considered.
 
         protocol : str or ``None``
-          The protocol to consider
+          The protocol to consider.
 
-        Returns: The client id for the given model id, if found.
+        Returns
+        -------
+
+        str
+          The client id for the given model id, if found.
         """
         protocol = self.protocol
         groups = self.check_parameters_for_validity(group, "group",
@@ -367,20 +406,22 @@ class FileListBioDatabase(ZTBioDatabase):
     def client_id_from_t_model_id(self, t_model_id, group='dev'):
         """Returns the client id that is connected to the given T-Norm model id.
 
-        Keyword parameters:
+        Parameters
+        ----------
 
         model_id : str or ``None``
           The model id for which the client id should be returned.
 
         groups : str or [str] or ``None``
           (optional) the groups, the client belongs to.
-          Might be one or more of ('dev', 'eval').
+          Might be one or more of ``('dev', 'eval')``.
           If groups are given, only these groups are considered.
 
-        protocol : str or ``None``
-          The protocol to consider
+        Returns
+        -------
 
-        Returns: The client id for the given model id of a T-Norm model, if found.
+        str
+          The client id for the given model id of a T-Norm model, if found.
         """
         protocol = self.protocol
         groups = self.check_parameters_for_validity(group, "group", self.groups(protocol, add_world=False))
@@ -393,58 +434,6 @@ class FileListBioDatabase(ZTBioDatabase):
 
         raise ValueError(
             "The given T-norm model id '%s' cannot be found in one of the groups '%s'" % (t_model_id, groups))
-
-    def clients(self, protocol=None, groups=None):
-        """Returns a list of :py:class:`bob.bio.base.database.Client` objects for the specific query by the user.
-
-        Keyword Parameters:
-
-        protocol : str or ``None``
-          The protocol to consider
-
-        groups : str or [str] or ``None``
-          The groups to which the clients belong ("dev", "eval", "world", "optional_world_1", "optional_world_2").
-
-        Returns: A list containing all the :py:class:`bob.bio.base.database.Client` objects which have the given properties.
-        """
-
-        protocol = protocol or self.protocol
-        client_ids = self.client_ids(protocol, groups)
-        return [Client(id) for id in client_ids]
-
-    def tclients(self, protocol=None, groups=None):
-        """Returns a list of T-Norm :py:class:`bob.bio.base.database.Client` objects for the specific query by the user.
-
-        Keyword Parameters:
-
-        protocol : str or ``None``
-          The protocol to consider
-
-        groups : str or [str] or ``None``
-          The groups to which the clients belong ("dev", "eval").
-
-        Returns: A list containing all the T-Norm :py:class:`bob.bio.base.database.Client` objects which have the given properties.
-        """
-        protocol = protocol or self.protocol
-        tclient_ids = self.tclient_ids(protocol, groups)
-        return [Client(id) for id in tclient_ids]
-
-    def zclients(self, protocol=None, groups=None):
-        """Returns a list of Z-Norm Client objects for the specific query by the user.
-
-        Keyword Parameters:
-
-        protocol : str or ``None``
-          The protocol to consider
-
-        groups : str or [str] or ``None``
-          The groups to which the models belong ("dev", "eval").
-
-        Returns: A list containing all the Z-Norm Client objects which have the given properties.
-        """
-        protocol = protocol or self.protocol
-        zclient_ids = self.zclient_ids(protocol, groups)
-        return [Client(id) for id in zclient_ids]
 
     def __client_id_list__(self, groups, type, protocol=None):
         ids = set()
@@ -459,15 +448,20 @@ class FileListBioDatabase(ZTBioDatabase):
     def client_ids(self, protocol=None, groups=None):
         """Returns a list of client ids for the specific query by the user.
 
-        Keyword Parameters:
+        Parameters
+        ----------
 
         protocol : str or ``None``
           The protocol to consider
 
         groups : str or [str] or ``None``
-          The groups to which the clients belong ("dev", "eval", "world", "optional_world_1", "optional_world_2").
+          The groups to which the clients belong ``('dev', 'eval', 'world', 'optional_world_1', 'optional_world_2')``.
 
-        Returns: A list containing all the client ids which have the given properties.
+        Returns
+        -------
+
+        [str]
+          A list containing all the client ids which have the given properties.
         """
 
         protocol = protocol or self.protocol
@@ -480,7 +474,8 @@ class FileListBioDatabase(ZTBioDatabase):
     def tclient_ids(self, protocol=None, groups=None):
         """Returns a list of T-Norm client ids for the specific query by the user.
 
-        Keyword Parameters:
+        Parameters
+        ----------
 
         protocol : str or ``None``
           The protocol to consider
@@ -488,7 +483,11 @@ class FileListBioDatabase(ZTBioDatabase):
         groups : str or [str] or ``None``
           The groups to which the clients belong ("dev", "eval").
 
-        Returns: A list containing all the T-Norm client ids which have the given properties.
+        Returns
+        -------
+
+        [str]
+          A list containing all the T-Norm client ids which have the given properties.
         """
 
         protocol = protocol or self.protocol
@@ -499,7 +498,8 @@ class FileListBioDatabase(ZTBioDatabase):
     def zclient_ids(self, protocol=None, groups=None):
         """Returns a list of Z-Norm client ids for the specific query by the user.
 
-        Keyword Parameters:
+        Parameters
+        ----------
 
         protocol : str or ``None``
           The protocol to consider
@@ -507,7 +507,11 @@ class FileListBioDatabase(ZTBioDatabase):
         groups : str or [str] or ``None``
           The groups to which the clients belong ("dev", "eval").
 
-        Returns: A list containing all the Z-Norm client ids which have the given properties.
+        Returns
+        -------
+
+        [str]
+          A list containing all the Z-Norm client ids which have the given properties.
         """
 
         protocol = protocol or self.protocol
@@ -527,15 +531,20 @@ class FileListBioDatabase(ZTBioDatabase):
     def model_ids_with_protocol(self, groups=None, protocol=None, **kwargs):
         """Returns a list of model ids for the specific query by the user.
 
-        Keyword Parameters:
+        Parameters
+        ----------
 
         protocol : str or ``None``
           The protocol to consider
 
         groups : str or [str] or ``None``
-          The groups to which the models belong ("dev", "eval", "world", "optional_world_1", "optional_world_2").
+          The groups to which the models belong ``('dev', 'eval', 'world', 'optional_world_1', 'optional_world_2')``.
 
-        Returns: A list containing all the model ids which have the given properties.
+        Returns
+        -------
+
+        [str]
+          A list containing all the model ids which have the given properties.
         """
         protocol = protocol or self.protocol
         groups = self.check_parameters_for_validity(groups, "group", self.groups(protocol=protocol))
@@ -545,15 +554,20 @@ class FileListBioDatabase(ZTBioDatabase):
     def tmodel_ids_with_protocol(self, protocol=None, groups=None, **kwargs):
         """Returns a list of T-Norm model ids for the specific query by the user.
 
-        Keyword Parameters:
+        Parameters
+        ----------
 
         protocol : str or ``None``
           The protocol to consider
 
         groups : str or [str] or ``None``
-          The groups to which the models belong ("dev", "eval").
+          The groups to which the models belong ``('dev', 'eval')``.
 
-        Returns: A list containing all the T-Norm model ids belonging to the given group.
+        Returns
+        -------
+
+        [str]
+          A list containing all the T-Norm model ids belonging to the given group.
         """
         protocol = protocol or self.protocol
         groups = self.check_parameters_for_validity(groups, "group", self.groups(protocol, add_world=False))
@@ -563,33 +577,40 @@ class FileListBioDatabase(ZTBioDatabase):
     def objects(self, groups=None, protocol=None, purposes=None, model_ids=None, classes=None, **kwargs):
         """Returns a set of :py:class:`bob.bio.base.database.BioFile` objects for the specific query by the user.
 
-        Keyword Parameters:
+        Parameters
+        ----------
 
         protocol : str or ``None``
           The protocol to consider
 
         purposes : str or [str] or ``None``
-          The purposes required to be retrieved ("enroll", "probe") or a tuple
-          with several of them. If 'None' is given (this is the default), it is
+          The purposes required to be retrieved ``('enroll', 'probe')`` or a tuple
+          with several of them. If ``None`` is given (this is the default), it is
           considered the same as a tuple with all possible values. This field is
-          ignored for the data from the "world", "optional_world_1", "optional_world_2" groups.
+          ignored for the data from the ``'world', 'optional_world_1', 'optional_world_2'`` groups.
 
         model_ids : str or [str] or ``None``
           Only retrieves the files for the provided list of model ids (claimed
-          client id). If 'None' is given (this is the default), no filter over
+          client id). If ``None`` is given (this is the default), no filter over
           the model_ids is performed.
 
         groups : str or [str] or ``None``
-          One of the groups ("dev", "eval", "world", "optional_world_1", "optional_world_2") or a tuple with several of them.
-          If 'None' is given (this is the default), it is considered to be the existing subset of ``("world", "dev", "eval")``.
+          One of the groups ``('dev', 'eval', 'world', 'optional_world_1', 'optional_world_2')`` or a tuple with several of them.
+          If ``None`` is given (this is the default), it is considered to be the existing subset of ``('world', 'dev', 'eval')``.
 
         classes : str or [str] or ``None``
-          The classes (types of accesses) to be retrieved ('client', 'impostor')
-          or a tuple with several of them. If 'None' is given (this is the
+          The classes (types of accesses) to be retrieved ``('client', 'impostor')``
+          or a tuple with several of them. If ``None`` is given (this is the
           default), it is considered the same as a tuple with all possible values.
-          Note: classes are not allowed to be specified when the 'probes_filename' is used.
 
-        Returns: A list of :py:class:`bob.bio.base.database.BioFile` objects considering all the filtering criteria.
+          .. note::
+             Classes are not allowed to be specified when 'probes_filename' is used in the constructor.
+
+        Returns
+        -------
+
+        [BioFile]
+          A list of :py:class:`BioFile` objects considering all the filtering criteria.
         """
 
         protocol = protocol or self.protocol
@@ -673,20 +694,25 @@ class FileListBioDatabase(ZTBioDatabase):
     def tobjects(self, groups=None, protocol=None, model_ids=None, **kwargs):
         """Returns a list of :py:class:`bob.bio.base.database.BioFile` objects for enrolling T-norm models for score normalization.
 
-        Keyword Parameters:
+        Parameters
+        ----------
 
         protocol : str or ``None``
           The protocol to consider
 
         model_ids : str or [str] or ``None``
           Only retrieves the files for the provided list of model ids (claimed
-          client id). If 'None' is given (this is the default), no filter over
+          client id). If ``None`` is given (this is the default), no filter over
           the model_ids is performed.
 
         groups : str or [str] or ``None``
-          The groups to which the models belong ("dev", "eval").
+          The groups to which the models belong ``('dev', 'eval')``.
 
-        Returns: A list of :py:class:`bob.bio.base.database.BioFile` objects considering all the filtering criteria.
+        Returns
+        -------
+
+        [BioFile]
+          A list of :py:class:`BioFile` objects considering all the filtering criteria.
         """
         protocol = protocol or self.protocol
         groups = self.check_parameters_for_validity(groups, "group", self.groups(protocol, add_world=False))
@@ -706,17 +732,22 @@ class FileListBioDatabase(ZTBioDatabase):
         return self._make_bio(retval)
 
     def zobjects(self, groups=None, protocol=None, **kwargs):
-        """Returns a list of :py:class:`bob.bio.base.database.BioFile` objects to perform Z-norm score normalization.
+        """Returns a list of :py:class:`BioFile` objects to perform Z-norm score normalization.
 
-        Keyword Parameters:
+        Parameters
+        ----------
 
         protocol : str or ``None``
           The protocol to consider
 
         groups : str or [str] or ``None``
-          The groups to which the clients belong ("dev", "eval").
+          The groups to which the clients belong ``('dev', 'eval')``.
 
-        Returns: A list of File objects considering all the filtering criteria.
+        Returns
+        -------
+
+        [BioFile]
+          A list of File objects considering all the filtering criteria.
         """
 
         protocol = protocol or self.protocol
@@ -735,15 +766,17 @@ class FileListBioDatabase(ZTBioDatabase):
     def annotations(self, file):
         """Reads the annotations for the given file id from file and returns them in a dictionary.
 
-        If you don't have a copy of the annotation files, you can download them under http://www.idiap.ch/resource/biometric.
+        Parameters
+        ----------
 
-        Keyword parameters:
-
-        file : :py:class:`bob.bio.base.database.BioFile`
+        file : BioFile
           The BioFile object for which the annotations should be read.
 
-        Return value
-          The annotations as a dictionary: {'reye':(re_y,re_x), 'leye':(le_y,le_x)}
+        Returns
+        -------
+
+        dict
+          The annotations as a dictionary, e.g.: ``{'reye':(re_y,re_x), 'leye':(le_y,le_x)}``
         """
         if self.annotation_directory is None:
             return None
@@ -753,6 +786,7 @@ class FileListBioDatabase(ZTBioDatabase):
 
         # return the annotations as read from file
         return bob.db.base.read_annotation_file(annotation_file, self.annotation_type)
+
 
     def original_file_name(self, file, check_existence=True):
         """Returns the original file name of the given file.
@@ -764,17 +798,21 @@ class FileListBioDatabase(ZTBioDatabase):
         these file names, and return the first one that actually exists.
         In this case, the ``check_existence`` flag is ignored.
 
-        **Keyword parameters**
+        Parameters
+        ----------
 
-        file : :py:class:`bob.bio.base.database.BioFile`
+        file : BioFile
           The BioFile object for which the file name should be returned.
 
         check_existence : bool
           Should the existence of the original file be checked?
-          (Ignored when multiple original extensions were specified in the contructor.)
+          (Ignored when multiple original extensions were specified in the constructor.)
 
-        **Returns**
-        str : The full path of the original data file.
+        Returns
+        -------
+
+        str
+          The full path of the original data file.
         """
 
         if isinstance(self.original_extension, str):

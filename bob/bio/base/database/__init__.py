@@ -2,8 +2,7 @@ from .file import BioFile
 from .file import BioFileSet
 from .database import BioDatabase
 from .database import ZTBioDatabase
-from .filelist.query import FileListBioDatabase
-from .filelist.models import Client
+from .filelist import FileListBioDatabase
 from . import filelist
 
 # gets sphinx autodoc done right - don't remove it
@@ -27,7 +26,6 @@ __appropriate__(
     BioFileSet,
     BioDatabase,
     ZTBioDatabase,
-    FileListBioDatabase,
-    Client,
+    FileListBioDatabase
 )
 __all__ = [_ for _ in dir() if not _.startswith('_')]
