@@ -1,7 +1,4 @@
 
-
-import bob.measure
-
 import os
 import shutil
 import tempfile
@@ -23,6 +20,7 @@ data_dir = pkg_resources.resource_filename('bob.bio.base', 'test/data')
 
 def _verify(parameters, test_dir, sub_dir, ref_modifier="", score_modifier=('scores',''), counts=3, check_zt=True):
   from bob.bio.base.script.verify import main
+  import bob.measure
   try:
     main(parameters)
 
@@ -248,8 +246,9 @@ def test_verify_filelist():
       '--preferred-package', 'bob.bio.base'
   ]
 
+  from bob.bio.base.script.verify import main
+  import bob.measure
   try:
-    from bob.bio.base.script.verify import main
     main(parameters)
 
     # assert that the score file exists
@@ -292,8 +291,9 @@ def test_verify_missing():
       '--imports', 'bob.bio.base.test.dummy'
   ]
 
+  from bob.bio.base.script.verify import main
+  import bob.measure
   try:
-    from bob.bio.base.script.verify import main
     main(parameters)
 
     # assert that the score file exists
@@ -448,6 +448,7 @@ def test_fusion():
 
   # execute the script
   from bob.bio.base.script.fuse_scores import main
+  import bob.measure
   try:
     main(parameters)
 
