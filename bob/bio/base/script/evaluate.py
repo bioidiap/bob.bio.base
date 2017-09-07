@@ -7,6 +7,14 @@ You can set the environment variable BOB_NO_STYLE_CHANGES to any value to avoid
 this script from changing the matplotlib style values. """
 
 from __future__ import print_function
+
+# matplotlib stuff
+import matplotlib
+matplotlib.use('pdf')  # avoids TkInter threaded start
+from matplotlib import pyplot
+from matplotlib.backends.backend_pdf import PdfPages
+
+# import bob.measure after matplotlib, so that it cannot define the backend
 import bob.measure
 
 import argparse
@@ -14,11 +22,6 @@ import numpy
 import math
 import os
 
-# matplotlib stuff
-import matplotlib
-matplotlib.use('pdf')  # avoids TkInter threaded start
-from matplotlib import pyplot
-from matplotlib.backends.backend_pdf import PdfPages
 
 if not os.environ.get('BOB_NO_STYLE_CHANGES'):
   # make the fig size smaller so that everything becomes bigger
@@ -457,4 +460,4 @@ def main(command_line_parameters=None):
           pdf.savefig(_plot_dir(cmcs_eval, fars, args.rank, colors, args.legends, args.title[1] if args.title is not None else "DIR curve for evaluation set", args.legend_font_size, args.legend_position), bbox_inches='tight')
         pdf.close()
       except RuntimeError as e:
-        raise RuntimeError("During plotting of DIR curves, the following exception occured:\n%s")
+        raise RuntimeError("During plotting of DIR curves, the following exception occured:\n%s" % e)
