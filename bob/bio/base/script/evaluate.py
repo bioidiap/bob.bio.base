@@ -12,6 +12,7 @@ from __future__ import print_function
 import matplotlib
 matplotlib.use('pdf')  # avoids TkInter threaded start
 from matplotlib import pyplot
+pyplot.ioff() # turn off interactive mode -- no figure window will be shown
 from matplotlib.backends.backend_pdf import PdfPages
 
 # import bob.measure after matplotlib, so that it cannot define the backend
