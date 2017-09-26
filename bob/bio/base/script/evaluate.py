@@ -11,7 +11,7 @@ from __future__ import print_function
 # matplotlib stuff
 import matplotlib
 from matplotlib import pyplot
-pyplot.switch_backend('agg')  # switch to non-X backend
+pyplot.switch_backend('pdf')  # switch to non-X backend
 from matplotlib.backends.backend_pdf import PdfPages
 
 # import bob.measure after matplotlib, so that it cannot define the backend
