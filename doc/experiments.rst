@@ -167,7 +167,7 @@ To achieve that, ``bob.bio`` is well-integrated with our SGE grid toolkit GridTK
 The ``verify.py`` script can submit jobs either to the SGE grid, or to a local scheduler, keeping track of dependencies between the jobs.
 
 The GridTK_ keeps a list of jobs in a local database, which by default is called ``submitted.sql3``, but which can be overwritten with the ``gridtk_database_file`` variable.
-Please refer to the `GridTK documentation <http://pythonhosted.org/gridtk>`_ for more details on how to use the Job Manager ``jman``.
+Please refer to the `GridTK documentation <https://www.idiap.ch/software/bob/docs/bob/gridtk/stable>`_ for more details on how to use the Job Manager ``jman``.
 
 Two different types of ``grid`` resources are defined, which can be used with the ``grid`` variable.
 The first type of resources will submit jobs to an SGE grid.
