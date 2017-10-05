@@ -298,7 +298,7 @@ def parse_config_file(parsers, args, args_dictionary, keywords, skips):
 
     skip_keywords = tuple(['skip_' + k.replace('-', '_') for k in skips])
 
-    for keyword in keywords + skip_keywords:
+    for keyword in keywords + skip_keywords + ('execute_only',):
         take_from_config_or_command_line(args, config, keyword,
                                          parser.get_default(keyword), required=False, is_resource=False)
 
