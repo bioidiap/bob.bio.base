@@ -61,7 +61,19 @@ def _verify(parameters, test_dir, sub_dir, ref_modifier="", score_modifier=('sco
     shutil.rmtree(test_dir)
 
 
-def test_verify_config():
+def test_verify_single_config():
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
+  # define dummy parameters
+  parameters = [
+      os.path.join(dummy_dir, 'config.py'),
+      '--temp-directory', test_dir,
+      '--result-directory', test_dir
+  ]
+
+  _verify(parameters, test_dir, 'test_dummy')
+
+
+def test_verify_multiple_config():
   test_dir = tempfile.mkdtemp(prefix='bobtest_')
   # define dummy parameters
   parameters = [
