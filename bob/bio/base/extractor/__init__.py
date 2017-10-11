@@ -1,11 +1,14 @@
 from .Extractor import Extractor
 from .Linearize import Linearize
+from .stacks import (SequentialExtractor, ParallelExtractor,
+                     CallableExtractor, MultipleExtractor)
+
 
 # gets sphinx autodoc done right - don't remove it
 def __appropriate__(*args):
   """Says object was actually declared here, and not in the import module.
-  Fixing sphinx warnings of not being able to find classes, when path is shortened.
-  Parameters:
+  Fixing sphinx warnings of not being able to find classes, when path is
+  shortened. Parameters:
 
     *args: An iterable of objects to modify
 
@@ -13,10 +16,16 @@ def __appropriate__(*args):
   <https://github.com/sphinx-doc/sphinx/issues/3048>`
   """
 
-  for obj in args: obj.__module__ = __name__
+  for obj in args:
+    obj.__module__ = __name__
+
 
 __appropriate__(
     Extractor,
     Linearize,
-    )
+    SequentialExtractor,
+    ParallelExtractor,
+    CallableExtractor,
+    MultipleExtractor,
+)
 __all__ = [_ for _ in dir() if not _.startswith('_')]

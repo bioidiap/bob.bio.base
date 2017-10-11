@@ -22,6 +22,12 @@ Implementations
 
 .. autosummary::
    bob.bio.base.preprocessor.Filename
+   bob.bio.base.preprocessor.SequentialPreprocessor
+   bob.bio.base.preprocessor.ParallelPreprocessor
+   bob.bio.base.preprocessor.CallablePreprocessor
+   bob.bio.base.extractor.SequentialExtractor
+   bob.bio.base.extractor.ParallelExtractor
+   bob.bio.base.extractor.CallableExtractor
    bob.bio.base.extractor.Linearize
    bob.bio.base.algorithm.Distance
    bob.bio.base.algorithm.PCA
