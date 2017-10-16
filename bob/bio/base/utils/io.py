@@ -175,7 +175,7 @@ def save_compressed(data, filename, compression_type='bz2', create_link=False):
   close_compressed(filename, hdf5, compression_type, create_link)
 
 
-def _generate_features(reader, paths):
+def _generate_features(reader, paths, allow_missing_files=False):
   """Load and stack features a memory efficient way. This function is meant to
   be used inside :py:func:`vstack_features`.
 
@@ -185,6 +185,8 @@ def _generate_features(reader, paths):
       See the documentation of :py:func:`vstack_features`.
   paths : ``collections.Iterable``
       See the documentation of :py:func:`vstack_features`.
+  allow_missing_files : :obj:`bool`, optional
+      If ``True``, it ignores files that doesn't exists
 
   Yields
   ------
@@ -193,10 +195,17 @@ def _generate_features(reader, paths):
       features and the shape of the first feature. The rest of objects are
       the actual values in features. The features are returned in C order.
   """
+  
+  shape_check = False
   for i, path in enumerate(paths):
+    if allow_missing_files and not os.path.isfile(path):
+        logger.debug("... The file {0}, that does not exist, has been ignored . ".format(path))
+        continue
+  
     feature = numpy.atleast_2d(reader(path))
     feature = numpy.ascontiguousarray(feature)
-    if i == 0:
+    if not shape_check:
+      shape_check = True
       dtype = feature.dtype
       shape = list(feature.shape)
       yield (dtype, shape)
@@ -209,7 +218,7 @@ def _generate_features(reader, paths):
       yield value
 
 
-def vstack_features(reader, paths, same_size=False):
+def vstack_features(reader, paths, same_size=False, allow_missing_files=False):
   """Stacks all features in a memory efficient way.
 
   Parameters
@@ -228,6 +237,9 @@ def vstack_features(reader, paths, same_size=False):
       If ``True``, it assumes that arrays inside all the paths are the same
       shape. If you know the features are the same size in all paths, set this
       to ``True`` to improve the performance.
+  allow_missing_files : :obj:`bool`, optional
+      If ``True``, it ignores files that doesn't exists
+      
 
   Returns
   -------
@@ -277,7 +289,7 @@ def vstack_features(reader, paths, same_size=False):
          [6, 7],
          [8, 9]])
   """
-  iterable = _generate_features(reader, paths)
+  iterable = _generate_features(reader, paths, allow_missing_files=allow_missing_files)
   dtype, shape = next(iterable)
   if same_size:
     total_size = int(len(paths) * numpy.prod(shape))
