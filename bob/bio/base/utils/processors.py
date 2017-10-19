@@ -11,7 +11,7 @@ class SequentialProcessor(object):
       A list of processors to apply.
   """
 
-  def __init__(self, processors):
+  def __init__(self, processors, **kwargs):
     super(SequentialProcessor, self).__init__()
     self.processors = processors
 
@@ -32,10 +32,7 @@ class SequentialProcessor(object):
         The processed data.
     """
     for processor in self.processors:
-      try:
-        data = processor(data, **kwargs)
-      except ValueError:
-        data = processor(data)
+      data = processor(data, **kwargs)
     return data
 
 
@@ -51,7 +48,7 @@ class ParallelProcessor(object):
       If True (default), :any:`numpy.hstack` is called on the list of outputs.
   """
 
-  def __init__(self, processors, stack=True):
+  def __init__(self, processors, stack=True, **kwargs):
     super(ParallelProcessor, self).__init__()
     self.processors = processors
     self.stack = stack
@@ -74,10 +71,7 @@ class ParallelProcessor(object):
     """
     output = []
     for processor in self.processors:
-      try:
-        out = processor(data, **kwargs)
-      except ValueError:
-        out = processor(data)
+      out = processor(data, **kwargs)
       output.append(out)
     if self.stack:
       output = numpy.hstack(output)

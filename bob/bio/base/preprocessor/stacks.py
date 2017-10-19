@@ -26,12 +26,8 @@ class ParallelPreprocessor(ParallelProcessor, Preprocessor):
   __doc__ = ParallelProcessor.__doc__
 
   def __init__(self, processors, **kwargs):
-    min_preprocessed_file_size = 1000
-    try:
-      min_preprocessed_file_size = min(
-          (p.min_preprocessed_file_size for p in processors))
-    except AttributeError:
-      pass
+    min_preprocessed_file_size = min((p.min_preprocessed_file_size for p in
+                                      processors))
 
     ParallelProcessor.__init__(self, processors)
     Preprocessor.__init__(
@@ -48,14 +44,21 @@ class CallablePreprocessor(Preprocessor):
 
   Attributes
   ----------
+  accepts_annotations : bool
+      If False, annotations are not passed to the callable.
   callable : object
       Anything that is callable. It will be used as a preprocessor in
       bob.bio.base.
   """
 
-  def __init__(self, callable, **kwargs):
-    super(CallablePreprocessor, self).__init__(**kwargs)
+  def __init__(self, callable, accepts_annotations=True, **kwargs):
+    super(CallablePreprocessor, self).__init__(
+        callable=callable, accepts_annotations=accepts_annotations, **kwargs)
     self.callable = callable
+    self.accepts_annotations = accepts_annotations
 
   def __call__(self, data, annotations):
-    return self.callable(data)
+    if self.accepts_annotations:
+      return self.callable(data, annotations)
+    else:
+      return self.callable(data)

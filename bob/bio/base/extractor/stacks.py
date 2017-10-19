@@ -1,5 +1,6 @@
 from ..utils.processors import SequentialProcessor, ParallelProcessor
 from .Extractor import Extractor
+from bob.io.base import HDF5File
 
 
 class MultipleExtractor(Extractor):
@@ -8,34 +9,35 @@ class MultipleExtractor(Extractor):
 
   def get_attributes(self, processors):
     requires_training = any((p.requires_training for p in processors))
-    split_training_data_by_client = any(
-        (p.split_training_data_by_client for p in processors))
-    min_extractor_file_size = min(
-        (p.min_extractor_file_size for p in processors))
-    min_feature_file_size = min(
-        (p.min_feature_file_size for p in processors))
+    split_training_data_by_client = any(p.split_training_data_by_client for p
+                                        in processors)
+    min_extractor_file_size = min(p.min_extractor_file_size for p in
+                                  processors)
+    min_feature_file_size = min(p.min_feature_file_size for p in processors)
     return (requires_training, split_training_data_by_client,
             min_extractor_file_size, min_feature_file_size)
 
-  def get_extractor_files(self, extractor_file):
-    paths = [extractor_file]
-    paths += [extractor_file +
-              '_{}.hdf5'.format(i) for i in range(1, len(self.processors))]
-    return paths
+  def get_extractor_groups(self):
+    groups = ['E_{}'.format(i + 1) for i in range(len(self.processors))]
+    return groups
 
   def train_one(self, e, training_data, extractor_file, apply=False):
     if not e.requires_training:
       return
+    # if any of the extractors require splitting the data, the
+    # split_training_data_by_client is True.
     if e.split_training_data_by_client:
       e.train(training_data, extractor_file)
       if not apply:
         return
       training_data = [[e(d) for d in datalist] for datalist in training_data]
+    # when no extractor needs splitting
     elif not self.split_training_data_by_client:
       e.train(training_data, extractor_file)
       if not apply:
         return
       training_data = [e(d) for d in training_data]
+    # when e here wants it flat but the data is split
     else:
       # make training_data flat
       training_data_len = [len(datalist) for datalist in training_data]
@@ -55,9 +57,12 @@ class MultipleExtractor(Extractor):
     return training_data
 
   def load(self, extractor_file):
-    paths = self.get_extractor_files(extractor_file)
-    for e, path in zip(self.processors, paths):
-      e.load(path)
+    with HDF5File(extractor_file) as f:
+      groups = self.get_extractor_groups()
+      for e, group in zip(self.processors, groups):
+        f.cd(group)
+        e.load(f)
+        f.cd('..')
 
 
 class SequentialExtractor(SequentialProcessor, MultipleExtractor):
@@ -66,21 +71,24 @@ class SequentialExtractor(SequentialProcessor, MultipleExtractor):
   def __init__(self, processors):
 
     (requires_training, split_training_data_by_client,
-     min_extractor_file_size, min_feature_file_size) = self.get_attributes(
-        processors)
+     min_extractor_file_size, min_feature_file_size) = \
+        self.get_attributes(processors)
 
-    SequentialProcessor.__init__(self, processors)
-    MultipleExtractor.__init__(
-        self,
+    super(SequentialExtractor, self).__init__(
+        processors=processors,
         requires_training=requires_training,
         split_training_data_by_client=split_training_data_by_client,
         min_extractor_file_size=min_extractor_file_size,
         min_feature_file_size=min_feature_file_size)
 
   def train(self, training_data, extractor_file):
-    paths = self.get_extractor_files(extractor_file)
-    for e, path in zip(self.processors, paths):
-      training_data = self.train_one(e, training_data, path, apply=True)
+    with HDF5File(extractor_file, 'w') as f:
+      groups = self.get_extractor_groups()
+      for e, group in zip(self.processors, groups):
+        f.create_group(group)
+        f.cd(group)
+        training_data = self.train_one(e, training_data, f, apply=True)
+        f.cd('..')
 
 
 class ParallelExtractor(ParallelProcessor, MultipleExtractor):
@@ -92,18 +100,21 @@ class ParallelExtractor(ParallelProcessor, MultipleExtractor):
      min_extractor_file_size, min_feature_file_size) = self.get_attributes(
         processors)
 
-    ParallelProcessor.__init__(self, processors)
-    MultipleExtractor.__init__(
-        self,
+    super(ParallelExtractor, self).__init__(
+        processors=processors,
         requires_training=requires_training,
         split_training_data_by_client=split_training_data_by_client,
         min_extractor_file_size=min_extractor_file_size,
         min_feature_file_size=min_feature_file_size)
 
   def train(self, training_data, extractor_file):
-    paths = self.get_extractor_files(extractor_file)
-    for e, path in zip(self.processors, paths):
-      self.train_one(e, training_data, path)
+    with HDF5File(extractor_file, 'w') as f:
+      groups = self.get_extractor_groups()
+      for e, group in zip(self.processors, groups):
+        f.create_group(group)
+        f.cd(group)
+        self.train_one(e, training_data, f, apply=False)
+        f.cd('..')
 
 
 class CallableExtractor(Extractor):

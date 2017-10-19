@@ -24,7 +24,7 @@ def test_processors():
 
 
 def test_preprocessors():
-  processors = [CallablePreprocessor(p) for p in PROCESSORS]
+  processors = [CallablePreprocessor(p, False) for p in PROCESSORS]
   proc = SequentialPreprocessor(processors)
   data = proc(DATA, None)
   assert np.allclose(data, SEQ_DATA)
