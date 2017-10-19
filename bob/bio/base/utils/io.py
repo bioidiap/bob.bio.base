@@ -175,9 +175,10 @@ def save_compressed(data, filename, compression_type='bz2', create_link=False):
   close_compressed(filename, hdf5, compression_type, create_link)
 
 
-def _generate_features(reader, paths, allow_missing_files=False):
-  """Load and stack features a memory efficient way. This function is meant to
-  be used inside :py:func:`vstack_features`.
+def _generate_features(reader, paths, same_size=False,
+                       allow_missing_files=False):
+  """Load and stack features in a memory efficient way. This function is meant
+  to be used inside :py:func:`vstack_features`.
 
   Parameters
   ----------
@@ -185,8 +186,10 @@ def _generate_features(reader, paths, allow_missing_files=False):
       See the documentation of :py:func:`vstack_features`.
   paths : ``collections.Iterable``
       See the documentation of :py:func:`vstack_features`.
+  same_size : bool, optional
+      See the documentation of :py:func:`vstack_features`.
   allow_missing_files : :obj:`bool`, optional
-      If ``True``, it ignores files that doesn't exists
+      See the documentation of :py:func:`vstack_features`.
 
   Yields
   ------
@@ -195,23 +198,26 @@ def _generate_features(reader, paths, allow_missing_files=False):
       features and the shape of the first feature. The rest of objects are
       the actual values in features. The features are returned in C order.
   """
-  
-  shape_check = False
+
+  shape_determined = False
   for i, path in enumerate(paths):
     if allow_missing_files and not os.path.isfile(path):
-        logger.debug("... The file {0}, that does not exist, has been ignored . ".format(path))
-        continue
-  
+      logger.debug("... File %s, that does not exist, has been ignored.", path)
+      continue
+
     feature = numpy.atleast_2d(reader(path))
     feature = numpy.ascontiguousarray(feature)
-    if not shape_check:
-      shape_check = True
+    if not shape_determined:
+      shape_determined = True
       dtype = feature.dtype
       shape = list(feature.shape)
       yield (dtype, shape)
     else:
-      # make sure all features have the same shape[1:] and dtype
-      assert shape[1:] == list(feature.shape[1:])
+      # make sure all features have the same shape and dtype
+      if same_size:
+        assert shape == list(feature.shape)
+      else:
+        assert shape[1:] == list(feature.shape[1:])
       assert dtype == feature.dtype
 
     for value in feature.flat:
@@ -232,23 +238,29 @@ def vstack_features(reader, paths, same_size=False, allow_missing_files=False):
       dimension. First dimension is should correspond to the number of samples.
   paths : ``collections.Iterable``
       An iterable of paths to iterate on. Whatever is inside path is given to
-      ``reader``. If ``same_size`` is ``True``, ``len(paths)`` must be valid.
+      ``reader`` so they do not need to be necessarily paths to actual files.
+      If ``same_size`` is ``True``, ``len(paths)`` must be valid.
   same_size : :obj:`bool`, optional
       If ``True``, it assumes that arrays inside all the paths are the same
       shape. If you know the features are the same size in all paths, set this
       to ``True`` to improve the performance.
   allow_missing_files : :obj:`bool`, optional
-      If ``True``, it ignores files that doesn't exists
-      
+      If ``True``, it assumes that the items inside paths are actual files and
+      ignores the ones that do not exist.
 
   Returns
   -------
   numpy.ndarray
       The read features with the shape (n_samples, \*features_shape[1:]).
 
+  Raises
+  ------
+  ValueError
+      If both same_size and allow_missing_files are ``True``.
+
   Examples
   --------
-  This function is equivalent to calling
+  This function in a simple way is equivalent to calling
   ``numpy.vstack(reader(p) for p in paths)``.
 
   >>> import numpy
@@ -288,8 +300,13 @@ def vstack_features(reader, paths, same_size=False, allow_missing_files=False):
          [4, 5],
          [6, 7],
          [8, 9]])
+
   """
-  iterable = _generate_features(reader, paths, allow_missing_files=allow_missing_files)
+  if same_size and allow_missing_files:
+    raise ValueError("Both same_size and allow_missing_files cannot be True at"
+                     " the same time.")
+  iterable = _generate_features(
+      reader, paths, allow_missing_files=allow_missing_files)
   dtype, shape = next(iterable)
   if same_size:
     total_size = int(len(paths) * numpy.prod(shape))
@@ -297,7 +314,7 @@ def vstack_features(reader, paths, same_size=False, allow_missing_files=False):
   else:
     all_features = numpy.fromiter(iterable, dtype)
 
-  # the shape is assumed to be (n_samples, ...) it can be (5, 2) or (5, 3, 3).
+  # the shape is assumed to be (n_samples, ...) it can be (5, 2) or (5, 3, 4).
   shape = list(shape)
   shape[0] = -1
   return numpy.reshape(all_features, shape, order='C')
