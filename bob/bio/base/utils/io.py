@@ -186,7 +186,7 @@ def _generate_features(reader, paths, same_size=False,
       See the documentation of :py:func:`vstack_features`.
   paths : ``collections.Iterable``
       See the documentation of :py:func:`vstack_features`.
-  same_size : bool, optional
+  same_size : :obj:`bool`, optional
       See the documentation of :py:func:`vstack_features`.
   allow_missing_files : :obj:`bool`, optional
       See the documentation of :py:func:`vstack_features`.
