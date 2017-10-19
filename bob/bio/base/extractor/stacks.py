@@ -8,7 +8,7 @@ class MultipleExtractor(Extractor):
   not meant to be used directly."""
 
   def get_attributes(self, processors):
-    requires_training = any((p.requires_training for p in processors))
+    requires_training = any(p.requires_training for p in processors)
     split_training_data_by_client = any(p.split_training_data_by_client for p
                                         in processors)
     min_extractor_file_size = min(p.min_extractor_file_size for p in

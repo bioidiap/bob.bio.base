@@ -26,8 +26,8 @@ class ParallelPreprocessor(ParallelProcessor, Preprocessor):
   __doc__ = ParallelProcessor.__doc__
 
   def __init__(self, processors, **kwargs):
-    min_preprocessed_file_size = min((p.min_preprocessed_file_size for p in
-                                      processors))
+    min_preprocessed_file_size = min(p.min_preprocessed_file_size for p in
+                                     processors)
 
     ParallelProcessor.__init__(self, processors)
     Preprocessor.__init__(
