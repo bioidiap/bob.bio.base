@@ -305,8 +305,7 @@ def vstack_features(reader, paths, same_size=False, allow_missing_files=False):
   if same_size and allow_missing_files:
     raise ValueError("Both same_size and allow_missing_files cannot be True at"
                      " the same time.")
-  iterable = _generate_features(
-      reader, paths, allow_missing_files=allow_missing_files)
+  iterable = _generate_features(reader, paths, same_size, allow_missing_files)
   dtype, shape = next(iterable)
   if same_size:
     total_size = int(len(paths) * numpy.prod(shape))
