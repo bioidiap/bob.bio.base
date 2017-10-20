@@ -42,20 +42,13 @@ class MultipleExtractor(Extractor):
         # when e here wants it flat but the data is split
         else:
             # make training_data flat
-            training_data_len = [len(datalist) for datalist in training_data]
-            training_data = [d for datalist in training_data for d in datalist]
-            e.train(training_data, extractor_file)
+            aligned_training_data = [d for datalist in training_data for d in
+                                     datalist]
+            e.train(aligned_training_data, extractor_file)
             if not apply:
                 return
-            # split training data
-            new_training_data, i = [], 0
-            for length in training_data_len:
-                class_data = []
-                for _ in range(length):
-                    class_data.append(e(training_data[i]))
-                    i += 1
-                new_training_data.append(class_data)
-            training_data = new_training_data
+            training_data = [[e(d) for d in datalist]
+                             for datalist in training_data]
         return training_data
 
     def load(self, extractor_file):
@@ -96,7 +89,7 @@ class SequentialExtractor(SequentialProcessor, MultipleExtractor):
         return self.processors[-1].read_feature(feature_file)
 
     def write_feature(self, feature, feature_file):
-        return self.processors[-1].write_feature(feature, feature_file)
+        self.processors[-1].write_feature(feature, feature_file)
 
 
 class ParallelExtractor(ParallelProcessor, MultipleExtractor):
@@ -134,11 +127,24 @@ class CallableExtractor(Extractor):
     callable : object
         Anything that is callable. It will be used as an extractor in
         bob.bio.base.
+    read_feature : object
+        A callable object with the signature of
+        ``feature = read_feature(feature_file)``. If not provided, the default
+        implementation handles numpy arrays.
+    write_feature : object
+        A callable object with the signature of
+        ``write_feature(feature, feature_file)``. If not provided, the default
+        implementation handles numpy arrays.
     """
 
-    def __init__(self, callable, **kwargs):
+    def __init__(self, callable, write_feature=None, read_feature=None,
+                 **kwargs):
         super(CallableExtractor, self).__init__(**kwargs)
         self.callable = callable
+        if write_feature is not None:
+            self.write_feature = write_feature
+        if read_feature is not None:
+            self.read_feature = read_feature
 
     def __call__(self, data):
         return self.callable(data)

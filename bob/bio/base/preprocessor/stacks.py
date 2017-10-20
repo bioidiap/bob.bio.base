@@ -26,7 +26,7 @@ class SequentialPreprocessor(SequentialProcessor, Preprocessor):
         return self.processors[-1].read_data(data_file)
 
     def write_data(self, data, data_file):
-        return self.processors[-1].write_data(data, data_file)
+        self.processors[-1].write_data(data, data_file)
 
 
 class ParallelPreprocessor(ParallelProcessor, Preprocessor):
@@ -57,14 +57,27 @@ class CallablePreprocessor(Preprocessor):
     callable : object
         Anything that is callable. It will be used as a preprocessor in
         bob.bio.base.
+    read_data : object
+        A callable object with the signature of
+        ``data = read_data(data_file)``. If not provided, the default
+        implementation handles numpy arrays.
+    write_data : object
+        A callable object with the signature of
+        ``write_data(data, data_file)``. If not provided, the default
+        implementation handles numpy arrays.
     """
 
-    def __init__(self, callable, accepts_annotations=True, **kwargs):
+    def __init__(self, callable, accepts_annotations=True, write_data=None,
+                 read_data=None, **kwargs):
         super(CallablePreprocessor, self).__init__(
             callable=callable, accepts_annotations=accepts_annotations,
             **kwargs)
         self.callable = callable
         self.accepts_annotations = accepts_annotations
+        if write_data is not None:
+            self.write_data = write_data
+        if read_data is not None:
+            self.read_data = read_data
 
     def __call__(self, data, annotations):
         if self.accepts_annotations:

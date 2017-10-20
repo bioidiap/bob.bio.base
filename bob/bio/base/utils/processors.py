@@ -1,6 +1,3 @@
-import numpy
-
-
 class SequentialProcessor(object):
     """A helper class which takes several processors and applies them one by
     one sequentially
@@ -38,24 +35,21 @@ class SequentialProcessor(object):
 
 class ParallelProcessor(object):
     """A helper class which takes several processors and applies them on each
-    processor separately and outputs a list of their outputs in the end.
+    processor separately and yields their outputs one by one.
 
     Attributes
     ----------
     processors : list
         A list of processors to apply.
-    stack : bool
-        If True (default), :any:`numpy.hstack` is called on the list of outputs
     """
 
-    def __init__(self, processors, stack=True, **kwargs):
+    def __init__(self, processors, **kwargs):
         super(ParallelProcessor, self).__init__()
         self.processors = processors
-        self.stack = stack
 
     def __call__(self, data, **kwargs):
-        """Applies the processors on the data independently and outputs a list of
-        their outputs.
+        """Applies the processors on the data independently and outputs a
+        generator of their outputs.
 
         Parameters
         ----------
@@ -64,15 +58,10 @@ class ParallelProcessor(object):
         **kwargs
             Any kwargs are passed to the processors.
 
-        Returns
-        -------
+        Yields
+        ------
         object
-            The processed data.
+            The processed data from processors one by one.
         """
-        output = []
         for processor in self.processors:
-            out = processor(data, **kwargs)
-            output.append(out)
-        if self.stack:
-            output = numpy.hstack(output)
-        return output
+            yield processor(data, **kwargs)

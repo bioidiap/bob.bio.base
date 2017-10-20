@@ -10,7 +10,7 @@ from bob.bio.base.extractor import (
 DATA = [0, 1, 2, 3, 4]
 PROCESSORS = [partial(np.power, 2), np.mean]
 SEQ_DATA = PROCESSORS[1](PROCESSORS[0](DATA))
-PAR_DATA = np.hstack([PROCESSORS[0](DATA), PROCESSORS[1](DATA)])
+PAR_DATA = (PROCESSORS[0](DATA), PROCESSORS[1](DATA))
 
 
 def test_processors():
@@ -20,7 +20,7 @@ def test_processors():
 
   proc = ParallelProcessor(PROCESSORS)
   data = proc(DATA)
-  assert np.allclose(data, PAR_DATA)
+  assert all(np.allclose(x1, x2) for x1, x2 in zip(data, PAR_DATA))
 
 
 def test_preprocessors():
@@ -31,7 +31,7 @@ def test_preprocessors():
 
   proc = ParallelPreprocessor(processors)
   data = proc(DATA, None)
-  assert np.allclose(data, PAR_DATA)
+  assert all(np.allclose(x1, x2) for x1, x2 in zip(data, PAR_DATA))
 
 
 def test_extractors():
@@ -42,4 +42,4 @@ def test_extractors():
 
   proc = ParallelExtractor(processors)
   data = proc(DATA)
-  assert np.allclose(data, PAR_DATA)
+  assert all(np.allclose(x1, x2) for x1, x2 in zip(data, PAR_DATA))
