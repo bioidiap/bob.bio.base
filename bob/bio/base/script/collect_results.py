@@ -27,6 +27,7 @@ The measure type of the development set can be changed to compute "HTER" or
 
 import sys, os,  glob
 import argparse
+import numpy
 
 import bob.measure
 import bob.core
@@ -47,11 +48,10 @@ def command_line_arguments(command_line_parameters):
   parser.add_argument('-s', '--sort', action='store_true', help = "Sort the results")
   parser.add_argument('-k', '--sort-key', dest='key', default = 'nonorm-dev', choices= ('nonorm-dev','nonorm-eval','ztnorm-dev','ztnorm-eval','dir'),
       help = "Sort the results according to the given key")
-  parser.add_argument('-c', '--criterion', dest='criterion', default = 'EER', choices = ('EER', 'HTER', 'FAR'),
+  parser.add_argument('-c', '--criterion', dest='criterion', default = 'EER', choices = ('EER', 'HTER', 'FAR', 'RR', 'DIR'),
       help = "Minimize the threshold on the development set according to the given criterion")
 
   parser.add_argument('-o', '--output', help = "Name of the output file that will contain the EER/HTER scores")
-  parser.add_argument('--parser', default = '4column', choices = ('4column', '5column'), help="The style of the resulting score files; rarely changed")
 
   parser.add_argument('--self-test', action='store_true', help=argparse.SUPPRESS)
 
@@ -61,9 +61,6 @@ def command_line_arguments(command_line_parameters):
   args = parser.parse_args(command_line_parameters)
 
   bob.core.log.set_verbosity_level(logger, args.verbose)
-
-  # assign the score file parser
-  args.parser = {'4column' : bob.measure.load.split_four_column, '5column' : bob.measure.load.split_five_column}[args.parser]
 
   return args
 
@@ -79,32 +76,63 @@ class Result:
 
   def _calculate(self, dev_file, eval_file = None):
     """Calculates the EER and HTER or FRR based on the threshold criterion."""
-    dev_neg, dev_pos = self.m_args.parser(dev_file)
+    if self.m_args.criterion in ("RR", "DIR"):
+      scores_dev = bob.measure.load.cmc(dev_file)
+      if eval_file is not None:
+        scores_eval = bob.measure.load.cmc(eval_file)
 
-    # switch which threshold function to use;
-    # THIS f***ing piece of code really is what python authors propose:
-    threshold = {
-      'EER'  : bob.measure.eer_threshold,
-      'HTER' : bob.measure.min_hter_threshold,
-      'FAR'  : bob.measure.far_threshold
-    } [self.m_args.criterion](dev_neg, dev_pos)
+      if self.m_args.criterion == "DIR":
+        # get negatives without positives
+        negatives = [max(neg) for neg, pos in scores_dev if (pos is None or not numpy.array(pos).size) and neg is not None]
+        if not negatives:
+          raise ValueError("There need to be at least one pair with only negative scores")
+        threshold = bob.measure.far_threshold(negatives, [], 0.001)
+        DIR_dev = bob.measure.detection_identification_rate(scores_dev, threshold)
+        if eval_file is not None:
+          # re-compute the threshold for eval file
+          negatives = [max(neg) for neg, pos in scores_eval if (pos is None or not numpy.array(pos).size) and neg is not None]
+          if not negatives:
+            raise ValueError("There need to be at least one pair with only negative scores")
+          threshold = bob.measure.far_threshold(negatives, [], 0.001)
+          DIR_dev = bob.measure.detection_identification_rate(scores_eval, threshold)
+        else:
+          DIR_eval = None
+        return DIR_dev, DIR_eval
 
-    # compute far and frr for the given threshold
-    dev_far, dev_frr = bob.measure.farfrr(dev_neg, dev_pos, threshold)
-    dev_hter = (dev_far + dev_frr)/2.0
+      else:
+        # Recognition Rate
+        RR_dev = bob.measure.recognition_rate(scores_dev)
+        RR_eval = None if eval_file is None else bob.measure.recognition_rate(scores_eval)
+        return RR_dev, RR_eval
 
-    if eval_file:
-      eval_neg, eval_pos = self.m_args.parser(eval_file)
-      eval_far, eval_frr = bob.measure.farfrr(eval_neg, eval_pos, threshold)
-      eval_hter = (eval_far + eval_frr)/2.0
     else:
-      eval_hter = None
-      eval_frr = None
 
-    if self.m_args.criterion == 'FAR':
-      return (dev_frr, eval_frr)
-    else:
-      return (dev_hter, eval_hter)
+      dev_neg, dev_pos = bob.measure.load.split(dev_file)
+
+      # switch which threshold function to use;
+      # THIS f***ing piece of code really is what python authors propose:
+      threshold = {
+        'EER'  : bob.measure.eer_threshold,
+        'HTER' : bob.measure.min_hter_threshold,
+        'FAR'  : bob.measure.far_threshold
+      } [self.m_args.criterion](dev_neg, dev_pos)
+
+      # compute far and frr for the given threshold
+      dev_far, dev_frr = bob.measure.farfrr(dev_neg, dev_pos, threshold)
+      dev_hter = (dev_far + dev_frr)/2.0
+
+      if eval_file:
+        eval_neg, eval_pos = bob.measure.load.split(eval_file)
+        eval_far, eval_frr = bob.measure.farfrr(eval_neg, eval_pos, threshold)
+        eval_hter = (eval_far + eval_frr)/2.0
+      else:
+        eval_hter = None
+        eval_frr = None
+
+      if self.m_args.criterion == 'FAR':
+        return (dev_frr, eval_frr)
+      else:
+        return (dev_hter, eval_hter)
 
   def nonorm(self, dev_file, eval_file = None):
     self.nonorm_dev, self.nonorm_eval = self._calculate(dev_file, eval_file)
