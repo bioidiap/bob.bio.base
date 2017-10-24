@@ -124,7 +124,7 @@ setup(
       ],
       # declare database to bob
       'bob.db': [
-        'bio_filelist = bob.bio.base.database.filelist.driver:Interface',
+        'bio_filelist      = bob.bio.base.database.filelist.driver:Interface',
       ],
    },
 

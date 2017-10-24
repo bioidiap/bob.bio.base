@@ -1,15 +1,19 @@
 from bob.bio.base.preprocessor import Preprocessor
+import numpy
+numpy.random.seed(10)
 
 
 class DummyPreprocessor (Preprocessor):
-  def __init__(self, return_none=False, **kwargs):
+  def __init__(self, return_none=False, probability_of_none=1, **kwargs):
     Preprocessor.__init__(self)
     self.return_none = return_none
+    self.probability_of_none = probability_of_none
 
   def __call__(self, data, annotation):
     """Does nothing, simply converts the data type of the data, ignoring any annotation."""
     if self.return_none:
-      return None
+      return numpy.random.choice([None, data], p=[self.probability_of_none, 1-self.probability_of_none])
+      
     return data
 
 

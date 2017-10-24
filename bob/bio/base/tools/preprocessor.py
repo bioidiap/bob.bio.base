@@ -68,6 +68,7 @@ def preprocess(preprocessor, groups = None, indices = None, allow_missing_files 
     if not utils.check_file(preprocessed_data_file, force,
                             preprocessor.min_preprocessed_file_size):
       logger.debug("... Processing original data file '%s'", file_name)
+
       data = preprocessor.read_original_data(file_object, original_directory, original_extension)
       # create output directory before reading the data file (is sometimes required, when relative directories are specified, especially, including a .. somewhere)
       bob.io.base.create_directories_safe(os.path.dirname(preprocessed_data_file))
