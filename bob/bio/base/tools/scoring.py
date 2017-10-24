@@ -98,6 +98,13 @@ def _close_written(score_file, f, write_compressed):
   # close the file
   f.close()
 
+def _delete(score_file, write_compressed):
+  """Deletes the (compressed) score_file"""
+  if write_compressed:
+    score_file += '.tar.bz2'
+  if os.path.isfile(score_file):
+    os.remove(score_file)
+
 
 def _save_scores(score_file, scores, probe_objects, client_id, write_compressed):
   """Saves the scores of one model into a text file that can be interpreted by :py:func:`bob.measure.load.split_four_column`."""
@@ -441,22 +448,29 @@ def zt_norm(groups = ['dev', 'eval'], write_compressed = False, allow_missing_fi
 
 def _concat(score_files, output, write_compressed, model_ids):
   """Concatenates a list of score files into a single score file."""
-  f = _open_to_write(output, write_compressed)
+  try:
+    f = _open_to_write(output, write_compressed)
 
-  # Concatenates the scores
-  if model_ids is None:
-    for score_file in score_files:
-      i = _open_to_read(score_file)
-      f.write(i.read())
+    # Concatenates the scores
+    if model_ids is None:
+      for score_file in score_files:
+        i = _open_to_read(score_file)
+        f.write(i.read())
+    else:
+      for score_file, model_id in zip(score_files, model_ids):
+        i = _open_to_read(score_file)
+        for l in i:
+          s = l.split()
+          s.insert(1, str(model_id))
+          f.write(" ".join(s) + "\n")
+
+  except:
+    logger.error("Concatenation failed; removing result file %s", output)
+    _close_written(output, f, write_compressed)
+    _delete(output, write_compressed)
+    raise
   else:
-    for score_file, model_id in zip(score_files, model_ids):
-      i = _open_to_read(score_file)
-      for l in i:
-        s = l.split()
-        s.insert(1, str(model_id))
-        f.write(" ".join(s) + "\n")
-
-  _close_written(output, f, write_compressed)
+    _close_written(output, f, write_compressed)
 
 
 
