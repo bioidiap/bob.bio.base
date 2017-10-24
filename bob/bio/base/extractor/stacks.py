@@ -61,7 +61,32 @@ class MultipleExtractor(Extractor):
 
 
 class SequentialExtractor(SequentialProcessor, MultipleExtractor):
-    __doc__ = SequentialProcessor.__doc__
+    """A helper class which takes several extractors and applies them one by
+    one sequentially.
+
+    Attributes
+    ----------
+    processors : list
+        A list of extractors to apply.
+
+    Examples
+    --------
+    You can use this class to apply a chain of extractors on your data. For
+    example:
+
+    >>> import numpy as np
+    >>> from functools import  partial
+    >>> from bob.bio.base.extractor import SequentialExtractor, CallableExtractor
+    >>> raw_data = np.array([[1, 2, 3], [1, 2, 3]])
+    >>> seq_extractor = SequentialExtractor(
+    ...     [CallableExtractor(f) for f in
+    ...      [np.cast['float64'], lambda x: x / 2, partial(np.mean, axis=1)]])
+    >>> seq_extractor(raw_data)
+    array([ 1.,  1.])
+    >>> np.all(seq_extractor(raw_data) == \
+    ...        np.mean(np.cast['float64'](raw_data) / 2, axis=1))
+    True
+    """
 
     def __init__(self, processors):
 
@@ -93,7 +118,42 @@ class SequentialExtractor(SequentialProcessor, MultipleExtractor):
 
 
 class ParallelExtractor(ParallelProcessor, MultipleExtractor):
-    __doc__ = ParallelProcessor.__doc__
+    """A helper class which takes several extractors and applies them on
+    each processor separately and yields their outputs one by one.
+
+    Attributes
+    ----------
+    processors : list
+        A list of extractors to apply.
+
+    Examples
+    --------
+    You can use this class to apply several extractors on your data and get
+    all the results back. For example:
+
+    >>> import numpy as np
+    >>> from functools import  partial
+    >>> from bob.bio.base.extractor import ParallelExtractor, CallableExtractor
+    >>> raw_data = np.array([[1, 2, 3], [1, 2, 3]])
+    >>> parallel_extractor = ParallelExtractor(
+    ...     [CallableExtractor(f) for f in
+    ...      [np.cast['float64'], lambda x: x / 2.0]])
+    >>> list(parallel_extractor(raw_data))
+    [array([[ 1.,  2.,  3.],
+           [ 1.,  2.,  3.]]),
+     array([[ 0.5,  1. ,  1.5],
+           [ 0.5,  1. ,  1.5]])]
+
+    The data may be further processed using a :any:`SequentialProcessor`:
+
+    >>> from bob.bio.base.extractor import SequentialExtractor
+    >>> total_extractor = SequentialExtractor(
+    ...     [parallel_extractor, CallableExtractor(list),
+    ...      CallableExtractor(partial(np.concatenate, axis=1))])
+    >>> total_extractor(raw_data)
+    array([[ 1. ,  2. ,  3. ,  0.5,  1. ,  1.5],
+           [ 1. ,  2. ,  3. ,  0.5,  1. ,  1.5]])
+    """
 
     def __init__(self, processors):
 
@@ -135,6 +195,13 @@ class CallableExtractor(Extractor):
         A callable object with the signature of
         ``write_feature(feature, feature_file)``. If not provided, the default
         implementation handles numpy arrays.
+
+    Examples
+    --------
+    You can take any function like ``numpy.cast['float32']`` to cast your data
+    to float32 for example. This is useful when you want to stack several
+    extractors using the :any:`SequentialExtractor` and
+    :any:`ParallelExtractor` classes.
     """
 
     def __init__(self, callable, write_feature=None, read_feature=None,
