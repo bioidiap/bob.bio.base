@@ -97,13 +97,13 @@ class Result:
           DIR_dev = bob.measure.detection_identification_rate(scores_eval, threshold)
         else:
           DIR_eval = None
-        return DIR_dev, DIR_eval
+        return (DIR_dev, DIR_eval)
 
       else:
         # Recognition Rate
         RR_dev = bob.measure.recognition_rate(scores_dev)
         RR_eval = None if eval_file is None else bob.measure.recognition_rate(scores_eval)
-        return RR_dev, RR_eval
+        return (RR_dev, RR_eval)
 
     else:
 
@@ -140,10 +140,13 @@ class Result:
   def ztnorm(self, dev_file, eval_file = None):
     self.ztnorm_dev, self.ztnorm_eval = self._calculate(dev_file, eval_file)
 
+  def valid(self):
+    return any(a is not None for a in [self.nonorm_dev, self.ztnorm_dev, self.nonorm_eval, self.ztnorm_eval])
+
   def __str__(self):
     str = ""
     for v in [self.nonorm_dev, self.ztnorm_dev, self.nonorm_eval, self.ztnorm_eval]:
-      if v:
+      if v is not None:
         val = "% 2.3f%%"%(v*100)
       else:
         val = "None"
@@ -152,8 +155,6 @@ class Result:
     str += "        %s"%self.dir
     return str[5:]
 
-
-results = []
 
 def add_results(args, nonorm, ztnorm = None):
   """Adds results of the given nonorm and ztnorm directories."""
@@ -178,6 +179,7 @@ def add_results(args, nonorm, ztnorm = None):
       else:
         r.ztnorm(dev_file)
 
+  global results
   results.append(r)
 
 
@@ -186,8 +188,8 @@ def recurse(args, path):
   dir_list = os.listdir(path)
 
   # check if the score directories are included in the current path
-  if args.nonorm in dir_list:
-    if args.ztnorm in dir_list:
+  if args.nonorm in dir_list or args.nonorm == '.':
+    if args.ztnorm in dir_list or args.ztnorm == '.':
       add_results(args, os.path.join(path, args.nonorm), os.path.join(path, args.ztnorm))
     else:
       add_results(args, os.path.join(path, args.nonorm))
@@ -203,7 +205,8 @@ def table():
   A = " "*2 + 'dev  nonorm'+ " "*5 + 'dev  ztnorm' + " "*6 + 'eval nonorm' + " "*4 + 'eval ztnorm' + " "*12 + 'directory\n'
   A += "-"*100+"\n"
   for r in results:
-    A += str(r) + "\n"
+    if r.valid():
+      A += str(r) + "\n"
   return A
 
 
@@ -211,6 +214,8 @@ def main(command_line_parameters = None):
   """Iterates through the desired directory and collects all result files."""
   args = command_line_arguments(command_line_parameters)
 
+  global results
+  results = []
   # collect results
   directories = glob.glob(args.directory)
   for directory in directories:
