@@ -4,7 +4,7 @@ numpy.random.seed(10)
 
 
 class DummyPreprocessor (Preprocessor):
-  def __init__(self, return_none=False, probability_of_none=1,  **kwargs):
+  def __init__(self, return_none=False, probability_of_none=1, **kwargs):
     Preprocessor.__init__(self)
     self.return_none = return_none
     self.probability_of_none = probability_of_none
