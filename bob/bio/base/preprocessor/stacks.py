@@ -25,7 +25,7 @@ class SequentialPreprocessor(SequentialProcessor, Preprocessor):
     ...      [np.cast['float64'], lambda x: x / 2, partial(np.mean, axis=1)]])
     >>> seq_preprocessor(raw_data)
     array([ 1.,  1.])
-    >>> np.all(seq_preprocessor(raw_data) == \
+    >>> np.all(seq_preprocessor(raw_data) ==
     ...        np.mean(np.cast['float64'](raw_data) / 2, axis=1))
     True
     """
@@ -35,9 +35,10 @@ class SequentialPreprocessor(SequentialProcessor, Preprocessor):
             (p.min_preprocessed_file_size for p in processors))
         if read_original_data is None:
             read_original_data = processors[0].read_original_data
-        SequentialProcessor.__init__(self, processors)
-        Preprocessor.__init__(
-            self, min_preprocessed_file_size=min_preprocessed_file_size,
+        super(SequentialPreprocessor, self).__init__(
+            processors=processors,
+            min_preprocessed_file_size=min_preprocessed_file_size,
+            read_original_data=read_original_data,
             **kwargs)
 
     def __call__(self, data, annotations=None):
@@ -74,8 +75,7 @@ class ParallelPreprocessor(ParallelProcessor, Preprocessor):
     ...      [np.cast['float64'], lambda x: x / 2.0]])
     >>> list(parallel_preprocessor(raw_data))
     [array([[ 1.,  2.,  3.],
-           [ 1.,  2.,  3.]]),
-     array([[ 0.5,  1. ,  1.5],
+           [ 1.,  2.,  3.]]), array([[ 0.5,  1. ,  1.5],
            [ 0.5,  1. ,  1.5]])]
 
     The data may be further processed using a :any:`SequentialProcessor`:
@@ -93,9 +93,9 @@ class ParallelPreprocessor(ParallelProcessor, Preprocessor):
         min_preprocessed_file_size = min(p.min_preprocessed_file_size for p in
                                          processors)
 
-        ParallelProcessor.__init__(self, processors)
-        Preprocessor.__init__(
-            self, min_preprocessed_file_size=min_preprocessed_file_size,
+        super(ParallelPreprocessor, self).__init__(
+            processors=processors,
+            min_preprocessed_file_size=min_preprocessed_file_size,
             **kwargs)
 
     def __call__(self, data, annotations=None):

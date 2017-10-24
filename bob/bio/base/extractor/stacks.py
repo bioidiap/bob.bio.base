@@ -83,7 +83,7 @@ class SequentialExtractor(SequentialProcessor, MultipleExtractor):
     ...      [np.cast['float64'], lambda x: x / 2, partial(np.mean, axis=1)]])
     >>> seq_extractor(raw_data)
     array([ 1.,  1.])
-    >>> np.all(seq_extractor(raw_data) == \
+    >>> np.all(seq_extractor(raw_data) ==
     ...        np.mean(np.cast['float64'](raw_data) / 2, axis=1))
     True
     """
@@ -140,8 +140,7 @@ class ParallelExtractor(ParallelProcessor, MultipleExtractor):
     ...      [np.cast['float64'], lambda x: x / 2.0]])
     >>> list(parallel_extractor(raw_data))
     [array([[ 1.,  2.,  3.],
-           [ 1.,  2.,  3.]]),
-     array([[ 0.5,  1. ,  1.5],
+           [ 1.,  2.,  3.]]), array([[ 0.5,  1. ,  1.5],
            [ 0.5,  1. ,  1.5]])]
 
     The data may be further processed using a :any:`SequentialProcessor`:
