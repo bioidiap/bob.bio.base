@@ -90,9 +90,6 @@ def command_line_options(command_line_parameters):
   parser.add_argument('-G', '--gridtk-database-directory', metavar='DIR', default = 'grid_db',
       help = 'Directory where the submitted.sql3 files should be written into (will create sub-directories on need)')
 
-  parser.add_argument('-w', '--write-commands',
-      help = '(optional) The file name where to write the calls into (will not write the dependencies, though)')
-
   parser.add_argument('-q', '--dry-run', action='store_true',
       help = 'Just write the commands to console and mimic dependencies, but do not execute the commands')
 
@@ -246,6 +243,9 @@ def directory_parameters(directories):
   # - scoring
   parameters += ['--score-directories', _join_dirs(4, 'nonorm'), _join_dirs(4, 'ztnorm')]
 
+  # - Experiment.info
+  parameters += ['--experiment-info-file', _join_dirs(4, 'Experiment.info')]
+
   # the sub-dorectory, given on command line
   parameters += ['--sub-directory', args.sub_directory]
 
@@ -297,18 +297,6 @@ def execute_dependent_task(command_line, directories, dependency_level):
 
   if args.parameters is not None:
     command_line += args.parameters[1:]
-
-  # write the command to file?
-  if args.write_commands:
-    index = command_line.index('--gridtk-database-file')
-    command_file = os.path.join(os.path.dirname(command_line[index+1]), args.write_commands)
-    bob.io.base.create_directories_safe(os.path.dirname(command_file))
-    with open(command_file, 'w') as f:
-      f.write('bin/verify.py ')
-      for p in command_line:
-        f.write(p + ' ')
-      f.close()
-    logger.info("Wrote command line into file '%s'", command_file)
 
   # extract dependencies
   global job_ids
