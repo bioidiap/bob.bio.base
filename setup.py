@@ -89,7 +89,7 @@ setup(
       ],
 
       'bob.bio.database': [
-        'dummy              = bob.bio.base.test.dummy.database:database', # for test purposes only
+        'dummy             = bob.bio.base.test.dummy.database:database', # for test purposes only
       ],
 
       'bob.bio.preprocessor': [
@@ -124,7 +124,7 @@ setup(
       ],
       # declare database to bob
       'bob.db': [
-        'bio_filelist = bob.bio.base.database.filelist.driver:Interface',
+        'bio_filelist      = bob.bio.base.database.filelist.driver:Interface',
       ],
    },
 
