@@ -1,7 +1,6 @@
 python
 numpy
 bob.bio.face
-bob.bio.speaker
 bob.bio.gmm
 bob.bio.video
 bob.bio.csu
