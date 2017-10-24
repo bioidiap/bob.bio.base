@@ -581,6 +581,12 @@ def test_grid_search():
     assert bob.bio.base.script.grid_search.task_count == 6
     # but no job in the grid
     assert bob.bio.base.script.grid_search.job_count == 0
+    # assert that the Experiment.info files are at the right location
+    for p in (1,2):
+      for f in (1,2):
+        for s in (1,2):
+          if 2*p>f:
+            assert os.path.exists(os.path.join(test_dir, "test_grid_search/Default/P%d/F%d/S%d/Experiment.info"%(p,f,s)))
 
     # now, in the grid...
     parameters = [
