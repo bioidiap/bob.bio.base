@@ -247,7 +247,7 @@ def directory_parameters(directories):
   parameters += ['--score-directories', _join_dirs(4, 'nonorm'), _join_dirs(4, 'ztnorm')]
 
   # - Experiment.info
-  parameters += ['--experiment-info-file', _join_dirs(4, 'Experiment.info')],
+  parameters += ['--experiment-info-file', _join_dirs(4, 'Experiment.info')]
 
   # the sub-dorectory, given on command line
   parameters += ['--sub-directory', args.sub_directory]
