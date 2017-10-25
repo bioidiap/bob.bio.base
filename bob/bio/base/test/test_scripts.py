@@ -478,12 +478,12 @@ def test_fusion():
 def test_evaluate_closedset():
   # tests our 'evaluate' script using the reference files
   test_dir = tempfile.mkdtemp(prefix='bobtest_')
-  reference_files = [os.path.join(data_dir, s) for s in ('scores-nonorm-dev', 'scores-ztnorm-dev')]
+  reference_files = ('scores-nonorm-dev', 'scores-ztnorm-dev')
   plots = [os.path.join(test_dir, '%s.pdf')%f for f in ['roc', 'cmc', 'det', 'epc']]
   parameters = [
     '--dev-files', reference_files[0], reference_files[1],
     '--eval-files', reference_files[0], reference_files[1],
-    '--directory', os.path.join(data_dir),
+    '--directory', data_dir,  # will not be ignored since reference files are relative
     '--legends', 'no norm', 'ZT norm',
     '--criterion', 'HTER',
     '--roc', plots[0],
@@ -516,7 +516,7 @@ def test_evaluate_openset():
   parameters = [
     '--dev-files', reference_file,
     '--eval-files', reference_file,
-    '--directory', os.path.join(data_dir),
+    '--directory', "/non/existing/directory", # will be ignored since reference_file is absolute
     '--legends', 'Test',
     '--dir', plot,
     '--min-far-value', '1e-6',
