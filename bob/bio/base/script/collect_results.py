@@ -43,6 +43,9 @@ def command_line_arguments(command_line_parameters):
   parser.add_argument('-d', '--devel-name', dest="dev", default="scores-dev", help = "Name of the file containing the development scores")
   parser.add_argument('-e', '--eval-name', dest="eval", default="scores-eval", help = "Name of the file containing the evaluation scores")
   parser.add_argument('-D', '--directory', default=".", help = "The directory where the results should be collected from; might include search patterns as '*'.")
+  parser.add_argument('-r', '--rank', type=int, default=1, help = "The rank for which to compute RR and DIR")
+  parser.add_argument('-f', '--far-threshold', type=float, default=0.001, help = "The FAR threshold to be used with criterion FAR and DIR")
+
   parser.add_argument('-n', '--nonorm-dir', dest="nonorm", default="nonorm", help = "Directory where the unnormalized scores are found")
   parser.add_argument('-z', '--ztnorm-dir', dest="ztnorm", default = "ztnorm", help = "Directory where the normalized scores are found")
   parser.add_argument('-s', '--sort', action='store_true', help = "Sort the results")
@@ -86,15 +89,15 @@ class Result:
         negatives = [max(neg) for neg, pos in scores_dev if (pos is None or not numpy.array(pos).size) and neg is not None]
         if not negatives:
           raise ValueError("There need to be at least one pair with only negative scores")
-        threshold = bob.measure.far_threshold(negatives, [], 0.001)
-        DIR_dev = bob.measure.detection_identification_rate(scores_dev, threshold)
+        threshold = bob.measure.far_threshold(negatives, [], self.m_args.far_threshold)
+        DIR_dev = bob.measure.detection_identification_rate(scores_dev, threshold, self.m_args.rank)
         if eval_file is not None:
           # re-compute the threshold for eval file
           negatives = [max(neg) for neg, pos in scores_eval if (pos is None or not numpy.array(pos).size) and neg is not None]
           if not negatives:
             raise ValueError("There need to be at least one pair with only negative scores")
-          threshold = bob.measure.far_threshold(negatives, [], 0.001)
-          DIR_dev = bob.measure.detection_identification_rate(scores_eval, threshold)
+          threshold = bob.measure.far_threshold(negatives, [], self.m_args.far_threshold)
+          DIR_eval = bob.measure.detection_identification_rate(scores_eval, threshold, self.m_args.rank)
         else:
           DIR_eval = None
         return (DIR_dev, DIR_eval)
@@ -109,13 +112,15 @@ class Result:
 
       dev_neg, dev_pos = bob.measure.load.split(dev_file)
 
-      # switch which threshold function to use;
-      # THIS f***ing piece of code really is what python authors propose:
-      threshold = {
-        'EER'  : bob.measure.eer_threshold,
-        'HTER' : bob.measure.min_hter_threshold,
-        'FAR'  : bob.measure.far_threshold
-      } [self.m_args.criterion](dev_neg, dev_pos)
+      # switch which threshold function to use
+      if self.m_args.criterion == 'EER':
+        threshold = bob.measure.far_threshold(dev_neg, dev_pos)
+      elif self.m_args.criterion == 'HTER':
+        threshold = bob.measure.min_hter_threshold(dev_neg, dev_pos)
+      elif self.m_args.criterion == 'FAR':
+        threshold = bob.measure.far_threshold(dev_neg, dev_pos, self.m_args.far_threshold)
+      else:
+        raise NotImplementedError("Criterion %s is not yet implemented", self.m_args.criterion)
 
       # compute far and frr for the given threshold
       dev_far, dev_frr = bob.measure.farfrr(dev_neg, dev_pos, threshold)

@@ -553,8 +553,9 @@ def test_collect_results():
     '-d', 'scores-nonorm-dev',
     '-e', 'scores-nonorm-fivecol-dev',
     '-n', '.', '-z', '.',
-    '--sort', '--sort-key', 'dir', '--criterion', 'FAR',
-    '--self-test', '-vvv'
+    '--sort', '--sort-key', 'dir',
+    '--criterion', 'FAR', '--far-threshold', '0.1',
+    '--self-test', '-v'
   ])
 
   # Recognition Rate
@@ -563,8 +564,9 @@ def test_collect_results():
     '-d', 'scores-nonorm-dev',
     '-e', 'scores-nonorm-fivecol-dev',
     '-n', '.', '-z', '.',
-    '--sort', '--sort-key', 'dir', '--criterion', 'RR',
-    '--self-test', '-vvv'
+    '--sort', '--sort-key', 'dir',
+    '--criterion', 'RR', '--rank', '10',
+    '--self-test', '-v'
   ])
 
   # DIR
@@ -572,8 +574,9 @@ def test_collect_results():
     '-D', data_dir,
     '-d', 'scores-nonorm-openset-dev',
     '-n', '.', '-z', '.',
-    '--sort', '--sort-key', 'dir', '--criterion', 'DIR',
-    '--self-test', '-vvv'
+    '--sort', '--sort-key', 'dir',
+    '--criterion', 'DIR', '--far-threshold', '0.1',
+    '--self-test', '-v'
   ])
 
 
