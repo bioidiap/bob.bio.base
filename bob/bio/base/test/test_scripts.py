@@ -537,7 +537,7 @@ def test_evaluate_openset():
 
 
 def test_resources():
-  # simply test that the collect_results script works
+  # simply test that the resorces script works
   from bob.bio.base.script.resources import resources, databases
   with utils.Quiet():
     resources(['--types', 'database', 'preprocessor', 'extractor', 'algorithm', 'grid', '--details', '--packages', 'bob.bio.base'])
@@ -546,13 +546,39 @@ def test_resources():
 
 def test_collect_results():
   # simply test that the collect_results script works
-  test_dir = tempfile.mkdtemp(prefix='bobtest_')
-  try:
-    from bob.bio.base.script.collect_results import main
-    main(['--directory', test_dir, '--sort', '--sort-key', 'dir', '--criterion', 'FAR', '--self-test'])
-  finally:
-    if os.path.exists(test_dir):
-      os.rmdir(test_dir)
+  from bob.bio.base.script.collect_results import main
+  # FAR criterion
+  main([
+    '-D', data_dir,
+    '-d', 'scores-nonorm-dev',
+    '-e', 'scores-nonorm-fivecol-dev',
+    '-n', '.', '-z', '.',
+    '--sort', '--sort-key', 'dir',
+    '--criterion', 'FAR', '--far-threshold', '0.1',
+    '--self-test', '-v'
+  ])
+
+  # Recognition Rate
+  main([
+    '-D', data_dir,
+    '-d', 'scores-nonorm-dev',
+    '-e', 'scores-nonorm-fivecol-dev',
+    '-n', '.', '-z', '.',
+    '--sort', '--sort-key', 'dir',
+    '--criterion', 'RR', '--rank', '10',
+    '--self-test', '-v'
+  ])
+
+  # DIR
+  main([
+    '-D', data_dir,
+    '-d', 'scores-nonorm-openset-dev',
+    '-n', '.', '-z', '.',
+    '--sort', '--sort-key', 'dir',
+    '--criterion', 'DIR', '--far-threshold', '0.1',
+    '--self-test', '-v'
+  ])
+
 
 
 @utils.grid_available
