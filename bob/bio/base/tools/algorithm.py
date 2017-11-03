@@ -97,6 +97,7 @@ def project(algorithm, extractor, groups = None, indices = None, allow_missing_f
   # load the projector
   algorithm.load_projector(fs.projector_file)
 
+  original_data_files = fs.original_data_list(groups=groups) # the actual file objects
   feature_files = fs.feature_list(groups=groups)
   projected_files = fs.projected_list(groups=groups)
 
@@ -129,7 +130,11 @@ def project(algorithm, extractor, groups = None, indices = None, allow_missing_f
       # load feature
       feature = extractor.read_feature(feature_file)
       # project feature
-      projected = algorithm.project(feature)
+      if algorithm.requires_client_id_for_proj:
+        file_object = original_data_files[i]
+        projected = algorithm.project(feature, file_object.client_id)
+      else:
+        projected = algorithm.project(feature)
 
       if projected is None:
         if allow_missing_files:

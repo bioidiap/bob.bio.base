@@ -74,6 +74,7 @@ class Algorithm (object):
       self,
       performs_projection = False, # enable if your tool will project the features
       requires_projector_training = True, # by default, the projector needs training, if projection is enabled
+      requires_client_id_for_proj=False, # enable if you need to use the client id in the projection
       split_training_features_by_client = False, # enable if your projector training needs the training files sorted by client
       use_projected_features_for_enrollment = True, # by default, the enroller used projected features for enrollment, if projection is enabled.
       requires_enroller_training = False, # enable if your enroller needs training
@@ -89,6 +90,7 @@ class Algorithm (object):
   ):
     self.performs_projection = performs_projection
     self.requires_projector_training = performs_projection and requires_projector_training
+    self.requires_client_id_for_proj = performs_projection and requires_client_id_for_proj
     self.split_training_features_by_client = split_training_features_by_client
     self.use_projected_features_for_enrollment = performs_projection and use_projected_features_for_enrollment
     self.requires_enroller_training = requires_enroller_training
