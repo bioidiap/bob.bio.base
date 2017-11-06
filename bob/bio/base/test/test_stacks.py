@@ -47,7 +47,7 @@ def test_extractors():
   assert all(np.allclose(x1, x2) for x1, x2 in zip(data, PAR_DATA))
 
 
-def test_trainable_extractors():
+def test_sequential_trainable_extractors():
   processors = [CallableExtractor(p) for p in PROCESSORS] + [dummy_extractor]
   proc = SequentialExtractor(processors)
   with tempfile.NamedTemporaryFile(suffix='.hdf5') as f:
@@ -55,3 +55,13 @@ def test_trainable_extractors():
     proc.load(f.name)
   data = proc(DATA)
   assert np.allclose(data, SEQ_DATA)
+
+
+def test_parallel_trainable_extractors():
+  processors = [CallableExtractor(p) for p in PROCESSORS] + [dummy_extractor]
+  proc = ParallelExtractor(processors)
+  with tempfile.NamedTemporaryFile(suffix='.hdf5') as f:
+    proc.train(DATA, f.name)
+    proc.load(f.name)
+  data = proc(np.array(DATA))
+  assert all(np.allclose(x1, x2) for x1, x2 in zip(data, PAR_DATA))
