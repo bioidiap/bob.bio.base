@@ -24,7 +24,13 @@ class MultipleExtractor(Extractor):
 
     def train_one(self, e, training_data, extractor_file, apply=False):
         if not e.requires_training:
-            return
+            if not apply:
+                return
+            if self.split_training_data_by_client:
+                training_data = [[e(d) for d in datalist]
+                                 for datalist in training_data]
+            else:
+                training_data = [e(d) for d in training_data]
         # if any of the extractors require splitting the data, the
         # split_training_data_by_client is True.
         if e.split_training_data_by_client:
