@@ -33,7 +33,7 @@ class MultipleExtractor(Extractor):
                 training_data = [e(d) for d in training_data]
         # if any of the extractors require splitting the data, the
         # split_training_data_by_client is True.
-        if e.split_training_data_by_client:
+        elif e.split_training_data_by_client:
             e.train(training_data, extractor_file)
             if not apply:
                 return
@@ -62,7 +62,8 @@ class MultipleExtractor(Extractor):
             groups = self.get_extractor_groups()
             for e, group in zip(self.processors, groups):
                 f.cd(group)
-                e.load(f)
+                if e.requires_training:
+                    e.load(f)
                 f.cd('..')
 
 
@@ -110,10 +111,15 @@ class SequentialExtractor(SequentialProcessor, MultipleExtractor):
     def train(self, training_data, extractor_file):
         with HDF5File(extractor_file, 'w') as f:
             groups = self.get_extractor_groups()
-            for e, group in zip(self.processors, groups):
+            for i, (e, group) in enumerate(zip(self.processors, groups)):
+                if i == len(self.processors) - 1:
+                    apply = False
+                else:
+                    apply = True
                 f.create_group(group)
                 f.cd(group)
-                training_data = self.train_one(e, training_data, f, apply=True)
+                training_data = self.train_one(e, training_data, f,
+                                               apply=apply)
                 f.cd('..')
 
     def read_feature(self, feature_file):
