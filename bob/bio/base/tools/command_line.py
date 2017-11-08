@@ -241,7 +241,6 @@ def take_from_config_or_command_line(args, config, keyword, default, required=Tr
                                                        preferred_package=args.preferred_package))
 
     elif config is not None and hasattr(config, keyword):
-
         val = getattr(config, keyword)
         if isinstance(val, str) and is_resource:
             val = utils.load_resource(val, keyword, imports=args.imports, package_prefix=args.package_prefix,
@@ -295,7 +294,7 @@ def parse_config_file(parsers, args, args_dictionary, keywords, skips):
 
     take_from_config_or_command_line(args, config, "sub_directory",
                                      parser.get_default("sub_directory"), is_resource=False)
-
+                                     
     skip_keywords = tuple(['skip_' + k.replace('-', '_') for k in skips])
 
     for keyword in keywords + skip_keywords + ('execute_only',):

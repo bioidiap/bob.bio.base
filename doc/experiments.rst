@@ -94,6 +94,18 @@ Running the experiment is then as simple as:
 .. note::
    To be able to run exactly the command line from above, it requires to have :ref:`bob.bio.face <bob.bio.face>` installed.
 
+
+.. note::
+   Chain loading is possible through configuration files, i.e., variables of each
+   config is available during evaluation of the preceding config file.
+   
+   This allows us to spread our experiment setup in several configuration files and have a call similar to this::
+   
+   $ verify.py config_1.py config_2.py config_n.py
+  
+   For more information see *Chain Loading* in :ref:`bob.extension.config`.
+
+
 Before running an experiment, it is recommended to add set the variable ``dry_run = True``, so that it will only print, which steps would be executed, without actually executing them, and make sure that everything works as expected.
 
 The final result of the experiment will be one (or more) score file(s).
@@ -102,7 +114,7 @@ By default, you can find them in a sub-directory the ``result`` directory, but y
 
 .. note::
    At Idiap_, the default result directory differs, see ``verify.py --help`` for your directory.
-
+   
 
 .. _bob.bio.base.command_line:
 

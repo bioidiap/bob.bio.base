@@ -184,28 +184,32 @@ def add_results(args, nonorm, ztnorm = None):
       else:
         r.ztnorm(dev_file)
 
-  global results
-  results.append(r)
+  return r
 
 
 def recurse(args, path):
   """Recurse the directory structure and collect all results that are stored in the desired file names."""
   dir_list = os.listdir(path)
+  results = []
 
   # check if the score directories are included in the current path
   if args.nonorm in dir_list or args.nonorm == '.':
     if args.ztnorm in dir_list or args.ztnorm == '.':
-      add_results(args, os.path.join(path, args.nonorm), os.path.join(path, args.ztnorm))
+      return results + [add_results(args, os.path.join(path, args.nonorm), os.path.join(path, args.ztnorm))]
     else:
-      add_results(args, os.path.join(path, args.nonorm))
+      return results + [add_results(args, os.path.join(path, args.nonorm))]
 
   for e in dir_list:
     real_path = os.path.join(path, e)
     if os.path.isdir(real_path):
-      recurse(args, real_path)
+      r = recurse(args, real_path)
+      if r is not None:
+        results += r
 
+  return results
+  
 
-def table():
+def table(results):
   """Generates a table containing all results in a nice format."""
   A = " "*2 + 'dev  nonorm'+ " "*5 + 'dev  ztnorm' + " "*6 + 'eval nonorm' + " "*4 + 'eval ztnorm' + " "*12 + 'directory\n'
   A += "-"*100+"\n"
@@ -219,12 +223,13 @@ def main(command_line_parameters = None):
   """Iterates through the desired directory and collects all result files."""
   args = command_line_arguments(command_line_parameters)
 
-  global results
   results = []
   # collect results
   directories = glob.glob(args.directory)
   for directory in directories:
-    recurse(args, directory)
+    r = recurse(args, directory)
+    if r is not None:
+      results += r
 
   # sort results if desired
   if args.sort:
@@ -233,10 +238,10 @@ def main(command_line_parameters = None):
 
   # print the results
   if args.self_test:
-    table()
+    table(results)
   elif args.output:
     f = open(args.output, "w")
-    f.writelines(table())
+    f.writelines(table(results))
     f.close()
   else:
-    print (table())
+    print (table(results))
