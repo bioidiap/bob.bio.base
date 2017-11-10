@@ -10,6 +10,9 @@ from .. import BioFile
 
 from .models import ListReader
 
+import logging
+logger = logging.getLogger('bob.bio.base')
+
 
 class FileListBioDatabase(ZTBioDatabase):
     """This class provides a user-friendly interface to databases that are given as file lists.
@@ -226,10 +229,12 @@ class FileListBioDatabase(ZTBioDatabase):
             if group == 'world':
                 continue
             if add_zt_files:
-                if not self.implements_zt(self.protocol, group):
-                    raise ValueError("ZT score files are requested, but no such files are defined in group %s for protocol %s", group, self.protocol)
-                files += self.tobjects(group, self.protocol)
-                files += self.zobjects(group, self.protocol, **self.z_probe_options)
+                if self.implements_zt(self.protocol, group):
+                    files += self.tobjects(group, self.protocol)
+                    files += self.zobjects(group, self.protocol, **self.z_probe_options)
+                else:
+                    logger.warn("ZT score files are requested, but no such files are defined in group %s for protocol %s", group, self.protocol)
+
         return self.sort(self._make_bio(files))
 
 
