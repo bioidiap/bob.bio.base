@@ -75,6 +75,8 @@ class MultipleExtractor(Extractor):
         return training_data
 
     def load(self, extractor_file):
+        if not self.requires_training:
+            return
         with HDF5File(extractor_file) as f:
             groups = self.get_extractor_groups()
             for e, group in zip(self.processors, groups):
@@ -111,7 +113,7 @@ class SequentialExtractor(SequentialProcessor, MultipleExtractor):
     True
     """
 
-    def __init__(self, processors):
+    def __init__(self, processors, **kwargs):
 
         (requires_training, split_training_data_by_client,
          min_extractor_file_size, min_feature_file_size) = \
@@ -122,7 +124,8 @@ class SequentialExtractor(SequentialProcessor, MultipleExtractor):
             requires_training=requires_training,
             split_training_data_by_client=split_training_data_by_client,
             min_extractor_file_size=min_extractor_file_size,
-            min_feature_file_size=min_feature_file_size)
+            min_feature_file_size=min_feature_file_size,
+            **kwargs)
 
     def train(self, training_data, extractor_file):
         with HDF5File(extractor_file, 'w') as f:
@@ -179,7 +182,7 @@ class ParallelExtractor(ParallelProcessor, MultipleExtractor):
            [ 1. ,  2. ,  3. ,  0.5,  1. ,  1.5]])
     """
 
-    def __init__(self, processors):
+    def __init__(self, processors, **kwargs):
 
         (requires_training, split_training_data_by_client,
          min_extractor_file_size, min_feature_file_size) = self.get_attributes(
@@ -190,7 +193,8 @@ class ParallelExtractor(ParallelProcessor, MultipleExtractor):
             requires_training=requires_training,
             split_training_data_by_client=split_training_data_by_client,
             min_extractor_file_size=min_extractor_file_size,
-            min_feature_file_size=min_feature_file_size)
+            min_feature_file_size=min_feature_file_size,
+            **kwargs)
 
     def train(self, training_data, extractor_file):
         with HDF5File(extractor_file, 'w') as f:

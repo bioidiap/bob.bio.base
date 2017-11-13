@@ -39,10 +39,12 @@ def test_preprocessors():
 def test_extractors():
   processors = [CallableExtractor(p) for p in PROCESSORS]
   proc = SequentialExtractor(processors)
+  proc.load(None)
   data = proc(DATA)
   assert np.allclose(data, SEQ_DATA)
 
   proc = ParallelExtractor(processors)
+  proc.load(None)
   data = proc(DATA)
   assert all(np.allclose(x1, x2) for x1, x2 in zip(data, PAR_DATA))
 
