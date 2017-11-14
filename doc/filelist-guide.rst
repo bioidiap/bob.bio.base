@@ -124,6 +124,8 @@ The following list files need to be created:
       filename client_id
 
 
+Please note that in all files, the lines starting with any number of white
+space and ``#`` will be ignored.
 
 
 Protocols and File Lists
