@@ -123,7 +123,8 @@ def project(algorithm, extractor, groups = None, indices = None, allow_missing_f
 
     if not utils.check_file(projected_file, force,
                             algorithm.min_projected_file_size):
-      logger.debug("... Projecting features for file '%s'", feature_file)
+      logger.debug("... Projecting features for file '%s' (%d/%d)",
+          feature_file, index_range.index(i)+1, len(index_range))
       # create output directory before reading the data file (is sometimes required, when relative directories are specified, especially, including a .. somewhere)
       bob.io.base.create_directories_safe(os.path.dirname(projected_file))
       # load feature
@@ -256,7 +257,7 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
         logger.info("- Enrollment: splitting of index range %s", str(indices))
 
       logger.info("- Enrollment: enrolling models of group '%s'", group)
-      for model_id in model_ids:
+      for pos, model_id in enumerate(model_ids):
         # Path to the model
         model_file = fs.model_file(model_id, group)
 
@@ -271,7 +272,9 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
               logger.debug("... Skipping model file %s since no feature file could be found", model_file)
               continue
 
-          logger.debug("... Enrolling model from %d features to file '%s'", len(enroll_files), model_file)
+          logger.debug("... Enrolling model '%d' from %d feature(s) to "
+              "file '%s' (%d/%d)", model_id, len(enroll_files), model_file,
+              pos+1, len(model_ids))
           bob.io.base.create_directories_safe(os.path.dirname(model_file))
 
           # load all files into memory

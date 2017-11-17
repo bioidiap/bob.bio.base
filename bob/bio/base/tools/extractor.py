@@ -112,7 +112,8 @@ def extract(extractor, preprocessor, groups=None, indices = None, allow_missing_
 
     if not utils.check_file(feature_file, force,
                             extractor.min_feature_file_size):
-      logger.debug("... Extracting features for data file '%s'", data_file)
+      logger.debug("... Extracting features for data file '%s' (%d/%d)",
+          data_file, index_range.index(i)+1, len(index_range))
       # create output directory before reading the data file (is sometimes required, when relative directories are specified, especially, including a .. somewhere)
       bob.io.base.create_directories_safe(os.path.dirname(feature_file))
       # load data
