@@ -9,7 +9,7 @@ from numpy.testing.decorators import setastest
 import bob.db.base
 
 
-class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
+class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
     """This class represents the basic API for database access.
     Please use this class as a base class for your database access classes.
     Do not forget to call the constructor of this base class in your derived class.
