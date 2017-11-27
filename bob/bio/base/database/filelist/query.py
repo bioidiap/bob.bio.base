@@ -130,7 +130,6 @@ class FileListBioDatabase(ZTBioDatabase):
         and the given sub-directories and file names (which default to useful values if not given)."""
 
         super(FileListBioDatabase, self).__init__(
-            filelists_directory=filelists_directory,
             name=name,
             protocol=protocol,
             original_directory=original_directory,
@@ -138,7 +137,10 @@ class FileListBioDatabase(ZTBioDatabase):
             annotation_directory=annotation_directory,
             annotation_extension=annotation_extension,
             annotation_type=annotation_type,
-            # extra args for pretty printing
+            **kwargs)
+        # extra args for pretty printing
+        self._kwargs.update(dict(
+            filelists_directory=filelists_directory,
             dev_sub_directory=dev_sub_directory,
             eval_sub_directory=eval_sub_directory,
             world_filename=world_filename,
@@ -150,9 +152,10 @@ class FileListBioDatabase(ZTBioDatabase):
             tnorm_filename=tnorm_filename,
             znorm_filename=znorm_filename,
             use_dense_probe_file_list=use_dense_probe_file_list,
-            # if both probe_filename and scores_filename are given, what kind of list should be used?
+            # if both probe_filename and scores_filename are given, what kind
+            # of list should be used?
             keep_read_lists_in_memory=keep_read_lists_in_memory,
-            **kwargs)
+        ))
         # self.original_directory = original_directory
         # self.original_extension = original_extension
         self.bio_file_class = bio_file_class

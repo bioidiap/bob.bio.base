@@ -101,7 +101,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
         self.enroller_training_options = enroller_training_options
         self.check_existence = check_original_files_for_existence
 
-        self._kwargs = kwargs
+        self._kwargs = {}
 
         self.annotation_directory = annotation_directory
         self.annotation_extension = annotation_extension
