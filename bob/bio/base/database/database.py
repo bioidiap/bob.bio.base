@@ -90,7 +90,8 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
 
         super(BioDatabase, self).__init__(
             original_directory=original_directory,
-            original_extension=original_extension)
+            original_extension=original_extension,
+            **kwargs)
 
         self.name = name
 
