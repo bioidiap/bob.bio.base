@@ -97,7 +97,7 @@ Running the experiment is then as simple as:
 
 .. note::
    Chain loading is possible through configuration files, i.e., variables of each
-   config is available during evaluation of the preceding config file.
+   config is available during evaluation of the following config file.
    
    This allows us to spread our experiment setup in several configuration files and have a call similar to this::
    
