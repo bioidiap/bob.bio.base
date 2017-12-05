@@ -1,5 +1,5 @@
 import numpy
-import bob.io.base
+import bob.bio.base
 
 from bob.bio.base.extractor import Extractor
 
@@ -12,10 +12,10 @@ class DummyExtractor (Extractor):
 
   def train(self, train_data, extractor_file):
     assert isinstance(train_data, list)
-    bob.io.base.save(_data, extractor_file)
+    bob.bio.base.save(_data, extractor_file)
 
   def load(self, extractor_file):
-    data = bob.io.base.load(extractor_file)
+    data = bob.bio.base.load(extractor_file)
     assert (_data == data).all()
     self.model = True
 

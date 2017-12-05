@@ -9,7 +9,7 @@ from numpy.testing.decorators import setastest
 import bob.db.base
 
 
-class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
+class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
     """This class represents the basic API for database access.
     Please use this class as a base class for your database access classes.
     Do not forget to call the constructor of this base class in your derived class.
@@ -90,7 +90,8 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
 
         super(BioDatabase, self).__init__(
             original_directory=original_directory,
-            original_extension=original_extension)
+            original_extension=original_extension,
+            **kwargs)
 
         self.name = name
 
@@ -100,7 +101,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
         self.enroller_training_options = enroller_training_options
         self.check_existence = check_original_files_for_existence
 
-        self._kwargs = kwargs
+        self._kwargs = {}
 
         self.annotation_directory = annotation_directory
         self.annotation_extension = annotation_extension
@@ -197,17 +198,8 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.Database)):
             self.original_directory = replacements[self.original_directory]
 
         try:
-            self._db.original_directory = self.original_directory
-        except AttributeError:
-            pass
-
-        try:
             if self.annotation_directory in replacements:
                 self.annotation_directory = replacements[self.annotation_directory]
-                try:
-                    self._db.annotation_directory = self.annotation_directory
-                except AttributeError:
-                    pass
         except AttributeError:
             pass
 

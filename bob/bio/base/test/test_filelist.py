@@ -136,6 +136,12 @@ def test_query_protocol():
     assert len(db.objects(protocol=prot, groups='dev', purposes='probe')) == 9
 
 
+def test_noztnorm():
+    db = FileListBioDatabase(os.path.join(os.path.dirname(example_dir),
+                                          'example_filelist2'), 'test')
+    assert len(db.all_files())
+
+
 def test_query_dense():
     db = FileListBioDatabase(example_dir, 'test', use_dense_probe_file_list=True)
 

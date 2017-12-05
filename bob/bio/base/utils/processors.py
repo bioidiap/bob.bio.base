@@ -26,7 +26,7 @@ class SequentialProcessor(object):
     """
 
     def __init__(self, processors, **kwargs):
-        super(SequentialProcessor, self).__init__()
+        super(SequentialProcessor, self).__init__(**kwargs)
         self.processors = processors
 
     def __call__(self, data, **kwargs):
@@ -86,7 +86,7 @@ class ParallelProcessor(object):
     """
 
     def __init__(self, processors, **kwargs):
-        super(ParallelProcessor, self).__init__()
+        super(ParallelProcessor, self).__init__(**kwargs)
         self.processors = processors
 
     def __call__(self, data, **kwargs):

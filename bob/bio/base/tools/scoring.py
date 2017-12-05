@@ -131,9 +131,11 @@ def _scores_a(algorithm, reader, model_ids, group, compute_zt_norm, force, write
     logger.info("- Scoring: computing scores for group '%s'", group)
 
   # Computes the raw scores for each model
-  for model_id in model_ids:
+  for pos, model_id in enumerate(model_ids):
     # test if the file is already there
     score_file = fs.a_file(model_id, group) if compute_zt_norm else fs.no_norm_file(model_id, group)
+    logger.debug("... Scoring model '%s' at '%s' (%d/%d)", model_id, score_file,
+        pos+1, len(model_ids))
     if utils.check_file(score_file, force):
       logger.warn("Score file '%s' already exists.", score_file)
     else:
@@ -166,9 +168,11 @@ def _scores_b(algorithm, reader, model_ids, group, force, allow_missing_files):
   logger.info("- Scoring: computing score matrix B for group '%s'", group)
 
   # Loads the models
-  for model_id in model_ids:
+  for pos, model_id in enumerate(model_ids):
     # test if the file is already there
     score_file = fs.b_file(model_id, group)
+    logger.debug("... Scoring model '%s' at '%s' (%d/%d)", model_id,
+        score_file, pos+1, len(model_ids))
     if utils.check_file(score_file, force):
       logger.warn("Score file '%s' already exists.", score_file)
     else:
@@ -191,9 +195,11 @@ def _scores_c(algorithm, reader, t_model_ids, group, force, allow_missing_files)
   logger.info("- Scoring: computing score matrix C for group '%s'", group)
 
   # Computes the raw scores for the T-Norm model
-  for t_model_id in t_model_ids:
+  for pos, t_model_id in enumerate(t_model_ids):
     # test if the file is already there
     score_file = fs.c_file(t_model_id, group)
+    logger.debug("... Scoring model '%s' at '%s' (%d/%d)", t_model_id,
+        score_file, pos+1, len(t_model_ids))
     if utils.check_file(score_file, force):
       logger.warn("Score file '%s' already exists.", score_file)
     else:
@@ -219,9 +225,11 @@ def _scores_d(algorithm, reader, t_model_ids, group, force, allow_missing_files)
   z_probe_ids = [z_probe_object.client_id for z_probe_object in z_probe_objects]
 
   # Loads the T-Norm models
-  for t_model_id in t_model_ids:
+  for pos, t_model_id in enumerate(t_model_ids):
     # test if the file is already there
     score_file = fs.d_file(t_model_id, group)
+    logger.debug("... Scoring model '%s' at '%s' (%d/%d)", t_model_id,
+        score_file, pos+1, len(t_model_ids))
     same_score_file = fs.d_same_value_file(t_model_id, group)
     if utils.check_file(score_file, force) and utils.check_file(same_score_file, force):
       logger.warn("score files '%s' and '%s' already exist.", score_file, same_score_file)

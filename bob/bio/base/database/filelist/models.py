@@ -87,6 +87,8 @@ class ListReader(object):
             raise RuntimeError('File %s does not exist.' % (list_file,))
         try:
             for line in fileinput.input(list_file):
+                if line.strip().startswith('#'):
+                    continue
                 parsed_line = re.findall('[\w/(-.)]+', line)
                 if len(parsed_line):
                     # perform some sanity checks
