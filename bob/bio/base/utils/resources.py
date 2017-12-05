@@ -8,7 +8,7 @@ from __future__ import print_function
 import imp
 import os
 import pkg_resources
-
+import bob.extension.config
 import sys
 if sys.version_info[0] == 2:
   from string import letters as ascii_letters
@@ -45,45 +45,7 @@ def _collect_config(paths):
 
   '''
 
-  def _attach_resources(src, dst):
-    for k in dir(src):
-      setattr(dst, k, getattr(src, k))
-
-  import random
-
-  name = "".join(random.sample(ascii_letters, 10))
-  retval = imp.new_module(name)
-
-  for path in paths:
-    # execute the module code on the context of previously import modules
-    for ep in pkg_resources.iter_entry_points('bob.bio.config'):
-      if ep.name == path:
-        tmp = ep.load() # loads the pointed module
-        _attach_resources(tmp, retval)
-        break
-    else:
-
-      # if you get to this point, then it is not a resource, maybe it is a module?
-      try:
-        tmp = __import__(path, retval.__dict__, retval.__dict__, ['*'])
-        _attach_resources(tmp, retval)
-        continue
-      except ImportError:
-        # module does not exist, ignore it
-        pass
-      except Exception as e:
-        raise IOError("The configuration module '%s' could not be loaded: %s" % (path, e))
-
-      # if you get to this point, then its not a resource nor a loadable module, is
-      # it on the file system?
-      if not os.path.exists(path):
-        raise IOError("The configuration file, resource or module '%s' could not be found, loaded or imported" % path)
-
-      name = "".join(random.sample(ascii_letters, 10))
-      tmp = imp.load_source(name, path)
-      _attach_resources(tmp, retval)
-
-  return retval
+  return bob.extension.config.load(paths, entry_point_group="bob.bio.config")
 
 
 def read_config_file(filenames, keyword = None):
