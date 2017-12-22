@@ -272,7 +272,7 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
               logger.debug("... Skipping model file %s since no feature file could be found", model_file)
               continue
 
-          logger.debug("... Enrolling model '%d' from %d feature(s) to "
+          logger.debug("... Enrolling model '%s' from %d feature(s) to "
               "file '%s' (%d/%d)", model_id, len(enroll_files), model_file,
               pos+1, len(model_ids))
           bob.io.base.create_directories_safe(os.path.dirname(model_file))
