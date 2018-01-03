@@ -2,6 +2,7 @@ import bob.io.base
 import os
 
 import logging
+import inspect
 logger = logging.getLogger("bob.bio.base")
 
 from .FileSelector import FileSelector
@@ -90,6 +91,7 @@ def extract(extractor, preprocessor, groups=None, indices = None, allow_missing_
   extractor.load(fs.extractor_file)
   data_files = fs.preprocessed_data_list(groups=groups)
   feature_files = fs.feature_list(groups=groups)
+  metadata = fs.original_data_list(groups=groups)
 
   # select a subset of indices to iterate
   if indices is not None:
@@ -119,7 +121,10 @@ def extract(extractor, preprocessor, groups=None, indices = None, allow_missing_
       # load data
       data = preprocessor.read_data(data_file)
       # extract feature
-      feature = extractor(data)
+      if "metadata" in inspect.getargspec(extractor.__call__).args:
+        feature = extractor(data, metadata=metadata[i])
+      else:
+        feature = extractor(data)
 
       if feature is None:
         if allow_missing_files:

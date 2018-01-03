@@ -143,6 +143,25 @@ def test_verify_resources():
   _verify(parameters, test_dir, 'test_resource')
 
 
+def test_verify_resources_metadata():
+  test_dir = tempfile.mkdtemp(prefix='bobtest_')
+  # define dummy parameters
+  parameters = [
+      '-d', 'dummy',
+      '-p', 'dummy',
+      '-e', 'dummy_metadata',
+      '-a', 'dummy',
+      '--zt-norm',
+      '--allow-missing-files',
+      '-vs', 'test_resource',
+      '--temp-directory', test_dir,
+      '--result-directory', test_dir,
+      '--preferred-package', 'bob.bio.base'
+  ]
+
+  _verify(parameters, test_dir, 'test_resource')
+
+
 def test_verify_commandline():
   test_dir = tempfile.mkdtemp(prefix='bobtest_')
   # define dummy parameters

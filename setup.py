@@ -99,6 +99,7 @@ setup(
 
       'bob.bio.extractor': [
         'dummy             = bob.bio.base.test.dummy.extractor:extractor', # for test purposes only
+        'dummy_metadata    = bob.bio.base.test.dummy.extractor:extractor_metadata', # for test purposes only
         'linearize         = bob.bio.base.config.extractor.linearize:extractor',
       ],
 
