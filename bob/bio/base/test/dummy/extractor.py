@@ -25,3 +25,14 @@ class DummyExtractor (Extractor):
     return data.astype(numpy.float).flatten()
 
 extractor = DummyExtractor()
+
+
+class DummyExtractorMetadata (DummyExtractor):
+
+  def __call__(self, data, metadata=None):
+    """Does nothing, simply converts the data type of the data, ignoring any annotation."""
+    assert metadata is not None
+    assert self.model
+    return data.astype(numpy.float).flatten()
+
+extractor_metadata = DummyExtractorMetadata()
