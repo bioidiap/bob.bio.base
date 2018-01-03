@@ -77,7 +77,7 @@ def command_line_arguments(command_line_parameters):
   for f in args.dev_files + (args.eval_files or []):
     real_file = os.path.join(args.directory, f)
     if not os.path.exists(real_file):
-      raise ValueError("The provided score file '%s' does not exist", real_file)
+      raise ValueError("The provided score file '%s' does not exist" % real_file)
 
   if args.eval_files is not None and len(args.dev_files) != len(args.eval_files):
     logger.error("The number of --dev-files (%d) and --eval-files (%d) are not identical", len(args.dev_files), len(args.eval_files))
