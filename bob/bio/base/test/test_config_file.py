@@ -331,3 +331,10 @@ def test_order_inverse():
 
   finally:
     if test_dir: shutil.rmtree(test_dir)
+
+
+def test_relative_import_across_packages():
+  from bob.extension.config import load
+  load([ 'resource_config', ], entry_point_group='bob.extension.test_config_load')
+  load([ 'config_relative', ], entry_point_group='bob.extension.test_config_load')
+  load([ 'resource_config', 'config_relative', ], entry_point_group='bob.extension.test_config_load')

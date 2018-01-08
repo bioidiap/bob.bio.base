@@ -127,6 +127,10 @@ setup(
       'bob.db': [
         'bio_filelist      = bob.bio.base.database.filelist.driver:Interface',
       ],
+      # test entry for testing loading of bob.extension.config.load
+      'bob.extension.test_config_load': [
+        'config_relative   = bob.bio.base.test.dummy.config_relative',
+      ],
    },
 
     # Classifiers are important if you plan to distribute this package through
