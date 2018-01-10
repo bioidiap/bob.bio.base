@@ -22,8 +22,8 @@ class BioFile(bob.db.base.File):
       see :py:class:`bob.db.base.File` constructor
     """
 
-    def __init__(self, client_id, path, file_id=None):
-        bob.db.base.File.__init__(self, path, file_id)
+    def __init__(self, client_id, path, file_id=None, **kwargs):
+        super(BioFile, self).__init__(path, file_id, **kwargs)
 
         # just copy the information
         self.client_id = client_id
@@ -48,13 +48,15 @@ class BioFileSet(BioFile):
       All files of that list need to have the same client ID.
     """
 
-    def __init__(self, file_set_id, files, path=None):
+    def __init__(self, file_set_id, files, path=None, **kwargs):
         # don't accept empty file lists
         assert len(files), "Cannot create an empty BioFileSet"
 
         # call base class constructor
-        BioFile.__init__(self, files[0].client_id, "+".join(f.path for f in files) if path is None else path,
-                         file_set_id)
+        super(BioFileSet, self).__init__(
+            files[0].client_id,
+            "+".join(f.path for f in files) if path is None else path,
+            file_set_id, **kwargs)
 
         # check that all files come from the same client
         assert all(f.client_id == self.client_id for f in files)
