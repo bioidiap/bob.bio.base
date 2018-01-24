@@ -148,7 +148,7 @@ def test_verify_resources_metadata():
   # define dummy parameters
   parameters = [
       '-d', 'dummy',
-      '-p', 'dummy',
+      '-p', 'dummy_metadata',
       '-e', 'dummy_metadata',
       '-a', 'dummy',
       '--zt-norm',
