@@ -127,6 +127,10 @@ setup(
       'bob.db': [
         'bio_filelist      = bob.bio.base.database.filelist.driver:Interface',
       ],
+      # main entry for bob cli
+      'bob.cli': [
+        'bio               = bob.bio.base.script.bio:bio',
+      ],
    },
 
     # Classifiers are important if you plan to distribute this package through
