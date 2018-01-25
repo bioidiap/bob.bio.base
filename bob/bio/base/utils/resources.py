@@ -131,6 +131,9 @@ def load_resource(resource, keyword, imports = ['bob.bio.base'], package_prefix=
   if os.path.isfile(resource):
     return read_config_file([resource], keyword)
 
+  if keyword not in valid_keywords:
+    logger.warning("The given keyword '%s' is not valid. Please use one of %s!", keyword, valid_keywords)
+
   # now, we check if the resource is registered as an entry point in the resource files
   entry_points = [entry_point for entry_point in _get_entry_points(keyword, package_prefix=package_prefix) if entry_point.name == resource]
 
