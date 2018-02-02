@@ -4,7 +4,6 @@
 
 .. _bob.bio.base.installation:
 
-=========================
 Installation Instructions
 =========================
 

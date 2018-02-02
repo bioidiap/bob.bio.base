@@ -2,7 +2,6 @@
 .. Manuel Guenther <Manuel.Guenther@idiap.ch>
 .. Mon 23 04 2012
 
-======================
 Implementation Details
 ======================
 
