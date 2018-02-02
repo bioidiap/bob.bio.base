@@ -9,5 +9,8 @@ bob.learn.linear
 bob.math
 bob.measure
 bob.sp
+click
+click-plugins
+numpy
 scipy
 setuptools

@@ -1,6 +1,5 @@
 .. _bob.bio.base.implemented:
 
-=================================
 Tools implemented in bob.bio.base
 =================================
 
@@ -15,6 +14,7 @@ Base Classes
    bob.bio.base.extractor.Extractor
    bob.bio.base.algorithm.Algorithm
    bob.bio.base.grid.Grid
+   bob.bio.base.annotator.Base
 
 
 Implementations
@@ -38,7 +38,8 @@ Implementations
    bob.bio.base.database.BioDatabase
    bob.bio.base.database.ZTBioDatabase
    bob.bio.base.database.FileListBioDatabase
-
+   bob.bio.base.annotator.FailSafe
+   bob.bio.base.annotator.Callable
 
 Preprocessors
 -------------
@@ -71,6 +72,11 @@ Grid Configuration
 
 
    .. adapted from http://stackoverflow.com/a/29789910/3301902 to ge a nice dictionary content view
+
+Annotators
+----------
+
+.. automodule:: bob.bio.base.annotator
 
 
 .. include:: links.rst
