@@ -1,5 +1,6 @@
 .. _bob.bio.base.annotations:
 
+==============================
 Annotating biometric databases
 ==============================
 

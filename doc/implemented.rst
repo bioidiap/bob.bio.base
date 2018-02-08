@@ -1,5 +1,6 @@
 .. _bob.bio.base.implemented:
 
+=================================
 Tools implemented in bob.bio.base
 =================================
 
