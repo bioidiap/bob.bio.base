@@ -42,4 +42,7 @@ class FailSafe(Base):
             # check if we have all the required annotations
             if all(key in kwargs['annotations'] for key in self.required_keys):
                 break
+        else:  # this else is for the for loop
+            # we don't want to return half of the annotations
+            kwargs['annotations'] = {}
         return kwargs['annotations']
