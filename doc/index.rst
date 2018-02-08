@@ -4,9 +4,9 @@
 
 .. _bob.bio.base:
 
-*******************************************
+===========================================
  Running Biometric Recognition Experiments
-*******************************************
+===========================================
 
 The ``bob.bio`` packages provide open source tools to run comparable and reproducible biometric recognition experiments.
 To design a biometric recognition experiment, you must choose:
