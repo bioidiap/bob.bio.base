@@ -2,8 +2,9 @@
 .. @author: Manuel Guenther <manuel.guenther@idiap.ch>
 .. @date:   Fri Aug 29 13:52:39 CEST 2014
 
-Verification File List Database Guide
-=====================================
+==========================================
+ Verification File List Database Guide
+==========================================
 
 The Database Interface
 ----------------------

@@ -5,6 +5,7 @@
 .. _bob.bio.base.experiments:
 
 
+==========================================
 Running Biometric Recognition Experiments
 ==========================================
 
@@ -97,11 +98,11 @@ Running the experiment is then as simple as:
 .. note::
    Chain loading is possible through configuration files, i.e., variables of each
    config is available during evaluation of the following config file.
-
+   
    This allows us to spread our experiment setup in several configuration files and have a call similar to this::
-
+   
    $ verify.py config_1.py config_2.py config_n.py
-
+  
    For more information see *Chain Loading* in :ref:`bob.extension.config`.
 
 
@@ -113,7 +114,7 @@ By default, you can find them in a sub-directory the ``result`` directory, but y
 
 .. note::
    At Idiap_, the default result directory differs, see ``verify.py --help`` for your directory.
-
+   
 
 .. _bob.bio.base.command_line:
 

@@ -2,6 +2,7 @@
 .. author: Manuel Günther <manuel.guenther@idiap.ch>
 .. date: Thu Sep 20 11:58:57 CEST 2012
 
+==============================
 More about Running Experiments
 ==============================
 

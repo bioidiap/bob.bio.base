@@ -1,5 +1,6 @@
 ..  _bob.bio.base.struct_bio_rec_sys:
 
+============================================
 Structure of a Biometric Recognition System
 ============================================
 
