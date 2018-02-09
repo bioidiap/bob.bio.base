@@ -83,7 +83,8 @@ def annotate(database, annotator, output_dir, force, array, **kwargs):
                 continue
 
         logger.info(
-            "Extracting annotations for sample %d out of %d", i + 1, total)
+            "Extracting annotations for sample %d out of %d: %s", i + 1, total,
+            outpath)
         data = annotator.read_original_data(
             biofile, database.original_directory, database.original_extension)
         annot = annotator(data)
