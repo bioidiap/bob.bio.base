@@ -15,7 +15,7 @@ Base Classes
    bob.bio.base.extractor.Extractor
    bob.bio.base.algorithm.Algorithm
    bob.bio.base.grid.Grid
-   bob.bio.base.annotator.Base
+   bob.bio.base.annotator.Annotator
 
 
 Implementations
