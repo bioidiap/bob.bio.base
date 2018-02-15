@@ -1,10 +1,10 @@
 import logging
-from . import Base
+from . import Annotator
 
 logger = logging.getLogger(__name__)
 
 
-class FailSafe(Base):
+class FailSafe(Annotator):
     """A fail-safe annotator.
     This annotator takes a list of annotator and tries them until you get your
     annotations.

@@ -1,4 +1,4 @@
-from .Base import Base
+from .Annotator import Annotator
 from .FailSafe import FailSafe
 from .Callable import Callable
 
@@ -23,7 +23,7 @@ def __appropriate__(*args):
 
 
 __appropriate__(
-    Base,
+    Annotator,
     FailSafe,
     Callable,
 )

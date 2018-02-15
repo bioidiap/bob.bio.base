@@ -1,9 +1,8 @@
 from bob.bio.base import read_original_data as base_read
-import numpy  # for documentation
 
 
-class Base(object):
-    """Base class for all annotators. This class is meant to be used in
+class Annotator(object):
+    """Annotator class for all annotators. This class is meant to be used in
     conjunction with the bob bio annotate script.
 
     Attributes
@@ -14,7 +13,7 @@ class Base(object):
     """
 
     def __init__(self, read_original_data=None, **kwargs):
-        super(Base, self).__init__(**kwargs)
+        super(Annotator, self).__init__(**kwargs)
         self.read_original_data = read_original_data or base_read
 
     def annotate(self, sample, **kwargs):
@@ -36,6 +35,6 @@ class Base(object):
         """
         raise NotImplementedError
 
-    # Alisa call to annotate
+    # Alias call to annotate
     def __call__(self, sample, **kwargs):
         return self.annotate(sample, **kwargs)
