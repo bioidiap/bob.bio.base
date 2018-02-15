@@ -41,7 +41,7 @@ def annotate(database, annotator, output_dir, force, array, **kwargs):
     output_dir : str
         The directory to save the annotations.
     force : bool, optional
-        Wether to overwrite existing annotations.
+        Whether to overwrite existing annotations.
     array : int, optional
         Use this option alongside gridtk to submit this script as an array job.
     verbose : int, optional
