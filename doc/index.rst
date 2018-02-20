@@ -30,6 +30,7 @@ All of these packages can be easily combined.
 Here is a growing list of derived packages:
 
 * :ref:`bob.bio.spear <bob.bio.spear>` Tools to run speaker recognition experiments, including voice activity detection, Cepstral feature extraction, and speaker databases
+* :ref:`bob.bio.vein <bob.bio.vein>` Tools to run vein recognition experiments, such as finger RoI detection, image binarization and template matching, and access to multiple vein image databases
 * :ref:`bob.bio.face <bob.bio.face>` Tools to run face recognition experiments, such as face detection, facial feature extraction and comparison, and face image databases
 * :ref:`bob.bio.video <bob.bio.video>` An extension of face recognition algorithms to run on video data, and the according video databases
 * :ref:`bob.bio.gmm <bob.bio.gmm>` Algorithms based on Gaussian Mixture Modeling (GMM) such as Inter-Session Variability modeling (ISV) or Total Variability modeling (TV, aka. I-Vector) [Pri07]_ and [ESM+13]_.
