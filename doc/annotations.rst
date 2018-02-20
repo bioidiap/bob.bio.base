@@ -17,8 +17,8 @@ a command-line script:
 
 This script accepts two main parameters a database object that inherits from
 :any:`bob.bio.base.database.BioDatabase` and an annotator object that inherits
-from :any:`bob.bio.base.annotator.Base`. Please see the help message of the
-script for more information.
+from :any:`bob.bio.base.annotator.Annotator`. Please see the help message of
+the script for more information.
 
 The script can also be run in parallel using :ref:`gridtk`:
 
