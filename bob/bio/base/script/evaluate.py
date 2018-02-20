@@ -109,6 +109,7 @@ def command_line_arguments(command_line_parameters):
 
 def _add_far_labels(min_far):
   # compute and apply tick marks
+  assert min_far > 0
   ticks = [min_far]
   while ticks[-1] < 1.: ticks.append(ticks[-1] * 10.)
   pyplot.xticks(ticks)
@@ -116,7 +117,7 @@ def _add_far_labels(min_far):
 
 
 
-def _plot_roc(frrs, colors, labels, title, fontsize=10, position=None, farfrrs=None):
+def _plot_roc(frrs, colors, labels, title, fontsize=10, position=None, farfrrs=None, min_far=None):
   if position is None: position = 'lower right'
   figure = pyplot.figure()
 
@@ -133,7 +134,7 @@ def _plot_roc(frrs, colors, labels, title, fontsize=10, position=None, farfrrs=N
     else:
       pyplot.plot([x[0] for x in farfrrs], [(1.-x[1]) for x in farfrrs], '--', color='black')
 
-  _add_far_labels(frrs[0][0][0])
+  _add_far_labels(min_far)
 
   # set label, legend and title
   pyplot.xlabel('FMR')
@@ -366,7 +367,7 @@ def main(command_line_parameters=None):
         # create a multi-page PDF for the ROC curve
         pdf = PdfPages(args.roc)
         # create a separate figure for dev and eval
-        pdf.savefig(_plot_roc(frrs_dev, colors, args.legends, args.title[0] if args.title is not None else "ROC for development set", args.legend_font_size, args.legend_position, args.far_line_at), bbox_inches='tight')
+        pdf.savefig(_plot_roc(frrs_dev, colors, args.legends, args.title[0] if args.title is not None else "ROC for development set", args.legend_font_size, args.legend_position, args.far_line_at, min_far=args.min_far_value), bbox_inches='tight')
         del frrs_dev
         if args.eval_files:
           if args.far_line_at is not None:
@@ -376,7 +377,7 @@ def main(command_line_parameters=None):
               farfrrs.append(bob.measure.farfrr(scores_eval[i][0], scores_eval[i][1], threshold))
           else:
             farfrrs = None
-          pdf.savefig(_plot_roc(frrs_eval, colors, args.legends, args.title[1] if args.title is not None else "ROC for evaluation set", args.legend_font_size, args.legend_position, farfrrs), bbox_inches='tight')
+          pdf.savefig(_plot_roc(frrs_eval, colors, args.legends, args.title[1] if args.title is not None else "ROC for evaluation set", args.legend_font_size, args.legend_position, farfrrs, min_far=args.min_far_value), bbox_inches='tight')
           del frrs_eval
         pdf.close()
       except RuntimeError as e:

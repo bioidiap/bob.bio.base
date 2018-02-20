@@ -123,9 +123,24 @@ setup(
         'demanding         = bob.bio.base.config.grid.demanding:grid',
         'gpu               = bob.bio.base.config.grid.gpu:grid',
       ],
+
       # declare database to bob
       'bob.db': [
         'bio_filelist      = bob.bio.base.database.filelist.driver:Interface',
+      ],
+      # main entry for bob bio cli
+      'bob.cli': [
+        'bio               = bob.bio.base.script.bio:bio',
+      ],
+
+      # bob bio scripts
+      'bob.bio.cli': [
+        'annotate          = bob.bio.base.script.annotate:annotate',
+      ],
+
+      # annotators
+      'bob.bio.annotator': [
+        'dummy             = bob.bio.base.test.dummy.annotator:annotator',
       ],
    },
 
