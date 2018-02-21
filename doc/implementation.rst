@@ -192,6 +192,7 @@ Here is a list of implementations:
 * :ref:`bob.bio.face <bob.bio.face>` : :ref:`bob.bio.face.implemented`
 * :ref:`bob.bio.video <bob.bio.video>` : :ref:`bob.bio.video.implemented`
 * :ref:`bob.bio.gmm <bob.bio.gmm>` : :ref:`bob.bio.gmm.implemented`
+* :ref:`bob.bio.vein <bob.bio.vein>` : :ref:`bob.bio.vein.api`
 
 .. * :ref:`bob.bio.spear <bob.bio.spear>` : :ref:`bob.bio.spear.implemented`
 
