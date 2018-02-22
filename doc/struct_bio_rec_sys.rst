@@ -18,14 +18,14 @@ A biometric recognition system has two stages:
 
 Fig. 1 shows the enrollment and verification stages in a typical biometric *verification* system:
 
-.. figure:: /img/bio_ver_sys.svg
+.. figure:: img/bio_ver_sys.svg
    :align: center
 
    Enrollment and verification in a typical biometric verification system.
 
 Fig. 2 shows the enrollment and identification stages in a typical biometric *identification* system:
 
-.. figure:: /img/bio_ident_sys.svg
+.. figure:: img/bio_ident_sys.svg
    :align: center
 
    Enrollment and identification in a typical biometric identification system.
@@ -64,7 +64,7 @@ Biometric measurements are often noisy, containing redundant information that is
 
 All the biometric samples in the input biometric database go through the preprocessing stage.  The results are stored in a directory entitled "preprocessed".  This process is illustrated in Fig. 3:
 
-.. figure:: /img/preprocessor.svg
+.. figure:: img/preprocessor.svg
    :align: center
 
    Preprocessing stage in ``bob.bio``'s biometric recognition experiment framework.
@@ -77,7 +77,7 @@ Although the preprocessing stage produces cleaner biometric data, the resulting 
 
 All the biometric features stored in the "preprocessed" directory go through the feature extraction stage.  The results are stored in a directory entitled "extracted".  This process is illustrated in Fig. 4:
 
-.. figure:: /img/extractor.svg
+.. figure:: img/extractor.svg
    :align: center
 
    Feature extraction stage in ``bob.bio``'s biometric recognition experiment framework.
@@ -93,7 +93,7 @@ The matching stage in ``bob.bio`` is referred to as the "Algorithm".  The Algori
 
 (i) An optional "projection" stage after the feature extraction, as illustrated in Fig. 5.  This would be used if, for example, you wished to project your extracted biometric features into a lower-dimensional subspace prior to recognition.
 
-.. figure:: /img/algorithm_projection.svg
+.. figure:: img/algorithm_projection.svg
    :align: center
 
    The projection part of the Algorithm stage in ``bob.bio``'s biometric recognition experiment framework.
@@ -104,7 +104,7 @@ The matching stage in ``bob.bio`` is referred to as the "Algorithm".  The Algori
 
 (ii) Enrollment: The enrollment part of the Algorithm stage essentially works as follows.  One or more biometric samples per person are used to compute a representative "model" for that person, which essentially represents that person's identity.  To determine which of a person's biometric samples should be used to generate their model, we query the protocol of our input biometric database.  The model is then calculated using the corresponding biometric features extracted in the Feature Extraction stage (or, optionally, our "projected" features).  Fig. 6 illustrates the enrollment part of the Algorithm module:
 
-.. figure:: /img/algorithm_enrollment.svg
+.. figure:: img/algorithm_enrollment.svg
    :align: center
 
    The enrollment part of the Algorithm stage in ``bob.bio``'s biometric recognition experiment framework.
@@ -115,7 +115,7 @@ The matching stage in ``bob.bio`` is referred to as the "Algorithm".  The Algori
 
 (iii) Scoring: The scoring part of the Algorithm stage essentially works as follows.  Each model is associated with a number of probes, so we first query the input biometric database to determine which biometric samples should be used as the probes for each model.  Every model is then compared to its associated probes (some of which come from the same person, and some of which come from different people), and a score is calculated for each comparison.  The score describes the similarity between the model and the probe (higher scores indicate greater similarity); for example, it can be computed as a negative distance between the model and probe features.  Ideally, if the model and probe come from the same biometric (e.g., two images of the same finger), they should be very similar, and if they come from different sources (e.g., two images of different fingers) then their similarity should be low.  Fig. 7 illustrates the scoring part of the Algorithm module:
 
-.. figure:: /img/algorithm_scoring.svg
+.. figure:: img/algorithm_scoring.svg
    :align: center
 
    The scoring part of the Algorithm stage in ``bob.bio``'s biometric recognition experiment framework.
@@ -128,7 +128,7 @@ The decision making stage in ``bob.bio`` is referred to as "Evaluation".  If we 
 
 Once a decision has been made, we can quantify the overall performance of the particular biometric recognition system in terms of common metrics like the False Match Rate (FMR), False Non Match Rate (FNMR), and Equal Error Rate (EER) for verification, and Identification Rate (IR) for identification.  We can also view a visual representation of the performance in terms of plots like the Receiver Operating Characteristic (ROC) and Detection Error Trade-off (DET) for verification, Cumulative Match Characteristics (CMC) for closed-set identification, and Detection and Identification Rate (DIR) for open-set identification.  Fig. 8 illustrates the Evaluation stage:
 
-.. figure:: /img/evaluation.svg
+.. figure:: img/evaluation.svg
    :align: center
 
    Evaluation stage in ``bob.bio``'s biometric recognition experiment framework.
