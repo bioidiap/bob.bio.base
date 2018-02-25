@@ -2,6 +2,7 @@ import bob.io.base
 import os
 
 import logging
+import inspect
 logger = logging.getLogger("bob.bio.base")
 
 from .FileSelector import FileSelector
@@ -45,6 +46,7 @@ def train_projector(algorithm, extractor, allow_missing_files = False, force = F
     bob.io.base.create_directories_safe(os.path.dirname(fs.projector_file))
     # train projector
     logger.info("- Projection: loading training data")
+
     train_files = fs.training_list('extracted', 'train_projector', arrange_by_client = algorithm.split_training_features_by_client)
     train_features = read_features(train_files, extractor, algorithm.split_training_features_by_client, allow_missing_files)
     if algorithm.split_training_features_by_client:
@@ -53,8 +55,11 @@ def train_projector(algorithm, extractor, allow_missing_files = False, force = F
       logger.info("- Projection: training projector '%s' using %d training files: ", fs.projector_file, len(train_files))
 
     # perform training
-    algorithm.train_projector(train_features, fs.projector_file)
-
+    if "metadata" in inspect.getargspec(algorithm.train_projector).args:
+      metadata = fs.database.training_files('train_projector', algorithm.split_training_features_by_client)
+      algorithm.train_projector(train_features, fs.projector_file, metadata=metadata)
+    else:
+      algorithm.train_projector(train_features, fs.projector_file)
 
 
 def project(algorithm, extractor, groups = None, indices = None, allow_missing_files = False, force = False):
@@ -99,6 +104,7 @@ def project(algorithm, extractor, groups = None, indices = None, allow_missing_f
 
   feature_files = fs.feature_list(groups=groups)
   projected_files = fs.projected_list(groups=groups)
+  metadata = fs.original_data_list(groups=groups)
 
   # select a subset of indices to iterate
   if indices is not None:
@@ -129,8 +135,12 @@ def project(algorithm, extractor, groups = None, indices = None, allow_missing_f
       bob.io.base.create_directories_safe(os.path.dirname(projected_file))
       # load feature
       feature = extractor.read_feature(feature_file)
+
       # project feature
-      projected = algorithm.project(feature)
+      if "metadata" in inspect.getargspec(algorithm.project).args:
+        projected = algorithm.project(feature, metadata=metadata)
+      else:
+        projected = algorithm.project(feature)
 
       if projected is None:
         if allow_missing_files:
@@ -264,8 +274,8 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
         # Removes old file if required
         if not utils.check_file(model_file, force,
                                 algorithm.min_model_file_size):
-          enroll_files = fs.enroll_files(model_id, group, 'projected' if algorithm.use_projected_features_for_enrollment else 'extracted')
 
+          enroll_files = fs.enroll_files(model_id, group, 'projected' if algorithm.use_projected_features_for_enrollment else 'extracted')
           if allow_missing_files:
             enroll_files = utils.filter_missing_files(enroll_files)
             if not enroll_files:
@@ -280,7 +290,11 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
           # load all files into memory
           enroll_features = [reader.read_feature(enroll_file) for enroll_file in enroll_files]
 
-          model = algorithm.enroll(enroll_features)
+          if "metadata" in inspect.getargspec(algorithm.enroll).args:
+            metadata = fs.database.enroll_files(group=group, model_id=model_id)
+            model = algorithm.enroll(enroll_features, metadata=metadata)
+          else:
+            model = algorithm.enroll(enroll_features)
 
           if model is None:
             if allow_missing_files:
@@ -327,7 +341,11 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
           # load all files into memory
           t_enroll_features = [reader.read_feature(t_enroll_file) for t_enroll_file in t_enroll_files]
 
-          t_model = algorithm.enroll(t_enroll_features)
+          if "metadata" in inspect.getargspec(algorithm.enroll).args:
+            metadata = fs.database.enroll_files(group=group, model_id=t_model_id)
+            t_model = algorithm.enroll(t_enroll_features, metadata=metadata)
+          else:
+            t_model = algorithm.enroll(t_enroll_features)
 
           if t_model is None:
             if allow_missing_files:

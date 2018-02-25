@@ -1,6 +1,6 @@
 import scipy.spatial
 import bob.io.base
-
+import numpy
 from bob.bio.base.algorithm import Algorithm
 
 _data = [5., 6., 7., 8., 9.]
@@ -57,3 +57,28 @@ class DummyAlgorithm (Algorithm):
     return scipy.spatial.distance.euclidean(model, probe)
 
 algorithm = DummyAlgorithm()
+
+
+class DummyAlgorithmMetadata (DummyAlgorithm):
+
+  def train_projector(self, train_files, projector_file, metadata=None):
+    """Does nothing, simply converts the data type of the data, ignoring any annotation."""
+    assert metadata is not None
+    return super(DummyAlgorithmMetadata, self).train_projector(train_files, projector_file)
+
+  def enroll(self, enroll_features, metadata=None):
+    # Cheking if the all the metadata are from the same client_id
+    assert numpy.alltrue([metadata[0].client_id == m.client_id for m in metadata])
+    #assert metadata is not None
+    return super(DummyAlgorithmMetadata, self).enroll(enroll_features)
+
+  def score(self, model, probe, metadata=None):
+    """Returns the Euclidean distance between model and probe"""
+    assert metadata is not None
+    return super(DummyAlgorithmMetadata, self).score(model, probe)
+
+  def project(self, feature, metadata=None):
+    assert metadata is not None
+    return super(DummyAlgorithmMetadata, self).project(feature)
+
+algorithm_metadata = DummyAlgorithmMetadata()

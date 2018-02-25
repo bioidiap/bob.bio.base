@@ -150,7 +150,7 @@ def test_verify_resources_metadata():
       '-d', 'dummy',
       '-p', 'dummy_metadata',
       '-e', 'dummy_metadata',
-      '-a', 'dummy',
+      '-a', 'dummy_metadata',
       '--zt-norm',
       '--allow-missing-files',
       '-vs', 'test_resource',

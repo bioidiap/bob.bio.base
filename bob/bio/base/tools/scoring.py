@@ -5,12 +5,12 @@ import bob.measure
 import numpy
 import os, sys
 import tarfile
+import inspect
 
 import logging
 logger = logging.getLogger("bob.bio.base")
 
 from .FileSelector import FileSelector
-from .extractor import read_features
 from .. import utils
 
 def _scores(algorithm, reader, model, probe_objects, allow_missing_files):
@@ -28,12 +28,12 @@ def _scores(algorithm, reader, model, probe_objects, allow_missing_files):
     return scores
 
   # Loops over the probe sets
-  for i, probe_element in enumerate(probes):
+  for i, probe_element, probe_metadata in zip(range(len(probes)), probes, probe_objects):
     if fs.uses_probe_file_sets():
       assert isinstance(probe_element, list)
       # filter missing files
       if allow_missing_files:
-        probe_element = utils.filter_missing_files(probe_element)
+        probe_element = utils.filter_missing_files(probe_element, probe_objects)
         if not probe_element:
           # we keep the NaN score
           continue
@@ -48,7 +48,11 @@ def _scores(algorithm, reader, model, probe_objects, allow_missing_files):
       # read probe
       probe = reader.read_feature(probe_element)
       # compute score
-      scores[0,i] = algorithm.score(model, probe)
+      if "metadata" in inspect.getargspec(algorithm.score).args:
+        scores[0, i] = algorithm.score(model, probe, metadata=probe_metadata)
+      else:
+        scores[0, i] = algorithm.score(model, probe)
+
   # Returns the scores
   return scores
 
