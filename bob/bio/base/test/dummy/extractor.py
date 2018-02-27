@@ -1,6 +1,6 @@
 import numpy
 import bob.bio.base
-
+from bob.bio.base.database import BioFile
 from bob.bio.base.extractor import Extractor
 
 _data = [0., 1., 2., 3., 4.]
@@ -31,8 +31,7 @@ class DummyExtractorMetadata (DummyExtractor):
 
   def __call__(self, data, metadata=None):
     """Does nothing, simply converts the data type of the data, ignoring any annotation."""
-    assert metadata is not None
-    assert self.model
-    return data.astype(numpy.float).flatten()
+    assert isinstance(metadata, BioFile)
+    return super(DummyExtractorMetadata, self).__call__(data)
 
 extractor_metadata = DummyExtractorMetadata()

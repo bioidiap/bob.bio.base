@@ -27,6 +27,9 @@ def _scores(algorithm, reader, model, probe_objects, allow_missing_files):
     # if we have no model, all scores are undefined
     return scores
 
+  # Checking if we need to ship the metadata in the scoring method
+  has_metadata = utils.is_argument_available("metadata", algorithm.score)
+
   # Loops over the probe sets
   for i, probe_element, probe_metadata in zip(range(len(probes)), probes, probe_objects):
     if fs.uses_probe_file_sets():
@@ -47,8 +50,9 @@ def _scores(algorithm, reader, model, probe_objects, allow_missing_files):
         continue
       # read probe
       probe = reader.read_feature(probe_element)
+
       # compute score
-      if "metadata" in inspect.getargspec(algorithm.score).args:
+      if has_metadata:
         scores[0, i] = algorithm.score(model, probe, metadata=probe_metadata)
       else:
         scores[0, i] = algorithm.score(model, probe)

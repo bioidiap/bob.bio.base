@@ -91,7 +91,11 @@ def extract(extractor, preprocessor, groups=None, indices = None, allow_missing_
   extractor.load(fs.extractor_file)
   data_files = fs.preprocessed_data_list(groups=groups)
   feature_files = fs.feature_list(groups=groups)
-  metadata = fs.original_data_list(groups=groups)
+
+  if utils.is_argument_available("metadata", extractor.__call__):
+    metadata = fs.original_data_list(groups=groups)
+  else:
+    metadata = None
 
   # select a subset of indices to iterate
   if indices is not None:
@@ -120,11 +124,12 @@ def extract(extractor, preprocessor, groups=None, indices = None, allow_missing_
       bob.io.base.create_directories_safe(os.path.dirname(feature_file))
       # load data
       data = preprocessor.read_data(data_file)
+
       # extract feature
-      if "metadata" in inspect.getargspec(extractor.__call__).args:
-        feature = extractor(data, metadata=metadata[i])
-      else:
+      if metadata is None:
         feature = extractor(data)
+      else:
+        feature = extractor(data, metadata=metadata[i])
 
       if feature is None:
         if allow_missing_files:

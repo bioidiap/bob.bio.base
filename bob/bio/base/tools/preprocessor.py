@@ -46,7 +46,11 @@ def preprocess(preprocessor, groups = None, indices = None, allow_missing_files 
   data_files = fs.original_data_list(groups=groups)
   original_directory, original_extension = fs.original_directory_and_extension()
   preprocessed_data_files = fs.preprocessed_data_list(groups=groups)
-  metadata = fs.original_data_list(groups=groups)
+
+  if utils.is_argument_available("metadata", preprocessor.__call__):
+    metadata = fs.original_data_list(groups=groups)
+  else:
+    metadata = None
 
   # select a subset of keys to iterate
   if indices is not None:
@@ -80,10 +84,10 @@ def preprocess(preprocessor, groups = None, indices = None, allow_missing_files 
       annotations = fs.get_annotations(annotation_list[i])
 
       # call the preprocessor
-      if "metadata" in inspect.getargspec(preprocessor.__call__).args:
-        preprocessed_data = preprocessor(data, annotations, metadata=metadata[i])
-      else:
+      if metadata is None:
         preprocessed_data = preprocessor(data, annotations)
+      else:
+        preprocessed_data = preprocessor(data, annotations, metadata=metadata[i])
 
       if preprocessed_data is None:
         if allow_missing_files:

@@ -55,7 +55,7 @@ def train_projector(algorithm, extractor, allow_missing_files = False, force = F
       logger.info("- Projection: training projector '%s' using %d training files: ", fs.projector_file, len(train_files))
 
     # perform training
-    if "metadata" in inspect.getargspec(algorithm.train_projector).args:
+    if utils.is_argument_available("metadata", algorithm.train_projector):
       metadata = fs.database.training_files('train_projector', algorithm.split_training_features_by_client)
       algorithm.train_projector(train_features, fs.projector_file, metadata=metadata)
     else:
@@ -138,7 +138,7 @@ def project(algorithm, extractor, groups = None, indices = None, allow_missing_f
 
       # project feature
       if "metadata" in inspect.getargspec(algorithm.project).args:
-        projected = algorithm.project(feature, metadata=metadata)
+        projected = algorithm.project(feature, metadata=metadata[i])
       else:
         projected = algorithm.project(feature)
 
@@ -257,6 +257,9 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
   # which tool to use to read the features...
   reader = algorithm if algorithm.use_projected_features_for_enrollment else extractor
 
+  # Checking if we need to ship the metadata to the method enroll
+  has_metadata = utils.is_argument_available("metadata", algorithm.enroll)
+
   # Create Models
   if 'N' in types:
     for group in groups:
@@ -290,7 +293,7 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
           # load all files into memory
           enroll_features = [reader.read_feature(enroll_file) for enroll_file in enroll_files]
 
-          if "metadata" in inspect.getargspec(algorithm.enroll).args:
+          if has_metadata:
             metadata = fs.database.enroll_files(group=group, model_id=model_id)
             model = algorithm.enroll(enroll_features, metadata=metadata)
           else:
@@ -341,7 +344,7 @@ def enroll(algorithm, extractor, compute_zt_norm, indices = None, groups = ['dev
           # load all files into memory
           t_enroll_features = [reader.read_feature(t_enroll_file) for t_enroll_file in t_enroll_files]
 
-          if "metadata" in inspect.getargspec(algorithm.enroll).args:
+          if has_metadata:
             metadata = fs.database.enroll_files(group=group, model_id=t_model_id)
             t_model = algorithm.enroll(t_enroll_features, metadata=metadata)
           else:
