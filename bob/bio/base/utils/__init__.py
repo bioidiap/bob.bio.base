@@ -7,7 +7,8 @@ from .resources import *
 from .io import *
 from .singleton import *
 from . import processors
-
+import six
+import inspect
 import numpy
 
 def score_fusion_strategy(strategy_name = 'average'):
@@ -53,6 +54,27 @@ def selected_elements(list_of_elements, desired_number_of_elements = None):
   # sub-select
   return [list_of_elements[i] for i in selected_indices(total_number_of_elements, desired_number_of_elements)]
 
+
 def pretty_print(obj, kwargs):
   """Returns a pretty-print of the parameters to the constructor of a class, which should be able to copy-paste on the command line to create the object (with few exceptions)."""
   return "%s(%s)" % (str(obj.__class__), ", ".join(["%s='%s'" % (key,value) if isinstance(value, str) else "%s=%s" % (key, value) for key,value in kwargs.items() if value is not None]))
+
+
+def is_argument_available(argument, method):
+  """
+  Check if an argument (or keyword argument) is available in a method
+
+  Attributes
+  ----------
+    argument: str
+      The name of the argument (or keyword argument).
+
+    method:
+      Pointer to the method
+
+  """
+
+  if six.PY2:
+    return argument in inspect.getargspec(method).args
+  else:
+    return argument in inspect.signature(method).parameters.keys()

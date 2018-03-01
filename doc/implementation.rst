@@ -45,6 +45,13 @@ All of them implement the following two functions:
   .. note::
      When the database does not provide annotations, the ``annotations`` parameter might be ``None``.
 
+  .. note::
+     If necessary, an instance of :py:class:`bob.bio.base.database.BioFile` can be passed to the preprocessor.
+     For that, the method ``__call__`` has a keyword called **metadata**.
+     If this keyword is set in its header, an instance of :py:class:`bob.bio.base.database.BioFile`
+     is shipped via this keyword argument.
+
+
 By default, the data returned by the preprocessor is of type :py:class:`numpy.ndarray`.
 In that case, the base class IO functionality can be used.
 If a class returns data that is **not** of type :py:class:`numpy.ndarray`, it overwrites further functions from :py:class:`bob.bio.base.preprocessor.Preprocessor` that define the IO of your class:
@@ -71,6 +78,13 @@ All extractor classes provide at least the functions:
   Calls the base class constructor, e.g. as ``bob.bio.base.extractor.Extractor.__init__(self, ...)`` (there are more parameters to this constructor, see below).
 * ``__call__(self, data) -> feature``: Extracts the feature from the given preprocessed data.
   By default, the returned feature should be a :py:class:`numpy.ndarray`.
+
+  .. note::
+     If necessary, an instance of :py:class:`bob.bio.base.database.BioFile` can be passed to the extractor.
+     For that, the method ``__call__`` has a keyword called **metadata**.
+     If this keyword is set in its header, an instance of :py:class:`bob.bio.base.database.BioFile`
+     is shipped via this keyword argument.
+
 
 If features are not of type :py:class:`numpy.ndarray`, the ``write_feature`` function is overridden.
 In this case, also the function to read that kind of features needs to be overridden:
@@ -179,6 +193,13 @@ These two functions are:
 
 * ``score_for_multiple_models(self, models, probe)``: In case your model store several features, **call** this function to compute the average (or min, max, ...) of the scores.
 * ``score_for_multiple_probes(self, model, probes)``: By default, the average (or min, max, ...) of the scores for all probes are computed. **Override** this function in case you want different behavior.
+
+  .. note::
+     If necessary, an instance of :py:class:`bob.bio.base.database.BioFile` can be passed to the algorithm.
+     For that, the methods ``train_projector``, ``project``, ``enroll`` and ``score`` have a keyword called **metadata**.
+     If this keyword is set in its header, an instance of :py:class:`bob.bio.base.database.BioFile`
+     is shipped via this keyword argument.
+
 
 
 Implemented Tools

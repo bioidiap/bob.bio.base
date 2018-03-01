@@ -2,6 +2,7 @@ import bob.io.base
 import os
 
 import logging
+import inspect
 logger = logging.getLogger("bob.bio.base")
 
 from .FileSelector import FileSelector
@@ -46,6 +47,11 @@ def preprocess(preprocessor, groups = None, indices = None, allow_missing_files 
   original_directory, original_extension = fs.original_directory_and_extension()
   preprocessed_data_files = fs.preprocessed_data_list(groups=groups)
 
+  if utils.is_argument_available("metadata", preprocessor.__call__):
+    metadata = fs.original_data_list(groups=groups)
+  else:
+    metadata = None
+
   # select a subset of keys to iterate
   if indices is not None:
     index_range = range(indices[0], indices[1])
@@ -58,7 +64,7 @@ def preprocess(preprocessor, groups = None, indices = None, allow_missing_files 
   # read annotation files
   annotation_list = fs.annotation_list(groups=groups)
 
-  # iterate over the selected files
+  # iterate over the selected files  
   for i in index_range:
     preprocessed_data_file = preprocessed_data_files[i]
     file_object = data_files[i]
@@ -78,7 +84,11 @@ def preprocess(preprocessor, groups = None, indices = None, allow_missing_files 
       annotations = fs.get_annotations(annotation_list[i])
 
       # call the preprocessor
-      preprocessed_data = preprocessor(data, annotations)
+      if metadata is None:
+        preprocessed_data = preprocessor(data, annotations)
+      else:
+        preprocessed_data = preprocessor(data, annotations, metadata=metadata[i])
+
       if preprocessed_data is None:
         if allow_missing_files:
           logger.debug("... Processing original data file '%s' was not successful", file_name)
@@ -90,8 +100,7 @@ def preprocess(preprocessor, groups = None, indices = None, allow_missing_files 
       preprocessor.write_data(preprocessed_data, preprocessed_data_file)
 
     else:
-      logger.debug("... Skipping original data file '%s' since preprocessed data '%s' exists", file_name, preprocessed_data_file)
-
+      logger.debug("... Skipping original data file '%s' since preprocessed data '%s' exists", file_name, preprocessed_data_file)    
 
 
 def read_preprocessed_data(file_names, preprocessor, split_by_client = False, allow_missing_files = False):

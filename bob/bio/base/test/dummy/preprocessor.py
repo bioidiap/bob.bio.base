@@ -1,4 +1,5 @@
 from bob.bio.base.preprocessor import Preprocessor
+from bob.bio.base.database import BioFile
 import numpy
 numpy.random.seed(10)
 
@@ -16,5 +17,14 @@ class DummyPreprocessor (Preprocessor):
       
     return data
 
-
 preprocessor = DummyPreprocessor()
+
+
+class DummyPreprocessorMetadata (DummyPreprocessor):
+
+  def __call__(self, data, annotation, metadata=None):
+    """Does nothing, simply converts the data type of the data, ignoring any annotation."""
+    assert isinstance(metadata, BioFile)
+    return super(DummyPreprocessorMetadata, self).__call__(data, annotation)
+
+preprocessor_metadata = DummyPreprocessorMetadata()
