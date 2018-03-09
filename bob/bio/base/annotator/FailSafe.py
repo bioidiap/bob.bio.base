@@ -26,7 +26,7 @@ class FailSafe(Annotator):
 
     def annotate(self, sample, **kwargs):
         if 'annotations' not in kwargs or kwargs['annotations'] is None:
-            kwargs['annotations'] = {}
+            kwargs['annotations'] = None
         for annotator in self.annotators:
             try:
                 annotations = annotator(sample, **kwargs)
@@ -34,7 +34,7 @@ class FailSafe(Annotator):
                 logger.debug(
                     "The annotator `%s' failed to annotate!", annotator,
                     exc_info=True)
-                annotations = {}
+                annotations = None
             if not annotations:
                 logger.debug(
                     "Annotator `%s' returned empty annotations.", annotator)
@@ -44,5 +44,5 @@ class FailSafe(Annotator):
                 break
         else:  # this else is for the for loop
             # we don't want to return half of the annotations
-            kwargs['annotations'] = {}
+            kwargs['annotations'] = None
         return kwargs['annotations']
