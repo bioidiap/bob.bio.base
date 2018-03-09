@@ -42,14 +42,6 @@ Miscellaneous functions
    bob.bio.base.selected_indices
 
 
-Generic classes
----------------
-
-.. autosummary::
-   bob.bio.base.utils.processors.SequentialProcessor
-   bob.bio.base.utils.processors.ParallelProcessor
-
-
 Tools to run recognition experiments
 ------------------------------------
 

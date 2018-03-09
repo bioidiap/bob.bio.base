@@ -6,7 +6,6 @@
 from .resources import *
 from .io import *
 from .singleton import *
-from . import processors
 import six
 import inspect
 import numpy

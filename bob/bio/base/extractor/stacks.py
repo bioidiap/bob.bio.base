@@ -1,4 +1,4 @@
-from ..utils.processors import SequentialProcessor, ParallelProcessor
+from bob.extension.processors import SequentialProcessor, ParallelProcessor
 from .Extractor import Extractor
 from bob.io.base import HDF5File
 
