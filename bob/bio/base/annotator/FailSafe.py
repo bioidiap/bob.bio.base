@@ -26,7 +26,7 @@ class FailSafe(Annotator):
 
     def annotate(self, sample, **kwargs):
         if 'annotations' not in kwargs or kwargs['annotations'] is None:
-            kwargs['annotations'] = None
+            kwargs['annotations'] = {}
         for annotator in self.annotators:
             try:
                 annotations = annotator(sample, **kwargs)

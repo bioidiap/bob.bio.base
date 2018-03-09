@@ -77,9 +77,9 @@ def annotate(database, annotator, output_dir, force, array, **kwargs):
         outpath = biofile.make_path(output_dir, '.json')
         if isfile(outpath):
             if force:
-                logger.debug("Overwriting the annotations file `%s'", outpath)
+                logger.info("Overwriting the annotations file `%s'", outpath)
             else:
-                logger.debug("The annotation `%s' already exists", outpath)
+                logger.info("The annotation `%s' already exists", outpath)
                 continue
 
         logger.info(
