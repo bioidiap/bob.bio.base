@@ -13,7 +13,13 @@ def test_annotate():
         runner = CliRunner()
         result = runner.invoke(annotate, args=(
             '-d', 'dummy', '-a', 'dummy', '-o', tmp_dir))
-        assert result.exit_code == 0, result.output
+        assertion_error_message = (
+            'Command exited with this output: `{}\' \n'
+            'If the output is empty, you can run this script locally to see '
+            'what is wrong:\n'
+            'bin/bob bio annotate -vvv --force -d dummy -a dummy -o /tmp/temp_annotations'
+            ''.format(result.output))
+        assert result.exit_code == 0, assertion_error_message
 
         # test if annotations exist
         for dirpath, dirnames, filenames in os.walk(tmp_dir):
