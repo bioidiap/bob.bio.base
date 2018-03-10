@@ -1,4 +1,4 @@
-from ..utils.processors import SequentialProcessor, ParallelProcessor
+from bob.extension.processors import SequentialProcessor, ParallelProcessor
 from .Preprocessor import Preprocessor
 
 
@@ -78,7 +78,7 @@ class ParallelPreprocessor(ParallelProcessor, Preprocessor):
            [ 1.,  2.,  3.]]), array([[ 0.5,  1. ,  1.5],
            [ 0.5,  1. ,  1.5]])]
 
-    The data may be further processed using a :any:`SequentialProcessor`:
+    The data may be further processed using a :any:`SequentialPreprocessor`:
 
     >>> from bob.bio.base.preprocessor import SequentialPreprocessor
     >>> total_preprocessor = SequentialPreprocessor(

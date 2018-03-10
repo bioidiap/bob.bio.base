@@ -1,4 +1,4 @@
-from ..utils.processors import SequentialProcessor, ParallelProcessor
+from bob.extension.processors import SequentialProcessor, ParallelProcessor
 from .Extractor import Extractor
 from bob.io.base import HDF5File
 
@@ -171,7 +171,7 @@ class ParallelExtractor(ParallelProcessor, MultipleExtractor):
            [ 1.,  2.,  3.]]), array([[ 0.5,  1. ,  1.5],
            [ 0.5,  1. ,  1.5]])]
 
-    The data may be further processed using a :any:`SequentialProcessor`:
+    The data may be further processed using a :any:`SequentialExtractor`:
 
     >>> from bob.bio.base.extractor import SequentialExtractor
     >>> total_extractor = SequentialExtractor(
