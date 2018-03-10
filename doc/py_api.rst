@@ -109,7 +109,4 @@ Details
    .. autoclass:: FileSelector
 
 
-.. automodule:: bob.bio.base.utils.processors
-
-
 .. include:: links.rst
