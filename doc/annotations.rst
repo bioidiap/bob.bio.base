@@ -27,3 +27,10 @@ The script can also be run in parallel using :ref:`gridtk`:
     $ jman submit --array 64 -- bob bio annotate /path/to/config.py --array 64
 
 The number that is given to the ``--array`` options should match.
+
+You can find the list of readily available annotator configurations using the
+``resources.py`` command:
+
+.. code-block:: sh
+
+    $ resources.py --types annotator
