@@ -3,7 +3,7 @@
 import logging
 import json
 import click
-from os.path import dirname, isfile
+from os.path import dirname, isfile, expanduser
 from bob.extension.scripts.click_helper import (
     verbosity_option, ConfigCommand, ResourceOption)
 from bob.io.base import create_directories_safe
@@ -19,9 +19,12 @@ logger = logging.getLogger(__name__)
               entry_point_group='bob.bio.annotator')
 @click.option('--output-dir', '-o', required=True, cls=ResourceOption)
 @click.option('--force', '-f', is_flag=True, cls=ResourceOption)
-@click.option('--array', type=click.INT, default=1,)
+@click.option('--array', type=click.INT, default=1, cls=ResourceOption)
+@click.option('--database-directories-file', cls=ResourceOption,
+              default=expanduser('~/.bob_bio_databases.txt'))
 @verbosity_option(cls=ResourceOption)
-def annotate(database, annotator, output_dir, force, array, **kwargs):
+def annotate(database, annotator, output_dir, force, array,
+             database_directories_file, **kwargs):
     """Annotates a database.
     The annotations are written in text file (json) format which can be read
     back using :any:`bob.db.base.read_annotation_file` (annotation_type='json')
@@ -60,7 +63,11 @@ def annotate(database, annotator, output_dir, force, array, **kwargs):
     logger.debug('force: %s', force)
     logger.debug('output_dir: %s', output_dir)
     logger.debug('array: %s', array)
+    logger.debug('database_directories_file: %s', database_directories_file)
     logger.debug('kwargs: %s', kwargs)
+
+    # Some databases need their original_directory to be replaced
+    database.replace_directories(database_directories_file)
 
     biofiles = database.objects(groups=None, protocol=database.protocol)
     biofiles = sorted(biofiles)
