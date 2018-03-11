@@ -44,10 +44,12 @@ requirements:
     - bob.measure
     - bob.sp
     - scipy {{ scipy }}
+    - six {{ six }}
   run:
     - python
     - setuptools
     - scipy
+    - six
 
 test:
   imports:

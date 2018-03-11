@@ -2,7 +2,7 @@
 # vim: set fileencoding=utf-8 :
 # @author: Manuel Guenther <Manuel.Guenther@idiap.ch>
 # @date: Tue Oct  2 12:12:39 CEST 2012
-
+import six
 
 PREDEFINED_QUEUES = {
   'default'     : {},
@@ -130,7 +130,7 @@ class Grid (object):
     """
     if self.is_local():
       return {}
-    if isinstance(params, str) and params in PREDEFINED_QUEUES:
+    if isinstance(params, six.string_types) and params in PREDEFINED_QUEUES:
       return PREDEFINED_QUEUES[params]
     elif isinstance(params, dict):
       return params

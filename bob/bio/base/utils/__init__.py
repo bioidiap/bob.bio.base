@@ -56,7 +56,7 @@ def selected_elements(list_of_elements, desired_number_of_elements = None):
 
 def pretty_print(obj, kwargs):
   """Returns a pretty-print of the parameters to the constructor of a class, which should be able to copy-paste on the command line to create the object (with few exceptions)."""
-  return "%s(%s)" % (str(obj.__class__), ", ".join(["%s='%s'" % (key,value) if isinstance(value, str) else "%s=%s" % (key, value) for key,value in kwargs.items() if value is not None]))
+  return "%s(%s)" % (str(obj.__class__), ", ".join(["%s='%s'" % (key,value) if isinstance(value, six.string_types) else "%s=%s" % (key, value) for key,value in kwargs.items() if value is not None]))
 
 
 def is_argument_available(argument, method):
