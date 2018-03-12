@@ -86,7 +86,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
             **kwargs
     ):
 
-        assert isinstance(name, str)
+        assert isinstance(name, six.string_types)
 
         super(BioDatabase, self).__init__(
             original_directory=original_directory,
@@ -180,7 +180,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
         """
         if replacements is None:
             return
-        if isinstance(replacements, str):
+        if isinstance(replacements, six.string_types):
             if not os.path.exists(replacements):
                 return
             # Open the database replacement file and reads its content

@@ -14,6 +14,7 @@ if sys.version_info[0] == 2:
   from string import letters as ascii_letters
 else:
   from string import ascii_letters
+import six
 
 import logging
 logger = logging.getLogger("bob.bio.base")
@@ -173,7 +174,7 @@ def load_resource(resource, keyword, imports = ['bob.bio.base'], package_prefix=
     for i in imports:
       exec ("import %s"%i)
     # now, evaluate the resource (re-evaluate if the resource is still a string)
-    while isinstance(resource, str):
+    while isinstance(resource, six.string_types):
       resource = eval(resource)
     return resource
 

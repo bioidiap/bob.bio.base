@@ -823,7 +823,7 @@ class FileListBioDatabase(ZTBioDatabase):
           The full path of the original data file.
         """
 
-        if isinstance(self.original_extension, str):
+        if isinstance(self.original_extension, six.string_types):
             # extract file name
             file_name = file.make_path(self.original_directory, self.original_extension)
             if check_existence and os.path.exists(file_name):
