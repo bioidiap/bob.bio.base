@@ -15,12 +15,14 @@ pyplot.switch_backend('pdf')  # switch to non-X backend
 from matplotlib.backends.backend_pdf import PdfPages
 
 # import bob.measure after matplotlib, so that it cannot define the backend
-import bob.measure
 
 import argparse
 import numpy
 import math
 import os
+
+import bob.measure
+from .. import score
 
 
 if not os.environ.get('BOB_NO_STYLE_CHANGES'):
@@ -292,13 +294,13 @@ def main(command_line_parameters=None):
 
     # First, read the score files
     logger.info("Loading %d score files of the development set", len(args.dev_files))
-    scores_dev = [bob.measure.load.split(os.path.join(args.directory, f)) for f in args.dev_files]
+    scores_dev = [score.split(os.path.join(args.directory, f)) for f in args.dev_files]
     # remove nans
     scores_dev = [get_fta(s) for s in scores_dev]
 
     if args.eval_files:
       logger.info("Loading %d score files of the evaluation set", len(args.eval_files))
-      scores_eval = [bob.measure.load.split(os.path.join(args.directory, f)) for f in args.eval_files]
+      scores_eval = [score.split(os.path.join(args.directory, f)) for f in args.eval_files]
       # remove nans
       scores_eval = [get_fta(s) for s in scores_eval]
 
@@ -422,9 +424,9 @@ def main(command_line_parameters=None):
 
   if args.cmc or args.rr or args.dir:
     logger.info("Loading CMC data on the development " + ("and on the evaluation set" if args.eval_files else "set"))
-    cmcs_dev = [bob.measure.load.cmc(os.path.join(args.directory, f)) for f in args.dev_files]
+    cmcs_dev = [score.cmc(os.path.join(args.directory, f)) for f in args.dev_files]
     if args.eval_files:
-      cmcs_eval = [bob.measure.load.cmc(os.path.join(args.directory, f)) for f in args.eval_files]
+      cmcs_eval = [score.cmc(os.path.join(args.directory, f)) for f in args.eval_files]
 
     if args.cmc:
       logger.info("Plotting CMC curves to file '%s'", args.cmc)
