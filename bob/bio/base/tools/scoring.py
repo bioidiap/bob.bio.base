@@ -62,7 +62,7 @@ def _scores(algorithm, reader, model, probe_objects, allow_missing_files):
 
 
 def _open_to_read(score_file):
-  """Checks for the existence of the normal and the compressed version of the file, and calls :py:func:`score.open_file` for the existing one."""
+  """Checks for the existence of the normal and the compressed version of the file, and calls :py:func:`bob.bio.base.score.open_file` for the existing one."""
   if not os.path.exists(score_file):
     score_file += '.tar.bz2'
     if not os.path.exists(score_file):
@@ -115,7 +115,8 @@ def _delete(score_file, write_compressed):
 
 
 def _save_scores(score_file, scores, probe_objects, client_id, write_compressed):
-  """Saves the scores of one model into a text file that can be interpreted by :py:func:`score.split_four_column`."""
+  """Saves the scores of one model into a text file that can be interpreted by
+  :py:func:`bob.bio.base.score.split_four_column`."""
   assert len(probe_objects) == scores.shape[1]
 
   # open file for writing
@@ -493,7 +494,9 @@ def _concat(score_files, output, write_compressed, model_ids):
 def concatenate(compute_zt_norm, groups = ['dev', 'eval'], write_compressed = False, add_model_id = False):
   """Concatenates all results into one (or two) score files per group.
 
-  Score files, which were generated per model, are concatenated into a single score file, which can be interpreter by :py:func:`score.split_four_column`.
+  Score files, which were generated per model, are concatenated into a single
+  score file, which can be interpreter by
+  :py:func:`bob.bio.base.score.load.split_four_column`.
   The score files are always re-computed, regardless if they exist or not.
 
   **Parameters:**

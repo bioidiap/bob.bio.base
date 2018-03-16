@@ -268,7 +268,9 @@ def scores(filename, ncolumns=None):
   """scores(filename, ncolumns=None) -> tuple
 
   Loads the scores from the given score file and yield its lines.
-  Depending on the score file format, four or five elements are yielded, see :py:func:`bob.bio.base.score.four_column` and :py:func:`bob.bio.base.score.five_column` for details.
+  Depending on the score file format, four or five elements are yielded, see
+  :py:func:`bob.bio.base.score.load.four_column` and
+  :py:func:`bob.bio.base.score.load.five_column` for details.
 
   Parameters:
 
@@ -281,7 +283,8 @@ def scores(filename, ncolumns=None):
   Yields:
 
   tuple:
-    see :py:func:`bob.bio.base.score.four_column` or :py:func:`bob.bio.base.score.five_column`
+    see :py:func:`bob.bio.base.score.load.four_column` or
+    :py:func:`bob.bio.base.score.load.five_column`
   """
   return _iterate_score_file(filename)
 
@@ -291,7 +294,8 @@ def split(filename, ncolumns=None):
 
   Loads the scores from the given score file and splits them into positives and negatives.
 
-  Depending on the score file format, it calls see :py:func:`bob.bio.base.score.split_four_column` and `:py:func:`bob.bio.base.score.split_five_column` for details.
+  Depending on the score file format, it calls see :py:func:`split_four_column` 
+  and :py:func:`split_five_column` for details.
 
   Parameters:
 
@@ -324,7 +328,9 @@ def cmc(filename, ncolumns=None):
 
   Loads scores to compute CMC curves.
 
-  Depending on the score file format, it calls see :py:func:`bob.bio.base.score.cmc_four_column` and `:py:func:`bob.bio.base.score.cmc_five_column` for details.
+  Depending on the score file format, it calls see
+  :py:func:`bob.bio.base.score.load.cmc_four_column` and
+  `:py:func:`bob.bio.base.score.load.cmc_five_column` for details.
 
   Parameters:
 
