@@ -11,6 +11,7 @@ import numpy
 import tempfile
 import os
 import shutil
+import pkg_resources
 
 import bob.io.base.test_utils
 from .. import score
@@ -25,17 +26,16 @@ def test_load_scores():
   cols = {'4col': 4, '5col': 5}
 
   for variant in cols:
-    # read score file in normal way
-    normal_score_file = bob.io.base.test_utils.datafile(
-        'dev-%s.txt' % variant, 'bob.bio.base', 'test/data')
+    normal_score_file = pkg_resources.resource_filename(
+        'bob.bio.base.test', 'data/dev-%s.txt' % variant)
     normal_scores = list(load_functions[variant](normal_score_file))
 
     assert len(normal_scores) == 910
     assert all(len(s) == cols[variant] for s in normal_scores)
 
     # read the compressed score file
-    compressed_score_file = bob.io.base.test_utils.datafile(
-        'dev-%s.tar.gz' % variant, 'bob.bio.base', 'test/data')
+    compressed_score_file = pkg_resources.resource_filename(
+        'bob.bio.base.test', 'data/dev-%s.tar.gz' % variant)
     compressed_scores = list(load_functions[variant](compressed_score_file))
 
     assert len(compressed_scores) == len(normal_scores)
@@ -69,16 +69,16 @@ def test_split_scores():
 
   for variant in cols:
     # read score file in normal way
-    normal_score_file = bob.io.base.test_utils.datafile(
-        'dev-%s.txt' % variant, 'bob.bio.base', 'test/data')
+    normal_score_file = pkg_resources.resource_filename(
+        'bob.bio.base.test', 'data/dev-%s.txt' % variant)
     negatives, positives = split_functions[variant](normal_score_file)
 
     assert len(negatives) == 520, len(negatives)
     assert len(positives) == 390, len(positives)
 
     # read the compressed score file
-    compressed_score_file = bob.io.base.test_utils.datafile(
-        'dev-%s.tar.gz' % variant, 'bob.bio.base', 'test/data')
+    compressed_score_file = pkg_resources.resource_filename(
+        'bob.bio.base.test', 'data/dev-%s.tar.gz' % variant)
     negatives, positives = split_functions[variant](compressed_score_file)
 
     assert len(negatives) == 520, len(negatives)
@@ -106,9 +106,10 @@ def test_load_score():
   cols = {'4col': 4, '5col': 5}
 
   for variant in cols:
-    # read score file in normal way
-    normal_score_file = bob.io.base.test_utils.datafile(
-        'dev-%s.txt' % variant, 'bob.bio.base', 'test/data')
+    compressed_score_file = pkg_resources.resource_filename(
+        'bob.bio.base.test', 'data/dev-%s.tar.gz' % variant)
+    normal_score_file = pkg_resources.resource_filename(
+        'bob.bio.base.test', 'data/dev-%s.txt' % variant)
     normal_scores = score.load_score(
         normal_score_file, cols[variant])
 
@@ -116,8 +117,8 @@ def test_load_score():
     assert len(normal_scores.dtype) == cols[variant]
 
     # read the compressed score file
-    compressed_score_file = bob.io.base.test_utils.datafile(
-        'dev-%s.tar.gz' % variant, 'bob.bio.base', 'test/data')
+    compressed_score_file = pkg_resources.resource_filename(
+        'bob.bio.base.test', 'data/dev-%s.tar.gz' % variant)
     compressed_scores = score.load_score(
         compressed_score_file, cols[variant])
 
@@ -142,8 +143,8 @@ def test_dump_score():
 
   for variant in cols:
     # read score file
-    normal_score_file = bob.io.base.test_utils.datafile(
-        'dev-%s.txt' % variant, 'bob.bio.base', 'test/data')
+    normal_score_file = pkg_resources.resource_filename(
+        'bob.bio.base.test', 'data/dev-%s.txt' % variant)
     normal_scores = score.load_score(
         normal_score_file, cols[variant])
 
@@ -178,8 +179,8 @@ def test_openbr_verify():
   try:
     for variant in ('4col', '5col'):
       # get score file
-      score_file = bob.io.base.test_utils.datafile(
-          'scores-cmc-%s.txt' % variant, 'bob.bio.base', 'test/data')
+      score_file = pkg_resources.resource_filename(
+        'bob.bio.base.test', 'data/scores-cmc-%s.txt' % variant)
 
       # first round, do not define keyword arguments -- let the file get the
       # gallery and probe ids automatically
@@ -193,8 +194,8 @@ def test_openbr_verify():
 
         # check that they are binary identical to the reference files (which
         # are tested to work and give the same results with OpenBR)
-        matrix_ref, mask_ref = [bob.io.base.test_utils.datafile(
-            'scores%s' % ext, 'bob.bio.base', 'test/data') for ext in openbr_extensions]
+        matrix_ref, mask_ref = [pkg_resources.resource_filename(
+        'bob.bio.base.test', 'data/scores%s' % ext) for ext in openbr_extensions]
         _check_binary_identical(matrix_file, matrix_ref)
         _check_binary_identical(mask_file, mask_ref)
 
@@ -225,8 +226,8 @@ def test_openbr_search():
   try:
     for variant in ('4col', '5col'):
       # get score file
-      score_file = bob.io.base.test_utils.datafile(
-          'scores-cmc-%s.txt' % variant, 'bob.bio.base', 'test/data')
+      score_file = pkg_resources.resource_filename(
+        'bob.bio.base.test', 'data/scores-cmc-%s.txt' % variant)
 
       # first round, do not define keyword arguments -- let the file get the
       # gallery and probe ids automatically
@@ -240,8 +241,8 @@ def test_openbr_search():
 
         # check that they are binary identical to the reference files (which
         # are tested to work and give the same results with OpenBR)
-        matrix_ref, mask_ref = [bob.io.base.test_utils.datafile(
-            'search%s' % ext, 'bob.bio.base', 'test/data') for ext in openbr_extensions]
+        matrix_ref, mask_ref = [pkg_resources.resource_filename(
+        'bob.bio.base.test', 'data/search%s' % ext) for ext in openbr_extensions]
         _check_binary_identical(matrix_file, matrix_ref)
         _check_binary_identical(mask_file, mask_ref)
 
@@ -266,8 +267,8 @@ def test_from_openbr():
 
   # define input files
   openbr_extensions = ('.mtx', '.mask')
-  matrix_file, mask_file = [bob.io.base.test_utils.datafile(
-      'scores%s' % ext, 'bob.bio.base', 'test/data') for ext in openbr_extensions]
+  matrix_file, mask_file = [pkg_resources.resource_filename(
+        'bob.bio.base.test', 'data/scores%s' % ext) for ext in openbr_extensions]
 
   score_file = os.path.join(temp_dir, "scores")
   load_functions = {'4col': score.four_column,
@@ -300,8 +301,8 @@ def test_from_openbr():
                                           model_names=model_names, probe_names=probe_names, score_file_format="%sumn" % variant)
 
       # check that we re-generated the bob score file
-      reference_file = bob.io.base.test_utils.datafile(
-          'scores-cmc-%s.txt' % variant, 'bob.bio.base', 'test/data')
+      reference_file = pkg_resources.resource_filename(
+        'bob.bio.base.test', 'data/scores-cmc-%s.txt' % variant)
 
       # assert that we can (almost) reproduce the score file
       # ... read both files
