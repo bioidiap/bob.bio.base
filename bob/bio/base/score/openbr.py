@@ -62,7 +62,7 @@ def write_matrix(
 
       Only the scores of the given models will be considered.
 
-    probe_names (:py:class:`list`, optional): A list of strings. If given,
+    probe_names (:any:`list`, optional): A list of strings. If given,
       the matrix will be written in the same order as the given probe names
       (the ``path`` of the probe).  The probe names are identical to the third
       column of the 4-column (or the fourth column of the 5-column)
@@ -234,13 +234,13 @@ def write_score_file(
     score_file (str): Path to the 4 or 5 column style score file that should be
       written.
 
-    models_ids (:py:class:`list`, optional): A list of strings with the client
+    models_ids (:any:`list`, optional): A list of strings with the client
       ids of the models that will be written in the first column of the score
       file.  If given, the size must be identical to the number of models
       (gallery templates) in the OpenBR files.  If not given, client ids of the
       model will be identical to the **gallery index** in the matrix file.
 
-    probes_ids (:py:class:`list`, optional): A list of strings with the client
+    probes_ids (:any:`list`, optional): A list of strings with the client
       ids of the probes that will be written in the second/third column of the
       four/five column score file.  If given, the size must be identical to the
       number of probe templates in the OpenBR files.  It will be checked that
@@ -248,7 +248,7 @@ def write_score_file(
       probe ids will be estimated automatically, i.e., to fit the OpenBR
       matrix.
 
-    model_names (:py:class:`list`, optional): A list of strings with the model
+    model_names (:any:`list`, optional): A list of strings with the model
       path written in the second column of the five column score file. If not
       given, the model index in the OpenBR file will be used.
 
@@ -256,7 +256,7 @@ def write_score_file(
 
          This entry is ignored in the four column score file format.
 
-    probe_names (:py:class:`list`, optional): A list of probe path to be
+    probe_names (:any:`list`, optional): A list of probe path to be
       written in the third/fourth column in the four/five column score file. If
       given, the size must be identical to the number of probe templates in the
       OpenBR files. If not given, the probe index in the OpenBR file will be
