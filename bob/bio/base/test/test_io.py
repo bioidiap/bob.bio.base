@@ -13,7 +13,6 @@ import os
 import shutil
 import pkg_resources
 
-import bob.io.base.test_utils
 from .. import score
 
 
