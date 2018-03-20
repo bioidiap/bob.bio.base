@@ -152,7 +152,7 @@ def cmc_four_column(filename):
 
   Returns:
 
-    :py:class:`list`: A list of tuples, where each tuple contains the
+    :class:`list`: A list of tuples, where each tuple contains the
     ``negative`` and ``positive`` scores for one probe of the database. Both
     ``negatives`` and ``positives`` can be either an 1D
     :py:class:`numpy.ndarray` of type ``float``, or ``None``.
@@ -256,7 +256,7 @@ def cmc_five_column(filename):
 
   Returns:
 
-    :py:class:`list`: A list of tuples, where each tuple contains the
+    :class:`list`: A list of tuples, where each tuple contains the
     ``negative`` and ``positive`` scores for one probe of the database.
 
   """
@@ -343,7 +343,7 @@ def cmc(filename, ncolumns=None):
 
   Returns:
 
-  :py:class:`list`: [(neg,pos)] A list of tuples, where each tuple contains the
+  :class:`list`: [(neg,pos)] A list of tuples, where each tuple contains the
   ``negative`` and ``positive`` scores for one probe of the database.
 
   """
