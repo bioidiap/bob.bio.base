@@ -1,7 +1,6 @@
 import bob.io.base
 import bob.learn.em
 import bob.learn.linear
-import bob.measure
 import numpy
 import os, sys
 import tarfile
@@ -12,6 +11,7 @@ logger = logging.getLogger("bob.bio.base")
 
 from .FileSelector import FileSelector
 from .. import utils
+from .. import score
 
 def _scores(algorithm, reader, model, probe_objects, allow_missing_files):
   """Compute scores for the given model and a list of probes.
@@ -62,12 +62,12 @@ def _scores(algorithm, reader, model, probe_objects, allow_missing_files):
 
 
 def _open_to_read(score_file):
-  """Checks for the existence of the normal and the compressed version of the file, and calls :py:func:`bob.measure.load.open_file` for the existing one."""
+  """Checks for the existence of the normal and the compressed version of the file, and calls :py:func:`bob.bio.base.score.open_file` for the existing one."""
   if not os.path.exists(score_file):
     score_file += '.tar.bz2'
     if not os.path.exists(score_file):
       raise IOError("The score file '%s' cannot be found. Aborting!" % score_file)
-  return bob.measure.load.open_file(score_file)
+  return score.open_file(score_file)
 
 
 def _open_to_write(score_file, write_compressed):
@@ -115,7 +115,8 @@ def _delete(score_file, write_compressed):
 
 
 def _save_scores(score_file, scores, probe_objects, client_id, write_compressed):
-  """Saves the scores of one model into a text file that can be interpreted by :py:func:`bob.measure.load.split_four_column`."""
+  """Saves the scores of one model into a text file that can be interpreted by
+  :py:func:`bob.bio.base.score.split_four_column`."""
   assert len(probe_objects) == scores.shape[1]
 
   # open file for writing
@@ -493,7 +494,9 @@ def _concat(score_files, output, write_compressed, model_ids):
 def concatenate(compute_zt_norm, groups = ['dev', 'eval'], write_compressed = False, add_model_id = False):
   """Concatenates all results into one (or two) score files per group.
 
-  Score files, which were generated per model, are concatenated into a single score file, which can be interpreter by :py:func:`bob.measure.load.split_four_column`.
+  Score files, which were generated per model, are concatenated into a single
+  score file, which can be interpreter by
+  :py:func:`bob.bio.base.score.load.split_four_column`.
   The score files are always re-computed, regardless if they exist or not.
 
   **Parameters:**
@@ -563,7 +566,7 @@ def calibrate(compute_zt_norm, groups = ['dev', 'eval'], prior = 0.5, write_comp
     logger.info(" - Calibration: Training calibration for type %s from group %s", norm, groups[0])
     llr_trainer = bob.learn.linear.CGLogRegTrainer(prior, 1e-16, 100000)
 
-    training_scores = list(bob.measure.load.split_four_column(training_score_file))
+    training_scores = list(score.split_four_column(training_score_file))
     for i in (0,1):
       h = numpy.array(training_scores[i])
       # remove NaN's
@@ -582,7 +585,7 @@ def calibrate(compute_zt_norm, groups = ['dev', 'eval'], prior = 0.5, write_comp
       logger.info(" - Calibration: calibrating scores from '%s' to '%s'", score_file, calibrated_file)
 
       # iterate through the score file and calibrate scores
-      scores = bob.measure.load.four_column(_open_to_read(score_file))
+      scores = score.four_column(_open_to_read(score_file))
 
       f = _open_to_write(calibrated_file, write_compressed)
 

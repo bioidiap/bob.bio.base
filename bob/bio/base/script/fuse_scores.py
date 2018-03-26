@@ -17,6 +17,7 @@ import bob, os, sys
 import bob.learn.linear
 
 import bob.core
+from .. import score
 logger = bob.core.log.setup("bob.bio.base")
 
 def parse_command_line(command_line_options):
@@ -66,7 +67,7 @@ def main(command_line_options = None):
   for i in range(n_systems):
     logger.info("Loading development set score file '%s'", args.dev_files[i])
     # pythonic way: create inline dictionary "{...}", index with desired value "[...]", execute function "(...)"
-    data.append({'4column' : bob.measure.load.split_four_column, '5column' : bob.measure.load.split_five_column}[args.parser](args.dev_files[i]))
+    data.append({'4column' : score.split_four_column, '5column' : score.split_five_column}[args.parser](args.dev_files[i]))
   import numpy
 
   trainer = bob.learn.linear.CGLogRegTrainer(0.5, args.convergence_threshold, args.max_iterations, mean_std_norm=not args.no_whitening)
@@ -78,7 +79,7 @@ def main(command_line_options = None):
   gen_data_dev = []
   for i in range(n_systems):
     logger.info("Loading development set score file '%s'", args.dev_files[i])
-    gen_data_dev.append({'4column' : bob.measure.load.four_column, '5column' : bob.measure.load.five_column}[args.parser](args.dev_files[i]))
+    gen_data_dev.append({'4column' : score.four_column, '5column' : score.five_column}[args.parser](args.dev_files[i]))
 
   logger.info("Writing fused development set score file '%s'", args.fused_dev_file)
   outf = open(args.fused_dev_file, 'w')
@@ -99,7 +100,7 @@ def main(command_line_options = None):
     gen_data_eval = []
     for i in range(n_systems):
       logger.info("Loading evaluation set score file '%s'", args.eval_files[i])
-      gen_data_eval.append({'4column' : bob.measure.load.four_column, '5column' : bob.measure.load.five_column}[args.parser](args.eval_files[i]))
+      gen_data_eval.append({'4column' : score.four_column, '5column' : score.five_column}[args.parser](args.eval_files[i]))
 
     logger.info("Writing fused evaluation set score file '%s'", args.fused_eval_file)
     outf = open(args.fused_eval_file, 'w')

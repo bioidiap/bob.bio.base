@@ -8,6 +8,7 @@ import nose
 import bob.io.image
 import bob.bio.base
 from . import utils
+from .. import score
 
 from nose.plugins.skip import SkipTest
 
@@ -20,7 +21,6 @@ data_dir = pkg_resources.resource_filename('bob.bio.base', 'test/data')
 
 def _verify(parameters, test_dir, sub_dir, ref_modifier="", score_modifier=('scores',''), counts=3, check_zt=True):
   from bob.bio.base.script.verify import main
-  import bob.measure
   try:
     main(parameters)
 
@@ -42,7 +42,7 @@ def _verify(parameters, test_dir, sub_dir, ref_modifier="", score_modifier=('sco
       d = []
       # read reference and new data
       for score_file in (score_files[i], reference_files[i]):
-        f = bob.measure.load.open_file(score_file)
+        f = score.open_file(score_file)
         d_ = []
         for line in f:
           if isinstance(line, bytes): line = line.decode('utf-8')
@@ -278,7 +278,6 @@ def test_verify_filelist():
   ]
 
   from bob.bio.base.script.verify import main
-  import bob.measure
   try:
     main(parameters)
 
@@ -292,8 +291,8 @@ def test_verify_filelist():
 
     for i in (0,1):
       # load scores
-      a1, b1 = bob.measure.load.split_four_column(score_files[i])
-      a2, b2 = bob.measure.load.split_four_column(reference_files[i])
+      a1, b1 = score.split_four_column(score_files[i])
+      a2, b2 = score.split_four_column(reference_files[i])
       # sort scores
       a1 = sorted(a1); a2 = sorted(a2); b1 = sorted(b1); b2 = sorted(b2)
 
@@ -323,7 +322,6 @@ def test_verify_missing():
   ]
 
   from bob.bio.base.script.verify import main
-  import bob.measure
   try:
     main(parameters)
 
@@ -336,7 +334,7 @@ def test_verify_missing():
 
     for i in (0,1):
       # load scores
-      a, b = bob.measure.load.split_four_column(score_files[i])
+      a, b = score.split_four_column(score_files[i])
 
       assert numpy.all(numpy.isnan(a))
       assert numpy.all(numpy.isnan(b))
@@ -479,15 +477,14 @@ def test_fusion():
 
   # execute the script
   from bob.bio.base.script.fuse_scores import main
-  import bob.measure
   try:
     main(parameters)
 
     # assert that we can read the two files, and that they contain the same number of lines as the original file
     for i in (0,1):
       assert os.path.exists(output_files[i])
-      r = bob.measure.load.four_column(reference_files[i])
-      o = bob.measure.load.four_column(output_files[i])
+      r = score.four_column(reference_files[i])
+      o = score.four_column(output_files[i])
       assert len(list(r)) == len(list(o))
   finally:
     shutil.rmtree(test_dir)
