@@ -67,7 +67,7 @@ test:
     - score.py --help
     - fuse_scores.py --help
     - nosetests --with-coverage --cover-package={{ name }} -sv {{ name }}
-    - sphinx-build -aE {{ project_dir }}/doc {{ project_dir }}/sphinx
+    - sphinx-build -aEW {{ project_dir }}/doc {{ project_dir }}/sphinx
     - sphinx-build -aEb doctest {{ project_dir }}/doc sphinx
     - conda inspect linkages -p $PREFIX {{ name }}  # [not win]
     - conda inspect objects -p $PREFIX {{ name }}  # [osx]
