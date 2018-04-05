@@ -1,5 +1,7 @@
 import logging
+import six
 from . import Annotator
+from .. import load_resource
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +23,11 @@ class FailSafe(Annotator):
 
     def __init__(self, annotators, required_keys, **kwargs):
         super(FailSafe, self).__init__(**kwargs)
-        self.annotators = list(annotators)
+        self.annotators = []
+        for annotator in annotators:
+            if isinstance(annotator, six.string_types):
+                annotator = load_resource(annotator, 'annotator')
+            self.annotators.append(annotator)
         self.required_keys = list(required_keys)
 
     def annotate(self, sample, **kwargs):
