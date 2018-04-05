@@ -289,38 +289,47 @@ def scores(filename, ncolumns=None):
   return _iterate_score_file(filename)
 
 
-def split(filename, ncolumns=None):
-  """split(filename, ncolumns=None) -> negatives, positives
+def split(filename, ncolumns=None, sort=False):
+  """Loads the scores from the given score file and splits them into positives
+  and negatives.
+  Depending on the score file format, it calls see
+  :py:func:`bob.measure.load.split_four_column` and
+  :py:func:`bob.measure.load.split_five_column` for details.
 
-  Loads the scores from the given score file and splits them into positives and negatives.
+  Parameters
+  ----------
 
-  Depending on the score file format, it calls see :py:func:`split_four_column` 
-  and :py:func:`split_five_column` for details.
+  filename : str
+      The path to the score file.
+  ncolumns : int or ``None``
+      If specified to be ``4`` or ``5``, the score file will be assumed to be
+      in the given format. If not specified, the score file format will be
+      estimated automatically
+  sort : :obj:`bool`, optional
+      If ``True``, will return sorted negatives and positives
 
-  Parameters:
+  Returns
+  -------
 
-  filename:  :py:class:`str`, ``file-like``:
-    The file object that will be opened with :py:func:`open_file` containing the scores.
-
-  ncolumns: int or ``None``
-    If specified to be ``4`` or ``5``, the score file will be assumed to be in the given format.
-    If not specified, the score file format will be estimated automatically
-
-  Returns:
-
-  negatives: 1D :py:class:`numpy.ndarray` of type float
-    This array contains the list of scores, for which the ``claimed_id`` and the ``real_id`` are different (see :py:func:`four_column`)
-
-  positives: 1D :py:class:`numpy.ndarray` of type float
-    This array contains the list of scores, for which the ``claimed_id`` and the ``real_id`` are identical (see :py:func:`four_column`)
-
+  negatives : 1D :py:class:`numpy.ndarray` of type float
+      This array contains the list of scores, for which the ``claimed_id`` and
+      the ``real_id`` are different (see :py:func:`four_column`)
+      positives : 1D :py:class:`numpy.ndarray` of type float
+      This array contains the list of scores, for which the ``claimed_id`` and
+      the ``real_id`` are identical (see :py:func:`four_column`)
   """
   ncolumns = _estimate_score_file_format(filename, ncolumns)
   if ncolumns == 4:
-    return split_four_column(filename)
+    neg, pos = split_four_column(filename)
   else:
     assert ncolumns == 5
-    return split_five_column(filename)
+    neg, pos = split_five_column(filename)
+
+  if sort:
+    neg.sort()
+    pos.sort()
+
+  return neg, pos
 
 
 def cmc(filename, ncolumns=None):
