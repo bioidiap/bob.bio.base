@@ -59,3 +59,52 @@ class Cmc(measure_figure.PlotBase):
         if self._axlim is None:
             self._axlim = [0, self._max_R, -0.01, 1.01]
         super(Cmc, self).end_process()
+
+class Dic(measure_figure.PlotBase):
+    ''' Handles the plotting of DIC
+
+    Attributes
+    ----------
+
+    _semilogx: :obj:`bool`
+        If true (default), X-axis will be semilog10
+    _rank: :obj:`int`
+        Rank to be used to plot DIC (default: 1)
+    '''
+    def __init__(self, ctx, scores, test, func_load):
+        super(Dic, self).__init__(ctx, scores, test, func_load)
+        self._semilogx = True if 'semilogx' not in ctx.meta else\
+                ctx.meta['semilogx']
+        self._rank = 1 if 'rank' not in ctx.meta else ctx.meta['rank']
+        self._title = 'DIC'
+        self._x_label = 'FAR'
+        self._y_label = 'DIR'
+
+    def compute(self, idx, dev_score, dev_file=None,
+                test_score=None, test_file=None):
+        ''' Plot DIC for dev and eval data using
+        :py:func:`bob.measure.plot.detection_identification_curve`'''
+        mpl.figure(1)
+        if self._test:
+            linestyle = '-' if not self._split else measure_figure.LINESTYLES[idx % 14]
+            plot.detection_identification_curve(
+                dev_score, rank=self._rank, logx=self._semilogx,
+                color=self._colors[idx], linestyle=linestyle,
+                label=self._label('development', dev_file, idx)
+            )
+            linestyle = '--'
+            if self._split:
+                mpl.figure(2)
+                linestyle = measure_figure.LINESTYLES[idx % 14]
+
+            plot.detection_identification_curve(
+                test_score, rank=self._rank, logx=self._semilogx,
+                color=self._colors[idx], linestyle=linestyle,
+                label=self._label('test', test_file, idx)
+            )
+        else:
+            rank = plot.detection_identification_curve(
+                dev_score, rank=self._rank, logx=self._semilogx,
+                color=self._colors[idx], linestyle=measure_figure.LINESTYLES[idx % 14],
+                label=self._label('development', dev_file, idx)
+            )

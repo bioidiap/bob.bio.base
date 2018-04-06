@@ -176,3 +176,22 @@ def test_cmc():
         if result.output:
             click.echo(result.output)
         assert result.exit_code == 0
+
+def test_dic():
+    dev1 = pkg_resources.resource_filename('bob.bio.base.test',
+                                           'data/scores-nonorm-openset-dev')
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.dic, [dev1, '--rank', 2])
+        if result.output:
+            click.echo(result.output)
+        assert result.exit_code == 0
+    test1 = pkg_resources.resource_filename('bob.bio.base.test',
+                                            'data/scores-nonorm-openset-dev')
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.dic, ['--output', 'test.pdf', '-t',
+                                              '--titles', 'A,B', '-F', 3,
+                                              dev1, test1, dev1, test1])
+        if result.output:
+            click.echo(result.output)
+        assert result.exit_code == 0

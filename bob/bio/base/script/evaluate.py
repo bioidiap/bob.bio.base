@@ -25,6 +25,7 @@ import bob.measure
 from .. import score
 
 
+
 if not os.environ.get('BOB_NO_STYLE_CHANGES'):
   # make the fig size smaller so that everything becomes bigger
   matplotlib.rc('figure', figsize=(4, 3))
@@ -369,7 +370,11 @@ def main(command_line_parameters=None):
         # create a multi-page PDF for the ROC curve
         pdf = PdfPages(args.roc)
         # create a separate figure for dev and eval
-        pdf.savefig(_plot_roc(frrs_dev, colors, args.legends, args.title[0] if args.title is not None else "ROC for development set", args.legend_font_size, args.legend_position, args.far_line_at, min_far=args.min_far_value), bbox_inches='tight')
+        pdf.savefig(_plot_roc(
+            frrs_dev, colors, args.legends,
+            args.title[0] if args.title is not None else "ROC for development set",
+            args.legend_font_size, args.legend_position, args.far_line_at,
+            min_far=args.min_far_value), bbox_inches='tight')
         del frrs_dev
         if args.eval_files:
           if args.far_line_at is not None:

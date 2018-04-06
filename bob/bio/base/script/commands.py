@@ -213,3 +213,50 @@ def cmc(ctx, scores, test, **kargs):
     """
     process = bio_figure.Cmc(ctx, scores, test, FUNC_CMC)
     process.run()
+
+@click.command()
+@common_options.scores_argument(nargs=-1)
+@common_options.titles_option()
+@common_options.sep_dev_test_option()
+@common_options.output_plot_file_option(default_out='cmc.pdf')
+@common_options.test_option()
+@common_options.semilogx_option(True)
+@common_options.axes_val_option(dflt=None)
+@common_options.axis_fontsize_option()
+@common_options.x_rotation_option()
+@common_options.rank_option()
+@verbosity_option()
+@click.pass_context
+def dic(ctx, scores, test, **kargs):
+    """Plots the Detection & Identification curve over the FAR
+
+    This curve is designed to be used in an open set identification protocol, and
+    defined in Chapter 14.1 of [LiJain2005]_.  It requires to have at least one
+    open set probe item, i.e., with no corresponding gallery, such that the
+    positives for that pair are ``None``.
+
+    The detection and identification curve first computes FAR thresholds based on
+    the out-of-set probe scores (negative scores).  For each probe item, the
+    **maximum** negative score is used.  Then, it plots the detection and
+    identification rates for those thresholds, which are based on the in-set
+    probe scores only. See [LiJain2005]_ for more details.
+
+    .. [LiJain2005] **Stan Li and Anil K. Jain**, *Handbook of Face Recognition*, Springer, 2005
+
+    You need provide one or more development score file(s) for each experiment.
+    You can also provide test files along with dev files but the flag `--test`
+    is required in that case.Files must be 4- or 5- columns format, see
+    :py:func:`bob.bio.base.score.load.four_column` and
+    :py:func:`bob.bio.base.score.load.five_column` for details.
+
+
+    Examples:
+        $ bob bio dic dev-scores
+
+        $ bob bio dic --test dev-scores1 test-scores1 dev-scores2
+        test-scores2
+
+        $ bob bio dic --test -o my_roc.pdf dev-scores1 test-scores1
+    """
+    process = bio_figure.Dic(ctx, scores, test, FUNC_CMC)
+    process.run()
