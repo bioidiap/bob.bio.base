@@ -1,0 +1,159 @@
+'''Tests for bob.measure scripts'''
+
+import sys
+import filecmp
+import click
+from click.testing import CliRunner
+import pkg_resources
+from ..script import commands
+
+def test_metrics():
+    dev1 = pkg_resources.resource_filename('bob.bio.base.test',
+                                           'data/dev-4col.txt')
+    runner = CliRunner()
+    result = runner.invoke(commands.metrics, [dev1])
+    with runner.isolated_filesystem():
+        with open('tmp', 'w') as f:
+            f.write(result.output)
+        assert result.exit_code == 0
+    dev2 = pkg_resources.resource_filename('bob.bio.base.test',
+                                           'data/dev-5col.txt')
+    test1 = pkg_resources.resource_filename('bob.bio.base.test',
+                                            'data/test-4col.txt')
+    test2 = pkg_resources.resource_filename('bob.bio.base.test',
+                                            'data/test-5col.txt')
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            commands.metrics, ['--test', dev1, test1, dev2, test2]
+        )
+        with open('tmp', 'w') as f:
+            f.write(result.output)
+        assert result.exit_code == 0
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            commands.metrics, ['-l', 'tmp', '--test', dev1, test1, dev2, test2]
+        )
+        assert result.exit_code == 0
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            commands.metrics, ['-l', 'tmp', '--test', dev1, dev2]
+        )
+        assert result.exit_code == 0
+
+def test_roc():
+    dev1 = pkg_resources.resource_filename('bob.bio.base.test',
+                                           'data/dev-4col.txt')
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.roc, ['--output','test.pdf',dev1])
+        if result.output:
+            click.echo(result.output)
+        assert result.exit_code == 0
+    dev2 = pkg_resources.resource_filename('bob.bio.base.test',
+                                           'data/dev-5col.txt')
+    test1 = pkg_resources.resource_filename('bob.bio.base.test',
+                                            'data/test-4col.txt')
+    test2 = pkg_resources.resource_filename('bob.bio.base.test',
+                                            'data/test-5col.txt')
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.roc, ['--test', '--split', '--output',
+                                              'test.pdf',
+                                              dev1, test1, dev2, test2])
+        if result.output:
+            click.echo(result.output)
+        assert result.exit_code == 0
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.roc, ['--test', '--output',
+                                              'test.pdf', '--titles', 'A,B', 
+                                              dev1, test1, dev2, test2])
+        if result.output:
+            click.echo(result.output)
+        assert result.exit_code == 0
+
+
+def test_det():
+    dev1 = pkg_resources.resource_filename('bob.bio.base.test',
+                                           'data/dev-4col.txt')
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.det, [dev1])
+        if result.output:
+            click.echo(result.output)
+        assert result.exit_code == 0
+    dev2 = pkg_resources.resource_filename('bob.bio.base.test',
+                                           'data/dev-5col.txt')
+    test1 = pkg_resources.resource_filename('bob.bio.base.test',
+                                            'data/test-4col.txt')
+    test2 = pkg_resources.resource_filename('bob.bio.base.test',
+                                            'data/test-5col.txt')
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.det, ['--test', '--split', '--output',
+                                              'test.pdf', '--titles', 'A,B',
+                                              dev1, test1, dev2, test2])
+        if result.output:
+            click.echo(result.output)
+        assert result.exit_code == 0
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.det, ['--test', '--output',
+                                              'test.pdf',
+                                              dev1, test1, dev2, test2])
+        if result.output:
+            click.echo(result.output)
+        assert result.exit_code == 0
+
+def test_epc():
+    dev1 = pkg_resources.resource_filename('bob.bio.base.test',
+                                           'data/dev-4col.txt')
+    test1 = pkg_resources.resource_filename('bob.bio.base.test',
+                                            'data/test-4col.txt')
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.epc, [dev1, test1])
+        if result.output:
+            click.echo(result.output)
+        assert result.exit_code == 0
+    dev2 = pkg_resources.resource_filename('bob.bio.base.test',
+                                           'data/dev-4col.tar.gz')
+    test2 = pkg_resources.resource_filename('bob.bio.base.test',
+                                            'data/test-5col.txt')
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.epc, ['--output', 'test.pdf',
+                                              '--titles', 'A,B',
+                                              dev1, test1, dev2, test2])
+        if result.output:
+            click.echo(result.output)
+        assert result.exit_code == 0
+
+def test_hist():
+    dev1 = pkg_resources.resource_filename('bob.bio.base.test',
+                                           'data/dev-4col.txt')
+    dev2 = pkg_resources.resource_filename('bob.bio.base.test',
+                                           'data/dev-5col.txt')
+    test1 = pkg_resources.resource_filename('bob.bio.base.test',
+                                            'data/test-4col.txt')
+    test2 = pkg_resources.resource_filename('bob.bio.base.test',
+                                            'data/test-5col.txt')
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.hist, [dev1])
+        if result.output:
+            click.echo(result.output)
+        assert result.exit_code == 0
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.hist, ['--criter', 'hter', '--output',
+                                               'HISTO.pdf', '-b', 30,
+                                               dev1, dev2])
+        if result.output:
+            click.echo(result.output)
+        assert result.exit_code == 0
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.hist, ['--criter', 'eer', '--output',
+                                               'HISTO.pdf', '-b', 30, '-F',
+                                               3, dev1, test1, dev2, test2])
+        if result.output:
+            click.echo(result.output)
+        assert result.exit_code == 0

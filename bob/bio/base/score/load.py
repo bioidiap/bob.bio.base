@@ -354,7 +354,6 @@ def cmc(filename, ncolumns=None):
     assert ncolumns == 5
     return cmc_five_column(filename)
 
-
 def load_score(filename, ncolumns=None, minimal=False, **kwargs):
   """Load scores using numpy.loadtxt and return the data as a numpy array.
 
@@ -419,6 +418,37 @@ def load_score(filename, ncolumns=None, minimal=False, **kwargs):
   score_lines = numpy.array(score_lines, new_dtype)
   return score_lines
 
+def load_files(filenames, func_load):
+    """Load a list of score files and return a list of tuples of (neg, pos)
+
+    Parameters
+    ----------
+
+    filenames : :any:`list`
+        list of file paths
+    func_load :
+        function that can read files in the list
+
+    Returns
+    -------
+
+    :any:`list`: [(neg,pos)] A list of tuples, where each tuple contains the
+    ``negative`` and ``positive`` sceach system/probee.
+
+    """
+    if filenames is None:
+        return None
+    res = []
+    for filepath in filenames:
+        try:
+            tmp = func_load(filepath)
+            if isinstance(tmp, list):
+                res += func_load(filepath)
+            else:
+                res.append(tmp)
+        except:
+            raise
+    return res
 
 def get_negatives_positives(score_lines):
   """Take the output of load_score and return negatives and positives.  This
