@@ -441,11 +441,7 @@ def load_files(filenames, func_load):
     res = []
     for filepath in filenames:
         try:
-            tmp = func_load(filepath)
-            if isinstance(tmp, list):
-                res += func_load(filepath)
-            else:
-                res.append(tmp)
+            res.append(func_load(filepath))
         except:
             raise
     return res
