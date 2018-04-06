@@ -2,13 +2,15 @@
 
 
 import click
+import bob.bio.base.script.figure as bio_figure
+import bob.measure.script.figure as measure_figure
 from ..score import load
-from bob.measure.script import figure
 from bob.measure.script import common_options
 from bob.extension.scripts.click_helper import verbosity_option
 
 
 FUNC_SPLIT = lambda x: load.load_files(x, load.split)
+FUNC_CMC = lambda x: load.load_files(x, load.cmc)
 
 
 @click.command()
@@ -42,7 +44,7 @@ def metrics(ctx, scores, test, **kargs):
 
         $ bob bio metrics --test {dev,test}-scores1 {dev,test}-scores2
     """
-    process = figure.Metrics(ctx, scores, test, FUNC_SPLIT)
+    process = measure_figure.Metrics(ctx, scores, test, FUNC_SPLIT)
     process.run()
 
 @click.command()
@@ -80,7 +82,7 @@ def roc(ctx, scores, test, **kargs):
 
         $ bob bio roc --test -o my_roc.pdf dev-scores1 test-scores1
     """
-    process = figure.Roc(ctx, scores, test, FUNC_SPLIT)
+    process = measure_figure.Roc(ctx, scores, test, FUNC_SPLIT)
     process.run()
 
 @click.command()
@@ -115,7 +117,7 @@ def det(ctx, scores, test, **kargs):
 
         $ bob bio det --test -o my_det.pdf dev-scores1 test-scores1
     """
-    process = figure.Det(ctx, scores, test, FUNC_SPLIT)
+    process = measure_figure.Det(ctx, scores, test, FUNC_SPLIT)
     process.run()
 
 @click.command()
@@ -142,7 +144,7 @@ def epc(ctx, scores, **kargs):
 
         $ bob bio epc -o my_epc.pdf dev-scores1 test-scores1
     """
-    process = figure.Epc(ctx, scores, True, FUNC_SPLIT)
+    process = measure_figure.Epc(ctx, scores, True, FUNC_SPLIT)
     process.run()
 
 @click.command()
@@ -171,5 +173,43 @@ def hist(ctx, scores, test, **kwargs):
 
         $ bob bio hist --test --criter hter dev-scores1 test-scores1
     """
-    process = figure.Hist(ctx, scores, test, FUNC_SPLIT)
+    process = measure_figure.Hist(ctx, scores, test, FUNC_SPLIT)
+    process.run()
+
+@click.command()
+@common_options.scores_argument(nargs=-1)
+@common_options.titles_option()
+@common_options.sep_dev_test_option()
+@common_options.output_plot_file_option(default_out='cmc.pdf')
+@common_options.test_option()
+@common_options.semilogx_option(True)
+@common_options.axes_val_option(dflt=None)
+@common_options.axis_fontsize_option()
+@common_options.x_rotation_option()
+@common_options.fmr_line_at_option()
+@verbosity_option()
+@click.pass_context
+def cmc(ctx, scores, test, **kargs):
+    """Plot CMC (cumulative match characteristic curve):
+    graphical presentation of results of an identification task test,
+    plotting rank values on the x-axis and the probability of correct identification
+    at or below that rank on the y-axis. The values for the axis will be
+    computed using :py:func:`bob.measure.cmc`.
+
+    You need provide one or more development score file(s) for each experiment.
+    You can also provide test files along with dev files but the flag `--test`
+    is required in that case.Files must be 4- or 5- columns format, see
+    :py:func:`bob.bio.base.score.load.four_column` and
+    :py:func:`bob.bio.base.score.load.five_column` for details.
+
+
+    Examples:
+        $ bob bio cmc dev-scores
+
+        $ bob bio cmc --test dev-scores1 test-scores1 dev-scores2
+        test-scores2
+
+        $ bob bio cmc --test -o my_roc.pdf dev-scores1 test-scores1
+    """
+    process = bio_figure.Cmc(ctx, scores, test, FUNC_CMC)
     process.run()

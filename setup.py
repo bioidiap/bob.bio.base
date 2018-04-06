@@ -144,6 +144,7 @@ setup(
         'det               = bob.bio.base.script.commands:det',
         'epc               = bob.bio.base.script.commands:epc',
         'hist               = bob.bio.base.script.commands:hist',
+        'cmc               = bob.bio.base.script.commands:cmc',
       ],
 
       # annotators
