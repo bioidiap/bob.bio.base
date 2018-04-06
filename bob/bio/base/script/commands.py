@@ -8,10 +8,8 @@ from ..score import load
 from bob.measure.script import common_options
 from bob.extension.scripts.click_helper import verbosity_option
 
-
 FUNC_SPLIT = lambda x: load.load_files(x, load.split)
 FUNC_CMC = lambda x: load.load_files(x, load.cmc)
-
 
 @click.command()
 @common_options.scores_argument(nargs=-1)
@@ -19,11 +17,13 @@ FUNC_CMC = lambda x: load.load_files(x, load.cmc)
 @common_options.test_option()
 @common_options.open_file_mode_option()
 @common_options.output_plot_metric_option()
-@common_options.criterion_option()
-@common_options.threshold_option()
+@common_options.criterion_option(['eer', 'hter', 'far', 'mindcf', 'cllr', 'rr'])
+@common_options.cost_option()
+@common_options.thresholds_option()
+@common_options.far_option()
 @verbosity_option()
 @click.pass_context
-def metrics(ctx, scores, test, **kargs):
+def metrics(ctx, scores, criter, test, **kargs):
     """Prints a single output line that contains all info for a given
     criterion (eer or hter).
 
@@ -44,7 +44,10 @@ def metrics(ctx, scores, test, **kargs):
 
         $ bob bio metrics --test {dev,test}-scores1 {dev,test}-scores2
     """
-    process = measure_figure.Metrics(ctx, scores, test, FUNC_SPLIT)
+    if criter == 'rr':
+        process = bio_figure.Metrics(ctx, scores, test, FUNC_CMC)
+    else:
+        process = bio_figure.Metrics(ctx, scores, test, FUNC_SPLIT)
     process.run()
 
 @click.command()
@@ -154,7 +157,7 @@ def epc(ctx, scores, **kargs):
 @common_options.n_bins_option()
 @common_options.criterion_option()
 @common_options.axis_fontsize_option()
-@common_options.threshold_option()
+@common_options.thresholds_option()
 @verbosity_option()
 @click.pass_context
 def hist(ctx, scores, test, **kwargs):

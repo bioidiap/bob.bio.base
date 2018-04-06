@@ -37,9 +37,52 @@ def test_metrics():
         assert result.exit_code == 0
     with runner.isolated_filesystem():
         result = runner.invoke(
-            commands.metrics, ['-l', 'tmp', '--test', dev1, dev2]
+            commands.metrics, ['-l', 'tmp', '--test', dev1, test2]
         )
         assert result.exit_code == 0
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            commands.metrics, ['-l', 'tmp', '-t', '-T', '0.1',
+                               '--criter', 'mindcf', '--cost', 0.9,
+                               dev1, test2]
+        )
+        assert result.exit_code == 0
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            commands.metrics, ['-l', 'tmp',
+                               '--criter', 'mindcf', '--cost', 0.9,
+                               dev1]
+        )
+        assert result.exit_code == 0
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            commands.metrics, ['-t', '--criter', 'cllr', dev1, test2]
+        )
+        assert result.exit_code == 0
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            commands.metrics, ['-l', 'tmp', '--criter', 'cllr', '--cost', 0.9,
+                               dev1]
+        )
+        assert result.exit_code == 0
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            commands.metrics, ['-t', '--criter', 'rr', '-T',
+                               '0.1', dev1, test2]
+        )
+        assert result.exit_code == 0
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            commands.metrics, ['-l', 'tmp', '--criter', 'rr', dev1, dev2]
+        )
+        assert result.exit_code == 0
+
 
 def test_roc():
     dev1 = pkg_resources.resource_filename('bob.bio.base.test',
