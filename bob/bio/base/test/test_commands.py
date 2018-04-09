@@ -238,3 +238,67 @@ def test_dic():
         if result.output:
             click.echo(result.output)
         assert result.exit_code == 0
+
+def test_evaluate():
+    dev1 = pkg_resources.resource_filename('bob.bio.base.test',
+                                           'data/dev-4col.txt')
+    dev2 = pkg_resources.resource_filename('bob.bio.base.test',
+                                           'data/dev-5col.txt')
+
+    test1 = pkg_resources.resource_filename('bob.bio.base.test',
+                                            'data/test-4col.txt')
+    test2 = pkg_resources.resource_filename('bob.bio.base.test',
+                                            'data/test-5col.txt')
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.evaluate, ['-l', 'tmp', '-f', 0.03, '-M',
+                                                   '-x', '-m', dev1, dev2])
+        assert result.exit_code == 0
+        result = runner.invoke(commands.evaluate, ['-f', 0.02, '-M',
+                                                   '-x', '-m', dev1, dev2])
+        assert result.exit_code == 0
+
+        result = runner.invoke(commands.evaluate, ['-l', 'tmp', '-f', 0.04, '-M',
+                                                   '-x', '-m', '-t', dev1, test1,
+                                                   dev2, test2])
+        assert result.exit_code == 0
+        result = runner.invoke(commands.evaluate, ['-f', 0.01, '-M', '-t',
+                                                   '-x', '-m', dev1, test1, dev2,
+                                                   test2])
+        assert result.exit_code == 0
+
+        result = runner.invoke(commands.evaluate, [dev1, dev2])
+        assert result.exit_code == 0
+
+        result = runner.invoke(commands.evaluate, ['-R', '-D', '-H', '-E',
+                                                   '-o', 'PLOTS.pdf', dev1, dev2])
+        assert result.exit_code == 0
+
+        result = runner.invoke(commands.evaluate, ['-t', '-R', '-D', '-H', '-E',
+                                                   '-o', 'PLOTS.pdf',
+                                                   test1, dev1, test2, dev2])
+        assert result.exit_code == 0
+
+    cmc = pkg_resources.resource_filename('bob.bio.base.test',
+                                          'data/scores-cmc-4col.txt')
+    cmc2 = pkg_resources.resource_filename('bob.bio.base.test',
+                                           'data/scores-cmc-5col.txt')
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.evaluate, ['-r', cmc])
+        assert result.exit_code == 0
+        result = runner.invoke(commands.evaluate, ['-r', '-t', cmc, cmc2])
+        assert result.exit_code == 0
+        result = runner.invoke(commands.evaluate, ['-C', '-t', cmc, cmc2])
+        assert result.exit_code == 0
+        result = runner.invoke(commands.evaluate, ['-C', cmc, cmc2])
+        assert result.exit_code == 0
+
+    cmc = pkg_resources.resource_filename('bob.bio.base.test',
+                                          'data/scores-cmc-4col-open-set.txt')
+    cmc2 = pkg_resources.resource_filename('bob.bio.base.test',
+                                          'data/scores-nonorm-openset-dev')
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.evaluate, ['-O', cmc])
+        assert result.exit_code == 0
+        result = runner.invoke(commands.evaluate, ['-O', '-t', cmc, cmc2])
+        assert result.exit_code == 0

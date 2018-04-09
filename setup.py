@@ -138,14 +138,14 @@ setup(
       # bob bio scripts
       'bob.bio.cli': [
         'annotate          = bob.bio.base.script.annotate:annotate',
-        'evaluate          = bob.bio.base.script.evaluate:evaluate',
         'metrics           = bob.bio.base.script.commands:metrics',
         'roc               = bob.bio.base.script.commands:roc',
         'det               = bob.bio.base.script.commands:det',
         'epc               = bob.bio.base.script.commands:epc',
-        'hist               = bob.bio.base.script.commands:hist',
+        'hist              = bob.bio.base.script.commands:hist',
         'cmc               = bob.bio.base.script.commands:cmc',
         'dic               = bob.bio.base.script.commands:dic',
+        'evaluate          = bob.bio.base.script.commands:evaluate',
       ],
 
       # annotators
