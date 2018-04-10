@@ -34,7 +34,7 @@ requirements:
     - setuptools {{ setuptools }}
     - bob.blitz
     - bob.core
-    - bob.db.base
+    - bob.db.base >2.2.0
     - bob.extension
     - bob.io.base
     - bob.learn.activation
