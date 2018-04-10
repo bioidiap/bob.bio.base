@@ -19,9 +19,12 @@ class FailSafe(Annotator):
     required_keys : list
         A list of keys that should be available in annotations to stop trying
         different annotators.
+    only_required_keys : bool
+        If True, the annotations will only contain the ``required_keys``.
     """
 
-    def __init__(self, annotators, required_keys, **kwargs):
+    def __init__(self, annotators, required_keys, only_required_keys=False,
+                 **kwargs):
         super(FailSafe, self).__init__(**kwargs)
         self.annotators = []
         for annotator in annotators:
@@ -29,6 +32,7 @@ class FailSafe(Annotator):
                 annotator = load_resource(annotator, 'annotator')
             self.annotators.append(annotator)
         self.required_keys = list(required_keys)
+        self.only_required_keys = only_required_keys
 
     def annotate(self, sample, **kwargs):
         if 'annotations' not in kwargs or kwargs['annotations'] is None:
@@ -51,4 +55,8 @@ class FailSafe(Annotator):
         else:  # this else is for the for loop
             # we don't want to return half of the annotations
             kwargs['annotations'] = None
+        if self.only_required_keys:
+            for key in list(kwargs['annotations'].keys()):
+                if key not in self.required_keys:
+                    del kwargs['annotations'][key]
         return kwargs['annotations']
