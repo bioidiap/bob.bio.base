@@ -3,6 +3,7 @@ import os
 import shutil
 from click.testing import CliRunner
 from bob.bio.base.script.annotate import annotate
+from bob.bio.base.annotator import Callable, FailSafe
 from bob.db.base import read_annotation_file
 
 
@@ -31,3 +32,18 @@ def test_annotate():
                 assert annot['bottomright'] == [112, 92]
     finally:
         shutil.rmtree(tmp_dir)
+
+
+def dummy_extra_key_annotator(data, **kwargs):
+    return {'leye': 0, 'reye': 0, 'topleft': 0}
+
+
+def test_failsafe():
+    annotator = FailSafe([Callable(dummy_extra_key_annotator)],
+                         ['leye', 'reye'])
+    assert all(key in annotator(1) for key in ['leye', 'reye', 'topleft'])
+
+    annotator = FailSafe([Callable(dummy_extra_key_annotator)],
+                         ['leye', 'reye'], True)
+    assert all(key in annotator(1) for key in ['leye', 'reye'])
+    assert all(key not in annotator(1) for key in ['topleft'])
