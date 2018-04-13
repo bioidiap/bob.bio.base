@@ -26,7 +26,7 @@ FUNC_CMC = lambda x: load.load_files(x, load.cmc)
 @click.pass_context
 def metrics(ctx, scores, evaluation, **kargs):
     """Prints a single output line that contains all info for a given
-    criterion (eer or hter).
+    criterion (eer,  hter, far, mindcf, cllr, rr).
 
     You need provide one or more development score file(s) for each experiment.
     You can also provide eval files along with dev files. If only dev-scores
