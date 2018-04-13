@@ -237,7 +237,7 @@ For example, to generate a CMC curve from development and evaluation datasets:
 
 .. code-block:: sh
 
-    $bob measure cmc --output 'my_cmc.pdf' dev-1.txt eval-1.txt 
+    $bob bio cmc --output 'my_cmc.pdf' dev-1.txt eval-1.txt 
     dev-2.txt eval-2.txt
 
 where `my_cmc.pdf` will contain CMC curves for the two experiments.
