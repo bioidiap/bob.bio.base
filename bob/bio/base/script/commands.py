@@ -6,7 +6,8 @@ import bob.bio.base.script.figure as bio_figure
 import bob.measure.script.figure as measure_figure
 from ..score import load
 from bob.measure.script import common_options
-from bob.extension.scripts.click_helper import verbosity_option
+from bob.extension.scripts.click_helper import (verbosity_option,
+                                                open_file_mode_option)
 
 FUNC_SPLIT = lambda x: load.load_files(x, load.split)
 FUNC_CMC = lambda x: load.load_files(x, load.cmc)
@@ -15,13 +16,13 @@ FUNC_CMC = lambda x: load.load_files(x, load.cmc)
 @common_options.scores_argument(nargs=-1)
 @common_options.table_option()
 @common_options.eval_option()
-@common_options.open_file_mode_option()
 @common_options.output_plot_metric_option()
 @common_options.criterion_option(['eer', 'hter', 'far', 'mindcf', 'cllr', 'rr'])
 @common_options.cost_option()
 @common_options.thresholds_option()
 @common_options.far_option()
 @common_options.titles_option()
+@open_file_mode_option()
 @verbosity_option()
 @click.pass_context
 def metrics(ctx, scores, evaluation, **kargs):
@@ -65,7 +66,9 @@ def metrics(ctx, scores, evaluation, **kargs):
 @common_options.axes_val_option(dflt=[1e-4, 1, 1e-4, 1])
 @common_options.axis_fontsize_option()
 @common_options.x_rotation_option()
-@common_options.fmr_line_at_option()
+@common_options.lines_at_option()
+@common_options.x_label_option()
+@common_options.y_label_option()
 @common_options.const_layout_option()
 @verbosity_option()
 @click.pass_context
@@ -90,13 +93,15 @@ def roc(ctx, scores, evaluation, **kargs):
 
         $ bob bio roc -o my_roc.pdf dev-scores1 eval-scores1
     """
-    process = measure_figure.Roc(ctx, scores, evaluation, FUNC_SPLIT)
+    process = bio_figure.Roc(ctx, scores, evaluation, FUNC_SPLIT)
     process.run()
 
 @click.command()
 @common_options.scores_argument(nargs=-1)
 @common_options.output_plot_file_option(default_out='det.pdf')
 @common_options.titles_option()
+@common_options.x_label_option()
+@common_options.y_label_option()
 @common_options.sep_dev_eval_option()
 @common_options.eval_option()
 @common_options.axis_fontsize_option(dflt=6)
@@ -126,7 +131,7 @@ def det(ctx, scores, evaluation, **kargs):
 
         $ bob bio det -o my_det.pdf dev-scores1 eval-scores1
     """
-    process = measure_figure.Det(ctx, scores, evaluation, FUNC_SPLIT)
+    process = bio_figure.Det(ctx, scores, evaluation, FUNC_SPLIT)
     process.run()
 
 @click.command()
@@ -294,7 +299,7 @@ def hist(ctx, scores, evaluation, **kwargs):
 @common_options.output_plot_metric_option()
 @common_options.output_plot_file_option(default_out='eval_plots.pdf')
 @common_options.points_curve_option()
-@common_options.fmr_line_at_option()
+@common_options.lines_at_option()
 @common_options.cost_option()
 @common_options.rank_option()
 @common_options.far_option()

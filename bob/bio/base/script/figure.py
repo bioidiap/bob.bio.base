@@ -7,6 +7,22 @@ import bob.measure
 from bob.measure import plot
 from tabulate import tabulate
 
+class Roc(measure_figure.Roc):
+    def __init__(self, ctx, scores, evaluation, func_load):
+        super(Roc, self).__init__(ctx, scores, evaluation, func_load)
+        self._x_label = 'False Match Rate' if 'x_label' not in ctx.meta  or \
+        ctx.meta['x_label'] is None else ctx.meta['x_label']
+        self._y_label = '1 - False Non Match Rate' if 'y_label' not in \
+        ctx.meta or ctx.meta['y_label'] is None else ctx.meta['y_label']
+
+class Det(measure_figure.Det):
+    def __init__(self, ctx, scores, evaluation, func_load):
+        super(Det, self).__init__(ctx, scores, evaluation, func_load)
+        self._x_label = 'False Match Rate' if 'x_label' not in ctx.meta or \
+        ctx.meta['x_label'] is None else ctx.meta['x_label']
+        self._y_label = 'False Non Match Rate' if 'y_label' not in ctx.meta or\
+        ctx.meta['y_label'] is None else ctx.meta['y_label']
+
 class Cmc(measure_figure.PlotBase):
     ''' Handles the plotting of Cmc
 
@@ -20,9 +36,9 @@ class Cmc(measure_figure.PlotBase):
         super(Cmc, self).__init__(ctx, scores, evaluation, func_load)
         self._semilogx = True if 'semilogx' not in ctx.meta else\
         ctx.meta['semilogx']
-        self._title = 'CMC'
-        self._x_label = 'Rank'
-        self._y_label = 'Probability'
+        self._title = self._title or 'CMC'
+        self._x_label = self._x_label or 'Rank'
+        self._y_label = self._y_label or 'Identification rate'
         self._max_R = 0
 
     def compute(self, idx, dev_score, dev_file=None,
@@ -79,9 +95,9 @@ class Dic(measure_figure.PlotBase):
         self._semilogx = True if 'semilogx' not in ctx.meta else\
                 ctx.meta['semilogx']
         self._rank = 1 if 'rank' not in ctx.meta else ctx.meta['rank']
-        self._title = 'DIC'
-        self._x_label = 'FAR'
-        self._y_label = 'DIR'
+        self._title = self._title or 'DIC'
+        self._x_label = self._title or 'FAR'
+        self._y_label = self._title or 'DIR'
 
     def compute(self, idx, dev_score, dev_file=None,
                 eval_score=None, eval_file=None):
