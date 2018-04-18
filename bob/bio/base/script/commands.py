@@ -123,6 +123,7 @@ def roc(ctx, scores, evaluation, **kargs):
 @common_options.const_layout_option()
 @common_options.style_option()
 @common_options.figsize_option()
+@common_options.lines_at_option()
 @verbosity_option()
 @click.pass_context
 def det(ctx, scores, evaluation, **kargs):
@@ -221,7 +222,7 @@ def cmc(ctx, scores, evaluation, **kargs):
 @common_options.scores_argument(nargs=-1)
 @common_options.titles_option()
 @common_options.sep_dev_eval_option()
-@common_options.output_plot_file_option(default_out='dic.pdf')
+@common_options.output_plot_file_option(default_out='cmc.pdf')
 @common_options.eval_option()
 @common_options.semilogx_option(True)
 @common_options.axes_val_option(dflt=None)
@@ -408,7 +409,7 @@ def evaluate(ctx, scores, evaluation, **kwargs):
     # the last one closes the file
     ctx.meta['closef'] = True
     click.echo("Generating score histograms in %s..." % ctx.meta['output'])
-    ctx.meta['criter'] = 'eer'  # no criterion passed in evaluate
+    ctx.meta['criter'] = 'hter'  # no criterion passed in evaluate
     ctx.forward(hist)
 
     click.echo("Evaluate successfully completed!")
