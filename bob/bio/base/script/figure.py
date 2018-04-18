@@ -24,14 +24,7 @@ class Det(measure_figure.Det):
         ctx.meta['y_label'] is None else ctx.meta['y_label']
 
 class Cmc(measure_figure.PlotBase):
-    ''' Handles the plotting of Cmc
-
-    Attributes
-    ----------
-
-    _semilogx: :obj:`bool`
-        If true (default), X-axis will be semilog10
-    '''
+    ''' Handles the plotting of Cmc '''
     def __init__(self, ctx, scores, evaluation, func_load):
         super(Cmc, self).__init__(ctx, scores, evaluation, func_load)
         self._semilogx = True if 'semilogx' not in ctx.meta else\
@@ -73,23 +66,8 @@ class Cmc(measure_figure.PlotBase):
             )
             self._max_R = max(rank, self._max_R)
 
-    def end_process(self):
-        ''' Set custom default if not axis limits provided '''
-        if self._axlim is None:
-            self._axlim = [0, self._max_R, -0.01, 1.01]
-        super(Cmc, self).end_process()
-
 class Dic(measure_figure.PlotBase):
-    ''' Handles the plotting of DIC
-
-    Attributes
-    ----------
-
-    _semilogx: :obj:`bool`
-        If true (default), X-axis will be semilog10
-    _rank: :obj:`int`
-        Rank to be used to plot DIC (default: 1)
-    '''
+    ''' Handles the plotting of DIC'''
     def __init__(self, ctx, scores, evaluation, func_load):
         super(Dic, self).__init__(ctx, scores, evaluation, func_load)
         self._semilogx = True if 'semilogx' not in ctx.meta else\

@@ -140,5 +140,6 @@ Details
 .. automodule:: bob.bio.base.score.openbr
 .. automodule:: bob.bio.base.script.figure
 .. automodule:: bob.bio.base.script.commands
+.. automodule:: bob.bio.base.script.gen
 
 .. include:: links.rst

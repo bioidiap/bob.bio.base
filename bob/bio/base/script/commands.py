@@ -1,6 +1,5 @@
 ''' Click commands for ``bob.bio.base`` '''
 
-
 import click
 import bob.bio.base.script.figure as bio_figure
 import bob.measure.script.figure as measure_figure
@@ -11,6 +10,19 @@ from bob.extension.scripts.click_helper import (verbosity_option,
 
 FUNC_SPLIT = lambda x: load.load_files(x, load.split)
 FUNC_CMC = lambda x: load.load_files(x, load.cmc)
+
+def rank_option(**kwargs):
+    '''Get option for rank parameter'''
+    def custom_rank_option(func):
+        def callback(ctx, param, value):
+            value = 1 if value < 0 else value
+            ctx.meta['rank'] = value
+            return value
+        return click.option(
+            '-rk', '--rank', type=click.INT, default=1,
+            help='Rank for DIC',
+            callback=callback, show_default=True, **kwargs)(func)
+    return custom_rank_option
 
 @click.command()
 @common_options.scores_argument(nargs=-1)
@@ -29,7 +41,7 @@ def metrics(ctx, scores, evaluation, **kargs):
     """Prints a single output line that contains all info for a given
     criterion (eer,  hter, far, mindcf, cllr, rr).
 
-    You need provide one or more development score file(s) for each experiment.
+    You need to provide one or more development score file(s) for each experiment.
     You can also provide eval files along with dev files. If only dev-scores
     are used, the flag `--no-evaluation` must be used.
     is required in that case. Files must be 4- or 5- columns format, see
@@ -64,12 +76,13 @@ def metrics(ctx, scores, evaluation, **kargs):
 @common_options.points_curve_option()
 @common_options.semilogx_option(True)
 @common_options.axes_val_option(dflt=[1e-4, 1, 1e-4, 1])
-@common_options.axis_fontsize_option()
 @common_options.x_rotation_option()
 @common_options.lines_at_option()
 @common_options.x_label_option()
 @common_options.y_label_option()
 @common_options.const_layout_option()
+@common_options.style_option()
+@common_options.figsize_option()
 @verbosity_option()
 @click.pass_context
 def roc(ctx, scores, evaluation, **kargs):
@@ -78,7 +91,7 @@ def roc(ctx, scores, evaluation, **kargs):
     false non match rate on the vertical axis.  The values for the axis will be
     computed using :py:func:`bob.measure.roc`.
 
-    You need provide one or more development score file(s) for each experiment.
+    You need to provide one or more development score file(s) for each experiment.
     You can also provide eval files along with dev files. If only dev-scores
     are used, the flag `--no-evaluation` must be used.
     is required in that case. Files must be 4- or 5- columns format, see
@@ -104,11 +117,12 @@ def roc(ctx, scores, evaluation, **kargs):
 @common_options.y_label_option()
 @common_options.sep_dev_eval_option()
 @common_options.eval_option()
-@common_options.axis_fontsize_option(dflt=6)
 @common_options.axes_val_option(dflt=[0.01, 95, 0.01, 95])
 @common_options.x_rotation_option(dflt=45)
 @common_options.points_curve_option()
 @common_options.const_layout_option()
+@common_options.style_option()
+@common_options.figsize_option()
 @verbosity_option()
 @click.pass_context
 def det(ctx, scores, evaluation, **kargs):
@@ -116,7 +130,7 @@ def det(ctx, scores, evaluation, **kargs):
     modified ROC curve which plots error rates on both axes
     (false positives on the x-axis and false negatives on the y-axis)
 
-    You need provide one or more development score file(s) for each experiment.
+    You need to provide one or more development score file(s) for each experiment.
     You can also provide eval files along with dev files. If only dev-scores
     are used, the flag `--no-evaluation` must be used.
     is required in that case. Files must be 4- or 5- columns format, see
@@ -139,8 +153,9 @@ def det(ctx, scores, evaluation, **kargs):
 @common_options.output_plot_file_option(default_out='epc.pdf')
 @common_options.titles_option()
 @common_options.points_curve_option()
-@common_options.axis_fontsize_option()
 @common_options.const_layout_option()
+@common_options.style_option()
+@common_options.figsize_option()
 @verbosity_option()
 @click.pass_context
 def epc(ctx, scores, **kargs):
@@ -149,7 +164,7 @@ def epc(ctx, scores, **kargs):
     a-priori on the development set and accounts for varying relative cost
     in [0; 1] of FPR and FNR when calculating the threshold.
 
-    You need provide one or more development score and eval file(s)
+    You need to provide one or more development score and eval file(s)
     for each experiment. Files must be 4- or 5- columns format, see
     :py:func:`bob.bio.base.score.load.four_column` and
     :py:func:`bob.bio.base.score.load.five_column` for details.
@@ -170,9 +185,10 @@ def epc(ctx, scores, **kargs):
 @common_options.eval_option()
 @common_options.semilogx_option(True)
 @common_options.axes_val_option(dflt=None)
-@common_options.axis_fontsize_option()
 @common_options.x_rotation_option()
 @common_options.const_layout_option()
+@common_options.style_option()
+@common_options.figsize_option()
 @verbosity_option()
 @click.pass_context
 def cmc(ctx, scores, evaluation, **kargs):
@@ -182,7 +198,7 @@ def cmc(ctx, scores, evaluation, **kargs):
     at or below that rank on the y-axis. The values for the axis will be
     computed using :py:func:`bob.measure.cmc`.
 
-    You need provide one or more development score file(s) for each experiment.
+    You need to provide one or more development score file(s) for each experiment.
     You can also provide eval files along with dev files. If only dev-scores
     are used, the flag `--no-evaluation` must be used.
     is required in that case. Files must be 4- or 5- columns format, see
@@ -205,14 +221,15 @@ def cmc(ctx, scores, evaluation, **kargs):
 @common_options.scores_argument(nargs=-1)
 @common_options.titles_option()
 @common_options.sep_dev_eval_option()
-@common_options.output_plot_file_option(default_out='cmc.pdf')
+@common_options.output_plot_file_option(default_out='dic.pdf')
 @common_options.eval_option()
 @common_options.semilogx_option(True)
 @common_options.axes_val_option(dflt=None)
-@common_options.axis_fontsize_option()
 @common_options.x_rotation_option()
-@common_options.rank_option()
+@rank_option()
 @common_options.const_layout_option()
+@common_options.style_option()
+@common_options.figsize_option()
 @verbosity_option()
 @click.pass_context
 def dic(ctx, scores, evaluation, **kargs):
@@ -231,7 +248,7 @@ def dic(ctx, scores, evaluation, **kargs):
 
     .. [LiJain2005] **Stan Li and Anil K. Jain**, *Handbook of Face Recognition*, Springer, 2005
 
-    You need provide one or more development score file(s) for each experiment.
+    You need to provide one or more development score file(s) for each experiment.
     You can also provide eval files along with dev files. If only dev-scores
     are used, the flag `--no-evaluation` must be used.
     is required in that case. Files must be 4- or 5- columns format, see
@@ -255,19 +272,20 @@ def dic(ctx, scores, evaluation, **kargs):
 @common_options.eval_option()
 @common_options.n_bins_option()
 @common_options.criterion_option()
-@common_options.axis_fontsize_option()
 @common_options.thresholds_option()
 @common_options.const_layout_option()
 @common_options.show_dev_option()
 @common_options.print_filenames_option()
 @common_options.titles_option()
+@common_options.style_option()
+@common_options.figsize_option()
 @verbosity_option()
 @click.pass_context
 def hist(ctx, scores, evaluation, **kwargs):
     """ Plots histograms of positive and negatives along with threshold
     criterion.
 
-    You need provide one or more development score file(s) for each experiment.
+    You need to provide one or more development score file(s) for each experiment.
     You can also provide eval files along with dev files. If only dev-scores
     are used, the flag `--no-evaluation` must be used.
     is required in that case. Files must be 4- or 5- columns format, see
@@ -301,9 +319,11 @@ def hist(ctx, scores, evaluation, **kwargs):
 @common_options.points_curve_option()
 @common_options.lines_at_option()
 @common_options.cost_option()
-@common_options.rank_option()
+@rank_option()
 @common_options.far_option()
 @common_options.const_layout_option()
+@common_options.style_option()
+@common_options.figsize_option()
 @verbosity_option()
 @click.pass_context
 def evaluate(ctx, scores, evaluation, **kwargs):
@@ -319,7 +339,7 @@ def evaluate(ctx, scores, evaluation, **kwargs):
     4. Plots ROC, EPC, DET, score distributions
        curves to a multi-page PDF file
 
-    You need provide one or more development score file(s) for each experiment.
+    You need to provide one or more development score file(s) for each experiment.
     You can also provide eval files along with dev files. If only dev-scores
     are used, the flag `--no-evaluation` must be used.
     is required in that case. Files must be 4- or 5- columns format, see
@@ -388,7 +408,7 @@ def evaluate(ctx, scores, evaluation, **kwargs):
     # the last one closes the file
     ctx.meta['closef'] = True
     click.echo("Generating score histograms in %s..." % ctx.meta['output'])
-    ctx.meta['criter'] = 'hter'  # no criterion passed in evaluate
+    ctx.meta['criter'] = 'eer'  # no criterion passed in evaluate
     ctx.forward(hist)
 
     click.echo("Evaluate successfully completed!")
