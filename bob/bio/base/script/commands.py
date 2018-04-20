@@ -8,8 +8,6 @@ from bob.measure.script import common_options
 from bob.extension.scripts.click_helper import (verbosity_option,
                                                 open_file_mode_option)
 
-FUNC_SPLIT = lambda x: load.load_files(x, load.split)
-FUNC_CMC = lambda x: load.load_files(x, load.cmc)
 
 def rank_option(**kwargs):
     '''Get option for rank parameter'''
@@ -62,9 +60,9 @@ def metrics(ctx, scores, evaluation, **kargs):
         $ bob bio metrics {dev,eval}-scores1 {dev,eval}-scores2
     """
     if 'criter' in ctx.meta and ctx.meta['criter'] == 'rr':
-        process = bio_figure.Metrics(ctx, scores, evaluation, FUNC_CMC)
+        process = bio_figure.Metrics(ctx, scores, evaluation, load.cmc)
     else:
-        process = bio_figure.Metrics(ctx, scores, evaluation, FUNC_SPLIT)
+        process = bio_figure.Metrics(ctx, scores, evaluation, load.split)
     process.run()
 
 @click.command()
@@ -106,7 +104,7 @@ def roc(ctx, scores, evaluation, **kargs):
 
         $ bob bio roc -o my_roc.pdf dev-scores1 eval-scores1
     """
-    process = bio_figure.Roc(ctx, scores, evaluation, FUNC_SPLIT)
+    process = bio_figure.Roc(ctx, scores, evaluation, load.split)
     process.run()
 
 @click.command()
@@ -146,11 +144,11 @@ def det(ctx, scores, evaluation, **kargs):
 
         $ bob bio det -o my_det.pdf dev-scores1 eval-scores1
     """
-    process = bio_figure.Det(ctx, scores, evaluation, FUNC_SPLIT)
+    process = bio_figure.Det(ctx, scores, evaluation, load.split)
     process.run()
 
 @click.command()
-@common_options.scores_argument(eval_mandatory=True, nargs=-1)
+@common_options.scores_argument(min_arg=2, nargs=-1)
 @common_options.output_plot_file_option(default_out='epc.pdf')
 @common_options.titles_option()
 @common_options.points_curve_option()
@@ -175,7 +173,7 @@ def epc(ctx, scores, **kargs):
 
         $ bob bio epc -o my_epc.pdf dev-scores1 eval-scores1
     """
-    process = measure_figure.Epc(ctx, scores, True, FUNC_SPLIT)
+    process = measure_figure.Epc(ctx, scores, True, load.split)
     process.run()
 
 @click.command()
@@ -215,7 +213,7 @@ def cmc(ctx, scores, evaluation, **kargs):
 
         $ bob bio cmc -o my_roc.pdf dev-scores1 eval-scores1
     """
-    process = bio_figure.Cmc(ctx, scores, evaluation, FUNC_CMC)
+    process = bio_figure.Cmc(ctx, scores, evaluation, load.cmc)
     process.run()
 
 @click.command()
@@ -264,7 +262,7 @@ def dic(ctx, scores, evaluation, **kargs):
 
         $ bob bio dic -o my_roc.pdf dev-scores1 eval-scores1
     """
-    process = bio_figure.Dic(ctx, scores, evaluation, FUNC_CMC)
+    process = bio_figure.Dic(ctx, scores, evaluation, load.cmc)
     process.run()
 
 @click.command()
@@ -306,7 +304,7 @@ def hist(ctx, scores, evaluation, **kwargs):
 
         $ bob bio hist --criter --show-dev hter dev-scores1 eval-scores1
     """
-    process = bio_figure.Hist(ctx, scores, evaluation, FUNC_SPLIT)
+    process = bio_figure.Hist(ctx, scores, evaluation, load.split)
     process.run()
 
 @click.command()

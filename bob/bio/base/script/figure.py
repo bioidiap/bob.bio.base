@@ -34,17 +34,16 @@ class Cmc(measure_figure.PlotBase):
         self._y_label = self._y_label or 'Identification rate'
         self._max_R = 0
 
-    def compute(self, idx, dev_score, dev_file=None,
-                eval_score=None, eval_file=None):
+    def compute(self, idx, input_scores, input_names):
         ''' Plot CMC for dev and eval data using
         :py:func:`bob.measure.plot.cmc`'''
         mpl.figure(1)
         if self._eval:
             linestyle = '-' if not self._split else measure_figure.LINESTYLES[idx % 14]
             rank = plot.cmc(
-                dev_score, logx=self._semilogx,
+                input_scores[0], logx=self._semilogx,
                 color=self._colors[idx], linestyle=linestyle,
-                label=self._label('development', dev_file, idx)
+                label=self._label('development', input_names[0], idx)
             )
             self._max_R = max(rank, self._max_R)
             linestyle = '--'
@@ -53,16 +52,16 @@ class Cmc(measure_figure.PlotBase):
                 linestyle = measure_figure.LINESTYLES[idx % 14]
 
             rank = plot.cmc(
-                eval_score, logx=self._semilogx,
+                input_scores[1], logx=self._semilogx,
                 color=self._colors[idx], linestyle=linestyle,
-                label=self._label('eval', eval_file, idx)
+                label=self._label('eval', input_names[1], idx)
             )
             self._max_R = max(rank, self._max_R)
         else:
             rank = plot.cmc(
-                dev_score, logx=self._semilogx,
+                input_scores[0], logx=self._semilogx,
                 color=self._colors[idx], linestyle=measure_figure.LINESTYLES[idx % 14],
-                label=self._label('development', dev_file, idx)
+                label=self._label('development', input_names[0], idx)
             )
             self._max_R = max(rank, self._max_R)
 
@@ -77,17 +76,16 @@ class Dic(measure_figure.PlotBase):
         self._x_label = self._title or 'FAR'
         self._y_label = self._title or 'DIR'
 
-    def compute(self, idx, dev_score, dev_file=None,
-                eval_score=None, eval_file=None):
+    def compute(self, idx, input_scores, input_names):
         ''' Plot DIC for dev and eval data using
         :py:func:`bob.measure.plot.detection_identification_curve`'''
         mpl.figure(1)
         if self._eval:
             linestyle = '-' if not self._split else measure_figure.LINESTYLES[idx % 14]
             plot.detection_identification_curve(
-                dev_score, rank=self._rank, logx=self._semilogx,
+                input_scores[0], rank=self._rank, logx=self._semilogx,
                 color=self._colors[idx], linestyle=linestyle,
-                label=self._label('development', dev_file, idx)
+                label=self._label('development', input_names[0], idx)
             )
             linestyle = '--'
             if self._split:
@@ -95,37 +93,36 @@ class Dic(measure_figure.PlotBase):
                 linestyle = measure_figure.LINESTYLES[idx % 14]
 
             plot.detection_identification_curve(
-                eval_score, rank=self._rank, logx=self._semilogx,
+                input_scores[1], rank=self._rank, logx=self._semilogx,
                 color=self._colors[idx], linestyle=linestyle,
-                label=self._label('eval', eval_file, idx)
+                label=self._label('eval', input_names[1], idx)
             )
         else:
-            rank = plot.detection_identification_curve(
-                dev_score, rank=self._rank, logx=self._semilogx,
+            plot.detection_identification_curve(
+                input_scores[0], rank=self._rank, logx=self._semilogx,
                 color=self._colors[idx], linestyle=measure_figure.LINESTYLES[idx % 14],
-                label=self._label('development', dev_file, idx)
+                label=self._label('development', input_names[0], idx)
             )
 
 class Metrics(measure_figure.Metrics):
     ''' Compute metrics from score files'''
     def init_process(self):
         if self._criter == 'rr':
-            self._thres = [None] * self.n_sytem if self._thres is None else \
+            self._thres = [None] * self.n_systems if self._thres is None else \
                     self._thres
 
-    def compute(self, idx, dev_score, dev_file=None,
-                eval_score=None, eval_file=None):
+    def compute(self, idx, input_scores, input_names):
         ''' Compute metrics for the given criteria'''
         title = self._titles[idx] if self._titles is not None else None
-        headers = ['' or title, 'Development %s' % dev_file]
-        if self._eval and eval_score is not None:
-            headers.append('eval % s' % eval_file)
+        headers = ['' or title, 'Development %s' % input_names[0]]
+        if self._eval and input_scores[1] is not None:
+            headers.append('eval % s' % input_names[1])
         if self._criter == 'rr':
-            rr = bob.measure.recognition_rate(dev_score, self._thres[idx])
+            rr = bob.measure.recognition_rate(input_scores[0], self._thres[idx])
             dev_rr = "%.1f%%" % (100 * rr)
             raws = [['RR', dev_rr]]
-            if self._eval and eval_score is not None:
-                rr = bob.measure.recognition_rate(eval_score, self._thres[idx])
+            if self._eval and input_scores[1] is not None:
+                rr = bob.measure.recognition_rate(input_scores[1], self._thres[idx])
                 eval_rr = "%.1f%%" % (100 * rr)
                 raws[0].append(eval_rr)
             click.echo(
@@ -136,12 +133,12 @@ class Metrics(measure_figure.Metrics):
                 cost = 0.99 if 'cost' not in self._ctx.meta else\
                         self._ctx.meta['cost']
             threshold = bob.measure.min_weighted_error_rate_threshold(
-                dev_score[0], dev_score[1], cost
+                input_scores[0][0], input_scores[0][1], cost
             ) if self._thres is None else self._thres[idx]
             if self._thres is None:
                 click.echo(
                     "[minDCF - Cost:%f] Threshold on Development set `%s`: %e"\
-                    % (cost, dev_file, threshold),
+                    % (cost, input_names[0], threshold),
                     file=self.log_file
                 )
             else:
@@ -151,7 +148,7 @@ class Metrics(measure_figure.Metrics):
                 )
             # apply threshold to development set
             far, frr = bob.measure.farfrr(
-                dev_score[0], dev_score[1], threshold
+                input_scores[0][0], input_scores[0][1], threshold
             )
             dev_far_str = "%.1f%%" % (100 * far)
             dev_frr_str = "%.1f%%" % (100 * frr)
@@ -159,10 +156,10 @@ class Metrics(measure_figure.Metrics):
             raws = [['FAR', dev_far_str],
                     ['FRR', dev_frr_str],
                     ['minDCF', dev_mindcf_str]]
-            if self._eval and eval_score is not None:
+            if self._eval and input_scores[1] is not None:
                 # apply threshold to development set
                 far, frr = bob.measure.farfrr(
-                    eval_score[0], eval_score[1], threshold
+                    input_scores[1][0], input_scores[1][1], threshold
                 )
                 eval_far_str = "%.1f%%" % (100 * far)
                 eval_frr_str = "%.1f%%" % (100 * frr)
@@ -174,19 +171,20 @@ class Metrics(measure_figure.Metrics):
                 tabulate(raws, headers, self._tablefmt), file=self.log_file
             )
         elif self._criter == 'cllr':
-            cllr = bob.measure.calibration.cllr(dev_score[0], dev_score[1])
+            cllr = bob.measure.calibration.cllr(input_scores[0][0],
+                                                input_scores[0][1])
             min_cllr = bob.measure.calibration.min_cllr(
-                dev_score[0], dev_score[1]
+                input_scores[0][0], input_scores[0][1]
             )
             dev_cllr_str = "%.1f%%" % cllr
             dev_min_cllr_str = "%.1f%%" % min_cllr
             raws = [['Cllr', dev_cllr_str],
                     ['minCllr', dev_min_cllr_str]]
-            if self._eval and eval_score is not None:
-                cllr = bob.measure.calibration.cllr(eval_score[0],
-                                                    eval_score[1])
+            if self._eval and input_scores[1] is not None:
+                cllr = bob.measure.calibration.cllr(input_scores[1][0],
+                                                    input_scores[1][1])
                 min_cllr = bob.measure.calibration.min_cllr(
-                    eval_score[0], eval_score[1]
+                    input_scores[1][0], input_scores[1][1]
                 )
                 eval_cllr_str = "%.1f%%" % cllr
                 eval_min_cllr_str = "%.1f%%" % min_cllr
@@ -196,9 +194,7 @@ class Metrics(measure_figure.Metrics):
                     tabulate(raws, headers, self._tablefmt), file=self.log_file
                 )
         else:
-            super(Metrics, self).compute(
-                idx, dev_score, dev_file, eval_score, eval_file
-            )
+            super(Metrics, self).compute(idx, input_scores, input_names)
 
 class Hist(measure_figure.Hist):
     ''' Histograms for biometric scores '''
