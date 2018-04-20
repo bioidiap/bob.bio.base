@@ -148,7 +148,7 @@ def det(ctx, scores, evaluation, **kargs):
     process.run()
 
 @click.command()
-@common_options.scores_argument(min_arg=2, nargs=-1)
+@common_options.scores_argument(min_arg=1, force_eval=True, nargs=-1)
 @common_options.output_plot_file_option(default_out='epc.pdf')
 @common_options.titles_option()
 @common_options.points_curve_option()
