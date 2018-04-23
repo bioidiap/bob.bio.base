@@ -202,8 +202,8 @@ class Hist(measure_figure.Hist):
     def _setup_hist(self, neg, pos):
         self._title_base = 'Bio scores'
         self._density_hist(
-            pos, label='Genuines', alpha=0.9, color='C2', **self._kwargs
+            pos[0], label='Genuines', alpha=0.9, color='C2', **self._kwargs
         )
         self._density_hist(
-            neg, label='Zero-effort impostors', alpha=0.8, color='C0', **self._kwargs
+            neg[0], label='Zero-effort impostors', alpha=0.8, color='C0', **self._kwargs
         )
