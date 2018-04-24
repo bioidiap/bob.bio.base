@@ -293,8 +293,8 @@ def split(filename, ncolumns=None, sort=False):
   """Loads the scores from the given score file and splits them into positives
   and negatives.
   Depending on the score file format, it calls see
-  :py:func:`bob.measure.load.split_four_column` and
-  :py:func:`bob.measure.load.split_five_column` for details.
+  :py:func:`bob.bio.base.score.load.split_four_column` and
+  :py:func:`bob.bio.base.score.load.split_five_column` for details.
 
   Parameters
   ----------
