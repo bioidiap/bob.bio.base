@@ -191,14 +191,14 @@ def test_hist():
     with runner.isolated_filesystem():
         result = runner.invoke(commands.hist, ['--criterion', 'hter', '--output',
                                                'HISTO.pdf', '-b',
-                                               30,'--no-evaluation', dev1, dev2])
+                                               '30,auto','--no-evaluation', dev1, dev2])
         if result.output:
             click.echo(result.output)
         assert result.exit_code == 0, (result.exit_code, result.output)
 
     with runner.isolated_filesystem():
         result = runner.invoke(commands.hist, ['--criterion', 'eer', '--output',
-                                               'HISTO.pdf', '-b', 30,
+                                               'HISTO.pdf', '-b', '30',
                                                '-ts', 'A,B', dev1, test1, dev2,
                                                test2])
         if result.output:
