@@ -4,11 +4,11 @@ import pkg_resources  # to make sure bob gets imported properly
 import os
 import logging
 import numpy
-import random as rd
+import random
 import click
 from click.types import FLOAT
 from bob.extension.scripts.click_helper import verbosity_option
-from bob.core import random
+import bob.core
 from bob.io.base import create_directories_safe
 
 logger = logging.getLogger(__name__)
@@ -37,10 +37,10 @@ def gen_score_distr(mean_neg, mean_pos, sigma_neg=10, sigma_pos=10):
     pos_scores : :any:`list`
         Positive scores
     """
-    mt = random.mt19937()  # initialise the random number generator
+    mt = bob.core.random.mt19937()  # initialise the random number generator
 
-    neg_generator = random.normal(numpy.float32, mean_neg, sigma_neg)
-    pos_generator = random.normal(numpy.float32, mean_pos, sigma_pos)
+    neg_generator = bob.core.random.normal(numpy.float32, mean_neg, sigma_neg)
+    pos_generator = bob.core.random.normal(numpy.float32, mean_pos, sigma_pos)
 
     neg_scores = [neg_generator(mt) for _ in range(NUM_NEG)]
     pos_scores = [pos_generator(mt) for _ in range(NUM_NEG)]
@@ -67,12 +67,12 @@ def write_scores_to_file(pos, neg, filename, n_sys=1, five_col=False):
     s_names = ['s%d' % i for i in range(n_sys)]
     with open(filename, 'wt') as f:
         for i in pos:
-            s_name = rd.choice(s_names)
-            s_five = ' ' if not five_col else ' d' + rd.choice(s_names) + ' '
+            s_name = random.choice(s_names)
+            s_five = ' ' if not five_col else ' d' + random.choice(s_names) + ' '
             f.write('x%sx %s %f\n' % (s_five, s_name, i))
         for i in neg:
-            s_name = rd.choice(s_names)
-            s_five = ' ' if not five_col else ' d' + rd.choice(s_names) + ' '
+            s_name = random.choice(s_names)
+            s_five = ' ' if not five_col else ' d' + random.choice(s_names) + ' '
             f.write('x%sy %s %f\n' % (s_five, s_name, i))
 
 @click.command()
