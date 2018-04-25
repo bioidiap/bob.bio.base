@@ -302,7 +302,7 @@ def hist(ctx, scores, evaluation, **kwargs):
         $ bob bio hist dev-scores1 eval-scores1 dev-scores2
         eval-scores2
 
-        $ bob bio hist --criter --show-dev hter dev-scores1 eval-scores1
+        $ bob bio hist --criterion --show-dev hter dev-scores1 eval-scores1
     """
     process = bio_figure.Hist(ctx, scores, evaluation, load.split)
     process.run()

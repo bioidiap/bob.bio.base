@@ -45,7 +45,7 @@ def test_metrics():
     with runner.isolated_filesystem():
         result = runner.invoke(
             commands.metrics, ['-l', 'tmp', '-T', '0.1',
-                               '--criter', 'mindcf', '--cost', 0.9,
+                               '--criterion', 'mindcf', '--cost', 0.9,
                                dev1, test2]
         )
         assert result.exit_code == 0, (result.exit_code, result.output)
@@ -53,34 +53,34 @@ def test_metrics():
     with runner.isolated_filesystem():
         result = runner.invoke(
             commands.metrics, ['--no-evaluation', '-l', 'tmp',
-                               '--criter', 'mindcf', '--cost', 0.9,
+                               '--criterion', 'mindcf', '--cost', 0.9,
                                dev1]
         )
         assert result.exit_code == 0, (result.exit_code, result.output)
 
     with runner.isolated_filesystem():
         result = runner.invoke(
-            commands.metrics, ['--criter', 'cllr', dev1, test2]
+            commands.metrics, ['--criterion', 'cllr', dev1, test2]
         )
         assert result.exit_code == 0, (result.exit_code, result.output)
 
     with runner.isolated_filesystem():
         result = runner.invoke(
-            commands.metrics, ['--no-evaluation', '-l', 'tmp', '--criter', 'cllr',
+            commands.metrics, ['--no-evaluation', '-l', 'tmp', '--criterion', 'cllr',
                                '--cost', 0.9, dev1]
         )
         assert result.exit_code == 0, (result.exit_code, result.output)
 
     with runner.isolated_filesystem():
         result = runner.invoke(
-            commands.metrics, ['--criter', 'rr', '-T',
+            commands.metrics, ['--criterion', 'rr', '-T',
                                '0.1', dev1, test2]
         )
         assert result.exit_code == 0, (result.exit_code, result.output)
 
     with runner.isolated_filesystem():
         result = runner.invoke(
-            commands.metrics, ['--no-evaluation', '-l', 'tmp', '--criter', 'rr',
+            commands.metrics, ['--no-evaluation', '-l', 'tmp', '--criterion', 'rr',
                                dev1, dev2]
         )
         assert result.exit_code == 0, (result.exit_code, result.output)
@@ -189,7 +189,7 @@ def test_hist():
         assert result.exit_code == 0, (result.exit_code, result.output)
 
     with runner.isolated_filesystem():
-        result = runner.invoke(commands.hist, ['--criter', 'hter', '--output',
+        result = runner.invoke(commands.hist, ['--criterion', 'hter', '--output',
                                                'HISTO.pdf', '-b',
                                                30,'--no-evaluation', dev1, dev2])
         if result.output:
@@ -197,7 +197,7 @@ def test_hist():
         assert result.exit_code == 0, (result.exit_code, result.output)
 
     with runner.isolated_filesystem():
-        result = runner.invoke(commands.hist, ['--criter', 'eer', '--output',
+        result = runner.invoke(commands.hist, ['--criterion', 'eer', '--output',
                                                'HISTO.pdf', '-b', 30,
                                                '-ts', 'A,B', dev1, test1, dev2,
                                                test2])
