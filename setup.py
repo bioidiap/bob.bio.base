@@ -144,7 +144,7 @@ setup(
         'epc               = bob.bio.base.script.commands:epc',
         'hist              = bob.bio.base.script.commands:hist',
         'cmc               = bob.bio.base.script.commands:cmc',
-        'dic               = bob.bio.base.script.commands:dic',
+        'dir               = bob.bio.base.script.commands:dir',
         'gen               = bob.bio.base.script.gen:gen',
         'evaluate          = bob.bio.base.script.commands:evaluate',
       ],

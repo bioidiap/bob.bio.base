@@ -65,19 +65,19 @@ class Cmc(measure_figure.PlotBase):
             )
             self._max_R = max(rank, self._max_R)
 
-class Dic(measure_figure.PlotBase):
-    ''' Handles the plotting of DIC'''
+class Dir(measure_figure.PlotBase):
+    ''' Handles the plotting of DIR curve'''
     def __init__(self, ctx, scores, evaluation, func_load):
-        super(Dic, self).__init__(ctx, scores, evaluation, func_load)
+        super(Dir, self).__init__(ctx, scores, evaluation, func_load)
         self._semilogx = True if 'semilogx' not in ctx.meta else\
                 ctx.meta['semilogx']
         self._rank = 1 if 'rank' not in ctx.meta else ctx.meta['rank']
-        self._title = self._title or 'DIC'
+        self._title = self._title or 'DIR curve'
         self._x_label = self._title or 'FAR'
         self._y_label = self._title or 'DIR'
 
     def compute(self, idx, input_scores, input_names):
-        ''' Plot DIC for dev and eval data using
+        ''' Plot DIR for dev and eval data using
         :py:func:`bob.measure.plot.detection_identification_curve`'''
         mpl.figure(1)
         if self._eval:

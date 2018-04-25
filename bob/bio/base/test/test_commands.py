@@ -224,19 +224,19 @@ def test_cmc():
             click.echo(result.output)
         assert result.exit_code == 0, (result.exit_code, result.output)
 
-def test_dic():
+def test_dir():
     dev1 = pkg_resources.resource_filename('bob.bio.base.test',
                                            'data/scores-nonorm-openset-dev')
     runner = CliRunner()
     with runner.isolated_filesystem():
-        result = runner.invoke(commands.dic, ['--no-evaluation', dev1, '--rank', 2])
+        result = runner.invoke(commands.dir, ['--no-evaluation', dev1, '--rank', 2])
         if result.output:
             click.echo(result.output)
         assert result.exit_code == 0, (result.exit_code, result.output)
     test1 = pkg_resources.resource_filename('bob.bio.base.test',
                                             'data/scores-nonorm-openset-dev')
     with runner.isolated_filesystem():
-        result = runner.invoke(commands.dic, ['--output', 'test.pdf',
+        result = runner.invoke(commands.dir, ['--output', 'test.pdf',
                                               '--titles', 'A,B',
                                               dev1, test1, dev1, test1])
         if result.output:

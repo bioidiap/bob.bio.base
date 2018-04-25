@@ -18,7 +18,7 @@ def rank_option(**kwargs):
             return value
         return click.option(
             '-rk', '--rank', type=click.INT, default=1,
-            help='Rank for DIC',
+            help='Provide rank for the command',
             callback=callback, show_default=True, **kwargs)(func)
     return custom_rank_option
 
@@ -231,7 +231,7 @@ def cmc(ctx, scores, evaluation, **kargs):
 @common_options.figsize_option()
 @verbosity_option()
 @click.pass_context
-def dic(ctx, scores, evaluation, **kargs):
+def dir(ctx, scores, evaluation, **kargs):
     """Plots the Detection & Identification curve over the FAR
 
     This curve is designed to be used in an open set identification protocol, and
@@ -255,14 +255,14 @@ def dic(ctx, scores, evaluation, **kargs):
     :py:func:`bob.bio.base.score.load.five_column` for details.
 
     Examples:
-        $ bob bio dic dev-scores
+        $ bob bio dir dev-scores
 
-        $ bob bio dic dev-scores1 eval-scores1 dev-scores2
+        $ bob bio dir dev-scores1 eval-scores1 dev-scores2
         eval-scores2
 
-        $ bob bio dic -o my_roc.pdf dev-scores1 eval-scores1
+        $ bob bio dir -o my_roc.pdf dev-scores1 eval-scores1
     """
-    process = bio_figure.Dic(ctx, scores, evaluation, load.cmc)
+    process = bio_figure.Dir(ctx, scores, evaluation, load.cmc)
     process.run()
 
 @click.command()

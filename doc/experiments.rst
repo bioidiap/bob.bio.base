@@ -227,7 +227,7 @@ file containing the plots. Available plots are:
 
 *  ``cmc`` (cumulative match characteristic curve)
 
-*  ``dic`` (detection identification curve)
+*  ``dir`` (detection identification rate)
 
 Use the ``--help`` option on the above-cited commands to find-out about more
 options.
@@ -243,7 +243,7 @@ For example, to generate a CMC curve from development and evaluation datasets:
 where `my_cmc.pdf` will contain CMC curves for the two experiments.
 
 .. note::
-    By default, ``det``, ``roc``, ``cmc`` and ``dic`` plot development and
+    By default, ``det``, ``roc``, ``cmc`` and ``dir`` plot development and
     evaluation curves on
     different plots. You can force gather everything in the same plot using
     ``--no-split`` option.
@@ -263,6 +263,24 @@ experiment. For example:
 
 will output metrics and plots for the two experiments (dev and eval pairs) in
 `my_metrics.txt` and `my_plots.pdf`, respectively.
+
+Evaluate script (deprecated)
+============================
+
+After the experiment has finished successfully, one or more text file containing all the scores are written.
+To evaluate the experiment, you can use the generic ``evaluate.py`` script, which has properties for all prevalent evaluation types, such as CMC, DIR, ROC and DET plots, as well as computing recognition rates, EER/HTER, Cllr and minDCF.
+Additionally, a combination of different algorithms can be plotted into the same files.
+Just specify all the score files that you want to evaluate using the ``--dev-files`` option, and possible legends for the plots (in the same order) using the ``--legends`` option, and the according plots will be generated.
+For example, to create a ROC curve for the experiment above, use:
+
+.. code-block:: sh
+
+   $ evaluate.py --dev-files results/pca-experiment/male/nonorm/scores-dev --legend MOBIO --roc MOBIO_MALE_ROC.pdf -vv
+
+
+Please note that there exists another file called ``Experiment.info`` inside the result directory.
+This file is a pure text file and contains the complete configuration of the experiment.
+With this configuration it is possible to inspect all default parameters of the algorithms, and even to re-run the exact same experiment.
 
 .. _running_in_parallel:
 

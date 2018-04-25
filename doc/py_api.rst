@@ -113,7 +113,7 @@ Plotting
 --------
 .. autosummary::
    bob.bio.base.script.figure.Cmc
-   bob.bio.base.script.figure.Dic
+   bob.bio.base.script.figure.Dir
    bob.bio.base.script.figure.Hist
 
 OpenBR conversions
