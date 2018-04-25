@@ -200,7 +200,7 @@ class Hist(measure_figure.Hist):
     ''' Histograms for biometric scores '''
 
     def _setup_hist(self, neg, pos):
-        self._title_base = 'Bio scores'
+        self._title_base = 'Biometric scores'
         self._density_hist(
             pos[0], label='Genuines', alpha=0.9, color='C2'
         )
