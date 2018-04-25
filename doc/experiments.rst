@@ -225,7 +225,7 @@ file containing the plots. Available plots are:
 
 *  ``hist`` (histograms of scores with threshold line)
 
-*  ``cmc`` (cumulative match characteristic curve)
+*  ``cmc`` (cumulative match characteristic)
 
 *  ``dir`` (detection identification rate)
 
