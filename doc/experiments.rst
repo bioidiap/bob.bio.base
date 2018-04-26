@@ -227,7 +227,7 @@ file containing the plots. Available plots are:
 
 *  ``cmc`` (cumulative match characteristic)
 
-*  ``dir`` (detection identification rate)
+*  ``dir`` (detection & identification rate)
 
 Use the ``--help`` option on the above-cited commands to find-out about more
 options.

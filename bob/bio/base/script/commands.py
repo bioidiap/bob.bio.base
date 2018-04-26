@@ -232,7 +232,7 @@ def cmc(ctx, scores, evaluation, **kargs):
 @verbosity_option()
 @click.pass_context
 def dir(ctx, scores, evaluation, **kargs):
-    """Plots the Detection & Identification curve over the FAR
+    """Plots the Detection & Identification Rate curve over the FAR
 
     This curve is designed to be used in an open set identification protocol, and
     defined in Chapter 14.1 of [LiJain2005]_.  It requires to have at least one
