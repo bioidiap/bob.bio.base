@@ -59,7 +59,7 @@ def metrics(ctx, scores, evaluation, **kargs):
 
         $ bob bio metrics {dev,eval}-scores1 {dev,eval}-scores2
     """
-    if 'criter' in ctx.meta and ctx.meta['criter'] == 'rr':
+    if 'criterion' in ctx.meta and ctx.meta['criterion'] == 'rr':
         process = bio_figure.Metrics(ctx, scores, evaluation, load.cmc)
     else:
         process = bio_figure.Metrics(ctx, scores, evaluation, load.split)
@@ -365,25 +365,25 @@ def evaluate(ctx, scores, evaluation, **kwargs):
     # first time erase if existing file
     ctx.meta['open_mode'] = 'w'
     click.echo("Computing metrics with EER%s..." % log_str)
-    ctx.meta['criter'] = 'eer'  # no criterion passed to evaluate
+    ctx.meta['criterion'] = 'eer'  # no criterion passed to evaluate
     ctx.invoke(metrics, scores=scores, evaluation=evaluation)
     # other times, appends the content
     ctx.meta['open_mode'] = 'a'
     click.echo("Computing metrics with HTER%s..." % log_str)
-    ctx.meta['criter'] = 'hter'  # no criterion passed in evaluate
+    ctx.meta['criterion'] = 'hter'  # no criterion passed in evaluate
     ctx.invoke(metrics, scores=scores, evaluation=evaluation)
     if 'far_value' in ctx.meta and ctx.meta['far_value'] is not None:
         click.echo("Computing metrics with FAR=%f%s..." %\
         (ctx.meta['far_value'], log_str))
-        ctx.meta['criter'] = 'far'  # no criterio % n passed in evaluate
+        ctx.meta['criterion'] = 'far'  # no criterio % n passed in evaluate
         ctx.invoke(metrics, scores=scores, evaluation=evaluation)
 
     click.echo("Computing minDCF%s..." % log_str)
-    ctx.meta['criter'] = 'mindcf'  # no criterion passed in evaluate
+    ctx.meta['criterion'] = 'mindcf'  # no criterion passed in evaluate
     ctx.invoke(metrics, scores=scores, evaluation=evaluation)
 
     click.echo("Computing  Cllr and minCllr%s..." % log_str)
-    ctx.meta['criter'] = 'cllr'  # no criterion passed in evaluate
+    ctx.meta['criterion'] = 'cllr'  # no criterion passed in evaluate
     ctx.invoke(metrics, scores=scores, evaluation=evaluation)
 
     # avoid closing pdf file before all figures are plotted
@@ -407,7 +407,7 @@ def evaluate(ctx, scores, evaluation, **kwargs):
     # the last one closes the file
     ctx.meta['closef'] = True
     click.echo("Generating score histograms in %s..." % ctx.meta['output'])
-    ctx.meta['criter'] = 'hter'  # no criterion passed in evaluate
+    ctx.meta['criterion'] = 'hter'  # no criterion passed in evaluate
     ctx.forward(hist)
 
     click.echo("Evaluate successfully completed!")

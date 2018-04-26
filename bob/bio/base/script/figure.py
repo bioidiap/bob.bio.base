@@ -107,7 +107,7 @@ class Dir(measure_figure.PlotBase):
 class Metrics(measure_figure.Metrics):
     ''' Compute metrics from score files'''
     def init_process(self):
-        if self._criter == 'rr':
+        if self._criterion == 'rr':
             self._thres = [None] * self.n_systems if self._thres is None else \
                     self._thres
 
@@ -117,7 +117,7 @@ class Metrics(measure_figure.Metrics):
         headers = ['' or title, 'Development %s' % input_names[0]]
         if self._eval and input_scores[1] is not None:
             headers.append('eval % s' % input_names[1])
-        if self._criter == 'rr':
+        if self._criterion == 'rr':
             rr = bob.measure.recognition_rate(input_scores[0], self._thres[idx])
             dev_rr = "%.1f%%" % (100 * rr)
             raws = [['RR', dev_rr]]
@@ -128,7 +128,7 @@ class Metrics(measure_figure.Metrics):
             click.echo(
                 tabulate(raws, headers, self._tablefmt), file=self.log_file
             )
-        elif self._criter == 'mindcf':
+        elif self._criterion == 'mindcf':
             if 'cost' in self._ctx.meta:
                 cost = 0.99 if 'cost' not in self._ctx.meta else\
                         self._ctx.meta['cost']
@@ -170,7 +170,7 @@ class Metrics(measure_figure.Metrics):
             click.echo(
                 tabulate(raws, headers, self._tablefmt), file=self.log_file
             )
-        elif self._criter == 'cllr':
+        elif self._criterion == 'cllr':
             cllr = bob.measure.calibration.cllr(input_scores[0][0],
                                                 input_scores[0][1])
             min_cllr = bob.measure.calibration.min_cllr(
