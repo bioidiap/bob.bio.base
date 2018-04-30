@@ -17,8 +17,8 @@ packages that you want to use, use conda_ to install them:
 
 .. code-block:: sh
 
-    $ conda search bob.bio  # searching
-    $ conda search bob.db  # searching
+    $ conda search "bob.bio.*"  # searching
+    $ conda search "bob.db.*"  # searching
     $ conda install bob.bio.base bob.bio.<bioname> bob.db.<dbname>
 
 where you would replace ``<bioname>`` and ``<dbname>`` with the name of
