@@ -113,7 +113,7 @@ class Metrics(measure_figure.Metrics):
 
     def compute(self, idx, input_scores, input_names):
         ''' Compute metrics for the given criteria'''
-        title = self._titles[idx] if self._titles is not None else None
+        title = self._legends[idx] if self._legends is not None else None
         headers = ['' or title, 'Development %s' % input_names[0]]
         if self._eval and input_scores[1] is not None:
             headers.append('eval % s' % input_names[1])
