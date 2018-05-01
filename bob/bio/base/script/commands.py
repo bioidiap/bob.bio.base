@@ -67,6 +67,7 @@ def metrics(ctx, scores, evaluation, **kargs):
 
 @click.command()
 @common_options.scores_argument(nargs=-1)
+@common_options.title_option()
 @common_options.legends_option()
 @common_options.sep_dev_eval_option()
 @common_options.output_plot_file_option(default_out='roc.pdf')
@@ -111,6 +112,7 @@ def roc(ctx, scores, evaluation, **kargs):
 
 @click.command()
 @common_options.scores_argument(nargs=-1)
+@common_options.title_option()
 @common_options.output_plot_file_option(default_out='det.pdf')
 @common_options.legends_option()
 @common_options.x_label_option()
@@ -153,6 +155,7 @@ def det(ctx, scores, evaluation, **kargs):
 
 @click.command()
 @common_options.scores_argument(min_arg=1, force_eval=True, nargs=-1)
+@common_options.title_option()
 @common_options.output_plot_file_option(default_out='epc.pdf')
 @common_options.legends_option()
 @common_options.points_curve_option()
@@ -183,6 +186,7 @@ def epc(ctx, scores, **kargs):
 
 @click.command()
 @common_options.scores_argument(nargs=-1)
+@common_options.title_option()
 @common_options.legends_option()
 @common_options.sep_dev_eval_option()
 @common_options.output_plot_file_option(default_out='cmc.pdf')
@@ -224,6 +228,7 @@ def cmc(ctx, scores, evaluation, **kargs):
 
 @click.command()
 @common_options.scores_argument(nargs=-1)
+@common_options.title_option()
 @common_options.legends_option()
 @common_options.sep_dev_eval_option()
 @common_options.output_plot_file_option(default_out='cmc.pdf')
