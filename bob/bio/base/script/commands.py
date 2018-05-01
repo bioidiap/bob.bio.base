@@ -80,7 +80,9 @@ def metrics(ctx, scores, evaluation, **kargs):
 @common_options.y_label_option()
 @common_options.const_layout_option()
 @common_options.style_option()
+@common_options.linestyles_option()
 @common_options.figsize_option()
+@common_options.min_far_option()
 @verbosity_option()
 @click.pass_context
 def roc(ctx, scores, evaluation, **kargs):
@@ -120,8 +122,10 @@ def roc(ctx, scores, evaluation, **kargs):
 @common_options.points_curve_option()
 @common_options.const_layout_option()
 @common_options.style_option()
+@common_options.linestyles_option()
 @common_options.figsize_option()
 @common_options.lines_at_option()
+@common_options.min_far_option()
 @verbosity_option()
 @click.pass_context
 def det(ctx, scores, evaluation, **kargs):
@@ -154,6 +158,7 @@ def det(ctx, scores, evaluation, **kargs):
 @common_options.points_curve_option()
 @common_options.const_layout_option()
 @common_options.style_option()
+@common_options.linestyles_option()
 @common_options.figsize_option()
 @verbosity_option()
 @click.pass_context
@@ -187,6 +192,7 @@ def epc(ctx, scores, **kargs):
 @common_options.x_rotation_option()
 @common_options.const_layout_option()
 @common_options.style_option()
+@common_options.linestyles_option()
 @common_options.figsize_option()
 @verbosity_option()
 @click.pass_context
@@ -228,6 +234,7 @@ def cmc(ctx, scores, evaluation, **kargs):
 @rank_option()
 @common_options.const_layout_option()
 @common_options.style_option()
+@common_options.linestyles_option()
 @common_options.figsize_option()
 @verbosity_option()
 @click.pass_context

@@ -2,7 +2,7 @@
 
 import click
 import matplotlib.pyplot as mpl
-import  bob.measure.script.figure as measure_figure
+import bob.measure.script.figure as measure_figure
 import bob.measure
 from bob.measure import plot
 from tabulate import tabulate
@@ -39,7 +39,7 @@ class Cmc(measure_figure.PlotBase):
         :py:func:`bob.measure.plot.cmc`'''
         mpl.figure(1)
         if self._eval:
-            linestyle = '-' if not self._split else measure_figure.LINESTYLES[idx % 14]
+            linestyle = '-' if not self._split else self._linestyles[idx]
             rank = plot.cmc(
                 input_scores[0], logx=self._semilogx,
                 color=self._colors[idx], linestyle=linestyle,
@@ -49,7 +49,7 @@ class Cmc(measure_figure.PlotBase):
             linestyle = '--'
             if self._split:
                 mpl.figure(2)
-                linestyle = measure_figure.LINESTYLES[idx % 14]
+                linestyle = self._linestyles[idx]
 
             rank = plot.cmc(
                 input_scores[1], logx=self._semilogx,
@@ -60,7 +60,7 @@ class Cmc(measure_figure.PlotBase):
         else:
             rank = plot.cmc(
                 input_scores[0], logx=self._semilogx,
-                color=self._colors[idx], linestyle=measure_figure.LINESTYLES[idx % 14],
+                color=self._colors[idx], linestyle=self._linestyles[idx],
                 label=self._label('development', input_names[0], idx)
             )
             self._max_R = max(rank, self._max_R)
@@ -81,7 +81,7 @@ class Dir(measure_figure.PlotBase):
         :py:func:`bob.measure.plot.detection_identification_curve`'''
         mpl.figure(1)
         if self._eval:
-            linestyle = '-' if not self._split else measure_figure.LINESTYLES[idx % 14]
+            linestyle = '-' if not self._split else self._linestyles[idx]
             plot.detection_identification_curve(
                 input_scores[0], rank=self._rank, logx=self._semilogx,
                 color=self._colors[idx], linestyle=linestyle,
@@ -90,7 +90,7 @@ class Dir(measure_figure.PlotBase):
             linestyle = '--'
             if self._split:
                 mpl.figure(2)
-                linestyle = measure_figure.LINESTYLES[idx % 14]
+                linestyle = self._linestyles[idx]
 
             plot.detection_identification_curve(
                 input_scores[1], rank=self._rank, logx=self._semilogx,
@@ -100,7 +100,7 @@ class Dir(measure_figure.PlotBase):
         else:
             plot.detection_identification_curve(
                 input_scores[0], rank=self._rank, logx=self._semilogx,
-                color=self._colors[idx], linestyle=measure_figure.LINESTYLES[idx % 14],
+                color=self._colors[idx], linestyle=self._linestyles[idx],
                 label=self._label('development', input_names[0], idx)
             )
 
