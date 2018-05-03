@@ -14,8 +14,6 @@
 .. _nist: http://www.nist.gov/itl/iad/ig/focs.cfm
 .. _pypi: http://pypi.python.org
 .. _sge: http://wiki.idiap.ch/linux/SunGridEngine
-.. _csu face recognition resources: http://www.cs.colostate.edu/facerec
-.. _xfacereclib.extension.csu: http://pypi.python.org/pypi/xfacereclib.extension.CSU
 .. _virtualbox: https://www.virtualbox.org
 .. _hdf5: http://www.hdfgroup.org/HDF5
 .. _mailing list: https://www.idiap.ch/software/bob/discuss

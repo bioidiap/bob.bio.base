@@ -2,7 +2,6 @@ python
 bob.bio.face
 bob.bio.gmm
 bob.bio.video
-bob.bio.csu
 bob.bio.spear
 bob.bio.vein
 bob.learn.linear
