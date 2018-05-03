@@ -270,8 +270,7 @@ each experiment. For example:
 
 .. code-block:: sh
 
-    $bob bio evaluate -v -l 'my_metrics.txt' -o 'my_plots.pdf' {sys1, sys2}/
-    {eval,dev}
+    $bob bio evaluate -v -l 'my_metrics.txt' -o 'my_plots.pdf' {sys1,sys2}/{dev,eval}
 
 will output metrics and plots for the two experiments (dev and eval pairs) in
 `my_metrics.txt` and `my_plots.pdf`, respectively.
