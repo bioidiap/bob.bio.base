@@ -32,7 +32,7 @@ def test_metrics():
 
     with runner.isolated_filesystem():
         result = runner.invoke(
-            commands.metrics, ['-l', 'tmp', '-Z', 'A,B',
+            commands.metrics, ['-l', 'tmp', '-lg', 'A,B',
                                dev1, test1, dev2, test2]
         )
         assert result.exit_code == 0, (result.exit_code, result.output)
@@ -199,7 +199,7 @@ def test_hist():
     with runner.isolated_filesystem():
         result = runner.invoke(commands.hist, ['--criterion', 'eer', '--output',
                                                'HISTO.pdf', '-b', '30',
-                                               '-Z', 'A,B', dev1, test1, dev2,
+                                               '-lg', 'A,B', dev1, test1, dev2,
                                                test2])
         if result.output:
             click.echo(result.output)
