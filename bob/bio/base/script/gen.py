@@ -1,6 +1,5 @@
 """Generate random scores.
 """
-import pkg_resources  # to make sure bob gets imported properly
 import os
 import logging
 import numpy
@@ -15,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 NUM_NEG = 5000
 NUM_POS = 5000
+
 
 def gen_score_distr(mean_neg, mean_pos, sigma_neg=10, sigma_pos=10):
     """Generate scores from normal distributions
@@ -47,15 +47,16 @@ def gen_score_distr(mean_neg, mean_pos, sigma_neg=10, sigma_pos=10):
 
     return neg_scores, pos_scores
 
-def write_scores_to_file(pos, neg, filename, n_sys=1, five_col=False):
+
+def write_scores_to_file(neg, pos, filename, n_sys=1, five_col=False):
     """ Writes score distributions
 
     Parameters
     ----------
-    pos : :py:class:`numpy.ndarray`
-        Scores for positive samples.
     neg : :py:class:`numpy.ndarray`
         Scores for negative samples.
+    pos : :py:class:`numpy.ndarray`
+        Scores for positive samples.
     filename : str
         The path to write the score to.
     n_sys : int
@@ -68,12 +69,15 @@ def write_scores_to_file(pos, neg, filename, n_sys=1, five_col=False):
     with open(filename, 'wt') as f:
         for i in pos:
             s_name = random.choice(s_names)
-            s_five = ' ' if not five_col else ' d' + random.choice(s_names) + ' '
+            s_five = ' ' if not five_col else ' d' + \
+                random.choice(s_names) + ' '
             f.write('x%sx %s %f\n' % (s_five, s_name, i))
         for i in neg:
             s_name = random.choice(s_names)
-            s_five = ' ' if not five_col else ' d' + random.choice(s_names) + ' '
+            s_five = ' ' if not five_col else ' d' + \
+                random.choice(s_names) + ' '
             f.write('x%sy %s %f\n' % (s_five, s_name, i))
+
 
 @click.command()
 @click.argument('outdir')
@@ -84,7 +88,7 @@ def write_scores_to_file(pos, neg, filename, n_sys=1, five_col=False):
 @verbosity_option()
 def gen(outdir, mean_match, mean_non_match, n_sys, five_col):
     """Generate random scores.
-    Generates random scores in 4col or 5col format. The scores are generated 
+    Generates random scores in 4col or 5col format. The scores are generated
     using Gaussian distribution whose mean is an input
     parameter. The generated scores can be used as hypothetical datasets.
     """
