@@ -27,7 +27,7 @@ def rank_option(**kwargs):
 @common_options.table_option()
 @common_options.eval_option()
 @common_options.output_log_metric_option()
-@common_options.criterion_option(['eer', 'hter', 'far', 'mindcf', 'cllr', 'rr'])
+@common_options.criterion_option(['eer', 'min-hter', 'far', 'mindcf', 'cllr', 'rr'])
 @common_options.cost_option()
 @common_options.thresholds_option()
 @common_options.far_option()
@@ -37,7 +37,7 @@ def rank_option(**kwargs):
 @click.pass_context
 def metrics(ctx, scores, evaluation, **kargs):
     """Prints a single output line that contains all info for a given
-    criterion (eer,  hter, far, mindcf, cllr, rr).
+    criterion (eer, min-hter, far, mindcf, cllr, rr).
 
     You need to provide one or more development score file(s) for each experiment.
     You can also provide eval files along with dev files. If only dev-scores
@@ -316,7 +316,7 @@ def hist(ctx, scores, evaluation, **kwargs):
         $ bob bio hist dev-scores1 eval-scores1 dev-scores2
         eval-scores2
 
-        $ bob bio hist --criterion --show-dev hter dev-scores1 eval-scores1
+        $ bob bio hist --criterion --show-dev min-hter dev-scores1 eval-scores1
     """
     process = bio_figure.Hist(ctx, scores, evaluation, load.split)
     process.run()
@@ -383,8 +383,8 @@ def evaluate(ctx, scores, evaluation, **kwargs):
     ctx.invoke(metrics, scores=scores, evaluation=evaluation)
     # other times, appends the content
     ctx.meta['open_mode'] = 'a'
-    click.echo("Computing metrics with HTER%s..." % log_str)
-    ctx.meta['criterion'] = 'hter'  # no criterion passed in evaluate
+    click.echo("Computing metrics with min-HTER%s..." % log_str)
+    ctx.meta['criterion'] = 'min-hter'  # no criterion passed in evaluate
     ctx.invoke(metrics, scores=scores, evaluation=evaluation)
     if 'far_value' in ctx.meta and ctx.meta['far_value'] is not None:
         click.echo("Computing metrics with FAR=%f%s..." %\
@@ -421,7 +421,7 @@ def evaluate(ctx, scores, evaluation, **kwargs):
     # the last one closes the file
     ctx.meta['closef'] = True
     click.echo("Generating score histograms in %s..." % ctx.meta['output'])
-    ctx.meta['criterion'] = 'hter'  # no criterion passed in evaluate
+    ctx.meta['criterion'] = 'eer'  # no criterion passed in evaluate
     ctx.forward(hist)
 
     click.echo("Evaluate successfully completed!")

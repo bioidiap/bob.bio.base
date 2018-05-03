@@ -170,9 +170,9 @@ min.HTER) on a development set and apply it on an evaluation set, just do:
 
 .. code-block:: sh
 
-    $ bob bio metrics {dev,test}-4col.txt --legends ExpA --criterion hter
+    $ bob bio metrics {dev,test}-4col.txt --legends ExpA --criterion min-hter
 
-    [Min. criterion: HTER ] Threshold on Development set `ExpA`: -4.830500e-03
+    [Min. criterion: MIN-HTER ] Threshold on Development set `ExpA`: -4.830500e-03
     ======  ======================  =================
     ExpA    Development dev-4col    Eval. test-4col
     ======  ======================  =================
