@@ -98,11 +98,11 @@ Running the experiment is then as simple as:
 .. note::
    Chain loading is possible through configuration files, i.e., variables of each
    config is available during evaluation of the following config file.
-   
+
    This allows us to spread our experiment setup in several configuration files and have a call similar to this::
-   
+
    $ verify.py config_1.py config_2.py config_n.py
-  
+
    For more information see *Chain Loading* in :ref:`bob.extension.config`.
 
 
@@ -114,7 +114,7 @@ By default, you can find them in a sub-directory the ``result`` directory, but y
 
 .. note::
    At Idiap_, the default result directory differs, see ``verify.py --help`` for your directory.
-   
+
 
 .. _bob.bio.base.command_line:
 
@@ -155,12 +155,19 @@ However, to be consistent, throughout this documentation we document the options
 Evaluating Experiments
 ----------------------
 
-After the experiment has finished successfully, one or more text file containing
-all the scores are written. In this section, commands that helps to quickly
-evaluate a set of scores by generating metrics or plots are presented here.
-The scripts take as input either a 4-column or 5-column data format as specified
-in the documentation of :py:func:`bob.bio.base.score.load.four_column` or 
+After the experiment has finished successfully, one or more text file
+containing all the scores are written. In this section, commands that helps to
+quickly evaluate a set of scores by generating metrics or plots are presented
+here. The scripts take as input either a 4-column or 5-column data format as
+specified in the documentation of
+:py:func:`bob.bio.base.score.load.four_column` or
 :py:func:`bob.bio.base.score.load.five_column`.
+
+Please note that there exists another file called ``Experiment.info`` inside
+the result directory. This file is a pure text file and contains the complete
+configuration of the experiment. With this configuration it is possible to
+inspect all default parameters of the algorithms, and even to re-run the exact
+same experiment.
 
 Metrics
 =======
@@ -213,9 +220,9 @@ For example:
 Plots
 =====
 
-Customizable plotting commands are available in the :py:mod:`bob.bio.base` module.
-They take a list of development and/or evaluation files and generate a single PDF
-file containing the plots. Available plots are:
+Customizable plotting commands are available in the :py:mod:`bob.bio.base`
+module. They take a list of development and/or evaluation files and generate a
+single PDF file containing the plots. Available plots are:
 
 *  ``roc`` (receiver operating characteristic)
 
@@ -237,7 +244,7 @@ For example, to generate a CMC curve from development and evaluation datasets:
 
 .. code-block:: sh
 
-    $bob bio cmc --output 'my_cmc.pdf' dev-1.txt eval-1.txt 
+    $bob bio cmc -v --output 'my_cmc.pdf' dev-1.txt eval-1.txt
     dev-2.txt eval-2.txt
 
 where `my_cmc.pdf` will contain CMC curves for the two experiments.
@@ -248,39 +255,27 @@ where `my_cmc.pdf` will contain CMC curves for the two experiments.
     different plots. You can force gather everything in the same plot using
     ``--no-split`` option.
 
+.. note::
+    The ``--figsize`` and ``--style`` options are two powerful options that can
+    dramatically change the appearance of your figures. Try them! (e.g.
+    ``--figsize 12,10 --style grayscale``)
+
 Evaluate
 ========
 
 A convenient command `evaluate` is provided to generate multiple metrics and
-plots for a list of experiments. It generates two `metrics` outputs with EER, 
-HTER, Cllr, minDCF criteria along with `roc`, `det`, `epc`, `hist` plots for each
-experiment. For example:
+plots for a list of experiments. It generates two `metrics` outputs with EER,
+HTER, Cllr, minDCF criteria along with `roc`, `det`, `epc`, `hist` plots for
+each experiment. For example:
 
 .. code-block:: sh
 
-    $bob bio evaluate -l 'my_metrics.txt' -o 'my_plots.pdf' {sys1, sys2}/
+    $bob bio evaluate -v -l 'my_metrics.txt' -o 'my_plots.pdf' {sys1, sys2}/
     {eval,dev}
 
 will output metrics and plots for the two experiments (dev and eval pairs) in
 `my_metrics.txt` and `my_plots.pdf`, respectively.
 
-Evaluate script (deprecated)
-============================
-
-After the experiment has finished successfully, one or more text file containing all the scores are written.
-To evaluate the experiment, you can use the generic ``evaluate.py`` script, which has properties for all prevalent evaluation types, such as CMC, DIR, ROC and DET plots, as well as computing recognition rates, EER/HTER, Cllr and minDCF.
-Additionally, a combination of different algorithms can be plotted into the same files.
-Just specify all the score files that you want to evaluate using the ``--dev-files`` option, and possible legends for the plots (in the same order) using the ``--legends`` option, and the according plots will be generated.
-For example, to create a ROC curve for the experiment above, use:
-
-.. code-block:: sh
-
-   $ evaluate.py --dev-files results/pca-experiment/male/nonorm/scores-dev --legend MOBIO --roc MOBIO_MALE_ROC.pdf -vv
-
-
-Please note that there exists another file called ``Experiment.info`` inside the result directory.
-This file is a pure text file and contains the complete configuration of the experiment.
-With this configuration it is possible to inspect all default parameters of the algorithms, and even to re-run the exact same experiment.
 
 .. _running_in_parallel:
 
