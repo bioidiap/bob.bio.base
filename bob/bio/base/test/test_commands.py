@@ -104,7 +104,8 @@ def test_roc():
                                             'data/test-5col.txt')
     with runner.isolated_filesystem():
         result = runner.invoke(commands.roc, ['--split', '--output',
-                                              'test.pdf', '-S', '-lc', 9,
+                                              'test.pdf', '-S', '-lc',
+                                              'lower-left',
                                               dev1, test1, dev2, test2])
         if result.output:
             click.echo(result.output)
