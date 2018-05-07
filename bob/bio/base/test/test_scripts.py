@@ -491,67 +491,6 @@ def test_fusion():
 
 
 
-def test_evaluate_closedset():
-  # tests our 'evaluate' script using the reference files
-  test_dir = tempfile.mkdtemp(prefix='bobtest_')
-  reference_files = ('scores-nonorm-dev', 'scores-ztnorm-dev')
-  plots = [os.path.join(test_dir, '%s.pdf')%f for f in ['roc', 'cmc', 'det', 'epc']]
-  parameters = [
-    '--dev-files', reference_files[0], reference_files[1],
-    '--eval-files', reference_files[0], reference_files[1],
-    '--directory', data_dir,  # will not be ignored since reference files are relative
-    '--legends', 'no norm', 'ZT norm',
-    '--criterion', 'HTER',
-    '--roc', plots[0],
-    '--cmc', plots[1],
-    '--det', plots[2],
-    '--epc', plots[3],
-    '--rr',
-    '--thresholds', '5000', '0',
-    '--min-far-value', '1e-6',
-    '--far-line-at', '1e-5',
-    '-v',
-  ]
-
-  # execute the script
-  from bob.bio.base.script.evaluate import main
-  try:
-    main(parameters)
-    for i in range(4):
-      assert os.path.exists(plots[i])
-      os.remove(plots[i])
-  finally:
-    if os.path.exists(test_dir):
-      shutil.rmtree(test_dir)
-
-def test_evaluate_openset():
-  # tests our 'evaluate' script using the reference files
-  test_dir = tempfile.mkdtemp(prefix='bobtest_')
-  reference_file = os.path.join(data_dir, 'scores-nonorm-openset-dev')
-  plot = os.path.join(test_dir, 'dir.pdf')
-  parameters = [
-    '--dev-files', reference_file,
-    '--eval-files', reference_file,
-    '--directory', "/non/existing/directory", # will be ignored since reference_file is absolute
-    '--legends', 'Test',
-    '--dir', plot,
-    '--min-far-value', '1e-6',
-    '-v',
-  ]
-
-  # execute the script
-  from bob.bio.base.script.evaluate import main
-  try:
-    main(parameters)
-    assert os.path.exists(plot)
-    os.remove(plot)
-  finally:
-    if os.path.exists(test_dir):
-      shutil.rmtree(test_dir)
-
-
-
-
 def test_resources():
   # simply test that the resorces script works
   from bob.bio.base.script.resources import resources, databases

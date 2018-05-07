@@ -86,6 +86,7 @@ def test_metrics():
         assert result.exit_code == 0, (result.exit_code, result.output)
 
 
+
 def test_roc():
     dev1 = pkg_resources.resource_filename('bob.bio.base.test',
                                            'data/dev-4col.txt')
@@ -119,6 +120,22 @@ def test_roc():
             click.echo(result.output)
         assert result.exit_code == 0, (result.exit_code, result.output)
 
+    dev_nonorm = pkg_resources.resource_filename('bob.bio.base.test',
+                                                 'data/scores-nonorm-dev')
+    dev_ztnorm = pkg_resources.resource_filename('bob.bio.base.test',
+                                                 'data/scores-ztnorm-dev')
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.roc, [
+            '--min-far-value', '1e-6',
+            '--lines-at', '1e-5',
+            '-v', '--legends', 'A',
+            dev_nonorm, dev_ztnorm
+        ])
+        if result.output:
+            click.echo(result.output)
+        assert result.exit_code == 0, (result.exit_code, result.output)
+
+
 
 def test_det():
     dev1 = pkg_resources.resource_filename('bob.bio.base.test',
@@ -150,6 +167,23 @@ def test_det():
             click.echo(result.output)
         assert result.exit_code == 0, (result.exit_code, result.output)
 
+
+    dev_nonorm = pkg_resources.resource_filename('bob.bio.base.test',
+                                                 'data/scores-nonorm-dev')
+    dev_ztnorm = pkg_resources.resource_filename('bob.bio.base.test',
+                                                 'data/scores-ztnorm-dev')
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.det, [
+            '--min-far-value', '1e-6',
+            '--lines-at', '1e-5',
+            '-v', '--legends', 'A',
+            dev_nonorm, dev_ztnorm
+        ])
+        if result.output:
+            click.echo(result.output)
+        assert result.exit_code == 0, (result.exit_code, result.output)
+
+
 def test_epc():
     dev1 = pkg_resources.resource_filename('bob.bio.base.test',
                                            'data/dev-4col.txt')
@@ -172,6 +206,22 @@ def test_epc():
         if result.output:
             click.echo(result.output)
         assert result.exit_code == 0, (result.exit_code, result.output)
+
+    dev_nonorm = pkg_resources.resource_filename('bob.bio.base.test',
+                                                 'data/scores-nonorm-dev')
+    dev_ztnorm = pkg_resources.resource_filename('bob.bio.base.test',
+                                                 'data/scores-ztnorm-dev')
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.epc, [
+            '-v', '--legends', 'A',
+            dev_nonorm, dev_ztnorm
+        ])
+        if result.output:
+            click.echo(result.output)
+        assert result.exit_code == 0, (result.exit_code, result.output)
+
+
 
 def test_hist():
     dev1 = pkg_resources.resource_filename('bob.bio.base.test',
@@ -206,6 +256,8 @@ def test_hist():
             click.echo(result.output)
         assert result.exit_code == 0, (result.exit_code, result.output)
 
+
+
 def test_cmc():
     dev1 = pkg_resources.resource_filename('bob.bio.base.test',
                                            'data/scores-cmc-5col.txt')
@@ -225,6 +277,23 @@ def test_cmc():
             click.echo(result.output)
         assert result.exit_code == 0, (result.exit_code, result.output)
 
+    dev_nonorm = pkg_resources.resource_filename('bob.bio.base.test',
+                                                 'data/scores-nonorm-dev')
+    dev_ztnorm = pkg_resources.resource_filename('bob.bio.base.test',
+                                                 'data/scores-ztnorm-dev')
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(commands.cmc, [
+            '-v', '--legends', 'A',
+            dev_nonorm, dev_ztnorm
+        ])
+        if result.output:
+            click.echo(result.output)
+        assert result.exit_code == 0, (result.exit_code, result.output)
+
+
+
+
 def test_dir():
     dev1 = pkg_resources.resource_filename('bob.bio.base.test',
                                            'data/scores-nonorm-openset-dev')
@@ -239,34 +308,8 @@ def test_dir():
     with runner.isolated_filesystem():
         result = runner.invoke(commands.dir, ['--output', 'test.pdf',
                                               '--legends', 'A,B', '-S',
+                                              '--min-far-value', '1e-6',
                                               dev1, test1, dev1, test1])
         if result.output:
             click.echo(result.output)
         assert result.exit_code == 0, (result.exit_code, result.output)
-
-def test_evaluate():
-    dev1 = pkg_resources.resource_filename('bob.bio.base.test',
-                                           'data/dev-4col.txt')
-    dev2 = pkg_resources.resource_filename('bob.bio.base.test',
-                                           'data/dev-5col.txt')
-
-    test1 = pkg_resources.resource_filename('bob.bio.base.test',
-                                            'data/test-4col.txt')
-    test2 = pkg_resources.resource_filename('bob.bio.base.test',
-                                            'data/test-5col.txt')
-    runner = CliRunner()
-    with runner.isolated_filesystem():
-        result = runner.invoke(commands.evaluate, ['-l', 'tmp', '-f', 0.03,
-                                                   '--no-evaluation', dev1, dev2])
-        assert result.exit_code == 0, (result.exit_code, result.output)
-        result = runner.invoke(commands.evaluate, ['--no-evaluation', '-f', 0.02,
-                                                   dev1, dev2])
-        assert result.exit_code == 0, (result.exit_code, result.output)
-
-        result = runner.invoke(commands.evaluate, ['-l', 'tmp', '-f', 0.04,
-                                                   dev1, test1, dev2, test2])
-        assert result.exit_code == 0, (result.exit_code, result.output)
-        result = runner.invoke(commands.evaluate, ['-f', 0.01,
-                                                   dev1, test1, dev2, test2])
-        assert result.exit_code == 0, (result.exit_code, result.output)
-

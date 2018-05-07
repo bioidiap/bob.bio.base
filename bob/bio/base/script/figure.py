@@ -1,5 +1,6 @@
 '''Plots and measures for bob.bio.base'''
 
+import math
 import click
 import matplotlib.pyplot as mpl
 import bob.measure.script.figure as measure_figure
@@ -76,6 +77,8 @@ class Dir(measure_figure.PlotBase):
         self._x_label = self._title or 'FAR'
         self._y_label = self._title or 'DIR'
 
+
+
     def compute(self, idx, input_scores, input_names):
         ''' Plot DIR for dev and eval data using
         :py:func:`bob.measure.plot.detection_identification_curve`'''
@@ -103,6 +106,9 @@ class Dir(measure_figure.PlotBase):
                 color=self._colors[idx], linestyle=self._linestyles[idx],
                 label=self._label('development', input_names[0], idx)
             )
+
+        if self._min_dig is not None:
+            mpl.xlim(xmin=math.pow(10, self._min_dig))
 
 class Metrics(measure_figure.Metrics):
     ''' Compute metrics from score files'''

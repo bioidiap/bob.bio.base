@@ -243,7 +243,7 @@ def cmc(ctx, scores, evaluation, **kargs):
 @common_options.title_option()
 @common_options.legends_option()
 @common_options.sep_dev_eval_option()
-@common_options.output_plot_file_option(default_out='cmc.pdf')
+@common_options.output_plot_file_option(default_out='dir.pdf')
 @common_options.eval_option()
 @common_options.semilogx_option(True)
 @common_options.axes_val_option(dflt=None)
@@ -253,6 +253,7 @@ def cmc(ctx, scores, evaluation, **kargs):
 @common_options.style_option()
 @common_options.linestyles_option()
 @common_options.figsize_option()
+@common_options.min_far_option()
 @verbosity_option()
 @click.pass_context
 def dir(ctx, scores, evaluation, **kargs):
