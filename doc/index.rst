@@ -78,6 +78,7 @@ Users Guide
    filelist-guide
    more
    annotations
+   openbr
 
 
 Reference Manual

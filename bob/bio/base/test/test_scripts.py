@@ -8,6 +8,7 @@ import nose
 import bob.io.image
 import bob.bio.base
 from . import utils
+from .. import score
 
 from nose.plugins.skip import SkipTest
 
@@ -20,7 +21,6 @@ data_dir = pkg_resources.resource_filename('bob.bio.base', 'test/data')
 
 def _verify(parameters, test_dir, sub_dir, ref_modifier="", score_modifier=('scores',''), counts=3, check_zt=True):
   from bob.bio.base.script.verify import main
-  import bob.measure
   try:
     main(parameters)
 
@@ -42,7 +42,7 @@ def _verify(parameters, test_dir, sub_dir, ref_modifier="", score_modifier=('sco
       d = []
       # read reference and new data
       for score_file in (score_files[i], reference_files[i]):
-        f = bob.measure.load.open_file(score_file)
+        f = score.open_file(score_file)
         d_ = []
         for line in f:
           if isinstance(line, bytes): line = line.decode('utf-8')
@@ -278,7 +278,6 @@ def test_verify_filelist():
   ]
 
   from bob.bio.base.script.verify import main
-  import bob.measure
   try:
     main(parameters)
 
@@ -292,8 +291,8 @@ def test_verify_filelist():
 
     for i in (0,1):
       # load scores
-      a1, b1 = bob.measure.load.split_four_column(score_files[i])
-      a2, b2 = bob.measure.load.split_four_column(reference_files[i])
+      a1, b1 = score.split_four_column(score_files[i])
+      a2, b2 = score.split_four_column(reference_files[i])
       # sort scores
       a1 = sorted(a1); a2 = sorted(a2); b1 = sorted(b1); b2 = sorted(b2)
 
@@ -323,7 +322,6 @@ def test_verify_missing():
   ]
 
   from bob.bio.base.script.verify import main
-  import bob.measure
   try:
     main(parameters)
 
@@ -336,7 +334,7 @@ def test_verify_missing():
 
     for i in (0,1):
       # load scores
-      a, b = bob.measure.load.split_four_column(score_files[i])
+      a, b = score.split_four_column(score_files[i])
 
       assert numpy.all(numpy.isnan(a))
       assert numpy.all(numpy.isnan(b))
@@ -479,79 +477,17 @@ def test_fusion():
 
   # execute the script
   from bob.bio.base.script.fuse_scores import main
-  import bob.measure
   try:
     main(parameters)
 
     # assert that we can read the two files, and that they contain the same number of lines as the original file
     for i in (0,1):
       assert os.path.exists(output_files[i])
-      r = bob.measure.load.four_column(reference_files[i])
-      o = bob.measure.load.four_column(output_files[i])
+      r = score.four_column(reference_files[i])
+      o = score.four_column(output_files[i])
       assert len(list(r)) == len(list(o))
   finally:
     shutil.rmtree(test_dir)
-
-
-
-def test_evaluate_closedset():
-  # tests our 'evaluate' script using the reference files
-  test_dir = tempfile.mkdtemp(prefix='bobtest_')
-  reference_files = ('scores-nonorm-dev', 'scores-ztnorm-dev')
-  plots = [os.path.join(test_dir, '%s.pdf')%f for f in ['roc', 'cmc', 'det', 'epc']]
-  parameters = [
-    '--dev-files', reference_files[0], reference_files[1],
-    '--eval-files', reference_files[0], reference_files[1],
-    '--directory', data_dir,  # will not be ignored since reference files are relative
-    '--legends', 'no norm', 'ZT norm',
-    '--criterion', 'HTER',
-    '--roc', plots[0],
-    '--cmc', plots[1],
-    '--det', plots[2],
-    '--epc', plots[3],
-    '--rr',
-    '--thresholds', '5000', '0',
-    '--min-far-value', '1e-6',
-    '--far-line-at', '1e-5',
-    '-v',
-  ]
-
-  # execute the script
-  from bob.bio.base.script.evaluate import main
-  try:
-    main(parameters)
-    for i in range(4):
-      assert os.path.exists(plots[i])
-      os.remove(plots[i])
-  finally:
-    if os.path.exists(test_dir):
-      shutil.rmtree(test_dir)
-
-def test_evaluate_openset():
-  # tests our 'evaluate' script using the reference files
-  test_dir = tempfile.mkdtemp(prefix='bobtest_')
-  reference_file = os.path.join(data_dir, 'scores-nonorm-openset-dev')
-  plot = os.path.join(test_dir, 'dir.pdf')
-  parameters = [
-    '--dev-files', reference_file,
-    '--eval-files', reference_file,
-    '--directory', "/non/existing/directory", # will be ignored since reference_file is absolute
-    '--legends', 'Test',
-    '--dir', plot,
-    '--min-far-value', '1e-6',
-    '-v',
-  ]
-
-  # execute the script
-  from bob.bio.base.script.evaluate import main
-  try:
-    main(parameters)
-    assert os.path.exists(plot)
-    os.remove(plot)
-  finally:
-    if os.path.exists(test_dir):
-      shutil.rmtree(test_dir)
-
 
 
 

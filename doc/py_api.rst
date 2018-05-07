@@ -93,6 +93,34 @@ Scoring
    bob.bio.base.tools.compute_scores
    bob.bio.base.tools.concatenate
    bob.bio.base.tools.calibrate
+   bob.bio.base.script.figure.Metrics
+
+Loading data
+------------
+.. autosummary::
+   bob.bio.base.score.load.open_file
+   bob.bio.base.score.load.scores
+   bob.bio.base.score.load.split
+   bob.bio.base.score.load.cmc
+   bob.bio.base.score.load.four_column
+   bob.bio.base.score.load.split_four_column
+   bob.bio.base.score.load.cmc_four_column
+   bob.bio.base.score.load.five_column
+   bob.bio.base.score.load.split_five_column
+   bob.bio.base.score.load.cmc_five_column
+
+Plotting
+--------
+.. autosummary::
+   bob.bio.base.script.figure.Cmc
+   bob.bio.base.script.figure.Dir
+   bob.bio.base.script.figure.Hist
+
+OpenBR conversions
+------------------
+.. autosummary::
+   bob.bio.base.score.openbr.write_matrix
+   bob.bio.base.score.openbr.write_score_file
 
 Details
 -------
@@ -108,5 +136,10 @@ Details
 
    .. autoclass:: FileSelector
 
+.. automodule:: bob.bio.base.score.load
+.. automodule:: bob.bio.base.score.openbr
+.. automodule:: bob.bio.base.script.figure
+.. automodule:: bob.bio.base.script.commands
+.. automodule:: bob.bio.base.script.gen
 
 .. include:: links.rst

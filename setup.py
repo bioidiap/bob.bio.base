@@ -73,7 +73,6 @@ setup(
         'verify.py         = bob.bio.base.script.verify:main',
         'resources.py      = bob.bio.base.script.resources:resources',
         'databases.py      = bob.bio.base.script.resources:databases',
-        'evaluate.py       = bob.bio.base.script.evaluate:main',
         'collect_results.py = bob.bio.base.script.collect_results:main',
         'grid_search.py    = bob.bio.base.script.grid_search:main',
         'preprocess.py     = bob.bio.base.script.preprocess:main',
@@ -139,6 +138,15 @@ setup(
       # bob bio scripts
       'bob.bio.cli': [
         'annotate          = bob.bio.base.script.annotate:annotate',
+        'metrics           = bob.bio.base.script.commands:metrics',
+        'roc               = bob.bio.base.script.commands:roc',
+        'det               = bob.bio.base.script.commands:det',
+        'epc               = bob.bio.base.script.commands:epc',
+        'hist              = bob.bio.base.script.commands:hist',
+        'cmc               = bob.bio.base.script.commands:cmc',
+        'dir               = bob.bio.base.script.commands:dir',
+        'gen               = bob.bio.base.script.gen:gen',
+        'evaluate          = bob.bio.base.script.commands:evaluate',
       ],
 
       # annotators

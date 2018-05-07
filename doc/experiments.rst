@@ -98,11 +98,11 @@ Running the experiment is then as simple as:
 .. note::
    Chain loading is possible through configuration files, i.e., variables of each
    config is available during evaluation of the following config file.
-   
+
    This allows us to spread our experiment setup in several configuration files and have a call similar to this::
-   
+
    $ verify.py config_1.py config_2.py config_n.py
-  
+
    For more information see *Chain Loading* in :ref:`bob.extension.config`.
 
 
@@ -114,7 +114,7 @@ By default, you can find them in a sub-directory the ``result`` directory, but y
 
 .. note::
    At Idiap_, the default result directory differs, see ``verify.py --help`` for your directory.
-   
+
 
 .. _bob.bio.base.command_line:
 
@@ -154,26 +154,133 @@ However, to be consistent, throughout this documentation we document the options
 
 Evaluating Experiments
 ----------------------
-After the experiment has finished successfully, one or more text file containing all the scores are written.
 
-To evaluate the experiment, you can use the generic ``evaluate.py`` script, which has properties for all prevalent evaluation types, such as CMC, DIR, ROC and DET plots, as well as computing recognition rates, EER/HTER, Cllr and minDCF.
-Additionally, a combination of different algorithms can be plotted into the same files.
-Just specify all the score files that you want to evaluate using the ``--dev-files`` option, and possible legends for the plots (in the same order) using the ``--legends`` option, and the according plots will be generated.
-For example, to create a ROC curve for the experiment above, use:
+After the experiment has finished successfully, one or more text file
+containing all the scores are written. In this section, commands that helps to
+quickly evaluate a set of scores by generating metrics or plots are presented
+here. The scripts take as input either a 4-column or 5-column data format as
+specified in the documentation of
+:py:func:`bob.bio.base.score.load.four_column` or
+:py:func:`bob.bio.base.score.load.five_column`.
+
+Please note that there exists another file called ``Experiment.info`` inside
+the result directory. This file is a pure text file and contains the complete
+configuration of the experiment. With this configuration it is possible to
+inspect all default parameters of the algorithms, and even to re-run the exact
+same experiment.
+
+Metrics
+=======
+
+To calculate the threshold using a certain criterion (EER (default), FAR or
+min.HTER) on a development set and apply it on an evaluation set, just do:
 
 .. code-block:: sh
 
-   $ evaluate.py --dev-files results/pca-experiment/male/nonorm/scores-dev --legend MOBIO --roc MOBIO_MALE_ROC.pdf -vv
+    $ bob bio metrics {dev,test}-4col.txt --legends ExpA --criterion min-hter
 
-Please note that there exists another file called ``Experiment.info`` inside the result directory.
-This file is a pure text file and contains the complete configuration of the experiment.
-With this configuration it is possible to inspect all default parameters of the algorithms, and even to re-run the exact same experiment.
+    [Min. criterion: MIN-HTER ] Threshold on Development set `ExpA`: -4.830500e-03
+    ======  ======================  =================
+    ExpA    Development dev-4col    Eval. test-4col
+    ======  ======================  =================
+    FtA     0.0%                    0.0%
+    FMR     6.7% (35/520)           2.5% (13/520)
+    FNMR    6.7% (26/390)           6.2% (24/390)
+    FAR     6.7%                    2.5%
+    FRR     6.7%                    6.2%
+    HTER    6.7%                    4.3%
+    ======  ======================  =================
+
+.. note::
+    You can compute analysis on development set(s) only by passing option
+    ``--no-evaluation``. See metrics --help for further options.
+
+You can also compute measure such as recognition rate (``rr``), Cllr and
+minCllr (``cllr``) and minDCF (``mindcf``) by passing the corresponding option.
+For example:
+
+.. code-block:: sh
+
+    bob bio metrics {dev,test}-4col.txt --legends ExpA --criterion cllr
+
+    ======  ======================  ================
+    Computing  Cllr and minCllr...
+    =======  ======================  ================
+    None     Development dev-4col    eval test-4col
+    =======  ======================  ================
+    Cllr     0.9%                    0.9%
+    minCllr  0.2%                    0.2%
+    =======  ======================  ================
+
+.. note::
+    You must provide files in the correct format depending on the measure you
+    want to compute. For example, recognition rate takes cmc type files. See
+    :py:func:`bob.bio.base.score.load.cmc`.
+
+Plots
+=====
+
+Customizable plotting commands are available in the :py:mod:`bob.bio.base`
+module. They take a list of development and/or evaluation files and generate a
+single PDF file containing the plots. Available plots are:
+
+*  ``roc`` (receiver operating characteristic)
+
+*  ``det`` (detection error trade-off)
+
+*  ``epc`` (expected performance curve)
+
+*  ``hist`` (histograms of scores with threshold line)
+
+*  ``cmc`` (cumulative match characteristic)
+
+*  ``dir`` (detection & identification rate)
+
+Use the ``--help`` option on the above-cited commands to find-out about more
+options.
+
+
+For example, to generate a CMC curve from development and evaluation datasets:
+
+.. code-block:: sh
+
+    $bob bio cmc -v --output 'my_cmc.pdf' dev-1.txt eval-1.txt
+    dev-2.txt eval-2.txt
+
+where `my_cmc.pdf` will contain CMC curves for the two experiments.
+
+.. note::
+    By default, ``det``, ``roc``, ``cmc`` and ``dir`` plot development and
+    evaluation curves on
+    different plots. You can force gather everything in the same plot using
+    ``--no-split`` option.
+
+.. note::
+    The ``--figsize`` and ``--style`` options are two powerful options that can
+    dramatically change the appearance of your figures. Try them! (e.g.
+    ``--figsize 12,10 --style grayscale``)
+
+Evaluate
+========
+
+A convenient command `evaluate` is provided to generate multiple metrics and
+plots for a list of experiments. It generates two `metrics` outputs with EER,
+HTER, Cllr, minDCF criteria along with `roc`, `det`, `epc`, `hist` plots for
+each experiment. For example:
+
+.. code-block:: sh
+
+    $bob bio evaluate -v -l 'my_metrics.txt' -o 'my_plots.pdf' {sys1,sys2}/{dev,eval}
+
+will output metrics and plots for the two experiments (dev and eval pairs) in
+`my_metrics.txt` and `my_plots.pdf`, respectively.
 
 
 .. _running_in_parallel:
 
 Running in Parallel
 -------------------
+
 One important property of the ``verify.py`` script is that it can run in parallel, using either several processes on the local machine, or an SGE grid.
 To achieve that, ``bob.bio`` is well-integrated with our SGE grid toolkit GridTK_, which we have selected as a python package in the :ref:`Installation <bob.bio.base.installation>` section.
 The ``verify.py`` script can submit jobs either to the SGE grid, or to a local scheduler, keeping track of dependencies between the jobs.
@@ -210,7 +317,7 @@ One set of command line options change the directory structure of the output.
 By default, intermediate (temporary) files are by default written to the ``temp`` directory, which can be overridden by the ``temp_directory`` variable, which expects relative or absolute paths.
 
 Re-using Parts of Experiments
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=============================
 If you want to re-use parts previous experiments, you can specify the directories (which are relative to the ``temp_directory``, but you can also specify absolute paths):
 
 * ``preprocessed_directory``
@@ -245,7 +352,7 @@ This option is particularly useful for debugging purposes.
 
 
 Database-dependent Variables
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+============================
 Many databases define several protocols that can be executed.
 To change the protocol, you can either modify the configuration file, or simply use the ``protocol`` variable.
 
@@ -264,13 +371,13 @@ Other Variables
 ---------------
 
 Calibration
-~~~~~~~~~~~
+===========
 For some applications it is interesting to get calibrated scores.
 Simply set the variable ``calibrate_scores = True`` and another set of score files will be created by training the score calibration on the scores of the ``'dev'`` group and execute it to all available groups.
 The scores will be located at the same directory as the **nonorm** and **ztnorm** scores, and the file names are **calibrated-dev** (and **calibrated-eval** if applicable).
 
 Unsuccessful Preprocessing
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+==========================
 In some cases, the preprocessor is not able to preprocess the data (e.g., for face image processing the face detector might not detect the face).
 If you expect such cases to happen, you might want to use the ``allow_missing_files`` variable.
 When this variable is set to ``True``, missing files will be handled correctly throughout the whole processing chain, i.e.:

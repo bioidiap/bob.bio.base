@@ -29,8 +29,9 @@ import sys, os,  glob
 import argparse
 import numpy
 
-import bob.measure
 import bob.core
+from .. import score
+
 logger = bob.core.log.setup("bob.bio.base")
 
 def command_line_arguments(command_line_parameters):
@@ -80,9 +81,9 @@ class Result:
   def _calculate(self, dev_file, eval_file = None):
     """Calculates the EER and HTER or FRR based on the threshold criterion."""
     if self.m_args.criterion in ("RR", "DIR"):
-      scores_dev = bob.measure.load.cmc(dev_file)
+      scores_dev = score.cmc(dev_file)
       if eval_file is not None:
-        scores_eval = bob.measure.load.cmc(eval_file)
+        scores_eval = score.cmc(eval_file)
 
       if self.m_args.criterion == "DIR":
         # get negatives without positives
@@ -110,7 +111,7 @@ class Result:
 
     else:
 
-      dev_neg, dev_pos = bob.measure.load.split(dev_file)
+      dev_neg, dev_pos = score.split(dev_file)
 
       # switch which threshold function to use
       if self.m_args.criterion == 'EER':
@@ -127,7 +128,7 @@ class Result:
       dev_hter = (dev_far + dev_frr)/2.0
 
       if eval_file:
-        eval_neg, eval_pos = bob.measure.load.split(eval_file)
+        eval_neg, eval_pos = score.split(eval_file)
         eval_far, eval_frr = bob.measure.farfrr(eval_neg, eval_pos, threshold)
         eval_hter = (eval_far + eval_frr)/2.0
       else:
