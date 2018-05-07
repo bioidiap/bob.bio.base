@@ -10,7 +10,6 @@ build:
     - verify.py         = bob.bio.base.script.verify:main
     - resources.py      = bob.bio.base.script.resources:resources
     - databases.py      = bob.bio.base.script.resources:databases
-    - evaluate.py       = bob.bio.base.script.evaluate:main
     - collect_results.py = bob.bio.base.script.collect_results:main
     - grid_search.py    = bob.bio.base.script.grid_search:main
     - preprocess.py     = bob.bio.base.script.preprocess:main
@@ -58,7 +57,6 @@ test:
     - verify.py --help
     - resources.py --help
     - databases.py --help
-    - evaluate.py --help
     - collect_results.py --help
     - grid_search.py --help
     - preprocess.py --help
