@@ -293,6 +293,20 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
         """
         raise NotImplementedError("Please implement this function in derived classes")
 
+
+    def groups(self):
+        """
+        Returns the names of all registered groups in the database
+
+        Keyword parameters:
+
+        protocol: str
+          The protocol for which the groups should be retrieved.
+          If you do not have protocols defined, just ignore this field. 
+        """
+        raise NotImplementedError("This function must be implemented in your derived class.")
+
+
     @abc.abstractmethod
     def objects(self, groups=None, protocol=None, purposes=None, model_ids=None, **kwargs):
         """This function returns a list of :py:class:`bob.bio.base.database.BioFile` objects or the list
