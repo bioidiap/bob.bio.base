@@ -75,6 +75,7 @@ Users Guide
    struct_bio_rec_sys
    experiments
    implementation
+   baseline
    filelist-guide
    more
    annotations
