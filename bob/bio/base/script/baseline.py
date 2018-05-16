@@ -3,77 +3,71 @@
 # Tiago de Freitas Pereira <tiago.pereira@idiap.ch>
 
 """
-This script runs some face recognition baselines under some face databases
-
-Examples:
-
-This command line will run the facenet from David Sandberg using the ATnT dataset:
-  `bob bio baseline --baseline facenet_msceleba_inception_v1 --database atnt`
-  
+A script to run biometric recognition baselines
 """
 
 
-import bob.bio.base
-import bob.io.base
+from .. import load_resource
 import os
-from bob.bio.base.script.verify import main as verify
-from bob.bio.base.baseline import get_available_databases
-from bob.extension.scripts.click_helper import (
-    verbosity_option, ConfigCommand, ResourceOption)
+from .verify import main as verify
+from ..baseline import get_available_databases, search_preprocessor
+from bob.extension.scripts.click_helper import verbosity_option
 import click
 
 
-@click.command(entry_point_group='bob.bio.config', cls=ConfigCommand)
-@click.option('--database', '-d', required=True, cls=ResourceOption, help="Registered database. Check it out `resources.py --types database` for ready to be used databases")
-@click.option('--baseline', '-b', required=True, cls=ResourceOption, help="Registered baseline. Check it out `resources.py --types baseline` for ready to be used baseline")
-@click.option('--temp-dir', '-T', required=False, cls=ResourceOption, help="The directory for temporary files")
-@click.option('--result-dir', '-R', required=False, cls=ResourceOption, help="The directory for resulting score files")
-@click.option('--grid', '-g', help="Execute the algorithm in the SGE grid.", is_flag=True)
-@click.option('--zt-norm', '-z', help="Enable the computation of ZT norms (if the database supports it).", is_flag=True)
-@verbosity_option(cls=ResourceOption)
+@click.command(context_settings={'ignore_unknown_options': True,
+                                 'allow_extra_args': True})
+@click.argument('baseline', required=True)
+@click.argument('database', required=True)
+@verbosity_option()
+@click.pass_context
+def baseline(ctx, baseline, database):
+    """Run a biometric recognition baseline.
 
-def baseline(baseline, database, temp_dir, result_dir, grid, zt_norm, **kwargs):
+    \b
+    Example:
+        $ bob bio baseline eigenface atnt -vvv
+
+    which will run the eigenface baseline (from bob.bio.face) on the atnt
+    database.
+
+    \b
+    Check out all baselines available by running:
+    `resource.py --types baseline`
+    and all available databases by running:
+    `resource.py --types database`
+
+    This script accepts parameters accepted by verify.py as well.
+    See `verify.py --help` for the extra options that you can pass.
+
+    Hint: pass `--grid demanding` to run the baseline on the SGE grid.
+
+    Hint: pass `--temp-directory <dir>` to set the directory for temporary files
+
+    Hint: pass `--result-directory <dir>` to set the directory for resulting score files
+ 
     """
-    Run a biometric recognition baselines
-
-    Check it out all baselines available by typing `resource.py --types baseline`
-
-    """
-
-    def search_preprocessor(key, keys):
-        """
-        Wrapper that searches for preprocessors for specific databases.
-        If not found, the default preprocessor is returned
-        """
-        for k in keys:
-            if key.startswith(k):
-                return k
-        else:
-            return "default"
-
-    # Triggering training for each baseline/database    
-    loaded_baseline = bob.bio.base.load_resource(baseline, 'baseline', package_prefix="bob.bio.")
+    # Triggering training for each baseline/database
+    loaded_baseline = load_resource(
+        baseline, 'baseline', package_prefix="bob.bio.")
 
     # this is the default sub-directory that is used
     sub_directory = os.path.join(database, baseline)
+
+    # find the compatible preprocessor for this database
     database_data = get_available_databases()[database]
+    db = search_preprocessor(database, loaded_baseline.preprocessors.keys())
+    preprocessor = loaded_baseline.preprocessors[db]
+
+    # call verify with all parameters
     parameters = [
-        '-p', loaded_baseline.preprocessors[search_preprocessor(database, loaded_baseline.preprocessors.keys())],
+        '-p', preprocessor,
         '-e', loaded_baseline.extractor,
         '-d', database,
         '-a', loaded_baseline.algorithm,
-        '-vvv',
-        '--temp-directory', temp_dir,
-        '--result-directory', result_dir,
         '--sub-directory', sub_directory
-    ]
-    
+    ] + ['-v'] * ctx.meta['verbosity']
+
     parameters += ['--groups'] + database_data["groups"]
 
-    if grid:
-        parameters += ['-g', 'demanding']
-
-    if zt_norm and 'has_zt' in database_data:
-        parameters += ['--zt-norm']
-
-    verify(parameters)
+    verify(parameters + ctx.args)
