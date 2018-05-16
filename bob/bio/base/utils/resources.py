@@ -5,7 +5,6 @@
 
 from __future__ import print_function
 
-import imp
 import os
 import pkg_resources
 import bob.extension.config
