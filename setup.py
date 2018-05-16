@@ -147,12 +147,19 @@ setup(
         'dir               = bob.bio.base.script.commands:dir',
         'gen               = bob.bio.base.script.gen:gen',
         'evaluate          = bob.bio.base.script.commands:evaluate',
+        'baseline          = bob.bio.base.script.baseline:baseline',
       ],
 
       # annotators
       'bob.bio.annotator': [
         'dummy             = bob.bio.base.test.dummy.annotator:annotator',
       ],
+
+      #baselines
+      'bob.bio.baseline':[
+        'dummy = bob.bio.base.test.dummy.baseline:baseline',
+      ],
+
    },
 
     # Classifiers are important if you plan to distribute this package through

@@ -16,6 +16,7 @@ Base Classes
    bob.bio.base.algorithm.Algorithm
    bob.bio.base.grid.Grid
    bob.bio.base.annotator.Annotator
+   bob.bio.base.baseline.Baseline
 
 
 Implementations
@@ -78,6 +79,12 @@ Annotators
 ----------
 
 .. automodule:: bob.bio.base.annotator
+
+
+Baselines
+---------
+
+.. automodule:: bob.bio.base.baseline
 
 
 .. include:: links.rst

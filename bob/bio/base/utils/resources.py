@@ -21,7 +21,7 @@ logger = logging.getLogger("bob.bio.base")
 
 
 #: Keywords for which resources are defined.
-valid_keywords = ('database', 'preprocessor', 'extractor', 'algorithm', 'grid', 'config', 'annotator')
+valid_keywords = ('database', 'preprocessor', 'extractor', 'algorithm', 'grid', 'config', 'annotator', 'baseline')
 
 
 def _collect_config(paths):

@@ -9,8 +9,8 @@ def resources(command_line_parameters = None):
   import argparse
   parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument("--types", '-t', nargs = '+',
-                      choices = ('d', 'database', 'p', 'preprocessor', 'e', 'extractor', 'a', 'algorithm', 'g', 'grid', 'c', 'config', 'an', 'annotator'),
-                      default = ('d', 'p', 'e', 'a', 'g', 'c', 'an'),
+                      choices = ('d', 'database', 'p', 'preprocessor', 'e', 'extractor', 'a', 'algorithm', 'g', 'grid', 'c', 'config', 'an', 'annotator', 'b', 'baseline'),
+                      default = ('d', 'p', 'e', 'a', 'g', 'c', 'an', 'b'),
                       help = "Select the resource types that should be listed.")
 
   parser.add_argument("--details", '-d', action='store_true', help = "Prints the complete configuration for all resources")
@@ -54,6 +54,10 @@ def resources(command_line_parameters = None):
   if 'an' in args.types or 'annotator' in args.types:
     print ("\nList of registered annotators:")
     print (bob.bio.base.list_resources('annotator', **kwargs))
+
+  if 'b' in args.types or 'baseline' in args.types:
+    print ("\nList of registered baseline:")
+    print (bob.bio.base.list_resources('baseline', **kwargs))
 
   print()
 
