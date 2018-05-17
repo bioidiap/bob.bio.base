@@ -294,7 +294,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
         raise NotImplementedError("Please implement this function in derived classes")
 
 
-    def groups(self):
+    def groups(self, protocol=None):
         """
         Returns the names of all registered groups in the database
 
