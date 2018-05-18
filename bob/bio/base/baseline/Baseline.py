@@ -34,7 +34,7 @@ def get_available_databases():
       available_databases[database]["groups"] = []
       # Searching for database groups
       try:
-        groups = list(database_entry_point.groups())
+        groups = list(database_entry_point.groups()) or ["dev"]
         for g in ["dev", "eval"]:
           available_databases[database]["groups"] += [g] if g in groups else []
       except Exception:
