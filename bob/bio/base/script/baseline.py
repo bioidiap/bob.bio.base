@@ -9,6 +9,7 @@ A script to run biometric recognition baselines
 
 from .. import load_resource
 from .verify import main as verify
+import os
 from ..baseline import get_available_databases, search_preprocessor
 from bob.extension.scripts.click_helper import verbosity_option
 import click
@@ -61,7 +62,7 @@ def baseline(ctx, baseline, database, **kwargs):
     preprocessor = loaded_baseline.preprocessors[db]
 
     # this is the default sub-directory that is used
-    if "-T" in ctx.args or  "--temp-directory" in ctx.args:
+    if "-T" in ctx.args or "--temp-directory" in ctx.args:
         sub_directory = os.path.join(database, baseline)
     else:
         sub_directory = baseline
@@ -96,5 +97,15 @@ verbose = {verbose}
         f.seek(0)
         verify([f.name] + ctx.args)
         click.echo("You may want to delete `{}' after the experiments are "
-                    "finished running.".format(f.name))
+                   "finished running.".format(f.name))
 
+    if "gmm" in loaded_baseline.algorithm:
+        from bob.bio.gmm.script.verify_gmm import main as verify
+    elif "isv" in loaded_baseline.algorithm:
+        from bob.bio.gmm.script.verify_isv import main as verify
+    elif "ivector" in loaded_baseline.algorithm:
+        from bob.bio.gmm.script.verify_ivector import main as verify
+    else:
+        from .verify import main as verify
+
+    verify(parameters + ctx.args)
