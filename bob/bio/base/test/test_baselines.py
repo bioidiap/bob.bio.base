@@ -10,11 +10,11 @@ def test_baselines():
         runner = CliRunner()
         result = runner.invoke(baseline, args=('dummy', 'dummy', '-T', tmp_dir, '-R', tmp_dir))
         assertion_error_message = (
-              'Command exited with this output: `{}\' \n'
+              'Command exited with this output and exception: `{}\' \n `{}\' \n'
               'If the output is empty, you can run this script locally to see '
               'what is wrong:\n'
-              'bin/bob bio baseline  -d dummy -a dummy -o /tmp/temp_annotations'
-              ''.format(result.output))
+              'bin/bob bio baseline dummy dummy -T /tmp/baseline -R /tmp/baseline'
+              ''.format(result.output, result.exception))
         assert result.exit_code == 0, assertion_error_message
 
     finally:
