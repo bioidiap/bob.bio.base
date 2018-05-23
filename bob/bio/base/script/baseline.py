@@ -14,6 +14,7 @@ from bob.extension.scripts.click_helper import verbosity_option
 import click
 import tempfile
 import logging
+import os
 
 logger = logging.getLogger("bob.bio.base")
 
@@ -59,6 +60,12 @@ def baseline(ctx, baseline, database):
     db = search_preprocessor(database, loaded_baseline.preprocessors.keys())
     preprocessor = loaded_baseline.preprocessors[db]
 
+    # this is the default sub-directory that is used
+    if "-T" in ctx.args or  "--temp-directory" in ctx.args:
+        sub_directory = os.path.join(database, baseline)
+    else:
+        sub_directory = baseline
+        
     logger.debug('Database groups are %s', database_data["groups"])
 
     # call verify with newly generated config file. We will create a new config
@@ -77,7 +84,7 @@ verbose = {verbose}
         extractor=loaded_baseline.extractor,
         algorithm=loaded_baseline.algorithm,
         database=database,
-        sub_directory=baseline,
+        sub_directory=sub_directory,
         groups="', '".join(database_data["groups"]),
         verbose=ctx.meta['verbosity'],
     )
@@ -89,4 +96,5 @@ verbose = {verbose}
         f.seek(0)
         verify([f.name] + ctx.args)
         click.echo("You may want to delete `{}' after the experiments are "
-                   "finished running.".format(f.name))
+                    "finished running.".format(f.name))
+
