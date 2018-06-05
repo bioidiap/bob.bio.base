@@ -31,7 +31,7 @@ class Cmc(measure_figure.PlotBase):
     def __init__(self, ctx, scores, evaluation, func_load):
         super(Cmc, self).__init__(ctx, scores, evaluation, func_load)
         self._semilogx = ctx.meta.get('semilogx', True)
-        self._title = self._title or 'CMC'
+        self._titles = self._titles or ['CMC dev', 'CMC eval']
         self._x_label = self._x_label or 'Rank'
         self._y_label = self._y_label or 'Identification rate'
         self._max_R = 0
@@ -45,7 +45,7 @@ class Cmc(measure_figure.PlotBase):
             rank = plot.cmc(
                 input_scores[0], logx=self._semilogx,
                 color=self._colors[idx], linestyle=linestyle,
-                label=self._label('development', input_names[0], idx)
+                label=self._label('dev', input_names[0], idx)
             )
             self._max_R = max(rank, self._max_R)
             linestyle = '--'
@@ -63,7 +63,7 @@ class Cmc(measure_figure.PlotBase):
             rank = plot.cmc(
                 input_scores[0], logx=self._semilogx,
                 color=self._colors[idx], linestyle=self._linestyles[idx],
-                label=self._label('development', input_names[0], idx)
+                label=self._label('dev', input_names[0], idx)
             )
             self._max_R = max(rank, self._max_R)
 
@@ -75,7 +75,7 @@ class Dir(measure_figure.PlotBase):
         super(Dir, self).__init__(ctx, scores, evaluation, func_load)
         self._semilogx = ctx.meta.get('semilogx', True)
         self._rank = ctx.meta.get('rank', 1)
-        self._title = self._title or 'DIR curve'
+        self._titles = self._titles or ['DIR curve'] * 2
         self._x_label = self._x_label or 'False Alarm Rate'
         self._y_label = self._y_label or 'Detection and Identification Rate'
 
@@ -88,7 +88,7 @@ class Dir(measure_figure.PlotBase):
             plot.detection_identification_curve(
                 input_scores[0], rank=self._rank, logx=self._semilogx,
                 color=self._colors[idx], linestyle=linestyle,
-                label=self._label('development', input_names[0], idx)
+                label=self._label('dev', input_names[0], idx)
             )
             linestyle = '--'
             if self._split:
@@ -104,7 +104,7 @@ class Dir(measure_figure.PlotBase):
             plot.detection_identification_curve(
                 input_scores[0], rank=self._rank, logx=self._semilogx,
                 color=self._colors[idx], linestyle=self._linestyles[idx],
-                label=self._label('development', input_names[0], idx)
+                label=self._label('dev', input_names[0], idx)
             )
 
         if self._min_dig is not None:
