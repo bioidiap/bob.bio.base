@@ -177,7 +177,7 @@ min.HTER) on a development set and apply it on an evaluation set, just do:
 
 .. code-block:: sh
 
-    $ bob bio metrics {dev,test}-4col.txt --legends ExpA --criterion min-hter
+    $ bob bio metrics -e {dev,test}-4col.txt --legends ExpA --criterion min-hter
 
     [Min. criterion: MIN-HTER ] Threshold on Development set `ExpA`: -4.830500e-03
     ======  ======================  =================
@@ -192,8 +192,8 @@ min.HTER) on a development set and apply it on an evaluation set, just do:
     ======  ======================  =================
 
 .. note::
-    You can compute analysis on development set(s) only by passing option
-    ``--no-evaluation``. See metrics --help for further options.
+    When evaluation scores are provided, ``--eval`` option must be passed.
+    See metrics --help for further options.
 
 You can also compute measure such as recognition rate (``rr``), Cllr and
 minCllr (``cllr``) and minDCF (``mindcf``) by passing the corresponding option.
@@ -201,7 +201,7 @@ For example:
 
 .. code-block:: sh
 
-    bob bio metrics {dev,test}-4col.txt --legends ExpA --criterion cllr
+    bob bio metrics -e {dev,test}-4col.txt --legends ExpA --criterion cllr
 
     ======  ======================  ================
     Computing  Cllr and minCllr...
@@ -244,7 +244,7 @@ For example, to generate a CMC curve from development and evaluation datasets:
 
 .. code-block:: sh
 
-    $bob bio cmc -v --output 'my_cmc.pdf' dev-1.txt eval-1.txt
+    $bob bio cmc -e -v --output 'my_cmc.pdf' dev-1.txt eval-1.txt
     dev-2.txt eval-2.txt
 
 where `my_cmc.pdf` will contain CMC curves for the two experiments.
@@ -270,7 +270,7 @@ each experiment. For example:
 
 .. code-block:: sh
 
-    $bob bio evaluate -v -l 'my_metrics.txt' -o 'my_plots.pdf' {sys1,sys2}/{dev,eval}
+    $bob bio evaluate -e -v -l 'my_metrics.txt' -o 'my_plots.pdf' {sys1,sys2}/{dev,eval}
 
 will output metrics and plots for the two experiments (dev and eval pairs) in
 `my_metrics.txt` and `my_plots.pdf`, respectively.
