@@ -272,6 +272,7 @@ def test_cmc():
     with runner.isolated_filesystem():
         result = runner.invoke(commands.cmc, ['--output', 'test.pdf',
                                               '--legends', 'A,B', '-S',
+                                              '-ts', 'TA,TB',
                                               dev1, test1, dev1, test1])
         if result.output:
             click.echo(result.output)
