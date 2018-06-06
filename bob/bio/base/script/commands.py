@@ -297,6 +297,7 @@ def dir(ctx, scores, evaluation, **kargs):
 @common_options.eval_option()
 @common_options.n_bins_option()
 @common_options.criterion_option()
+@common_options.far_option()
 @common_options.thresholds_option()
 @common_options.const_layout_option()
 @common_options.print_filenames_option()
@@ -320,8 +321,7 @@ def hist(ctx, scores, evaluation, **kwargs):
 
     By default, when eval-scores are given, only eval-scores histograms are
     displayed with threshold line
-    computed from dev-scores. If you want to display dev-scores distributions
-    as well, use ``--show-dev`` option.
+    computed from dev-scores.
 
     Examples:
         $ bob bio hist -v dev-scores
@@ -329,7 +329,7 @@ def hist(ctx, scores, evaluation, **kwargs):
         $ bob bio hist -v dev-scores1 eval-scores1 dev-scores2
         eval-scores2
 
-        $ bob bio hist -v --criterion --show-dev min-hter dev-scores1 eval-scores1
+        $ bob bio hist -v --criterion min-hter dev-scores1 eval-scores1
     """
     process = bio_figure.Hist(ctx, scores, evaluation, load.split)
     process.run()
