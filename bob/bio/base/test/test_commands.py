@@ -11,7 +11,7 @@ def test_metrics():
     dev1 = pkg_resources.resource_filename('bob.bio.base.test',
                                            'data/dev-4col.txt')
     runner = CliRunner()
-    result = runner.invoke(commands.metrics, ['--no-evaluation', dev1])
+    result = runner.invoke(commands.metrics, [dev1])
     with runner.isolated_filesystem():
         with open('tmp', 'w') as f:
             f.write(result.output)
@@ -24,7 +24,7 @@ def test_metrics():
                                             'data/test-5col.txt')
     with runner.isolated_filesystem():
         result = runner.invoke(
-            commands.metrics, [dev1, test1, dev2, test2]
+            commands.metrics, ['-e', dev1, test1, dev2, test2]
         )
         with open('tmp', 'w') as f:
             f.write(result.output)
@@ -32,19 +32,19 @@ def test_metrics():
 
     with runner.isolated_filesystem():
         result = runner.invoke(
-            commands.metrics, ['-l', 'tmp', '-lg', 'A,B',
+            commands.metrics, ['-e', '-l', 'tmp', '-lg', 'A,B',
                                dev1, test1, dev2, test2]
         )
         assert result.exit_code == 0, (result.exit_code, result.output)
     with runner.isolated_filesystem():
         result = runner.invoke(
-            commands.metrics, ['-l', 'tmp', dev1, test2]
+            commands.metrics, ['-e', '-l', 'tmp', dev1, test2]
         )
         assert result.exit_code == 0, (result.exit_code, result.output)
 
     with runner.isolated_filesystem():
         result = runner.invoke(
-            commands.metrics, ['-l', 'tmp', '-T', '0.1',
+            commands.metrics, ['-e', '-l', 'tmp', '-T', '0.1',
                                '--criterion', 'mindcf', '--cost', 0.9,
                                dev1, test2]
         )
@@ -52,7 +52,7 @@ def test_metrics():
 
     with runner.isolated_filesystem():
         result = runner.invoke(
-            commands.metrics, ['--no-evaluation', '-l', 'tmp',
+            commands.metrics, ['-l', 'tmp',
                                '--criterion', 'mindcf', '--cost', 0.9,
                                dev1]
         )
@@ -60,27 +60,27 @@ def test_metrics():
 
     with runner.isolated_filesystem():
         result = runner.invoke(
-            commands.metrics, ['--criterion', 'cllr', dev1, test2]
+            commands.metrics, ['-e', '--criterion', 'cllr', dev1, test2]
         )
         assert result.exit_code == 0, (result.exit_code, result.output)
 
     with runner.isolated_filesystem():
         result = runner.invoke(
-            commands.metrics, ['--no-evaluation', '-l', 'tmp', '--criterion', 'cllr',
+            commands.metrics, ['-l', 'tmp', '--criterion', 'cllr',
                                '--cost', 0.9, dev1]
         )
         assert result.exit_code == 0, (result.exit_code, result.output)
 
     with runner.isolated_filesystem():
         result = runner.invoke(
-            commands.metrics, ['--criterion', 'rr', '-T',
+            commands.metrics, ['-e', '--criterion', 'rr', '-T',
                                '0.1', dev1, test2]
         )
         assert result.exit_code == 0, (result.exit_code, result.output)
 
     with runner.isolated_filesystem():
         result = runner.invoke(
-            commands.metrics, ['--no-evaluation', '-l', 'tmp', '--criterion', 'rr',
+            commands.metrics, ['-l', 'tmp', '--criterion', 'rr',
                                dev1, dev2]
         )
         assert result.exit_code == 0, (result.exit_code, result.output)
@@ -92,7 +92,7 @@ def test_roc():
                                            'data/dev-4col.txt')
     runner = CliRunner()
     with runner.isolated_filesystem():
-        result = runner.invoke(commands.roc, ['--no-evaluation', '--output',
+        result = runner.invoke(commands.roc, ['--output',
                                               'test.pdf',dev1])
         if result.output:
             click.echo(result.output)
@@ -106,7 +106,7 @@ def test_roc():
     with runner.isolated_filesystem():
         result = runner.invoke(commands.roc, ['--split', '--output',
                                               'test.pdf', '-S', '-lc',
-                                              'lower-left',
+                                              'lower-left', '-e',
                                               dev1, test1, dev2, test2])
         if result.output:
             click.echo(result.output)
@@ -114,7 +114,8 @@ def test_roc():
 
     with runner.isolated_filesystem():
         result = runner.invoke(commands.roc, ['--output',
-                                              'test.pdf', '--legends', 'A,B', 
+                                              'test.pdf',
+                                              '-e', '--legends', 'A,B',
                                               dev1, test1, dev2, test2])
         if result.output:
             click.echo(result.output)
@@ -128,7 +129,7 @@ def test_roc():
         result = runner.invoke(commands.roc, [
             '--min-far-value', '1e-6',
             '--lines-at', '1e-5',
-            '-v', '--legends', 'A',
+            '-v', '--legends', 'A', '-e',
             dev_nonorm, dev_ztnorm
         ])
         if result.output:
@@ -142,7 +143,7 @@ def test_det():
                                            'data/dev-4col.txt')
     runner = CliRunner()
     with runner.isolated_filesystem():
-        result = runner.invoke(commands.det, ['--no-evaluation', dev1, '-S'])
+        result = runner.invoke(commands.det, [dev1, '-S'])
         if result.output:
             click.echo(result.output)
         assert result.exit_code == 0, (result.exit_code, result.output)
@@ -154,14 +155,15 @@ def test_det():
                                             'data/test-5col.txt')
     with runner.isolated_filesystem():
         result = runner.invoke(commands.det, ['--split', '--output',
-                                              'test.pdf', '--legends', 'A,B',
+                                              'test.pdf', '--legends',
+                                              'A,B', '-e',
                                               dev1, test1, dev2, test2])
         if result.output:
             click.echo(result.output)
         assert result.exit_code == 0, (result.exit_code, result.output)
     with runner.isolated_filesystem():
         result = runner.invoke(commands.det, ['--output',
-                                              'test.pdf',
+                                              'test.pdf', '-e',
                                               dev1, test1, dev2, test2])
         if result.output:
             click.echo(result.output)
@@ -175,7 +177,7 @@ def test_det():
     with runner.isolated_filesystem():
         result = runner.invoke(commands.det, [
             '--min-far-value', '1e-6',
-            '--lines-at', '1e-5',
+            '--lines-at', '1e-5', '-e',
             '-v', '--legends', 'A',
             dev_nonorm, dev_ztnorm
         ])
@@ -234,7 +236,7 @@ def test_hist():
                                             'data/test-5col.txt')
     runner = CliRunner()
     with runner.isolated_filesystem():
-        result = runner.invoke(commands.hist, ['--no-evaluation', dev1])
+        result = runner.invoke(commands.hist, [dev1])
         if result.output:
             click.echo(result.output)
         assert result.exit_code == 0, (result.exit_code, result.output)
@@ -242,14 +244,14 @@ def test_hist():
     with runner.isolated_filesystem():
         result = runner.invoke(commands.hist, ['--criterion', 'min-hter', '--output',
                                                'HISTO.pdf', '-b',
-                                               '30,auto','--no-evaluation', dev1, dev2])
+                                               '30,auto', dev1, dev2])
         if result.output:
             click.echo(result.output)
         assert result.exit_code == 0, (result.exit_code, result.output)
 
     with runner.isolated_filesystem():
         result = runner.invoke(commands.hist, ['--criterion', 'eer', '--output',
-                                               'HISTO.pdf', '-b', '30',
+                                               'HISTO.pdf', '-b', '30', '-e',
                                                '-lg', 'A,B', dev1, test1, dev2,
                                                test2])
         if result.output:
@@ -263,7 +265,7 @@ def test_cmc():
                                            'data/scores-cmc-5col.txt')
     runner = CliRunner()
     with runner.isolated_filesystem():
-        result = runner.invoke(commands.cmc, ['--no-evaluation', dev1])
+        result = runner.invoke(commands.cmc, [dev1])
         if result.output:
             click.echo(result.output)
         assert result.exit_code == 0, (result.exit_code, result.output)
@@ -272,7 +274,7 @@ def test_cmc():
     with runner.isolated_filesystem():
         result = runner.invoke(commands.cmc, ['--output', 'test.pdf',
                                               '--legends', 'A,B', '-S',
-                                              '-ts', 'TA,TB',
+                                              '-ts', 'TA,TB', '-e',
                                               dev1, test1, dev1, test1])
         if result.output:
             click.echo(result.output)
@@ -285,7 +287,7 @@ def test_cmc():
 
     with runner.isolated_filesystem():
         result = runner.invoke(commands.cmc, [
-            '-v', '--legends', 'A',
+            '-v', '--legends', 'A', '-e',
             dev_nonorm, dev_ztnorm
         ])
         if result.output:
@@ -300,7 +302,7 @@ def test_dir():
                                            'data/scores-nonorm-openset-dev')
     runner = CliRunner()
     with runner.isolated_filesystem():
-        result = runner.invoke(commands.dir, ['--no-evaluation', dev1, '--rank', 2])
+        result = runner.invoke(commands.dir, [dev1, '--rank', 2])
         if result.output:
             click.echo(result.output)
         assert result.exit_code == 0, (result.exit_code, result.output)
@@ -309,7 +311,7 @@ def test_dir():
     with runner.isolated_filesystem():
         result = runner.invoke(commands.dir, ['--output', 'test.pdf',
                                               '--legends', 'A,B', '-S',
-                                              '--min-far-value', '1e-6',
+                                              '--min-far-value', '1e-6', '-e',
                                               dev1, test1, dev1, test1])
         if result.output:
             click.echo(result.output)

@@ -41,8 +41,8 @@ def metrics(ctx, scores, evaluation, **kargs):
     criterion (eer, min-hter, far, mindcf, cllr, rr).
 
     You need to provide one or more development score file(s) for each
-    experiment. You can also provide eval files along with dev files. If only
-    dev-scores are used, the flag `--no-evaluation` must be used. is required
+    experiment. You can also provide eval files along with dev files. If
+    eval-scores are used, the flag `--eval` must be used. is required
     in that case. Files must be 4- or 5- columns format, see
     :py:func:`bob.bio.base.score.load.four_column` and
     :py:func:`bob.bio.base.score.load.five_column` for details.
@@ -54,11 +54,11 @@ def metrics(ctx, scores, evaluation, **kargs):
     Examples:
         $ bob bio metrics dev-scores
 
-        $ bob bio metrics --no-evaluation dev-scores1 dev-scores2
+        $ bob bio metrics dev-scores1 dev-scores2
 
-        $ bob bio metrics -l results.txt dev-scores1 eval-scores1
+        $ bob bio metrics -e -l results.txt dev-scores1 eval-scores1
 
-        $ bob bio metrics {dev,eval}-scores1 {dev,eval}-scores2
+        $ bob bio metrics -e {dev,eval}-scores1 {dev,eval}-scores2
     """
     if 'criterion' in ctx.meta and ctx.meta['criterion'] == 'rr':
         process = bio_figure.Metrics(ctx, scores, evaluation, load.cmc)
@@ -97,8 +97,8 @@ def roc(ctx, scores, evaluation, **kargs):
     computed using :py:func:`bob.measure.roc`.
 
     You need to provide one or more development score file(s) for each
-    experiment. You can also provide eval files along with dev files. If only
-    dev-scores are used, the flag `--no-evaluation` must be used. is required
+    experiment. You can also provide eval files along with dev files. If
+    eval-scores are used, the flag `--eval` must be used. is required
     in that case. Files must be 4- or 5- columns format, see
     :py:func:`bob.bio.base.score.load.four_column` and
     :py:func:`bob.bio.base.score.load.five_column` for details.
@@ -106,10 +106,10 @@ def roc(ctx, scores, evaluation, **kargs):
     Examples:
         $ bob bio roc -v dev-scores
 
-        $ bob bio roc -v dev-scores1 eval-scores1 dev-scores2
+        $ bob bio roc -e -v dev-scores1 eval-scores1 dev-scores2
         eval-scores2
 
-        $ bob bio roc -v -o my_roc.pdf dev-scores1 eval-scores1
+        $ bob bio roc -e -v -o my_roc.pdf dev-scores1 eval-scores1
     """
     process = bio_figure.Roc(ctx, scores, evaluation, load.split)
     process.run()
@@ -143,8 +143,8 @@ def det(ctx, scores, evaluation, **kargs):
     (false positives on the x-axis and false negatives on the y-axis)
 
     You need to provide one or more development score file(s) for each
-    experiment. You can also provide eval files along with dev files. If only
-    dev-scores are used, the flag `--no-evaluation` must be used. is required
+    experiment. You can also provide eval files along with dev files. If
+    eval-scores are used, the flag `--eval` must be used. is required
     in that case. Files must be 4- or 5- columns format, see
     :py:func:`bob.bio.base.score.load.four_column` and
     :py:func:`bob.bio.base.score.load.five_column` for details.
@@ -152,10 +152,10 @@ def det(ctx, scores, evaluation, **kargs):
     Examples:
         $ bob bio det -v dev-scores
 
-        $ bob bio det -v dev-scores1 eval-scores1 dev-scores2
+        $ bob bio det -e -v dev-scores1 eval-scores1 dev-scores2
         eval-scores2
 
-        $ bob bio det -v -o my_det.pdf dev-scores1 eval-scores1
+        $ bob bio det -e -v -o my_det.pdf dev-scores1 eval-scores1
     """
     process = bio_figure.Det(ctx, scores, evaluation, load.split)
     process.run()
@@ -219,8 +219,8 @@ def cmc(ctx, scores, evaluation, **kargs):
     using :py:func:`bob.measure.cmc`.
 
     You need to provide one or more development score file(s) for each
-    experiment. You can also provide eval files along with dev files. If only
-    dev-scores are used, the flag `--no-evaluation` must be used. is required
+    experiment. You can also provide eval files along with dev files. If
+    eval-scores are used, the flag `--eval` must be used. is required
     in that case. Files must be 4- or 5- columns format, see
     :py:func:`bob.bio.base.score.load.four_column` and
     :py:func:`bob.bio.base.score.load.five_column` for details.
@@ -273,14 +273,14 @@ def dir(ctx, scores, evaluation, **kargs):
     .. [LiJain2005] **Stan Li and Anil K. Jain**, *Handbook of Face Recognition*, Springer, 2005
 
     You need to provide one or more development score file(s) for each
-    experiment. You can also provide eval files along with dev files. If only
-    dev-scores are used, the flag `--no-evaluation` must be used. is required
+    experiment. You can also provide eval files along with dev files. If
+    eval-scores are used, the flag `--eval` must be used. is required
     in that case. Files must be 4- or 5- columns format, see
     :py:func:`bob.bio.base.score.load.four_column` and
     :py:func:`bob.bio.base.score.load.five_column` for details.
 
     Examples:
-        $ bob bio dir -v dev-scores
+        $ bob bio dir -e -v dev-scores
 
         $ bob bio dir -v dev-scores1 eval-scores1 dev-scores2
         eval-scores2
@@ -297,6 +297,8 @@ def dir(ctx, scores, evaluation, **kargs):
 @common_options.eval_option()
 @common_options.n_bins_option()
 @common_options.criterion_option()
+@common_options.no_line_option()
+@common_options.far_option()
 @common_options.thresholds_option()
 @common_options.const_layout_option()
 @common_options.print_filenames_option()
@@ -312,24 +314,23 @@ def hist(ctx, scores, evaluation, **kwargs):
     criterion.
 
     You need to provide one or more development score file(s) for each
-    experiment. You can also provide eval files along with dev files. If only
-    dev-scores are used, the flag `--no-evaluation` must be used. is required
+    experiment. You can also provide eval files along with dev files. If
+    eval-scores are used, the flag `--eval` must be used. is required
     in that case. Files must be 4- or 5- columns format, see
     :py:func:`bob.bio.base.score.load.four_column` and
     :py:func:`bob.bio.base.score.load.five_column` for details.
 
     By default, when eval-scores are given, only eval-scores histograms are
     displayed with threshold line
-    computed from dev-scores. If you want to display dev-scores distributions
-    as well, use ``--show-dev`` option.
+    computed from dev-scores.
 
     Examples:
         $ bob bio hist -v dev-scores
 
-        $ bob bio hist -v dev-scores1 eval-scores1 dev-scores2
+        $ bob bio hist -e -v dev-scores1 eval-scores1 dev-scores2
         eval-scores2
 
-        $ bob bio hist -v --criterion --show-dev min-hter dev-scores1 eval-scores1
+        $ bob bio hist -e -v --criterion min-hter dev-scores1 eval-scores1
     """
     process = bio_figure.Hist(ctx, scores, evaluation, load.split)
     process.run()
@@ -367,8 +368,8 @@ def evaluate(ctx, scores, evaluation, **kwargs):
        curves to a multi-page PDF file
 
     You need to provide one or more development score file(s) for each
-    experiment. You can also provide eval files along with dev files. If only
-    dev-scores are used, the flag `--no-evaluation` must be used. is required
+    experiment. You can also provide eval files along with dev files. If
+    eval-scores are used, the flag `--eval` must be used. is required
     in that case. Files must be 4- or 5- columns format, see
     :py:func:`bob.bio.base.score.load.four_column` and
     :py:func:`bob.bio.base.score.load.five_column` for details.
@@ -382,9 +383,9 @@ def evaluate(ctx, scores, evaluation, **kwargs):
     Examples:
         $ bob bio evaluate -v dev-scores
 
-        $ bob bio evaluate -v -l metrics.txt -o my_plots.pdf dev-scores eval-scores
+        $ bob bio evaluate -e -v -l metrics.txt -o my_plots.pdf dev-scores eval-scores
 
-        $ bob bio evaluate -v -o my_plots.pdf /path/to/syst-{1,2,3}/{dev,eval}-scores
+        $ bob bio evaluate -e -v -o my_plots.pdf /path/to/syst-{1,2,3}/{dev,eval}-scores
     '''
     log_str = ''
     if 'log' in ctx.meta and ctx.meta['log'] is not None:
