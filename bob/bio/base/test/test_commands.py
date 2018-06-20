@@ -244,7 +244,7 @@ def test_hist():
     with runner.isolated_filesystem():
         result = runner.invoke(commands.hist, ['--criterion', 'min-hter', '--output',
                                                'HISTO.pdf', '-b',
-                                               '30,auto', dev1, dev2])
+                                               'doane', dev1, dev2])
         if result.output:
             click.echo(result.output)
         assert result.exit_code == 0, (result.exit_code, result.output)
