@@ -136,7 +136,7 @@ Once a decision has been made, we can quantify the overall performance of the pa
 
 .. note::
 
-   * The "Data Preprocessing" to "Matching" steps are carried out by ``bob.bio.base``'s ``verify.py`` script.  The "Decision Making" step is carried out by ``bob.bio.base``'s ``evaluate.py`` script.  These scripts will be discussed in the next sections.
+   * The "Data Preprocessing" to "Matching" steps are carried out by ``bob.bio.base``'s ``verify.py`` script.  The "Decision Making" step is carried out by ``bob.bio.base``'s ``bob bio evaluate`` script.  These scripts will be discussed in the next sections.
    * The communication between any two steps in the recognition framework is file-based, usually using a binary HDF5_ interface, which is implemented, for example, in the :py:class:`bob.io.base.HDF5File` class. One exception is the "Decision Making" step, which uses score file in text format, i.e., to allow to incorporate other systems' results, which are computed outside of ``bob.bio``, but uses the same database and evaluation protocol.
    * The output of one step usually serves as the input of the subsequent step(s), as portrayed in Fig. 3 -- Fig. 8.
    * ``bob.bio`` ensures that the correct files are always forwarded to the subsequent steps.  For example, if you choose to implement a feature projection after the feature extraction stage, as illustrated in Fig. 5, ``bob.bio`` will make sure that the files in the "projected" directory are passed on as the input to the Enrollment stage; otherwise, the "extracted" directory will become the input to the Enrollment stage.

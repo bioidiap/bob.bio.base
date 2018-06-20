@@ -75,7 +75,7 @@ If ``--eval-files`` are specified, the same fusion that is trained on the develo
 .. note::
    When ``--eval-files`` are specified, they need to be in the same order as the ``--dev-files``, otherwise the result is undefined.
 
-The resulting ``--fused-dev-file`` and ``--fused-eval-file`` can then be evaluated normally, e.g., using the ``evaluate.py`` script.
+The resulting ``--fused-dev-file`` and ``--fused-eval-file`` can then be evaluated normally, e.g., using the ``bob bio evaluate`` script.
 
 
 .. _grid-search:
