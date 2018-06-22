@@ -114,6 +114,7 @@ class Dir(measure_figure.PlotBase):
 class Metrics(measure_figure.Metrics):
     ''' Compute metrics from score files'''
 
+
     def init_process(self):
         if self._criterion == 'rr':
             self._thres = [None] * self.n_systems if self._thres is None else \
@@ -205,6 +206,11 @@ class Metrics(measure_figure.Metrics):
                     tabulate(raws, headers, self._tablefmt), file=self.log_file
                 )
         else:
+            self.names = (
+                'Failure to Acquire', 'False Match Rate',
+                'False Non Match Rate', 'False Accept Rate',
+                'False Reject Rate', 'Half Total Error Rate'
+            )
             super(Metrics, self).compute(idx, input_scores, input_names)
 
 
