@@ -139,6 +139,7 @@ setup(
       'bob.bio.cli': [
         'annotate          = bob.bio.base.script.annotate:annotate',
         'metrics           = bob.bio.base.script.commands:metrics',
+        'multi-metrics     = bob.bio.base.script.commands:multi_metrics',
         'roc               = bob.bio.base.script.commands:roc',
         'det               = bob.bio.base.script.commands:det',
         'epc               = bob.bio.base.script.commands:epc',

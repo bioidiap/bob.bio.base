@@ -84,6 +84,19 @@ def evaluate(ctx, scores, evaluation, **kwargs):
         ctx, scores, evaluation, metrics, roc, det, epc, hist, **kwargs)
 
 
+@common_options.multi_metrics_command(
+    common_options.MULTI_METRICS_HELP.format(
+        names='FtA, FAR, FRR, FMR, FMNR, HTER',
+        criteria=CRITERIA, score_format=SCORE_FORMAT,
+        command='bob pad multi-metrics'),
+    criteria=CRITERIA)
+def multi_metrics(ctx, scores, evaluation, protocols_number, **kwargs):
+  ctx.meta['min_arg'] = protocols_number * (2 if evaluation else 1)
+  process = bio_figure.MultiMetrics(
+      ctx, scores, evaluation, load.split)
+  process.run()
+
+
 @click.command()
 @common_options.scores_argument(nargs=-1)
 @common_options.titles_option()
