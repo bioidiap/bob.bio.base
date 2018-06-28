@@ -11,8 +11,8 @@ from tabulate import tabulate
 class Roc(measure_figure.Roc):
     def __init__(self, ctx, scores, evaluation, func_load):
         super(Roc, self).__init__(ctx, scores, evaluation, func_load)
-        self._x_label = ctx.meta.get('x_label') or 'False Match Rate'
-        default_y_label = '1 - False Non Match Rate' if self._semilogx \
+        self._x_label = ctx.meta.get('x_label') or 'FMR'
+        default_y_label = '1 - FNMR' if self._semilogx \
             else 'False Non Match Rate'
         self._y_label = ctx.meta.get('y_label') or default_y_label
 
@@ -20,8 +20,8 @@ class Roc(measure_figure.Roc):
 class Det(measure_figure.Det):
     def __init__(self, ctx, scores, evaluation, func_load):
         super(Det, self).__init__(ctx, scores, evaluation, func_load)
-        self._x_label = ctx.meta.get('x_label') or 'False Match Rate (%)'
-        self._y_label = ctx.meta.get('y_label') or 'False Non Match Rate (%)'
+        self._x_label = ctx.meta.get('x_label') or 'FMR (%)'
+        self._y_label = ctx.meta.get('y_label') or 'FNMR (%)'
 
 
 class Cmc(measure_figure.PlotBase):
@@ -30,7 +30,7 @@ class Cmc(measure_figure.PlotBase):
     def __init__(self, ctx, scores, evaluation, func_load):
         super(Cmc, self).__init__(ctx, scores, evaluation, func_load)
         self._semilogx = ctx.meta.get('semilogx', True)
-        self._titles = self._titles or ['CMC dev', 'CMC eval']
+        self._titles = self._titles or ['CMC dev.', 'CMC eval.']
         self._x_label = self._x_label or 'Rank'
         self._y_label = self._y_label or 'Identification rate'
         self._max_R = 0
@@ -76,7 +76,7 @@ class Dir(measure_figure.PlotBase):
         self._rank = ctx.meta.get('rank', 1)
         self._titles = self._titles or ['DIR curve'] * 2
         self._x_label = self._x_label or 'False Alarm Rate'
-        self._y_label = self._y_label or 'Detection and Identification Rate'
+        self._y_label = self._y_label or 'DIR'
 
     def compute(self, idx, input_scores, input_names):
         ''' Plot DIR for dev and eval data using
