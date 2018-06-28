@@ -5,9 +5,8 @@ import click
 import matplotlib.pyplot as mpl
 import bob.measure.script.figure as measure_figure
 import bob.measure
-from bob.measure import plot
+from bob.measure import (plot, utils)
 from tabulate import tabulate
-
 
 class Roc(measure_figure.Roc):
     def __init__(self, ctx, scores, evaluation, func_load):
@@ -114,6 +113,14 @@ class Dir(measure_figure.PlotBase):
 class Metrics(measure_figure.Metrics):
     ''' Compute metrics from score files'''
 
+    def __init__(self, ctx, scores, evaluation, func_load,
+                names=('Failure to Acquire', 'False Match Rate',
+                   'False Non Match Rate', 'False Accept Rate',
+                   'False Reject Rate', 'Half Total Error Rate')):
+        super(Metrics, self).__init__(
+            ctx, scores, evaluation, func_load, names
+        )
+
     def init_process(self):
         if self._criterion == 'rr':
             self._thres = [None] * self.n_systems if self._thres is None else \
@@ -122,7 +129,7 @@ class Metrics(measure_figure.Metrics):
     def compute(self, idx, input_scores, input_names):
         ''' Compute metrics for the given criteria'''
         title = self._legends[idx] if self._legends is not None else None
-        headers = ['' or title, 'Development %s' % input_names[0]]
+        headers = ['' or title, 'Dev. %s' % input_names[0]]
         if self._eval and input_scores[1] is not None:
             headers.append('eval % s' % input_names[1])
         if self._criterion == 'rr':
@@ -205,12 +212,28 @@ class Metrics(measure_figure.Metrics):
                     tabulate(raws, headers, self._tablefmt), file=self.log_file
                 )
         else:
-            self.names = (
-                'Failure to Acquire', 'False Match Rate',
-                'False Non Match Rate', 'False Accept Rate',
-                'False Reject Rate', 'Half Total Error Rate'
-            )
-            super(Metrics, self).compute(idx, input_scores, input_names)
+            title = self._legends[idx] if self._legends is not None else None
+            all_metrics = self._get_all_metrics(idx, input_scores, input_names)
+            headers = [' ' or title, 'Development']
+            rows = [[self.names[0], all_metrics[0][0]],
+                    [self.names[1], all_metrics[0][1]],
+                    [self.names[2], all_metrics[0][2]],
+                    [self.names[3], all_metrics[0][3]],
+                    [self.names[4], all_metrics[0][4]],
+                    [self.names[5], all_metrics[0][5]]]
+
+            if self._eval:
+                # computes statistics for the eval set based on the threshold a
+                # priori
+                headers.append('Evaluation')
+                rows[0].append(all_metrics[1][0])
+                rows[1].append(all_metrics[1][1])
+                rows[2].append(all_metrics[1][2])
+                rows[3].append(all_metrics[1][3])
+                rows[4].append(all_metrics[1][4])
+                rows[5].append(all_metrics[1][5])
+
+            click.echo(tabulate(rows, headers, self._tablefmt), file=self.log_file)
 
 
 class MultiMetrics(measure_figure.MultiMetrics):
