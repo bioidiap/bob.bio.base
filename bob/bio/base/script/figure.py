@@ -7,6 +7,9 @@ import bob.measure.script.figure as measure_figure
 import bob.measure
 from bob.measure import (plot, utils)
 from tabulate import tabulate
+import logging
+
+LOGGER = logging.getLogger("bob.bio.base")
 
 class Roc(measure_figure.Roc):
     def __init__(self, ctx, scores, evaluation, func_load):
@@ -41,10 +44,11 @@ class Cmc(measure_figure.PlotBase):
         mpl.figure(1)
         if self._eval:
             linestyle = '-' if not self._split else self._linestyles[idx]
+            LOGGER.info("CMC dev. curve using %s", input_names[0])
             rank = plot.cmc(
                 input_scores[0], logx=self._semilogx,
                 color=self._colors[idx], linestyle=linestyle,
-                label=self._label('dev', input_names[0], idx)
+                label=self._label('dev.', idx)
             )
             self._max_R = max(rank, self._max_R)
             linestyle = '--'
@@ -52,17 +56,19 @@ class Cmc(measure_figure.PlotBase):
                 mpl.figure(2)
                 linestyle = self._linestyles[idx]
 
+            LOGGER.info("CMC eval. curve using %s", input_names[1])
             rank = plot.cmc(
                 input_scores[1], logx=self._semilogx,
                 color=self._colors[idx], linestyle=linestyle,
-                label=self._label('eval', input_names[1], idx)
+                label=self._label('eval.', idx)
             )
             self._max_R = max(rank, self._max_R)
         else:
+            LOGGER.info("CMC dev. curve using %s", input_names[0])
             rank = plot.cmc(
                 input_scores[0], logx=self._semilogx,
                 color=self._colors[idx], linestyle=self._linestyles[idx],
-                label=self._label('dev', input_names[0], idx)
+                label=self._label('dev.', idx)
             )
             self._max_R = max(rank, self._max_R)
 
@@ -84,26 +90,29 @@ class Dir(measure_figure.PlotBase):
         mpl.figure(1)
         if self._eval:
             linestyle = '-' if not self._split else self._linestyles[idx]
+            LOGGER.info("DIR dev. curve using %s", input_names[0])
             plot.detection_identification_curve(
                 input_scores[0], rank=self._rank, logx=self._semilogx,
                 color=self._colors[idx], linestyle=linestyle,
-                label=self._label('dev', input_names[0], idx)
+                label=self._label('dev', idx)
             )
             linestyle = '--'
             if self._split:
                 mpl.figure(2)
                 linestyle = self._linestyles[idx]
 
+            LOGGER.info("DIR eval. curve using %s", input_names[1])
             plot.detection_identification_curve(
                 input_scores[1], rank=self._rank, logx=self._semilogx,
                 color=self._colors[idx], linestyle=linestyle,
-                label=self._label('eval', input_names[1], idx)
+                label=self._label('eval', idx)
             )
         else:
+            LOGGER.info("DIR dev. curve using %s", input_names[0])
             plot.detection_identification_curve(
                 input_scores[0], rank=self._rank, logx=self._semilogx,
                 color=self._colors[idx], linestyle=self._linestyles[idx],
-                label=self._label('dev', input_names[0], idx)
+                label=self._label('dev', idx)
             )
 
         if self._min_dig is not None:
