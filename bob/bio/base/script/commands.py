@@ -32,6 +32,7 @@ def rank_option(**kwargs):
 @common_options.metrics_command(common_options.METRICS_HELP.format(
     names='FtA, FAR, FRR, FMR, FMNR, HTER',
     criteria=CRITERIA, score_format=SCORE_FORMAT,
+    hter_note='Note that HTER = (FMR + FMNR) / 2',
     command='bob bio metrics'), criteria=CRITERIA)
 @common_options.cost_option()
 def metrics(ctx, scores, evaluation, **kwargs):
