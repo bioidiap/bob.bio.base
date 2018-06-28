@@ -8,5 +8,5 @@ from bob.extension.scripts.click_helper import AliasedGroup
 @with_plugins(pkg_resources.iter_entry_points('bob.bio.cli'))
 @click.group(cls=AliasedGroup)
 def bio():
-    """Entry for bob.bio commands."""
+    """Biometric recognition commands."""
     pass
