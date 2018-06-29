@@ -141,7 +141,7 @@ def cmc(ctx, scores, evaluation, **kargs):
     process.run()
 
 
-@click.command()
+@click.command(context_settings=common_options.CONTEXT_SETTINGS)
 @common_options.scores_argument(nargs=-1)
 @common_options.titles_option()
 @common_options.legends_option()
