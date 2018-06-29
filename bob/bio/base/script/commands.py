@@ -5,7 +5,7 @@ from . import figure as bio_figure
 import bob.measure.script.figure as measure_figure
 from ..score import load
 from bob.measure.script import common_options
-from bob.extension.scripts.click_helper import verbosity_option, CONTEXT_SETTINGS
+from bob.extension.scripts.click_helper import verbosity_option
 
 
 SCORE_FORMAT = (
@@ -141,7 +141,7 @@ def cmc(ctx, scores, evaluation, **kargs):
     process.run()
 
 
-@click.command(context_settings=CONTEXT_SETTINGS)
+@click.command()
 @common_options.scores_argument(nargs=-1)
 @common_options.titles_option()
 @common_options.legends_option()

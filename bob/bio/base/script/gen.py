@@ -6,7 +6,7 @@ import numpy
 import random
 import click
 from click.types import FLOAT
-from bob.extension.scripts.click_helper import verbosity_option, CONTEXT_SETTINGS
+from bob.extension.scripts.click_helper import verbosity_option
 import bob.core
 from bob.io.base import create_directories_safe
 from bob.measure.script import common_options
@@ -80,7 +80,7 @@ def write_scores_to_file(neg, pos, filename, n_sys=1, five_col=False):
             f.write('x%sy %s %f\n' % (s_five, s_name, i))
 
 
-@click.command(context_settings=CONTEXT_SETTINGS)
+@click.command()
 @click.argument('outdir')
 @click.option('-mm', '--mean-match', default=10, type=FLOAT, show_default=True)
 @click.option('-mnm', '--mean-non-match', default=-10, type=FLOAT, show_default=True)
