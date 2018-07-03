@@ -9,6 +9,7 @@ from click.types import FLOAT
 from bob.extension.scripts.click_helper import verbosity_option
 import bob.core
 from bob.io.base import create_directories_safe
+from bob.measure.script import common_options
 
 logger = logging.getLogger(__name__)
 
