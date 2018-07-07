@@ -106,8 +106,8 @@ class SequentialExtractor(SequentialProcessor, MultipleExtractor):
     >>> seq_extractor = SequentialExtractor(
     ...     [CallableExtractor(f) for f in
     ...      [np.cast['float64'], lambda x: x / 2, partial(np.mean, axis=1)]])
-    >>> seq_extractor(raw_data)
-    array([ 1.,  1.])
+    >>> np.allclose(seq_extractor(raw_data),[ 1.,  1.])
+    True
     >>> np.all(seq_extractor(raw_data) ==
     ...        np.mean(np.cast['float64'](raw_data) / 2, axis=1))
     True
@@ -166,10 +166,8 @@ class ParallelExtractor(ParallelProcessor, MultipleExtractor):
     >>> parallel_extractor = ParallelExtractor(
     ...     [CallableExtractor(f) for f in
     ...      [np.cast['float64'], lambda x: x / 2.0]])
-    >>> list(parallel_extractor(raw_data))
-    [array([[ 1.,  2.,  3.],
-           [ 1.,  2.,  3.]]), array([[ 0.5,  1. ,  1.5],
-           [ 0.5,  1. ,  1.5]])]
+    >>> np.allclose(list(parallel_extractor(raw_data)),[[[ 1.,  2.,  3.],[ 1.,  2.,  3.]], [[ 0.5,  1. ,  1.5],[ 0.5,  1. ,  1.5]]])
+    True
 
     The data may be further processed using a :any:`SequentialExtractor`:
 
@@ -177,9 +175,9 @@ class ParallelExtractor(ParallelProcessor, MultipleExtractor):
     >>> total_extractor = SequentialExtractor(
     ...     [parallel_extractor, CallableExtractor(list),
     ...      CallableExtractor(partial(np.concatenate, axis=1))])
-    >>> total_extractor(raw_data)
-    array([[ 1. ,  2. ,  3. ,  0.5,  1. ,  1.5],
-           [ 1. ,  2. ,  3. ,  0.5,  1. ,  1.5]])
+    >>> np.allclose(total_extractor(raw_data),[[ 1. ,  2. ,  3. ,  0.5,  1. ,  1.5],[ 1. ,  2. ,  3. ,  0.5,  1. ,  1.5]])
+    True
+    
     """
 
     def __init__(self, processors, **kwargs):

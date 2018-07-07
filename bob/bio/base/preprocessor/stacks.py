@@ -23,8 +23,8 @@ class SequentialPreprocessor(SequentialProcessor, Preprocessor):
     >>> seq_preprocessor = SequentialPreprocessor(
     ...     [CallablePreprocessor(f, accepts_annotations=False) for f in
     ...      [np.cast['float64'], lambda x: x / 2, partial(np.mean, axis=1)]])
-    >>> seq_preprocessor(raw_data)
-    array([ 1.,  1.])
+    >>> np.allclose(seq_preprocessor(raw_data), [ 1.,  1.])
+    True
     >>> np.all(seq_preprocessor(raw_data) ==
     ...        np.mean(np.cast['float64'](raw_data) / 2, axis=1))
     True
@@ -73,10 +73,8 @@ class ParallelPreprocessor(ParallelProcessor, Preprocessor):
     >>> parallel_preprocessor = ParallelPreprocessor(
     ...     [CallablePreprocessor(f, accepts_annotations=False) for f in
     ...      [np.cast['float64'], lambda x: x / 2.0]])
-    >>> list(parallel_preprocessor(raw_data))
-    [array([[ 1.,  2.,  3.],
-           [ 1.,  2.,  3.]]), array([[ 0.5,  1. ,  1.5],
-           [ 0.5,  1. ,  1.5]])]
+    >>> np.allclose(list(parallel_preprocessor(raw_data)),[[[ 1.,  2.,  3.],[ 1.,  2.,  3.]], [[ 0.5,  1. ,  1.5],[ 0.5,  1. ,  1.5]]])
+    True
 
     The data may be further processed using a :any:`SequentialPreprocessor`:
 
@@ -84,9 +82,9 @@ class ParallelPreprocessor(ParallelProcessor, Preprocessor):
     >>> total_preprocessor = SequentialPreprocessor(
     ...     [parallel_preprocessor, CallablePreprocessor(list, False),
     ...      CallablePreprocessor(partial(np.concatenate, axis=1), False)])
-    >>> total_preprocessor(raw_data)
-    array([[ 1. ,  2. ,  3. ,  0.5,  1. ,  1.5],
-           [ 1. ,  2. ,  3. ,  0.5,  1. ,  1.5]])
+    >>> np.allclose(total_preprocessor(raw_data),[[ 1. ,  2. ,  3. ,  0.5,  1. ,  1.5],[ 1. ,  2. ,  3. ,  0.5,  1. ,  1.5]])
+    True
+    
     """
 
     def __init__(self, processors, **kwargs):
