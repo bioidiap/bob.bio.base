@@ -25,7 +25,7 @@ logger = logging.getLogger("bob.bio.base")
 @click.argument('database', required=True)
 @verbosity_option()
 @click.pass_context
-def baseline(ctx, baseline, database):
+def baseline(ctx, baseline, database, **kwargs):
     """Run a biometric recognition baseline.
 
     \b
@@ -65,7 +65,7 @@ def baseline(ctx, baseline, database):
         sub_directory = os.path.join(database, baseline)
     else:
         sub_directory = baseline
-        
+
     logger.debug('Database groups are %s', database_data["groups"])
 
     # call verify with newly generated config file. We will create a new config

@@ -87,7 +87,7 @@ def write_scores_to_file(neg, pos, filename, n_sys=1, five_col=False):
 @click.option('-n', '--n-sys', default=1, type=click.INT, show_default=True)
 @click.option('--five-col/--four-col', default=False, show_default=True)
 @verbosity_option()
-def gen(outdir, mean_match, mean_non_match, n_sys, five_col):
+def gen(outdir, mean_match, mean_non_match, n_sys, five_col, **kwargs):
     """Generate random scores.
     Generates random scores in 4col or 5col format. The scores are generated
     using Gaussian distribution whose mean is an input
