@@ -8,33 +8,39 @@ A script to run biometric recognition baselines
 
 
 from .. import load_resource
-from .verify import main as verify
 import os
 from ..baseline import get_available_databases, search_preprocessor
-from bob.extension.scripts.click_helper import verbosity_option
+from bob.extension.scripts.click_helper import (
+    verbosity_option, log_parameters)
 import click
 import tempfile
 import logging
-import os
 
 logger = logging.getLogger("bob.bio.base")
 
 
+EPILOG = '''\b
+Example:
+    $ bob bio baseline eigenface atnt -vvv
+
+which will run the eigenface baseline (from bob.bio.face) on the atnt
+database.
+'''
+
+
 @click.command(context_settings={'ignore_unknown_options': True,
-                                 'allow_extra_args': True})
+                                 'allow_extra_args': True}, epilog=EPILOG)
 @click.argument('baseline', required=True)
 @click.argument('database', required=True)
+@click.option('--parallel-training', default='verify', show_default=True,
+              type=click.Choice(('verify', 'gmm', 'isv', 'ivector')),
+              help='Which script to use for training the algorithm. Some '
+              'algorithms would train more efficiently using a different '
+              'script.')
 @verbosity_option()
 @click.pass_context
-def baseline(ctx, baseline, database, **kwargs):
+def baseline(ctx, baseline, database, parallel_training, **kwargs):
     """Run a biometric recognition baseline.
-
-    \b
-    Example:
-        $ bob bio baseline eigenface atnt -vvv
-
-    which will run the eigenface baseline (from bob.bio.face) on the atnt
-    database.
 
     \b
     Check out all baselines available by running:
@@ -52,6 +58,8 @@ def baseline(ctx, baseline, database, **kwargs):
     Hint: pass `--result-directory <dir>` to set the directory for resulting score files
 
     """
+    log_parameters(logger)
+
     # Triggering training for each baseline/database
     loaded_baseline = load_resource(
         baseline, 'baseline', package_prefix="bob.bio.")
@@ -90,22 +98,31 @@ verbose = {verbose}
         verbose=ctx.meta['verbosity'],
     )
 
+    if parallel_training == "verify":
+        from .verify import main
+    elif parallel_training == "gmm":
+        from bob.bio.gmm.script.verify_gmm import main
+    elif parallel_training == "isv":
+        from bob.bio.gmm.script.verify_isv import main
+    elif parallel_training == "ivector":
+        from bob.bio.gmm.script.verify_ivector import main
+
+    algorithm = loaded_baseline.algorithm
+    if 'gmm' in algorithm and parallel_training != 'gmm':
+        logger.warning("GMM algorithms can train faster using the "
+                       "``--parallel-training gmm`` option.")
+    if 'isv' in algorithm and parallel_training != 'isv':
+        logger.warning("ISV algorithms can train faster using the "
+                       "``--parallel-training isv`` option.")
+    if 'ivector' in algorithm and parallel_training != 'ivector':
+        logger.warning("ivector algorithms can train faster using the "
+                       "``--parallel-training ivector`` option.")
+
     with tempfile.NamedTemporaryFile(mode='w+t', prefix='{}_'.format(baseline),
                                      suffix='.py', delete=False, dir='.') as f:
         f.write(config)
         f.flush()
         f.seek(0)
-        verify([f.name] + ctx.args)
+        main([f.name] + ctx.args)
         click.echo("You may want to delete `{}' after the experiments are "
                    "finished running.".format(f.name))
-
-    if "gmm" in loaded_baseline.algorithm:
-        from bob.bio.gmm.script.verify_gmm import main as verify
-    elif "isv" in loaded_baseline.algorithm:
-        from bob.bio.gmm.script.verify_isv import main as verify
-    elif "ivector" in loaded_baseline.algorithm:
-        from bob.bio.gmm.script.verify_ivector import main as verify
-    else:
-        from .verify import main as verify
-
-    verify(parameters + ctx.args)
