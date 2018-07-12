@@ -6,6 +6,7 @@ import click
 from click.testing import CliRunner
 import pkg_resources
 from ..script import commands
+from bob.extension.scripts.click_helper import assert_click_runner_result
 
 def test_metrics():
     dev1 = pkg_resources.resource_filename('bob.bio.base.test',
@@ -15,7 +16,7 @@ def test_metrics():
     with runner.isolated_filesystem():
         with open('tmp', 'w') as f:
             f.write(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
     dev2 = pkg_resources.resource_filename('bob.bio.base.test',
                                            'data/dev-5col.txt')
     test1 = pkg_resources.resource_filename('bob.bio.base.test',
@@ -28,19 +29,19 @@ def test_metrics():
         )
         with open('tmp', 'w') as f:
             f.write(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
     with runner.isolated_filesystem():
         result = runner.invoke(
             commands.metrics, ['-e', '-l', 'tmp', '-lg', 'A,B',
                                dev1, test1, dev2, test2]
         )
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
     with runner.isolated_filesystem():
         result = runner.invoke(
             commands.metrics, ['-e', '-l', 'tmp', dev1, test2]
         )
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
     with runner.isolated_filesystem():
         result = runner.invoke(
@@ -48,7 +49,7 @@ def test_metrics():
                                '--criterion', 'mindcf', '--cost', 0.9,
                                dev1, test2]
         )
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
     with runner.isolated_filesystem():
         result = runner.invoke(
@@ -56,34 +57,34 @@ def test_metrics():
                                '--criterion', 'mindcf', '--cost', 0.9,
                                dev1]
         )
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
     with runner.isolated_filesystem():
         result = runner.invoke(
             commands.metrics, ['-e', '--criterion', 'cllr', dev1, test2]
         )
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
     with runner.isolated_filesystem():
         result = runner.invoke(
             commands.metrics, ['-l', 'tmp', '--criterion', 'cllr',
                                '--cost', 0.9, dev1]
         )
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
     with runner.isolated_filesystem():
         result = runner.invoke(
             commands.metrics, ['-e', '--criterion', 'rr', '-T',
                                '0.1', dev1, test2]
         )
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
     with runner.isolated_filesystem():
         result = runner.invoke(
             commands.metrics, ['-l', 'tmp', '--criterion', 'rr',
                                dev1, dev2]
         )
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
 
 
@@ -96,7 +97,7 @@ def test_roc():
                                               'test.pdf',dev1])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
     dev2 = pkg_resources.resource_filename('bob.bio.base.test',
                                            'data/dev-5col.txt')
     test1 = pkg_resources.resource_filename('bob.bio.base.test',
@@ -110,7 +111,7 @@ def test_roc():
                                               dev1, test1, dev2, test2])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
     with runner.isolated_filesystem():
         result = runner.invoke(commands.roc, ['--output',
@@ -119,7 +120,7 @@ def test_roc():
                                               dev1, test1, dev2, test2])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
     dev_nonorm = pkg_resources.resource_filename('bob.bio.base.test',
                                                  'data/scores-nonorm-dev')
@@ -134,7 +135,7 @@ def test_roc():
         ])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
 
 
@@ -146,7 +147,7 @@ def test_det():
         result = runner.invoke(commands.det, [dev1, '-S'])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
     dev2 = pkg_resources.resource_filename('bob.bio.base.test',
                                            'data/dev-5col.txt')
     test1 = pkg_resources.resource_filename('bob.bio.base.test',
@@ -160,14 +161,14 @@ def test_det():
                                               dev1, test1, dev2, test2])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
     with runner.isolated_filesystem():
         result = runner.invoke(commands.det, ['--output',
                                               'test.pdf', '-e',
                                               dev1, test1, dev2, test2])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
 
     dev_nonorm = pkg_resources.resource_filename('bob.bio.base.test',
@@ -183,7 +184,7 @@ def test_det():
         ])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
 
 def test_epc():
@@ -196,7 +197,7 @@ def test_epc():
         result = runner.invoke(commands.epc, [dev1, test1])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
     dev2 = pkg_resources.resource_filename('bob.bio.base.test',
                                            'data/dev-4col.tar.gz')
     test2 = pkg_resources.resource_filename('bob.bio.base.test',
@@ -207,7 +208,7 @@ def test_epc():
                                               dev1, test1, dev2, test2])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
     dev_nonorm = pkg_resources.resource_filename('bob.bio.base.test',
                                                  'data/scores-nonorm-dev')
@@ -221,7 +222,7 @@ def test_epc():
         ])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
 
 
@@ -239,7 +240,7 @@ def test_hist():
         result = runner.invoke(commands.hist, [dev1])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
     with runner.isolated_filesystem():
         result = runner.invoke(commands.hist, ['--criterion', 'min-hter', '--output',
@@ -247,7 +248,7 @@ def test_hist():
                                                '30,auto', dev1, dev2])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
     with runner.isolated_filesystem():
         result = runner.invoke(commands.hist, ['--criterion', 'eer', '--output',
@@ -256,7 +257,7 @@ def test_hist():
                                                test2])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
 
 
@@ -268,7 +269,7 @@ def test_cmc():
         result = runner.invoke(commands.cmc, [dev1])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
     test1 = pkg_resources.resource_filename('bob.bio.base.test',
                                             'data/scores-cmc-4col.txt')
     with runner.isolated_filesystem():
@@ -278,7 +279,7 @@ def test_cmc():
                                               dev1, test1, dev1, test1])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
     dev_nonorm = pkg_resources.resource_filename('bob.bio.base.test',
                                                  'data/scores-nonorm-dev')
@@ -292,7 +293,7 @@ def test_cmc():
         ])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
 
 
 
@@ -305,7 +306,7 @@ def test_dir():
         result = runner.invoke(commands.dir, [dev1, '--rank', 2])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
     test1 = pkg_resources.resource_filename('bob.bio.base.test',
                                             'data/scores-nonorm-openset-dev')
     with runner.isolated_filesystem():
@@ -315,4 +316,4 @@ def test_dir():
                                               dev1, test1, dev1, test1])
         if result.output:
             click.echo(result.output)
-        assert result.exit_code == 0, (result.exit_code, result.output)
+        assert_click_runner_result(result)
