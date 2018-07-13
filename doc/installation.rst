@@ -59,14 +59,19 @@ supported databases including their download URLs, please refer to the
 `biometric recognition databases`_.
 
 After downloading the raw data for the databases, you will need to tell
-``bob.bio``, where these databases can be found. For this purpose, we have
-decided to implement a special file, where you can set your directories. By
+``bob.bio``, where these databases can be found. There are two methods for
+this purpose. The older method is deprecated but some old databases may still
+be using it.
+
+Old Databases
+~~~~~~~~~~~~~
+A special file, where you can set your directories, is used. By
 default, this file is located in ``~/.bob_bio_databases.txt``, and it contains
 several lines, each line looking somewhat like:
 
 .. code-block:: text
 
-   [YOUR_ATNT_DIRECTORY] = /path/to/your/directory
+   [YOUR_ATNT_DIRECTORY] = /path/to/atnt/directory
 
 .. note::
 
@@ -84,6 +89,19 @@ updated, and the corrected paths for those you have.
    :ref:`bob.bio.face <bob.bio.face>` or :ref:`bob.bio.spear <bob.bio.spear>`.
    Also, please don't forget that you need to install the corresponding
    ``bob.db.<name>`` package as well.
+
+
+New Databases
+~~~~~~~~~~~~~
+
+Most new databses in bob use the :ref:`bob.extension.rc` to find the location
+of the raw data. Please refer to the documentation of the database package to
+find out if they use this feature or not. If they do, the location can be
+configured using the ``bob config`` command. For example:
+
+.. code-block:: sh
+
+   $ bob config set bob.db.atnt.directory /path/to/atnt/directory
 
 
 Test your Installation
