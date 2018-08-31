@@ -21,7 +21,8 @@ def _scores(algorithm, reader, model, probe_objects, allow_missing_files):
   # get probe files
   probes = fs.get_paths(probe_objects, 'projected' if algorithm.performs_projection else 'extracted')
   # the scores to be computed; initialized with NaN
-  scores = numpy.ones((1,len(probes)), numpy.float64) * numpy.nan
+  # scores = numpy.ones((1,len(probes)), numpy.float64) * numpy.nan
+  scores = []
 
   if allow_missing_files and model is None:
     # if we have no model, all scores are undefined
@@ -43,7 +44,7 @@ def _scores(algorithm, reader, model, probe_objects, allow_missing_files):
       # read probe from probe_set
       probe = [reader.read_feature(probe_file) for probe_file in probe_element]
       # compute score
-      scores[0,i] = algorithm.score_for_multiple_probes(model, probe)
+      scores.insert(i, algorithm.score_for_multiple_probes(model, probe))
     else:
       if allow_missing_files and not os.path.exists(probe_element):
         # we keep the NaN score
@@ -53,9 +54,11 @@ def _scores(algorithm, reader, model, probe_objects, allow_missing_files):
 
       # compute score
       if has_metadata:
-        scores[0, i] = algorithm.score(model, probe, metadata=probe_metadata)
+        scores.insert(i, algorithm.score(model, probe, metadata=probe_metadata))
+        # scores[0, i] = algorithm.score(model, probe, metadata=probe_metadata)
       else:
-        scores[0, i] = algorithm.score(model, probe)
+        scores.insert(i, algorithm.score(model, probe))
+        # scores[0, i] = algorithm.score(model, probe)
 
   # Returns the scores
   return scores
@@ -117,14 +120,17 @@ def _delete(score_file, write_compressed):
 def _save_scores(score_file, scores, probe_objects, client_id, write_compressed):
   """Saves the scores of one model into a text file that can be interpreted by
   :py:func:`bob.bio.base.score.split_four_column`."""
-  assert len(probe_objects) == scores.shape[1]
+  # assert len(probe_objects) == scores.shape[1]
+  assert len(probe_objects) == len(scores)
 
   # open file for writing
   f = _open_to_write(score_file, write_compressed)
 
   # write scores in four-column format as string
   for i, probe_object in enumerate(probe_objects):
-    _write(f, "%s %s %s %3.8f\n" % (str(client_id), str(probe_object.client_id), str(probe_object.path), scores[0,i]), write_compressed)
+    # _write(f, "%s %s %s %3.8f\n" % (str(client_id), str(probe_object.client_id), str(probe_object.path), scores[0,i]), write_compressed)
+    for score in scores[i]:
+      _write(f, "%s %s %s %3.8f\n" % (str(client_id), str(probe_object.client_id), str(probe_object.path), score), write_compressed)
 
   _close_written(score_file, f, write_compressed)
 
