@@ -175,10 +175,9 @@ class Metrics(measure_figure.Metrics):
             far, frr = bob.measure.farfrr(
                 input_scores[0][0], input_scores[0][1], threshold
             )
-            dev_far_str = "%.1f%%" % (100 * far)
-            dev_frr_str = "%.1f%%" % (100 * frr)
-            dev_mindcf_str = "%.1f%%" % (
-                (cost * far + (1 - cost) * frr) * 100.)
+            dev_far_str = "%.2f%%" % (100 * far)
+            dev_frr_str = "%.2f%%" % (100 * frr)
+            dev_mindcf_str = "%.4f" % ((cost / (1-cost)) * far + frr)
             raws = [['FAR', dev_far_str],
                     ['FRR', dev_frr_str],
                     ['minDCF', dev_mindcf_str]]
@@ -187,10 +186,9 @@ class Metrics(measure_figure.Metrics):
                 far, frr = bob.measure.farfrr(
                     input_scores[1][0], input_scores[1][1], threshold
                 )
-                eval_far_str = "%.1f%%" % (100 * far)
-                eval_frr_str = "%.1f%%" % (100 * frr)
-                eval_mindcf_str = "%.1f%%" % (
-                    (cost * far + (1 - cost) * frr) * 100.)
+                eval_far_str = "%.2f%%" % (100 * far)
+                eval_frr_str = "%.2f%%" % (100 * frr)
+                eval_mindcf_str = "%.4f" % ((cost / (1-cost)) * far + frr)
                 raws[0].append(eval_far_str)
                 raws[1].append(eval_frr_str)
                 raws[2].append(eval_mindcf_str)
@@ -203,8 +201,8 @@ class Metrics(measure_figure.Metrics):
             min_cllr = bob.measure.calibration.min_cllr(
                 input_scores[0][0], input_scores[0][1]
             )
-            dev_cllr_str = "%.1f%%" % cllr
-            dev_min_cllr_str = "%.1f%%" % min_cllr
+            dev_cllr_str = "%.4f" % cllr
+            dev_min_cllr_str = "%.4f" % min_cllr
             raws = [['Cllr', dev_cllr_str],
                     ['minCllr', dev_min_cllr_str]]
             if self._eval and input_scores[1] is not None:
@@ -213,8 +211,8 @@ class Metrics(measure_figure.Metrics):
                 min_cllr = bob.measure.calibration.min_cllr(
                     input_scores[1][0], input_scores[1][1]
                 )
-                eval_cllr_str = "%.1f%%" % cllr
-                eval_min_cllr_str = "%.1f%%" % min_cllr
+                eval_cllr_str = "%.4f" % cllr
+                eval_min_cllr_str = "%.4f" % min_cllr
                 raws[0].append(eval_cllr_str)
                 raws[1].append(eval_min_cllr_str)
                 click.echo(
