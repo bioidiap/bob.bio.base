@@ -149,6 +149,7 @@ setup(
         'gen               = bob.bio.base.script.gen:gen',
         'evaluate          = bob.bio.base.script.commands:evaluate',
         'baseline          = bob.bio.base.script.baseline:baseline',
+        'sort              = bob.bio.base.script.sort:sort',
       ],
 
       # annotators

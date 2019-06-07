@@ -48,6 +48,8 @@ class FailSafe(Annotator):
             if not annotations:
                 logger.debug(
                     "Annotator `%s' returned empty annotations.", annotator)
+            else:
+                logger.debug("Annotator `%s' succeeded!", annotator)
             kwargs['annotations'].update(annotations or {})
             # check if we have all the required annotations
             if all(key in kwargs['annotations'] for key in self.required_keys):

@@ -1,12 +1,14 @@
 '''Tests for bob.measure scripts'''
 
-import sys
-import filecmp
 import click
 from click.testing import CliRunner
+import shutil
 import pkg_resources
-from ..script import commands
+import numpy
+import nose
 from bob.extension.scripts.click_helper import assert_click_runner_result
+from ..script import commands, sort
+from ..score import scores
 
 def test_metrics():
     dev1 = pkg_resources.resource_filename('bob.bio.base.test',
@@ -87,7 +89,6 @@ def test_metrics():
         assert_click_runner_result(result)
 
 
-
 def test_roc():
     dev1 = pkg_resources.resource_filename('bob.bio.base.test',
                                            'data/dev-4col.txt')
@@ -138,7 +139,6 @@ def test_roc():
         assert_click_runner_result(result)
 
 
-
 def test_det():
     dev1 = pkg_resources.resource_filename('bob.bio.base.test',
                                            'data/dev-4col.txt')
@@ -169,7 +169,6 @@ def test_det():
         if result.output:
             click.echo(result.output)
         assert_click_runner_result(result)
-
 
     dev_nonorm = pkg_resources.resource_filename('bob.bio.base.test',
                                                  'data/scores-nonorm-dev')
@@ -225,7 +224,6 @@ def test_epc():
         assert_click_runner_result(result)
 
 
-
 def test_hist():
     dev1 = pkg_resources.resource_filename('bob.bio.base.test',
                                            'data/dev-4col.txt')
@@ -258,7 +256,6 @@ def test_hist():
         if result.output:
             click.echo(result.output)
         assert_click_runner_result(result)
-
 
 
 def test_cmc():
@@ -296,8 +293,6 @@ def test_cmc():
         assert_click_runner_result(result)
 
 
-
-
 def test_dir():
     dev1 = pkg_resources.resource_filename('bob.bio.base.test',
                                            'data/scores-nonorm-openset-dev')
@@ -317,3 +312,34 @@ def test_dir():
         if result.output:
             click.echo(result.output)
         assert_click_runner_result(result)
+
+
+def test_sort():
+
+    def sorted_scores(score_lines):
+        lines = []
+        floats = []
+        for line in score_lines:
+            lines.append(line)
+            floats.append(line[-1])
+        sort_idx = numpy.argsort(floats)
+        lines = [lines[i] for i in sort_idx]
+        return lines
+
+    dev1 = pkg_resources.resource_filename('bob.bio.base.test',
+                                           'data/scores-nonorm-dev')
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        # create a temporary sort file and sort it and check if it is sorted!
+
+        path = "scores.txt"
+        shutil.copy(dev1, path)
+
+        result = runner.invoke(sort.sort, [path])
+        assert_click_runner_result(result, exit_code=0)
+
+        # load dev1 and sort it and compare to path
+        dev1_sorted = sorted_scores(scores(dev1))
+        path_scores = list(scores(path))
+
+        nose.tools.assert_list_equal(dev1_sorted, path_scores)
