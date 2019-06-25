@@ -138,6 +138,7 @@ setup(
       # bob bio scripts
       'bob.bio.cli': [
         'annotate          = bob.bio.base.script.annotate:annotate',
+        'annotate-samples  = bob.bio.base.script.annotate:annotate_samples',
         'metrics           = bob.bio.base.script.commands:metrics',
         'multi-metrics     = bob.bio.base.script.commands:multi_metrics',
         'roc               = bob.bio.base.script.commands:roc',
