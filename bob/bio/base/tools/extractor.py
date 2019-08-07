@@ -52,8 +52,8 @@ def train_extractor(extractor, preprocessor, allow_missing_files = False, force 
     else:
       logger.info("- Extraction: training extractor '%s' using %d training files:", fs.extractor_file, len(train_files))
     # train model
-    extractor.train(train_data, fs.extractor_file)
-
+    extractor.train(train_data)
+    extractor.save(fs.extractor_file)
 
 
 def extract(extractor, preprocessor, groups=None, indices = None, allow_missing_files = False, force = False):

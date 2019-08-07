@@ -142,7 +142,7 @@ class Extractor (object):
     pass
 
 
-  def train(self, training_data, extractor_file):
+  def train(self, training_data):
     """This function can be overwritten to train the feature extractor.
     If you do this, please also register the function by calling this base class constructor
     and enabling the training by ``requires_training = True``.
@@ -154,8 +154,16 @@ class Extractor (object):
       Data will be provided in a single list, if ``split_training_features_by_client = False`` was specified in the constructor,
       otherwise the data will be split into lists, each of which contains the data of a single (training-)client.
 
+    """
+    raise NotImplementedError("Please overwrite this function in your derived class, or unset the 'requires_training' option in the constructor.")
+
+
+  def save(self, extractor_file):
+    """
     extractor_file : str
       The file to write.
       This file should be readable with the :py:meth:`load` function.
-    """
+
+    """      
     raise NotImplementedError("Please overwrite this function in your derived class, or unset the 'requires_training' option in the constructor.")
+
