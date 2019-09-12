@@ -180,7 +180,7 @@ class LDA (Algorithm):
     if self.lda_subspace is not None:
       self.machine.resize(self.machine.shape[0], self.lda_subspace)
       self.variances = self.variances.copy()
-      self.variances.resize(self.lda_subspace)
+      self.variances = numpy.resize(self.variances, (self.lda_subspace))
 
     if self.pca_subspace is not None:
       # compute combined PCA/LDA projection matrix

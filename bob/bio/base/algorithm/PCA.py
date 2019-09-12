@@ -109,7 +109,7 @@ class PCA (Algorithm):
     logger.info("    ... Keeping %d PCA dimensions", self.subspace_dim)
     # re-shape machine
     self.machine.resize(self.machine.shape[0], self.subspace_dim)
-    self.variances.resize(self.subspace_dim)
+    self.variances = numpy.resize(self.variances, (self.subspace_dim))
 
     f = bob.io.base.HDF5File(projector_file, "w")
     f.set("Eigenvalues", self.variances)
