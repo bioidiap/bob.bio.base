@@ -314,7 +314,7 @@ def split(filename, ncolumns=None, sort=False):
   negatives : 1D :py:class:`numpy.ndarray` of type float
       This array contains the list of scores, for which the ``claimed_id`` and
       the ``real_id`` are different (see :py:func:`four_column`)
-      positives : 1D :py:class:`numpy.ndarray` of type float
+  positives : 1D :py:class:`numpy.ndarray` of type float
       This array contains the list of scores, for which the ``claimed_id`` and
       the ``real_id`` are identical (see :py:func:`four_column`)
   """
