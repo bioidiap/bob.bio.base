@@ -38,24 +38,6 @@ Here is a growing list of derived packages:
 * :ref:`bob.bio.video <bob.bio.video>` An extension of face recognition algorithms to run on video data, and the according video databases
 * :ref:`bob.bio.gmm <bob.bio.gmm>` Algorithms based on Gaussian Mixture Modeling (GMM) such as Inter-Session Variability modeling (ISV) or Total Variability modeling (TV, aka. I-Vector) [Pri07]_ and [ESM+13]_.
 
-Tutorial on the Biometric Recognition Framework
-===============================================
-
-As an introduction into the Biometric Recognition Framework, a.k.a., bob.bio, we presented a tutorial in collaboration with the International Joint Conference on Biometrics (IJCB) in 2017.
-The tutorial was called *Bob’s Biometric Recognition Framework - A Hands-on Tutorial with Face Recognition Examples* and introduced the bob.bio framework by showing how to use and how to extend the framework.
-Though all presented examples were about face recognition, other biometric modalities can be handled similarly.
-
-If you did not have the time to attend the tutorial itself, we recorded the session.
-You can find the videos on YouTube, either combined in my `YouTube Channel <https://www.youtube.com/playlist?list=PL-M6OZEM9v0FXfgvarnrpTMhURafZbXwp>`__, or separately here:
-
-1. `Introduction <https://youtu.be/rYOgKqjWarw>`__
-2. `Bob's Biometric Framework <https://youtu.be/YaWBNpTTko8>`__
-3. `Gaussian Mixture Models <https://www.youtube.com/watch?v=YhWbpYh_-QY>`__
-4. `Extending the Biometric Framework <https://www.youtube.com/watch?v=6zcc-KCAK-8>`__
-5. `Parenthesis <https://www.youtube.com/watch?v=4IK_L-dVT3Y>`__
-6. `Reproducible Research <https://www.youtube.com/watch?v=0rVCkUoRVE0>`__
-
-If you want to test out the tutorial, you might want to have a look at its `Corresponding Web Page <http://vast.uccs.edu/public-data/IJCB.html>`__.
 
 Citing our Publications
 =======================
@@ -99,7 +81,6 @@ Users Guide
    struct_bio_rec_sys
    experiments
    implementation
-   baseline
    filelist-guide
    more
    annotations
