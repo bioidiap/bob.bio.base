@@ -27,24 +27,6 @@ def test_resources():
   assert 'bob.bio.base' in extensions
 
 
-def test_grid():
-  # try to load the grid configurations
-  g = bob.bio.base.load_resource("grid", "grid")
-  assert not g.is_local()
-  g = bob.bio.base.load_resource("demanding", "grid")
-  assert not g.is_local()
-
-  g = bob.bio.base.load_resource("local-p4", "grid")
-  assert g.is_local()
-  assert g.number_of_parallel_processes == 4
-  g = bob.bio.base.load_resource("local-p8", "grid")
-  assert g.is_local()
-  assert g.number_of_parallel_processes == 8
-  g = bob.bio.base.load_resource("local-p16", "grid")
-  assert g.is_local()
-  assert g.number_of_parallel_processes == 16
-
-
 def test_io():
   # Test that bob.bio.base.load and save works as expected
   filename = bob.io.base.test_utils.temporary_filename()

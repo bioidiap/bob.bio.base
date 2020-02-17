@@ -7,16 +7,6 @@ package:
 
 build:
   entry_points:
-    - verify.py         = bob.bio.base.script.verify:main
-    - resources.py      = bob.bio.base.script.resources:resources
-    - databases.py      = bob.bio.base.script.resources:databases
-    - collect_results.py = bob.bio.base.script.collect_results:main
-    - grid_search.py    = bob.bio.base.script.grid_search:main
-    - preprocess.py     = bob.bio.base.script.preprocess:main
-    - extract.py        = bob.bio.base.script.extract:main
-    - enroll.py         = bob.bio.base.script.enroll:main
-    - score.py          = bob.bio.base.script.score:main
-    - fuse_scores.py    = bob.bio.base.script.fuse_scores:main
   number: {{ environ.get('BOB_BUILD_NUMBER', 0) }}
   run_exports:
     - {{ pin_subpackage(name) }}
@@ -42,6 +32,7 @@ requirements:
     - bob.math
     - bob.measure
     - bob.sp
+    - bob.pipelines
     - scipy {{ scipy }}
     - six {{ six }}
   run:
@@ -54,16 +45,6 @@ test:
   imports:
     - {{ name }}
   commands:
-    - verify.py --help
-    - resources.py --help
-    - databases.py --help
-    - collect_results.py --help
-    - grid_search.py --help
-    - preprocess.py --help
-    - extract.py --help
-    - enroll.py --help
-    - score.py --help
-    - fuse_scores.py --help
     - bob bio --help
     - bob bio annotate --help
     - bob bio metrics --help
