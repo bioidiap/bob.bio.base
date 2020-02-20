@@ -3,9 +3,9 @@
 .. author: Tiago de Freitas Pereira <tiago.pereira@idiap.ch>
 .. Mon 23 04 2012
 
-======================
-Implementation Details
-======================
+===========================================
+Vanilla Biometrics - Implementation Details
+===========================================
 
 The ``bob.bio`` module is specifically designed to be as flexible as possible while trying to keep things simple.
 Therefore, it uses python to implement tools such as preprocessors, feature extractors and recognition algorithms.
@@ -21,11 +21,10 @@ Most of the functionality is provided in the base classes, but any function can 
 
 In the derived class constructors, the base class constructor needs to be called.
 For automatically tracing the algorithms, all parameters that are passed to the derived class constructor should be passed to the base class constructor as a list of keyword arguments (which is indicated by ``...`` below).
-This will assure that all parameters of the experiments are stored into the ``Experiment.info`` file.
 
 .. note::
    All tools are based on reading, processing and writing files.
-   By default, any type of file is allowed to be handled, and file names are provided to the ``read_...`` and ``write_...`` functions as strings.
+   By default, any type of file is allowed to be handled, and file names are provided to the ``read_data`` and ``write_data`` functions as strings.
    However, some of the extensions -- particularly the :ref:`bob.bio.video <bob.bio.video>` extension -- requires the read and write functions to handle files of type :py:class:`bob.io.base.HDF5File`.
 
 If you plan to write your own tools, please assure that you are following the following structure.
@@ -33,8 +32,8 @@ If you plan to write your own tools, please assure that you are following the fo
 
 .. _bob.bio.base.preprocessors:
 
-Preprocessors
-~~~~~~~~~~~~~
+Preprocessors and Extractors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 All preprocessor classes are derived from :py:class:`bob.bio.base.preprocessor.Preprocessor`.
 All of them implement the following two functions:

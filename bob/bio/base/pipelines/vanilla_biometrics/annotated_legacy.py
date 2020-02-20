@@ -12,7 +12,8 @@ import functools
 import bob.io.base
 
 
-from .blocks import DatabaseConnector, SampleLoader
+from .legacy import DatabaseConnector
+from .blocks import SampleLoader
 from bob.pipelines.sample.sample import SampleSet, DelayedSample, Sample 
 
 
