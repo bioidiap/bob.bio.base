@@ -21,7 +21,7 @@ The previous section described the :ref:`bob.bio.base.struct_bio_rec_sys` using 
 This section will describe in detail such sub-pipelines and its relation with biometric experiments.
 
 These sub-pipelines were built using `Dask delayed <https://docs.dask.org/en/latest/delayed.html>`_ ; please follow the Dask documentation for more information about it.
-Another source of information is the `TAM tutorial given at Idiap <https://github.com/tiagofrepereira2012/tam->`_
+Another source of information is the `TAM tutorial given at Idiap <https://github.com/tiagofrepereira2012/tam-dask>`_
 
 
 To run biometric experiments, we provide a generic CLI command called ``bob pipelines``.
@@ -104,21 +104,20 @@ So, a minimal configuration file (say: ``pca_atnt.py``) would look something lik
 
     extractor = 'linearize'
 
-    from bob.bio.base.algorithm import PCA
-    algorithm = AlgorithmAdaptor(functools.partial(PCA, 0.99))
+    algorithm = 'pca'
 
 
 Running the experiment is then as simple as:
 
 .. code-block:: sh
 
-   $ bob pipelines vanilla-biometrics pca_atnt.py local_parallel.py
+   $ bob pipelines vanilla-biometrics pca_atnt.py local_parallel.py -o atnt-experiment
 
 .. note::
    To be able to run exactly the command line from above, it requires to have :ref:`bob.bio.face <bob.bio.face>` installed.
 
 .. note::
-   The 'dask_client' variable is defined in the configuration file `local_parallel.py`. Check it out the package `bob.pipelines <http://gitlab.idiap.ch/bob/bob.pipelines>`_.
+   The `dask_client` variable is defined in the configuration file `local_parallel.py`. Check it out the package `bob.pipelines <http://gitlab.idiap.ch/bob/bob.pipelines>`_.
 
 
 .. note::
@@ -158,7 +157,7 @@ The exact same experiment as above can, hence, be executed using:
 
 .. code-block:: sh
 
-   $ bob pipelines vanilla-biometrics --database mobio-image --preprocessor face-crop-eyes --extractor linearize --algorithm pca --output pca-experiment -vv
+   $ bob pipelines vanilla-biometrics --database atnt --preprocessor face-crop-eyes --extractor linearize --algorithm pca --output atnt-experiment -vv
 
 .. note::
    When running an experiment twice, you might realize that the second execution of the same experiment is much faster than the first one.
@@ -181,12 +180,6 @@ specified in the documentation of
 :py:func:`bob.bio.base.score.load.four_column` or
 :py:func:`bob.bio.base.score.load.five_column`.
 
-Please note that there exists another file called ``Experiment.info`` inside
-the result directory. This file is a pure text file and contains the complete
-configuration of the experiment. With this configuration it is possible to
-inspect all default parameters of the algorithms, and even to re-run the exact
-same experiment.
-
 Metrics
 =======
 
@@ -195,19 +188,20 @@ min.HTER) on a development set and apply it on an evaluation set, just do:
 
 .. code-block:: sh
 
-    $ bob bio metrics -e {dev,test}-4col.txt --legends ExpA --criterion min-hter
+    $ bob bio metrics -v ./atnt-experiment/scores-dev --criterion min-hter
 
-    [Min. criterion: MIN-HTER ] Threshold on Development set `ExpA`: -4.830500e-03
-    ======  ======================  =================
-    ExpA    Development dev-4col    Eval. test-4col
-    ======  ======================  =================
-    FtA     0.0%                    0.0%
-    FMR     6.7% (35/520)           2.5% (13/520)
-    FNMR    6.7% (26/390)           6.2% (24/390)
-    FAR     6.7%                    2.5%
-    FRR     6.7%                    6.2%
-    HTER    6.7%                    4.3%
-    ======  ======================  =================
+    [Min. criterion: MIN-HTER ] Threshold on Development set `./atnt-experiment/scores-dev`: -1.756157e+03
+    =====================  ===============
+    ..                     Development
+    =====================  ===============
+    Failure to Acquire     0.0%
+    False Match Rate       9.7% (184/1900)
+    False Non Match Rate   9.0% (9/100)
+    False Accept Rate      9.7%
+    False Reject Rate      9.0%
+    Half Total Error Rate  9.3%
+    =====================  ===============
+
 
 .. note::
     When evaluation scores are provided, ``--eval`` option must be passed.
@@ -219,7 +213,7 @@ For example:
 
 .. code-block:: sh
 
-    bob bio metrics -e {dev,test}-4col.txt --legends ExpA --criterion cllr
+    bob bio metrics -v ./atnt-experiment/scores-dev --criterion cllr
 
     ======  ======================  ================
     Computing  Cllr and minCllr...

@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8 :
 
-
 """Re-usable blocks for legacy bob.bio.base algorithms"""
-
 
 import os
 import copy
@@ -11,6 +9,7 @@ import functools
 
 import bob.io.base
 from bob.pipelines.sample.sample import DelayedSample, SampleSet, Sample
+
 
 class DatabaseConnector:
     """Wraps a bob.bio.base database and generates conforming samples
@@ -100,10 +99,7 @@ class DatabaseConnector:
         for m in self.database.model_ids(protocol=self.protocol, groups=group):
 
             objects = self.database.objects(
-                protocol=self.protocol,
-                groups=group,
-                model_ids=(m,),
-                purposes="enroll",
+                protocol=self.protocol, groups=group, model_ids=(m,), purposes="enroll"
             )
 
             retval.append(
@@ -156,10 +152,7 @@ class DatabaseConnector:
             # Getting all the probe objects from a particular biometric
             # reference
             objects = self.database.objects(
-                protocol=self.protocol,
-                groups=group,
-                model_ids=(m,),
-                purposes="probe",
+                protocol=self.protocol, groups=group, model_ids=(m,), purposes="probe"
             )
 
             # Creating probe samples
@@ -184,185 +177,8 @@ class DatabaseConnector:
                     )
                 else:
                     probes[o.id].references.append(m)
-     
+
         return list(probes.values())
-
-
-class SampleLoader:
-    """Adaptor for loading, preprocessing and feature extracting samples
-
-    This adaptor class wraps around sample:
-
-    .. code-block:: text
-
-       [loading [-> preprocessing [-> extraction]]]
-
-    The input sample object must obbey the following (minimal) API:
-
-        * attribute ``id``: Contains an unique (string-fiable) identifier for
-          processed samples
-        * attribute ``data``: Contains the data for this sample
-
-    Optional checkpointing is also implemented for each of the states,
-    independently.  You may check-point just the preprocessing, feature
-    extraction or both.
-
-
-    Parameters
-    ----------
-
-    pipeline : :py:class:`list` of (:py:class:`str`, callable)
-        A list of doubles in which the first entry are names of each processing
-        step in the pipeline and second entry must be default-constructible
-        :py:class:`bob.bio.base.preprocessor.Preprocessor` or
-        :py:class:`bob.bio.base.preprocessor.Extractor` in any order.  Each
-        of these objects must be a python type, that can be instantiated and
-        used through its ``__call__()`` interface to process a single entry of
-        a sample.  For python types that you may want to plug-in, but do not
-        offer a default constructor that you like, pass the result of
-        :py:func:`functools.partial` instead.
-
-    """
-
-    def __init__(self, pipeline):
-        self.pipeline = copy.deepcopy(pipeline)
-
-    def _handle_step(self, sset, func, checkpoint):
-        """Handles a single step in the pipeline, with optional checkpointing
-
-        Parameters
-        ----------
-
-        sset : SampleSet
-            The original sample set to be processed (delayed or pre-loaded)
-
-        func : callable
-            The processing function to call for processing **each** sample in
-            the set, if needs be
-
-        checkpoint : str, None
-            An optional string that may point to a directory that will be used
-            for checkpointing the processing phase in question
-
-
-        Returns
-        -------
-
-        r : SampleSet
-            The prototype processed sample.  If no checkpointing required, this
-            will be of type :py:class:`Sample`.  Otherwise, it will be a
-            :py:class:`DelayedSample`
-
-        """
-
-        if checkpoint is not None:
-            samples = []  # processed samples
-            for s in sset.samples:
-                # there can be a checkpoint for the data to be processed
-                candidate = os.path.join(checkpoint, s.path + ".hdf5")
-                if not os.path.exists(candidate):
-                    # preprocessing is required, and checkpointing, do it now
-                    data = func(s.data)
-
-                    # notice this can be called in parallel w/o failing
-                    bob.io.base.create_directories_safe(
-                        os.path.dirname(candidate)
-                    )
-                    # bob.bio.base standard interface for preprocessor
-                    # has a read/write_data methods
-                    writer = (
-                        getattr(func, "write_data")
-                        if hasattr(func, "write_data")
-                        else getattr(func, "write_feature")
-                    )
-                    writer(data, candidate)
-
-                # because we are checkpointing, we return a DelayedSample
-                # instead of normal (preloaded) sample. This allows the next
-                # phase to avoid loading it would it be unnecessary (e.g. next
-                # phase is already check-pointed)
-                reader = (
-                    getattr(func, "read_data")
-                    if hasattr(func, "read_data")
-                    else getattr(func, "read_feature")
-                )
-                samples.append(
-                    DelayedSample(
-                        functools.partial(reader, candidate), parent=s
-                    )
-                )
-        else:
-            # if checkpointing is not required, load the data and preprocess it
-            # as we would normally do
-            samples = [Sample(func(s.data), parent=s) for s in sset.samples]
-
-        r = SampleSet(samples, parent=sset)
-        return r
-
-    def _handle_sample(self, sset, pipeline):
-        """Handles a single sampleset through a pipelien
-
-        Parameters
-        ----------
-
-        sset : SampleSet
-            The original sample set to be processed (delayed or pre-loaded)
-
-        pipeline : :py:class:`list` of :py:class:`tuple`
-            A list of tuples, each comprising of one processing function and
-            one checkpoint directory (:py:class:`str` or ``None``, to avoid
-            checkpointing that phase), respectively
-
-
-        Returns
-        -------
-
-        r : Sample
-            The processed sample
-
-        """
-
-        r = sset
-        for func, checkpoint in pipeline:
-            r = r if func is None else self._handle_step(r, func, checkpoint)
-        return r
-
-    def __call__(self, samples, checkpoints):
-        """Applies the pipeline chaining with optional checkpointing
-
-        Our implementation is optimized to minimize disk I/O to the most.  It
-        yields :py:class:`DelayedSample`'s instead of :py:class:`Sample` if
-        checkpointing is enabled.
-
-
-        Parameters
-        ----------
-
-        samples : list
-            List of :py:class:`SampleSet` to be treated by this pipeline
-
-        checkpoints : dict
-            A dictionary (with any number of entries) that may contain as many
-            keys as those defined when you constructed this class with the
-            pipeline tuple list.  Upon execution, the existance of an entry
-            that defines checkpointing, this phase of the pipeline will be
-            checkpointed.  Notice that you are in the control of checkpointing.
-            If you miss an intermediary step, it will trigger this loader to
-            load the relevant sample, even if the next phase is supposed to be
-            checkpointed.  This strategy keeps the implementation as simple as
-            possible.
-
-
-        Returns
-        -------
-
-        samplesets : list
-            Loaded samplesets, after optional preprocessing and extraction
-
-        """
-
-        pipe = [(v(), checkpoints.get(k)) for k, v in self.pipeline]
-        return [self._handle_sample(k, pipe) for k in samples]
 
 
 class AlgorithmAdaptor:
@@ -513,20 +329,15 @@ class AlgorithmAdaptor:
         retval = []
         for k in references:
             if checkpoint is not None:
-                candidate = os.path.join(
-                    os.path.join(checkpoint, k.path + ".hdf5")
-                )
+                candidate = os.path.join(os.path.join(checkpoint, k.path + ".hdf5"))
                 if not os.path.exists(candidate):
                     # create new checkpoint
-                    bob.io.base.create_directories_safe(
-                        os.path.dirname(candidate)
-                    )
+                    bob.io.base.create_directories_safe(os.path.dirname(candidate))
                     enrolled = model.enroll(k)
                     model.model.write_model(enrolled, candidate)
                 retval.append(
                     DelayedSample(
-                        functools.partial(model.model.read_model, candidate),
-                        parent=k,
+                        functools.partial(model.model.read_model, candidate), parent=k
                     )
                 )
             else:
@@ -576,16 +387,13 @@ class AlgorithmAdaptor:
                 data = [model.project(s.data) for s in p.samples]
             else:
                 data = [s.data for s in p.samples]
-                
+
             for subprobe_id, (s, parent) in enumerate(zip(data, p.samples)):
                 # each sub-probe in the probe needs to be checked
                 subprobe_scores = []
                 for ref in [r for r in references if r.id in p.references]:
-                    subprobe_scores.append(
-                        Sample(model.score(ref.data, s), parent=ref)
-                    )
+                    subprobe_scores.append(Sample(model.score(ref.data, s), parent=ref))
                 subprobe = SampleSet(subprobe_scores, parent=p)
                 subprobe.subprobe_id = subprobe_id
                 retval.append(subprobe)
         return retval
-

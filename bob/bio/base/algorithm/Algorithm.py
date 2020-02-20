@@ -6,6 +6,8 @@
 import numpy
 import os
 from .. import utils
+import warnings
+
 
 class Algorithm (object):
   """This is the base class for all biometric recognition algorithms.
@@ -87,6 +89,11 @@ class Algorithm (object):
       min_t_model_file_size=1000,
       **kwargs                            # parameters from the derived class that should be reported in the __str__() function
   ):
+
+    
+    warnings.warn("bob.bio.base.Algorithm is Deprecated", DeprecationWarning)
+
+
     self.performs_projection = performs_projection
     self.requires_projector_training = performs_projection and requires_projector_training
     self.split_training_features_by_client = split_training_features_by_client

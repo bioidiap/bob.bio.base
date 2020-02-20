@@ -173,7 +173,7 @@ def vanilla_biometrics(
     checkpointing = True
 
     # Chooses the pipeline to run
-    from bob.bio.base.pipelines.vanilla_biometrics import biometric_pipeline
+    from bob.bio.base.pipelines.vanilla_biometrics.pipeline import biometric_pipeline
 
     if not os.path.exists(output):
         os.makedirs(output)
@@ -205,7 +205,7 @@ def vanilla_biometrics(
 
     # Mechanism that loads samples
     # from ..bob_bio.blocks import SampleLoader
-    from bob.bio.base.pipelines.annotated_blocks import SampleLoaderAnnotated as SampleLoader
+    from bob.bio.base.pipelines.vanilla_biometrics.annotated_legacy import SampleLoaderAnnotated as SampleLoader
     loader = SampleLoader(pipeline)
 
     for g in group:

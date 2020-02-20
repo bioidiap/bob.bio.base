@@ -2,7 +2,7 @@
 # vim: set fileencoding=utf-8 :
 
 """
-Biometric "blocks"
+Implementation of the Vanilla Biometrics pipeline using Dask :ref:`bob.bio.base.struct_bio_rec_sys`_
 
 This file contains simple processing blocks meant to be used
 for bob.bio experiments
@@ -120,7 +120,7 @@ def train_background_model(
     checkpoints,
 ):
     """
-    Train background model (without labels)
+    Train background model (without labels) :ref:`_vanilla-pipeline-1`
 
     Parameters
     ----------
@@ -196,7 +196,7 @@ def create_biometric_reference(
     checkpoints,
 ):
     """
-    Create biometric references
+    Create biometric references :ref:`_vanilla-pipeline-2`
 
     Parameters
     ----------
@@ -281,7 +281,7 @@ def compute_scores(
     npartitions,
     checkpoints,
 ):
-    """ Compute biometric scores
+    """ Compute biometric scores :ref:`_vanilla-pipeline-2`
 
     Parameters
     ----------
