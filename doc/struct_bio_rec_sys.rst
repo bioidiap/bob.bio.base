@@ -39,9 +39,8 @@ In the figures above:
 * For *verification*, the "Decision Maker" decides whether or not the probe and the model from the database match, based on whether the similarity score is above or below a pre-defined match threshold.  For *identification*, the "Decision Maker" decides which model from the database best represents the identity of the probe, based on which model most closely matches the probe.
 
 
-Biometric Recognition Experiments in the ``bob.bio`` Framework
----------------------------------------------------------------
-
+Biometric Recognition Experiments in the ``bob.bio`` Framework: The biometric Vanilla Pipeline
+----------------------------------------------------------------------------------------------
 
 
 The ``bob.bio`` framework has the capability to perform both *verification* and *identification* experiments, depending on the user's requirements.
@@ -52,65 +51,95 @@ In general, the goal of a biometric recognition experiment is to quantify the re
 Figures 1 and 2 described pseudo-pipelines on how a biometric recognition system works.
 In fact, each one of those figures describe two sub-pipelines.
 One that creates **biometric references** given input data; and one that performs **biometric recognition** given input data and biometric references.
-Those two sub-pipelines are implemented in ``bob.bio`` using `Dask <https://dask.org/>` delayed.
-Check it out its documentation on how to create pipelines using Dask.
-Furthermore, bob.pipelines provides some examples on how to build pipelines using dask and on how to deploy them in different computational clusters.
+Those two sub-pipelines are implemented in ``bob.bio`` using `Dask <https://dask.org/>`_ delayed.
+
+Check it out its documentation on how to create pipelines.
+Furthermore, bob.pipelines provides some examples on how to build pipelines using dask and how to deploy them in different computational clusters.
+
+Pipelines for biometric systems can be very complex and full of elements.
+This documentation describes the simplest possible biometric pipeline, called, **vanilla-biometrics**.
+This pipeline is composed by the two aforementioned sub-pipelines, plus one optional sub-pipeline which are described in the following subsections.
 
 
+Optional sub pipeline 0 - Training background model
+*****************************************************
+
+.. _vanilla-pipeline-0:
+
+
+Very often biometric systems rely in some "offline" modelling.
+Such modelling, for instance, can encompass the training of custom feature extractors (Neural Networks, PCA, LDA, ...), custom preprocessors, or any statistical modeling used for creating biometric references and/or do biometric recognition.
+This is often called "Background modeling" and depending on the biometric system that it's being tested, can be a mandatory step.
+
+This sub-pipeline supports such operation and it's composed by, at least, three elements in the following order: i-) `Preprocessing`, ii-) `Feature extraction` and iii-)`Background modelling training.`.
+The output of this sub-pipeline is the trained background model. 
+
+Each one of these steps are described further in this chapter.
 
 
 Sub pipeline 1 - Creation of biometric references
 *************************************************
 
-This sub-pipeline is composed by, at least, three elements in the following order: i-) `Preprocess`, ii-) `Feature extraction` and iii-
+.. _vanilla-pipeline-1:
+
+As the name suggests, this sub-pipeline takes care of the creation of biometric references.
+In this sub-pipeline, one or more biometric samples per person are used to compute a representative "model" for that person, which essentially represents its "identity".
+
+This sub-pipeline is composed by, at least, three elements in the following order: i-) `Preprocessing`, ii-) `Feature extraction` and iii-`Creation of Biometric references`.
+The biometric reference is then calculated using the corresponding biometric features extracted in the Feature Extraction stage.
+
+
+Depending on the biometric algorithm used, the background model trained in the previous sub-pipeline is also used as input of this one.
+
 
 
 Sub pipeline 2 - Biometric Recognition
 **************************************
 
-Optional - Sub pipeline 3 - Training background model
-*****************************************************
+.. _vanilla-pipeline-2:
 
 
+As the name suggests, this sub-pipeline takes care of the biometric recognition and essentially works as follows.
+Each biometric reference is associated with a number of probes samples.
+Every biometric reference is then compared to its associated set of probes samples (some of which come from the same person, and some of which come from different people), and a score is calculated for each comparison.
+Such score describes the similarity between the biometric reference and the probe (higher scores indicate greater similarity); for example, it can be computed as a negative distance between the model and probe features.
+Ideally, if the biometric reference and probe sample come from the same biometric (e.g., two images of the same finger), they should be very similar, and if they come from different sources (e.g., two images of different fingers) then their similarity should be low. 
+
+This sub-pipeline is composed by, at least, three elements in the following order: i-) `Preprocessing`, ii-) `Feature extraction` and iii-)`Biometric recognition`.
+Each one of these steps are described later in this chapter.
+
+The scores has the following text format:
+
+.. code-block:: text
+
+   subject-id_1 suject-probe-id_1 probe-sample score
+   subject-id_1 suject-probe-id_2 probe-sample score
+   ...
+   subject-id_n suject-probe-id_m probe-sample score
 
 
-AN ADITIONAL
-
-
-To conduct a biometric recognition experiment, we need biometric data.
-Hence, we use a biometric database.
-A biometric database generally consists of multiple samples of a particular biometric, from multiple people.
-For example, a face database could contain 5 different images of a person's face, from 100 people.
-The dataset is split up into samples used for enrollment, and samples used for probing.
-We enroll a model for each identity from one or more of its faces.
-We then simulate "genuine" recognition attempts by comparing each person's probe samples to their enrolled models.
-We simulate "impostor" recognition attempts by comparing the same probe samples to models of different people.
-Which data is used for training, enrollment and probing is defined by the evaluation *protocol* of the database.
-The protocol also defines, which models should be compared to which probes.
-
-
-In section above it was described how a biometric s 
+Depending on the biometric algorithm used, the background model trained in the previous sub-pipeline is also used as input of this one.
 
 
 Stages
 ------
 
 
-In ``bob.bio``, biometric recognition experiments are split up into four main stages, similar to the stages in a typical verification or identification system as illustrated in Fig. 1 and Fig. 2, respectively:
+Each one of the previously mentioned sub-pipelines, have in common some processing steps, for instance, `Preprocessing` and `Feature Extraction`.
+Each one of these stages is discussed below.
 
-1. Data preprocessing
-2. Feature extraction
-3. Matching
-4. Decision making
-
-Each of these stages is discussed below:
 
 Data Preprocessing:
 *******************
 
-Biometric measurements are often noisy, containing redundant information that is not necessary (and can be misleading) for recognition.  For example, face images contain non-face background information, vein images can be unevenly illuminated, speech signals can be littered with background noise, etc.  The aim of the data preprocessing stage is to clean up the raw biometric data so that it is in the best possible state to make recognition easier.  For example, biometric data is cropped from the background, the images are photometrically enhanced, etc.
+Biometric measurements are often noisy, containing redundant information that is not necessary (and can be misleading) for recognition.
+For example, face images contain non-face background information, vein images can be unevenly illuminated, speech signals can be littered with background noise, etc.
+The aim of the data preprocessing stage is to clean up the raw biometric data so that it is in the best possible state to make recognition easier.
+For example, biometric data is cropped from the background, the images are photometrically enhanced, etc.
 
-All the biometric samples in the input biometric database go through the preprocessing stage.  The results are stored in a directory entitled "preprocessed".  This process is illustrated in Fig. 3:
+All the biometric samples in the input biometric database go through the preprocessing stage.
+For each sub-pipeline, the results are stored in a directory entitled "preprocessed".
+This process is illustrated in Fig. 3:
 
 .. figure:: img/preprocessor.svg
    :align: center
@@ -121,9 +150,12 @@ All the biometric samples in the input biometric database go through the preproc
 Feature Extraction:
 *******************
 
-Although the preprocessing stage produces cleaner biometric data, the resulting data is usually very large and still contains much redundant information.  The aim of the feature extraction stage is to extract features that are necessary for recognizing a person.
+Although the preprocessing stage produces cleaner biometric data, the resulting data is usually very large and still contains much redundant information.
+The aim of the feature extraction stage is to extract features that are necessary for recognizing a person.
 
-All the biometric features stored in the "preprocessed" directory go through the feature extraction stage.  The results are stored in a directory entitled "extracted".  This process is illustrated in Fig. 4:
+All the biometric features stored in the "preprocessed" directory go through the feature extraction stage.
+The results are stored in a directory entitled "extracted".
+This process is illustrated in Fig. 4:
 
 .. figure:: img/extractor.svg
    :align: center
@@ -133,40 +165,6 @@ All the biometric features stored in the "preprocessed" directory go through the
 .. note::
    Prior to the feature extraction there is an *optional* feature extractor training stage (to help the extractor to learn which features to extract) that uses the training data provided by the database.
 
-
-Matching:
-*********
-
-The matching stage in ``bob.bio`` is referred to as the "Algorithm".  The Algorithm stage consists of three main parts:
-
-(i) An optional "projection" stage after the feature extraction, as illustrated in Fig. 5.  This would be used if, for example, you wished to project your extracted biometric features into a lower-dimensional subspace prior to recognition.
-
-.. figure:: img/algorithm_projection.svg
-   :align: center
-
-   The projection part of the Algorithm stage in ``bob.bio``'s biometric recognition experiment framework.
-
-.. note::
-   In most cases when a feature projection is applied, there is a feature projection training stage that works on the training data provided by the database.
-   In the example above, prior to the "projection" stage, the subspace projection matrix is computed from the extracted training features.
-
-(ii) Enrollment: The enrollment part of the Algorithm stage essentially works as follows.  One or more biometric samples per person are used to compute a representative "model" for that person, which essentially represents that person's identity.  To determine which of a person's biometric samples should be used to generate their model, we query the protocol of our input biometric database.  The model is then calculated using the corresponding biometric features extracted in the Feature Extraction stage (or, optionally, our "projected" features).  Fig. 6 illustrates the enrollment part of the Algorithm module:
-
-.. figure:: img/algorithm_enrollment.svg
-   :align: center
-
-   The enrollment part of the Algorithm stage in ``bob.bio``'s biometric recognition experiment framework.
-
-.. note::
-   There is sometimes a model enroller training stage prior to enrollment, which uses the databases training data.  This is only necessary when you are trying to fit an existing model to a set of biometric features, e.g., fitting a UBM (Universal Background Model) to features extracted from a speech signal.  In other cases, the model is calculated from the features themselves, e.g., by averaging the feature vectors from multiple samples of the same biometric, in which case model enroller training is not necessary.
-
-
-(iii) Scoring: The scoring part of the Algorithm stage essentially works as follows.  Each model is associated with a number of probes, so we first query the input biometric database to determine which biometric samples should be used as the probes for each model.  Every model is then compared to its associated probes (some of which come from the same person, and some of which come from different people), and a score is calculated for each comparison.  The score describes the similarity between the model and the probe (higher scores indicate greater similarity); for example, it can be computed as a negative distance between the model and probe features.  Ideally, if the model and probe come from the same biometric (e.g., two images of the same finger), they should be very similar, and if they come from different sources (e.g., two images of different fingers) then their similarity should be low.  Fig. 7 illustrates the scoring part of the Algorithm module:
-
-.. figure:: img/algorithm_scoring.svg
-   :align: center
-
-   The scoring part of the Algorithm stage in ``bob.bio``'s biometric recognition experiment framework.
 
 
 Decision Making:
@@ -182,11 +180,19 @@ Once a decision has been made, we can quantify the overall performance of the pa
    Evaluation stage in ``bob.bio``'s biometric recognition experiment framework.
 
 
-.. note::
+Input Data
+**********
 
-   * The "Data Preprocessing" to "Matching" steps are carried out by ``bob.bio.base``'s ``verify.py`` script.  The "Decision Making" step is carried out by ``bob.bio.base``'s ``bob bio evaluate`` script.  These scripts will be discussed in the next sections.
-   * The communication between any two steps in the recognition framework is file-based, usually using a binary HDF5_ interface, which is implemented, for example, in the :py:class:`bob.io.base.HDF5File` class. One exception is the "Decision Making" step, which uses score file in text format, i.e., to allow to incorporate other systems' results, which are computed outside of ``bob.bio``, but uses the same database and evaluation protocol.
-   * The output of one step usually serves as the input of the subsequent step(s), as portrayed in Fig. 3 -- Fig. 8.
-   * ``bob.bio`` ensures that the correct files are always forwarded to the subsequent steps.  For example, if you choose to implement a feature projection after the feature extraction stage, as illustrated in Fig. 5, ``bob.bio`` will make sure that the files in the "projected" directory are passed on as the input to the Enrollment stage; otherwise, the "extracted" directory will become the input to the Enrollment stage.
+To conduct a biometric recognition experiment, we need biometric data.
+Hence, we use a biometric database.
+A biometric database generally consists of multiple samples of a particular biometric, from multiple people.
+For example, a face database could contain 5 different images of a person's face, from 100 people.
+The dataset is split up into samples used for the creation of biometric references, and samples used for recognition.
+We create biometric references for each identity from one or more of its faces.
+We then simulate "genuine" recognition attempts by comparing each person's probe samples to their enrolled models.
+We simulate "impostor" recognition attempts by comparing the same probe samples to models of different people.
+Which data is used for training, creation of biometric references and probing is defined by the evaluation *protocol* of the database.
+The protocol also defines, which models should be compared to which probes.
+
 
 .. include:: links.rst
