@@ -142,6 +142,7 @@ setup(
        # run pipelines
       'bob.pipelines.cli':[
         'vanilla-biometrics = bob.bio.base.script.vanilla_biometrics:vanilla_biometrics',
+        'vanilla-biometrics-template = bob.bio.base.script.vanilla_biometrics:vanilla_biometrics_template'
      ],
 
      

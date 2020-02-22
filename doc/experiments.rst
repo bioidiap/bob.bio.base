@@ -5,18 +5,35 @@
 .. _bob.bio.base.experiments:
 
 
-==========================================
-Running Biometric Recognition Experiments
-==========================================
+======================================================================
+Running Biometric Recognition Experiments with the Vanilla Biometrics
+======================================================================
 
 Now, you are ready to run your first biometric recognition experiment.
 
 .. _running_part_1:
 
-Running Experiments (part I)
-----------------------------
-To run an experiment, we provide a generic script ``verify.py``.
-As a default, ``verify.py`` accepts one or more *configuration files* that include the parametrization of the experiment to run.
+Running Experiments.
+--------------------
+
+The previous section described the :ref:`bob.bio.base.struct_bio_rec_sys` using two sub-pipelines (three if you count the optional one) in a rough manner.
+This section will describe in detail such sub-pipelines and its relation with biometric experiments.
+
+These sub-pipelines were built using `Dask delayed <https://docs.dask.org/en/latest/delayed.html>`_ ; please follow the Dask documentation for more information about it.
+Another source of information is the `TAM tutorial given at Idiap <https://github.com/tiagofrepereira2012/tam->`_
+
+
+To run biometric experiments, we provide a generic CLI command called ``bob pipelines``.
+Such CLI commands are entry-points to any kind of pipeline implemented under `bob.pipelines`.
+This tutorial will focus on the pipeline called `vanilla-biometrics`.
+
+.. code-block:: sh
+
+   bob pipelines vanilla-biometrics --help
+
+
+
+As a default, the ``vanilla-biometrics`` pipeline accepts one or more *configuration files* that include the parametrization of the experiment to run.
 A configuration file contains one ore more *variables* that define parts of the experiment.
 When several configuration files are specified, the variables of the latter will overwrite the ones of the former.
 For simplicity, here we discuss only a single configuration file.
@@ -25,7 +42,7 @@ As a start, we have implemented a shortcut to generate an empty configuration fi
 
 .. code-block:: sh
 
-   $ verify.py --create-configuration-file experiment.py
+   $ bob pipelines vanilla-biometrics-template experiment.py
 
 .. note::
    The generated ``experiment.py`` is a regular python file, so you can include any regular python code inside this file.
@@ -36,6 +53,7 @@ But, no worries, most of them have proper default values.
 However, there are five variables, which are required and sufficient to define the complete biometric recognition experiment.
 These five variables are:
 
+* ``dask_client``: The Dask client pointing the execution backend
 * ``database``: The database to run the experiments on
 * ``preprocessor``: The data preprocessor
 * ``extractor``: The feature extractor
