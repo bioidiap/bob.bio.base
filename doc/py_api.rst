@@ -10,7 +10,6 @@ IO-related functions
 ~~~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
-   bob.bio.base.read_original_data
    bob.bio.base.load
    bob.bio.base.save
    bob.bio.base.load_compressed

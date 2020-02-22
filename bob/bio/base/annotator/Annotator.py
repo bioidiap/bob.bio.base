@@ -9,7 +9,7 @@ class Annotator(object):
     ----------
     read_original_data : callable
         A function that loads the samples. The syntax is like
-        :any:`bob.bio.base.read_original_data`.
+        `bob.bio.base.read_original_data`.
     """
 
     def __init__(self, read_original_data=None, **kwargs):

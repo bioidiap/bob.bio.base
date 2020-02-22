@@ -1,5 +1,6 @@
 .. vim: set fileencoding=utf-8 :
 .. author: Manuel Günther <manuel.guenther@idiap.ch>
+.. author: Tiago de Freitas Pereira <tiago.pereira@idiap.ch>
 .. date: Thu Sep 20 11:58:57 CEST 2012
 
 .. _bob.bio.base:
@@ -95,9 +96,7 @@ Users Guide
    experiments
    implementation
    filelist-guide
-   more
    annotations
-   openbr
 
 
 Reference Manual

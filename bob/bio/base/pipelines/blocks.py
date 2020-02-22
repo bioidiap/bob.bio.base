@@ -10,7 +10,7 @@ import copy
 import functools
 
 import bob.io.base
-
+from bob.pipelines.sample.sample import DelayedSample, SampleSet, Sample
 
 class DatabaseConnector:
     """Wraps a bob.bio.base database and generates conforming samples

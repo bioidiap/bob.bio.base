@@ -39,6 +39,7 @@ requirements:
     - python
     - setuptools
     - scipy
+    - bob.pipelines
     - six
 
 test:
