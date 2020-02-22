@@ -1,5 +1,6 @@
 .. vim: set fileencoding=utf-8 :
 .. Manuel Guenther <Manuel.Guenther@idiap.ch>
+.. author: Tiago de Freitas Pereira <tiago.pereira@idiap.ch>
 .. Mon 23 04 2012
 
 ======================
@@ -62,7 +63,7 @@ If a class returns data that is **not** of type :py:class:`numpy.ndarray`, it ov
 The preprocessor is also responsible for reading the original data.
 How to read original data can be specified by the ``read_original_data`` parameter of the constructor.
 The ``read_original_data`` function gets three parameters: the :py:class:`bob.bio.base.database.BioFile` object from the database, the base ``directory`` where to read the data from, and the ``extension`` in which the original data is stored.
-By default, this function is :py:func:`bob.bio.base.read_original_data`, which simply calls: ``biofile.load(directory, extension)``, so that each database implementation can define an appropriate way, how data is read or written.
+By default, this function is `bob.bio.base.read_original_data`, which simply calls: ``biofile.load(directory, extension)``, so that each database implementation can define an appropriate way, how data is read or written.
 In the rare case that this is not the way that the preprocessor expects the data, another function can be passed to the constructor, i.e., in a configuration file of an experiment.
 
 
@@ -343,6 +344,11 @@ When you want to register your own resource, make sure that your configuration f
 Then, you can simply add a line inside the according ``entry_points`` section of the ``setup.py`` file (you might need to create that section, just follow the example of the ``setup.py`` file `that you can find online in bob.bio.base Gitlab page <https://gitlab.idiap.ch/bob/bob.bio.base/blob/master/setup.py>`__).
 
 After re-running ``buildout``, your new resource should be listed in the output of ``resources.py``.
+
+
+Legacy with old bob.bio.base
+----------------------------
+
 
 
 .. include:: links.rst

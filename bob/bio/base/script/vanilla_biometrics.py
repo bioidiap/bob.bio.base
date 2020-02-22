@@ -61,7 +61,7 @@ TODO: Work out this help
     "-p",
     required=True,
     cls=ResourceOption,
-    entry_point_group="bob.pipelines.preprocessors",  # This should be linked to bob.bio.base
+    entry_point_group="bob.bio.preprocessor",  # This should be linked to bob.bio.base
     help="Data preprocessing algorithm",
 )
 @click.option(
@@ -69,7 +69,7 @@ TODO: Work out this help
     "-e",
     required=True,
     cls=ResourceOption,
-    entry_point_group="bob.pipelines.extractor",  # This should be linked to bob.bio.base
+    entry_point_group="bob.bio.extractor",  # This should be linked to bob.bio.base
     help="Feature extraction algorithm",
 )
 @click.option(
@@ -77,7 +77,7 @@ TODO: Work out this help
     "-a",
     required=True,
     cls=ResourceOption,
-    entry_point_group="bob.pipelines.biometric_algorithm",  # This should be linked to bob.bio.base
+    entry_point_group="bob.bio.algorithm",  # This should be linked to bob.bio.base
     help="Biometric Algorithm (class that implements the methods: `fit`, `enroll` and `score`)",
 )
 @click.option(
@@ -85,7 +85,7 @@ TODO: Work out this help
     "-d",
     required=True,
     cls=ResourceOption,
-    entry_point_group="bob.pipelines.database",  # This should be linked to bob.bio.base
+    entry_point_group="bob.bio.database",  # This should be linked to bob.bio.base
     help="Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)",
 )
 @click.option(
@@ -222,9 +222,11 @@ def vanilla_biometrics(
 
         # result.visualize(os.path.join(output, "graph.pdf"), rankdir="LR")
         result = result.compute(scheduler=dask_client)
-        for probe in result:
-            for reference in probe.samples:
-                print(reference.subject, probe.subject, probe.path, reference.data)
+        with open(os.path.join(output,f"scores-{g}"), "w") as f:
+            for probe in result:
+                for reference in probe.samples:
+                    line = "{0} {1} {2} {3}\n".format(reference.subject, probe.subject, probe.path, reference.data)
+                    f.write(line)
 
     dask_client.shutdown()
 

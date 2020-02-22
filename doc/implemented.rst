@@ -14,9 +14,7 @@ Base Classes
    bob.bio.base.preprocessor.Preprocessor
    bob.bio.base.extractor.Extractor
    bob.bio.base.algorithm.Algorithm
-   bob.bio.base.grid.Grid
    bob.bio.base.annotator.Annotator
-   bob.bio.base.baseline.Baseline
 
 
 Implementations
@@ -63,28 +61,12 @@ Databases
 
 .. automodule:: bob.bio.base.database
 
-Grid Configuration
-------------------
-
-.. automodule:: bob.bio.base.grid
-
-.. data:: PREDEFINED_QUEUES
-
-   A dictionary of predefined queue keywords, which are adapted to the Idiap_ SGE.
-
-
-   .. adapted from http://stackoverflow.com/a/29789910/3301902 to ge a nice dictionary content view
 
 Annotators
 ----------
 
 .. automodule:: bob.bio.base.annotator
 
-
-Baselines
----------
-
-.. automodule:: bob.bio.base.baseline
 
 
 .. include:: links.rst
