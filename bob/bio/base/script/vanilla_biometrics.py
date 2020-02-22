@@ -12,6 +12,10 @@ import click
 
 from bob.extension.scripts.click_helper import verbosity_option, ResourceOption, ConfigCommand
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 
 EPILOG = """\b
 
@@ -110,7 +114,6 @@ TODO: Work out this help
     default="results",
     help="Name of output directory",
 )
-@verbosity_option(cls=ResourceOption)
 def vanilla_biometrics(
     preprocessor,
     extractor,
@@ -165,7 +168,7 @@ def vanilla_biometrics(
 
 
     """
-
+    
     # Always turn-on the checkpointing
     checkpointing = True
 
@@ -224,3 +227,42 @@ def vanilla_biometrics(
                 print(reference.subject, probe.subject, probe.path, reference.data)
 
     dask_client.shutdown()
+
+
+
+@click.command()
+@click.argument("output-file")
+@verbosity_option(cls=ResourceOption)
+def vanilla_biometrics_template(output_file, **kwargs):
+    """
+    Generate an template configuration file for the vanilla biometrics pipeline
+    """
+
+    import bob.io.base
+
+    path = os.path.dirname(output_file)
+    logger.info(f"Writting template configuration file in {path}")
+    bob.io.base.create_directories_safe(path)
+
+    template = '''
+
+# Client dask. Look at https://gitlab.idiap.ch/bob/bob.pipelines/tree/master/bob/pipelines/config/distributed to find proper dask clients.
+# You don't need to necessary instantiate a dask client yourself. You can simply pipe those config files
+
+dask_client = my_client
+
+
+preprocessor = my_preprocessor
+
+
+extractor = my_extractor
+
+
+algorithm = my_algorithm
+
+
+database = my_database
+    
+'''
+
+    open(output_file, "w").write(template)

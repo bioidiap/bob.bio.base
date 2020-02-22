@@ -22,6 +22,19 @@ The ``bob.bio`` packages contain several implementations of each of the above st
 .. note::
    The ``bob.bio`` packages are derived from the former `FaceRecLib <http://pypi.python.org/pypi/facereclib>`__, which is herewith outdated.
 
+
+bob.bio.base in one shot
+========================
+
+
+If you are too lazy to go through the documentation, and just want to see what this is about, just run the command below:
+
+.. code-block:: sh
+
+  bob pipelines vanilla-biometrics --help 
+
+
+
 Structure of the Biometric Recognition Framework
 ================================================
 
