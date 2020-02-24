@@ -107,8 +107,9 @@ class SampleLoader:
                     if hasattr(func, "read_data")
                     else getattr(func, "read_feature")
                 )
+                reader = reader.__func__ # The reader object might not be picklable
                 samples.append(
-                    DelayedSample(functools.partial(reader, candidate), parent=s)
+                    DelayedSample(functools.partial(reader, None, candidate), parent=s)
                 )
         else:
             # if checkpointing is not required, load the data and preprocess it
