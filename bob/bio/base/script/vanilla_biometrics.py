@@ -114,6 +114,7 @@ TODO: Work out this help
     default="results",
     help="Name of output directory",
 )
+@verbosity_option(cls=ResourceOption)
 def vanilla_biometrics(
     preprocessor,
     extractor,
