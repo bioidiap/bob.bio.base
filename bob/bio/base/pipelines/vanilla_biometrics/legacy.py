@@ -9,7 +9,7 @@ import functools
 
 import bob.io.base
 from bob.pipelines.sample.sample import DelayedSample, SampleSet, Sample
-
+import numpy
 
 class DatabaseConnector:
     """Wraps a bob.bio.base database and generates conforming samples
@@ -316,17 +316,17 @@ class AlgorithmAdaptor:
                 self.load()
                 if self.model.requires_projector_training:
                     return self.model.enroll(
-                        [self.model.project(s.data) for s in k.samples]
+                        numpy.array([self.model.project(s.data) for s in k.samples])
                     )
                 else:
-                    return [s.data for s in k.samples]
+                    return self.model.enroll(numpy.array([s.data for s in k.samples]))
 
             def write_enrolled(self, k, path):
                 self.model.write_model(k, path)
 
         model = _CachedModel(self.algorithm, path)
 
-        retval = []
+        retval = []        
         for k in references:
             if checkpoint is not None:
                 candidate = os.path.join(os.path.join(checkpoint, k.path + ".hdf5"))
@@ -334,7 +334,7 @@ class AlgorithmAdaptor:
                     # create new checkpoint
                     bob.io.base.create_directories_safe(os.path.dirname(candidate))
                     enrolled = model.enroll(k)
-                    model.model.write_model(enrolled, candidate)
+                    model.model.write_model(enrolled, candidate)                
                 retval.append(
                     DelayedSample(
                         functools.partial(model.model.read_model, candidate), parent=k

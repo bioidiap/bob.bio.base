@@ -274,7 +274,7 @@ class SampleLoaderAnnotated(SampleLoader):
                     try:
                         # preprocessing is required, and checkpointing, do it now
                         data = func(s.data, annotations=s.annotations)
-                    except:
+                    except:                        
                         data = func(s.data)
 
 
@@ -294,15 +294,17 @@ class SampleLoaderAnnotated(SampleLoader):
                 # because we are checkpointing, we return a DelayedSample
                 # instead of normal (preloaded) sample. This allows the next
                 # phase to avoid loading it would it be unnecessary (e.g. next
-                # phase is already check-pointed)
+                # phase is already check-pointed)                
+                #reader = bob.io.base.load
                 reader = (
                     getattr(func, "read_data")
                     if hasattr(func, "read_data")
                     else getattr(func, "read_feature")
                 )
+                reader = reader.__func__ # The reader object might not be picklable
                 samples.append(
                     DelayedSample(
-                        functools.partial(reader, candidate), parent=s
+                        functools.partial(reader, None, candidate), parent=s
                     )
                 )
         else:

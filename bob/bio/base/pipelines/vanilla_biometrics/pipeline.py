@@ -108,7 +108,7 @@ def biometric_pipeline(
     ## Create biometric samples
     biometric_references = create_biometric_reference(background_model,references,loader,algorithm,npartitions,checkpoints)
 
-    ## Scores all probes
+    ## Scores all probes    
     return compute_scores(background_model, biometric_references, probes, loader, algorithm, npartitions, checkpoints)
 
 
@@ -354,12 +354,13 @@ def compute_scores(
     db = dask.bag.from_sequence(probes, npartitions=npartitions)
     db = db.map_partitions(loader, checkpoints.get("probes", {}))
 
+
     ## TODO: Here, we are sending all computed biometric references to all
     ## probes.  It would be more efficient if only the models related to each
     ## probe are sent to the probing split.  An option would be to use caching
     ## and allow the ``score`` function above to load the required data from
     ## the disk, directly.  A second option would be to generate named delays
-    ## for each model and then associate them here.
-    all_references = dask.delayed(list)(references)
+    ## for each model and then associate them here.          
+    all_references = dask.delayed(list)(references)    
     return db.map_partitions(algorithm.score, all_references, background_model)
 
