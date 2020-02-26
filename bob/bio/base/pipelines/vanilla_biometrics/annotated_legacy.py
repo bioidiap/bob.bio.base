@@ -277,7 +277,6 @@ class SampleLoaderAnnotated(SampleLoader):
                     except:                        
                         data = func(s.data)
 
-
                     # notice this can be called in parallel w/o failing
                     bob.io.base.create_directories_safe(
                         os.path.dirname(candidate)
@@ -314,4 +313,3 @@ class SampleLoaderAnnotated(SampleLoader):
 
         r = SampleSet(samples, parent=sset)
         return r
-
