@@ -15,6 +15,10 @@ import bob.io.base
 from .legacy import DatabaseConnector
 from .blocks import SampleLoader
 from bob.pipelines.sample.sample import SampleSet, DelayedSample, Sample 
+from bob.pipelines.utils import is_picklable
+
+import logging
+logger = logging.getLogger("bob.bio.base")
 
 
 class DatabaseConnectorAnnotated(DatabaseConnector):
@@ -293,19 +297,28 @@ class SampleLoaderAnnotated(SampleLoader):
                 # because we are checkpointing, we return a DelayedSample
                 # instead of normal (preloaded) sample. This allows the next
                 # phase to avoid loading it would it be unnecessary (e.g. next
-                # phase is already check-pointed)                
-                #reader = bob.io.base.load
+                # phase is already check-pointed)
                 reader = (
                     getattr(func, "read_data")
                     if hasattr(func, "read_data")
                     else getattr(func, "read_feature")
-                )
-                reader = reader.__func__ # The reader object might not be picklable
-                samples.append(
-                    DelayedSample(
-                        functools.partial(reader, None, candidate), parent=s
+                )                
+                if is_picklable(reader):
+                    samples.append(
+                        DelayedSample(
+                            functools.partial(reader, candidate), parent=s
+                        )
                     )
-                )
+                else:                    
+                    logger.warning(f"The method {reader} is not picklable. Shiping its unbounded method to `DelayedSample`.")
+                    reader = reader.__func__ # The reader object might not be picklable
+
+                    samples.append(
+                        DelayedSample(
+                            functools.partial(reader, None, candidate), parent=s
+                        )
+                    )
+
         else:
             # if checkpointing is not required, load the data and preprocess it
             # as we would normally do
