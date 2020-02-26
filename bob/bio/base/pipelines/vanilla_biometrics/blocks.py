@@ -7,8 +7,11 @@ import numpy
 import os
 import bob.io.base
 from bob.pipelines.sample.sample import DelayedSample, SampleSet, Sample
+from bob.pipelines.utils import is_picklable
 
 """Re-usable blocks for legacy bob.bio.base algorithms"""
+import logging
+logger = logging.getLogger("bob.bio.base")
 
 
 class SampleLoader:
@@ -107,10 +110,21 @@ class SampleLoader:
                     if hasattr(func, "read_data")
                     else getattr(func, "read_feature")
                 )
-                reader = reader.__func__ # The reader object might not be picklable
-                samples.append(
-                    DelayedSample(functools.partial(reader, None, candidate), parent=s)
-                )
+                if is_picklable(reader):
+                    samples.append(
+                        DelayedSample(
+                            functools.partial(reader, candidate), parent=s
+                        )
+                    )
+                else:                    
+                    logger.warning(f"The method {func} is not picklable. Shiping its unbounded method to `DelayedSample`.")
+                    reader = reader.__func__ # The reader object might not be picklable
+
+                    samples.append(
+                        DelayedSample(
+                            functools.partial(reader, None, candidate), parent=s
+                        )
+                    )
         else:
             # if checkpointing is not required, load the data and preprocess it
             # as we would normally do
