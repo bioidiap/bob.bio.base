@@ -209,18 +209,26 @@ def vanilla_biometrics(
     from bob.bio.base.pipelines.vanilla_biometrics.annotated_legacy import SampleLoaderAnnotated as SampleLoader
     loader = SampleLoader(pipeline)
 
-    counter = 0
-    for g in group:        
-        with open(os.path.join(output,f"scores-{g}"), "w") as f:
-            for biometric_reference in database.references(group=g):
+    for g in group:
 
-                subject = biometric_reference.subject
-                print(f"   BIOMETRIC REFERENCE {counter} - {subject}")
-                counter += 1
+        with open(os.path.join(output,f"scores-{g}"), "w") as f:
+
+            # Spliting the references in small chunks
+            n_workers = 3
+            biometric_references = database.references(group=g)
+            offset = 0
+            step = len(biometric_references)//n_workers
+            biometric_references_chunks = []
+            for i in range(n_workers-1):
+                biometric_references_chunks.append(biometric_references[offset:offset+step])
+                offset += step
+            biometric_references_chunks.append(biometric_references[offset:])
+
+            for biometric_reference in biometric_references_chunks:
 
                 result = biometric_pipeline(
                     database.background_model_samples(),
-                    [biometric_reference],
+                    biometric_reference,
                     database.probes(group=g),
                     loader,
                     algorithm,
