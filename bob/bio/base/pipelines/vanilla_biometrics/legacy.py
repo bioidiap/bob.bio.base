@@ -10,6 +10,13 @@ import functools
 import bob.io.base
 from bob.pipelines.sample.sample import DelayedSample, SampleSet, Sample
 import numpy
+import logging
+import dask
+
+import sys
+import pickle
+logger = logging.getLogger("bob.bio.base")
+
 
 class DatabaseConnector:
     """Wraps a bob.bio.base database and generates conforming samples
@@ -381,19 +388,38 @@ class AlgorithmAdaptor:
         model = self.algorithm()
         model.load_projector(path)
 
-        retval = []
-        for p in probes:
+        score_sample_sets = []
+        n_probes = len(probes)
+
+        for i,p in enumerate(probes):
             if model.requires_projector_training:
                 data = [model.project(s.data) for s in p.samples]
             else:
                 data = [s.data for s in p.samples]
 
             for subprobe_id, (s, parent) in enumerate(zip(data, p.samples)):
+
                 # each sub-probe in the probe needs to be checked
                 subprobe_scores = []
+                def _compute_score(ref, probe_sample):
+                    return Sample(model.score(ref.data, probe_sample), parent=ref)
+
+                # Parellelizing the scoring
+                subprobe_scores_delayed = []
                 for ref in [r for r in references if r.id in p.references]:
-                    subprobe_scores.append(Sample(model.score(ref.data, s), parent=ref))
-                subprobe = SampleSet(subprobe_scores, parent=p)
+                    # Delaying the computation of a single score.
+                    subprobe_scores_delayed.append(dask.delayed(_compute_score)(ref, s))
+                    #subprobe_scores.append(Sample(model.score(ref.data, s), parent=ref))
+                #subprobe_scores = [ssd.compute() for ssd in subprobe_scores_delayed]
+                
+                # Delaying the computation of a single score.
+                subprobe_scores = dask.delayed(list)(subprobe_scores_delayed)
+                subprobe = SampleSet(subprobe_scores, parent=parent)
+                #subprobe = SampleSet(subprobe_scores, parent=p)
+                #subprobe = SampleSet(subprobe_scores, parent=None)
+
                 subprobe.subprobe_id = subprobe_id
-                retval.append(subprobe)
-        return retval
+                score_sample_sets.append(subprobe)
+
+
+        return score_sample_sets

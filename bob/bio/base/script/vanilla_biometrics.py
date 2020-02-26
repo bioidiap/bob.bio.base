@@ -209,25 +209,33 @@ def vanilla_biometrics(
     from bob.bio.base.pipelines.vanilla_biometrics.annotated_legacy import SampleLoaderAnnotated as SampleLoader
     loader = SampleLoader(pipeline)
 
-    for g in group:
-
-        result = biometric_pipeline(
-            database.background_model_samples(),
-            database.references(group=g),
-            database.probes(group=g),
-            loader,
-            algorithm,
-            npartitions=len(dask_client.cluster.workers),
-            checkpoints=checkpoints,
-        )
-
-        # result.visualize(os.path.join(output, "graph.pdf"), rankdir="LR")
-        result = result.compute(scheduler=dask_client)
+    counter = 0
+    for g in group:        
         with open(os.path.join(output,f"scores-{g}"), "w") as f:
-            for probe in result:
-                for reference in probe.samples:
-                    line = "{0} {1} {2} {3}\n".format(reference.subject, probe.subject, probe.path, reference.data)
-                    f.write(line)
+            for biometric_reference in database.references(group=g):
+
+                subject = biometric_reference.subject
+                print(f"   BIOMETRIC REFERENCE {counter} - {subject}")
+                counter += 1
+
+                result = biometric_pipeline(
+                    database.background_model_samples(),
+                    [biometric_reference],
+                    database.probes(group=g),
+                    loader,
+                    algorithm,
+                    npartitions=len(dask_client.cluster.workers),
+                    checkpoints=checkpoints,
+                )
+
+                # result.visualize(os.path.join(output, "graph.pdf"), rankdir="LR")
+                result = result.compute(scheduler=dask_client)
+                #result = result.compute(scheduler="single-threaded")        
+                for probe in result:
+                    probe.samples = probe.samples.compute(scheduler=dask_client)
+                    for reference in probe.samples:
+                        line = "{0} {1} {2} {3}\n".format(reference.subject, probe.subject, probe.path, reference.data)
+                        f.write(line)
 
     dask_client.shutdown()
 
