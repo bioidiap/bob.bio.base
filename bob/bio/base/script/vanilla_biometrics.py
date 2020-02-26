@@ -214,7 +214,7 @@ def vanilla_biometrics(
         with open(os.path.join(output,f"scores-{g}"), "w") as f:
 
             # Spliting the references in small chunks
-            n_workers = 3
+            n_workers = len(dask_client.cluster.workers)
             biometric_references = database.references(group=g)
             offset = 0
             step = len(biometric_references)//n_workers
