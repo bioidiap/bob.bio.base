@@ -11,6 +11,7 @@ import functools
 import click
 
 from bob.extension.scripts.click_helper import verbosity_option, ResourceOption, ConfigCommand
+from bob.pipelines.sample.sample import DelayedSample, Sample
 
 import logging
 logger = logging.getLogger(__name__)
@@ -195,7 +196,9 @@ def vanilla_biometrics(
             "probes": {
                 "preprocessor": os.path.join(output, "probes", "preprocessed"),
                 "extractor": os.path.join(output, "probes", "extracted"),
+                "scores": os.path.join(output, "probes", "scores"),
             },
+
         }
 
 
@@ -212,38 +215,33 @@ def vanilla_biometrics(
     for g in group:
 
         with open(os.path.join(output,f"scores-{g}"), "w") as f:
-
-            # Spliting the references in small chunks
-            n_workers = len(dask_client.cluster.workers)
             biometric_references = database.references(group=g)
-            offset = 0
-            step = len(biometric_references)//n_workers
-            biometric_references_chunks = []
-            for i in range(n_workers-1):
-                biometric_references_chunks.append(biometric_references[offset:offset+step])
-                offset += step
-            biometric_references_chunks.append(biometric_references[offset:])
 
-            for biometric_reference in biometric_references_chunks:
+            result = biometric_pipeline(
+                database.background_model_samples(),
+                biometric_references,
+                database.probes(group=g),
+                loader,
+                algorithm,
+                npartitions=len(dask_client.cluster.workers),
+                checkpoints=checkpoints,
+            )
+            # result.visualize(os.path.join(output, "graph.pdf"), rankdir="LR")
+            result = result.compute(scheduler=dask_client)
+            #result = result.compute(scheduler="single-threaded")
 
-                result = biometric_pipeline(
-                    database.background_model_samples(),
-                    biometric_reference,
-                    database.probes(group=g),
-                    loader,
-                    algorithm,
-                    npartitions=len(dask_client.cluster.workers),
-                    checkpoints=checkpoints,
-                )
-
-                # result.visualize(os.path.join(output, "graph.pdf"), rankdir="LR")
-                result = result.compute(scheduler=dask_client)
-                #result = result.compute(scheduler="single-threaded")        
-                for probe in result:
-                    probe.samples = probe.samples.compute(scheduler=dask_client)
-                    for reference in probe.samples:
+            #import ipdb; ipdb.set_trace()
+            for probe in result:
+                for sample in probe.samples:
+                    
+                    if isinstance(sample, Sample):
                         line = "{0} {1} {2} {3}\n".format(reference.subject, probe.subject, probe.path, reference.data)
                         f.write(line)
+                    elif isinstance(sample, DelayedSample):
+                        lines = sample.load().readlines()
+                        f.writelines(lines)
+                    else:
+                        raise TypeError("The output of the pipeline is not writeble")
 
     dask_client.shutdown()
 
