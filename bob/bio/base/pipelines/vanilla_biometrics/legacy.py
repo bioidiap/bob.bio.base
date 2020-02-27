@@ -352,7 +352,7 @@ class AlgorithmAdaptor:
                 retval.append(Sample(model.enroll(k), parent=k))
         return retval
 
-    def score(self, probes, references, path, *args, **kwargs):
+    def score(self, probes, references, path, checkpoint, *args, **kwargs):
         """Scores a new sample against multiple (potential) references
 
         Parameters
@@ -389,37 +389,63 @@ class AlgorithmAdaptor:
         model.load_projector(path)
 
         score_sample_sets = []
-        n_probes = len(probes)
 
+        # TODO: temporary optimization
+        optimize = True
+        references_stacked = None
+        ###############
+        
         for i,p in enumerate(probes):
             if model.requires_projector_training:
                 data = [model.project(s.data) for s in p.samples]
             else:
                 data = [s.data for s in p.samples]
-
+            
             for subprobe_id, (s, parent) in enumerate(zip(data, p.samples)):
 
                 # each sub-probe in the probe needs to be checked
                 subprobe_scores = []
-                def _compute_score(ref, probe_sample):
-                    return Sample(model.score(ref.data, probe_sample), parent=ref)
 
-                # Parellelizing the scoring
-                subprobe_scores_delayed = []
-                for ref in [r for r in references if r.id in p.references]:
-                    # Delaying the computation of a single score.
-                    subprobe_scores_delayed.append(dask.delayed(_compute_score)(ref, s))
-                    #subprobe_scores.append(Sample(model.score(ref.data, s), parent=ref))
-                #subprobe_scores = [ssd.compute() for ssd in subprobe_scores_delayed]
-                
+                # Temporary optimization
+                if optimize:
+                    # TODO: THIS IS JUST FOR CITER PROJECT
+                    # GIVE ME A BREAK AND LOOK SOMEWHERE ELSE
+                    if references_stacked is None:
+                        references_stacked = numpy.vstack([r.data for r in references if r.id in p.references])                    
+                    from scipy.spatial.distance import cdist
+                    scores = -1*cdist(references_stacked, s.reshape(1,-1), 'cosine')
+                    for ref, score in zip([r for r in references if r.id in p.references], scores):
+                        subprobe_scores.append(Sample(score[0], parent=ref))
+                else:
+                    def _compute_score(ref, probe_sample):
+                        return Sample(model.score(ref.data, probe_sample), parent=ref)
+
+                    # Parellelizing the scoring
+                    #subprobe_scores_delayed = []
+                    for ref in [r for r in references if r.id in p.references]:
+                        subprobe_scores.append(_compute_score(ref, s))
+
                 # Delaying the computation of a single score.
-                subprobe_scores = dask.delayed(list)(subprobe_scores_delayed)
                 subprobe = SampleSet(subprobe_scores, parent=parent)
-                #subprobe = SampleSet(subprobe_scores, parent=p)
-                #subprobe = SampleSet(subprobe_scores, parent=None)
+                subprobe.subprobe_id = subprobe_id                
 
-                subprobe.subprobe_id = subprobe_id
+                # Chekpointing if necessary
+                if checkpoint is not None:
+                    candidate = os.path.join(os.path.join(checkpoint, parent.path + ".txt"))
+                    bob.io.base.create_directories_safe(os.path.dirname(candidate))
+                    delayed_samples_subprobe = _save_scores_four_columns(candidate, subprobe)
+                    subprobe.samples = [delayed_samples_subprobe]
+
                 score_sample_sets.append(subprobe)
 
-
         return score_sample_sets
+
+
+def _save_scores_four_columns(path, probe):
+    
+    with open(path, "w") as f:
+        for biometric_reference in probe.samples:
+            line = "{0} {1} {2} {3}\n".format(biometric_reference.subject, probe.subject, probe.path, biometric_reference.data)
+            f.write(line)
+
+    return DelayedSample(functools.partial(open, path))

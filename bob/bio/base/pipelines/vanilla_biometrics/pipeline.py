@@ -363,7 +363,6 @@ def compute_scores(
     ## the disk, directly.  A second option would be to generate named delays
     ## for each model and then associate them here.
     all_references = dask.delayed(list)(references)
-    return db.map_partitions(algorithm.score, all_references, background_model)
-    #return db.map_partitions(algorithm.score, all_references, background_model)
+    return db.map_partitions(algorithm.score, all_references, background_model, checkpoints.get("probes", {}).get("scores")  )
 
 
