@@ -8,4 +8,7 @@ preprocessor = "face-detect"
 
 extractor = 'linearize'
 
-algorithm = 'pca'
+
+from bob.bio.base.algorithm import PCA
+import functools
+algorithm = AlgorithmAdaptor(functools.partial(PCA,0.99))

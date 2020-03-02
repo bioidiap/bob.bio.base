@@ -102,14 +102,14 @@ def biometric_pipeline(
     """
 
     ## Training background model (fit will return even if samples is ``None``,
-    ## in which case we suppose the algorithm is not trainable in any way)
-    background_model = train_background_model(background_model_samples, loader, algorithm, npartitions, checkpoints)
+    ## in which case we suppose the algorithm is not trainable in any way)    
+    background_model = train_background_model(background_model_samples, loader.transform, algorithm, npartitions, checkpoints)
     
     ## Create biometric samples
-    biometric_references = create_biometric_reference(background_model,references,loader,algorithm,npartitions,checkpoints)
+    biometric_references = create_biometric_reference(background_model,references,loader.transform,algorithm,npartitions,checkpoints)
 
     ## Scores all probes    
-    return compute_scores(background_model, biometric_references, probes, loader, algorithm, npartitions, checkpoints)
+    return compute_scores(background_model, biometric_references, probes, loader.transform, algorithm, npartitions, checkpoints)
 
 
 def train_background_model(

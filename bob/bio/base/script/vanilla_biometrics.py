@@ -203,14 +203,17 @@ def vanilla_biometrics(
 
 
     # Defines the processing pipeline for loading samples
-    # Can add any number of steps!
-    pipeline = [("preprocessor",preprocessor),
-                ("extractor", extractor)]
+    # Can add any number of steps!    
+    from bob.bio.base.pipelines.vanilla_biometrics.legacy import ProcessorBlockAdaptor
+
+    pipeline = [("preprocessor", ProcessorBlockAdaptor(cls=preprocessor)),
+                ("extractor", ProcessorBlockAdaptor(cls=extractor))]
 
     # Mechanism that loads samples
     # from ..bob_bio.blocks import SampleLoader
-    from bob.bio.base.pipelines.vanilla_biometrics.annotated_legacy import SampleLoaderAnnotated as SampleLoader
-    loader = SampleLoader(pipeline)
+    #from bob.bio.base.pipelines.vanilla_biometrics.annotated_legacy import SampleLoaderAnnotated as SampleLoader
+    from bob.pipelines.processor import ProcessorPipeline
+    processor_pipeline = ProcessorPipeline(pipeline)
 
     for g in group:
 
@@ -221,7 +224,7 @@ def vanilla_biometrics(
                 database.background_model_samples(),
                 biometric_references,
                 database.probes(group=g),
-                loader,
+                processor_pipeline,
                 algorithm,
                 npartitions=len(dask_client.cluster.workers),
                 checkpoints=checkpoints,
@@ -229,8 +232,7 @@ def vanilla_biometrics(
             # result.visualize(os.path.join(output, "graph.pdf"), rankdir="LR")
             result = result.compute(scheduler=dask_client)
             #result = result.compute(scheduler="single-threaded")
-
-            #import ipdb; ipdb.set_trace()
+            
             for probe in result:
                 for sample in probe.samples:
                     

@@ -13,9 +13,22 @@ from bob.pipelines.utils import is_picklable
 import logging
 logger = logging.getLogger("bob.bio.base")
 
+def save_scores_four_columns(path, probe):
+    """
+    Write scores in the four columns format
+    """
+    
+    with open(path, "w") as f:
+        for biometric_reference in probe.samples:
+            line = "{0} {1} {2} {3}\n".format(biometric_reference.subject, probe.subject, probe.path, biometric_reference.data)
+            f.write(line)
 
-class SampleLoader:
-    """Adaptor for loading, preprocessing and feature extracting samples
+    return DelayedSample(functools.partial(open, path))
+
+
+from bob.pipelines.processor import ProcessorPipeline
+class ProcessorPipelineAnnotated(ProcessorPipeline):
+    """Adaptor for loading, preprocessing and feature extracting samples that uses annotations
 
     This adaptor class wraps around sample:
 
@@ -51,152 +64,16 @@ class SampleLoader:
     """
 
     def __init__(self, pipeline):
-        self.pipeline = copy.deepcopy(pipeline)
-
-    def _handle_step(self, sset, func, checkpoint):
-        """Handles a single step in the pipeline, with optional checkpointing
-
-        Parameters
-        ----------
-
-        sset : SampleSet
-            The original sample set to be processed (delayed or pre-loaded)
-
-        func : callable
-            The processing function to call for processing **each** sample in
-            the set, if needs be
-
-        checkpoint : str, None
-            An optional string that may point to a directory that will be used
-            for checkpointing the processing phase in question
+        super(ProcessorPipelineAnnotated, self).__init__(pipeline)
 
 
-        Returns
-        -------
+    def _transform(self, func, sample):
 
-        r : SampleSet
-            The prototype processed sample.  If no checkpointing required, this
-            will be of type :py:class:`Sample`.  Otherwise, it will be a
-            :py:class:`DelayedSample`
-
-        """
-
-        if checkpoint is not None:
-            samples = []  # processed samples
-            for s in sset.samples:
-                # there can be a checkpoint for the data to be processed
-                candidate = os.path.join(checkpoint, s.path + ".hdf5")
-                if not os.path.exists(candidate):
-                    # preprocessing is required, and checkpointing, do it now
-                    data = func(s.data)
-
-                    # notice this can be called in parallel w/o failing
-                    bob.io.base.create_directories_safe(os.path.dirname(candidate))
-                    # bob.bio.base standard interface for preprocessor
-                    # has a read/write_data methods
-                    writer = (
-                        getattr(func, "write_data")
-                        if hasattr(func, "write_data")
-                        else getattr(func, "write_feature")
-                    )
-                    writer(data, candidate)
-
-                # because we are checkpointing, we return a DelayedSample
-                # instead of normal (preloaded) sample. This allows the next
-                # phase to avoid loading it would it be unnecessary (e.g. next
-                # phase is already check-pointed)
-                reader = (
-                    getattr(func, "read_data")
-                    if hasattr(func, "read_data")
-                    else getattr(func, "read_feature")
-                )
-                if is_picklable(reader):
-                    samples.append(
-                        DelayedSample(
-                            functools.partial(reader, candidate), parent=s
-                        )
-                    )
-                else:                    
-                    logger.warning(f"The method {func} is not picklable. Shiping its unbounded method to `DelayedSample`.")
-                    reader = reader.__func__ # The reader object might not be picklable
-
-                    samples.append(
-                        DelayedSample(
-                            functools.partial(reader, None, candidate), parent=s
-                        )
-                    )
-        else:
-            # if checkpointing is not required, load the data and preprocess it
-            # as we would normally do
-            samples = [Sample(func(s.data), parent=s) for s in sset.samples]
-
-        r = SampleSet(samples, parent=sset)
-        return r
-
-    def _handle_sample(self, sset, pipeline):
-        """Handles a single sampleset through a pipelien
-
-        Parameters
-        ----------
-
-        sset : SampleSet
-            The original sample set to be processed (delayed or pre-loaded)
-
-        pipeline : :py:class:`list` of :py:class:`tuple`
-            A list of tuples, each comprising of one processing function and
-            one checkpoint directory (:py:class:`str` or ``None``, to avoid
-            checkpointing that phase), respectively
-
-
-        Returns
-        -------
-
-        r : Sample
-            The processed sample
-
-        """
-
-        r = sset
-        for func, checkpoint in pipeline:
-            r = r if func is None else self._handle_step(r, func, checkpoint)
-        return r
-
-    def __call__(self, samples, checkpoints):
-        """Applies the pipeline chaining with optional checkpointing
-
-        Our implementation is optimized to minimize disk I/O to the most.  It
-        yields :py:class:`DelayedSample`'s instead of :py:class:`Sample` if
-        checkpointing is enabled.
-
-
-        Parameters
-        ----------
-
-        samples : list
-            List of :py:class:`SampleSet` to be treated by this pipeline
-
-        checkpoints : dict
-            A dictionary (with any number of entries) that may contain as many
-            keys as those defined when you constructed this class with the
-            pipeline tuple list.  Upon execution, the existance of an entry
-            that defines checkpointing, this phase of the pipeline will be
-            checkpointed.  Notice that you are in the control of checkpointing.
-            If you miss an intermediary step, it will trigger this loader to
-            load the relevant sample, even if the next phase is supposed to be
-            checkpointed.  This strategy keeps the implementation as simple as
-            possible.
-
-
-        Returns
-        -------
-
-        samplesets : list
-            Loaded samplesets, after optional preprocessing and extraction
-
-        """
-
-        pipe = [(v(), checkpoints.get(k)) for k, v in self.pipeline]
-        return [self._handle_sample(k, pipe) for k in samples]
+        # TODO: Fix this on bob.bio.base
+        try:
+            return func.transform(sample.data, annotations=sample.annotations)
+        except:
+            return func.transform(sample.data)
 
 
 class VanillaBiometricsAlgoritm(object):
@@ -226,8 +103,7 @@ class VanillaBiometricsAlgoritm(object):
             stack_per_sampleset: bool
                 If true will return a list of :py:class:`numpy.ndarray`, each one for a sample set
 
-        """
-
+        """        
         if stack_per_sampleset:
             # TODO: Make it more efficient
             all_data = []

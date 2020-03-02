@@ -9,6 +9,7 @@ import functools
 
 import bob.io.base
 from bob.pipelines.sample.sample import DelayedSample, SampleSet, Sample
+from .blocks import save_scores_four_columns
 import numpy
 import logging
 import dask
@@ -188,6 +189,184 @@ class DatabaseConnector:
         return list(probes.values())
 
 
+class DatabaseConnectorAnnotated(DatabaseConnector):
+    """Wraps a bob.bio.base database and generates conforming samples for datasets
+    that has annotations
+
+    This connector allows wrapping generic bob.bio.base datasets and generate
+    samples that conform to the specifications of biometric pipelines defined
+    in this package.
+
+
+    Parameters
+    ----------
+
+    database : object
+        An instantiated version of a bob.bio.base.Database object
+
+    protocol : str
+        The name of the protocol to generate samples from.
+        To be plugged at :py:method:`bob.db.base.Database.objects`.
+
+    """
+
+    def __init__(self, database, protocol):
+        super(DatabaseConnectorAnnotated, self).__init__(database, protocol)
+       
+
+    def background_model_samples(self):
+        """Returns :py:class:`Sample`'s to train a background model (group
+        ``world``).
+
+
+        Returns
+        -------
+
+            samples : list
+                List of samples conforming the pipeline API for background
+                model training.  See, e.g., :py:func:`.pipelines.first`.
+
+        """
+
+        # TODO: This should be organized by client
+        retval = []
+
+        objects = self.database.objects(protocol=self.protocol, groups="world")
+
+        return [
+            SampleSet(
+                [
+                    DelayedSample(
+                        load=functools.partial(
+                            k.load,
+                            self.database.original_directory,
+                            self.database.original_extension,
+                        ),
+                        id=k.id,
+                        path=k.path,
+                        annotations=self.database.annotations(k)
+                    )
+                ]
+            )
+            for k in objects
+        ]
+
+    def references(self, group="dev"):
+        """Returns :py:class:`Reference`'s to enroll biometric references
+
+
+        Parameters
+        ----------
+
+            group : :py:class:`str`, optional
+                A ``group`` to be plugged at
+                :py:meth:`bob.db.base.Database.objects`
+
+
+        Returns
+        -------
+
+            references : list
+                List of samples conforming the pipeline API for the creation of
+                biometric references.  See, e.g., :py:func:`.pipelines.first`.
+
+        """
+
+        retval = []
+
+        for m in self.database.model_ids_with_protocol(protocol=self.protocol, groups=group):
+
+            objects = self.database.objects(
+                protocol=self.protocol,
+                groups=group,
+                model_ids=(m,),
+                purposes="enroll",
+            )
+
+            retval.append(
+                SampleSet(
+                    [
+                        DelayedSample(
+                            load=functools.partial(
+                                k.load,
+                                self.database.original_directory,
+                                self.database.original_extension,
+                            ),
+                            id=k.id,
+                            path=k.path,
+                            annotations=self.database.annotations(k)
+                        )
+                        for k in objects
+                    ],
+                    id=m,
+                    path=str(m),
+                    subject=objects[0].client_id,
+                )
+            )
+
+        return retval
+
+    def probes(self, group):
+        """Returns :py:class:`Probe`'s to score biometric references
+
+
+        Parameters
+        ----------
+
+            group : str
+                A ``group`` to be plugged at
+                :py:meth:`bob.db.base.Database.objects`
+
+
+        Returns
+        -------
+
+            probes : list
+                List of samples conforming the pipeline API for the creation of
+                biometric probes.  See, e.g., :py:func:`.pipelines.first`.
+
+        """
+
+        probes = dict()
+
+        for m in self.database.model_ids_with_protocol(protocol=self.protocol, groups=group):
+
+            # Getting all the probe objects from a particular biometric
+            # reference
+            objects = self.database.objects(
+                protocol=self.protocol,
+                groups=group,
+                model_ids=(m,),
+                purposes="probe",
+            )
+
+            # Creating probe samples
+            for o in objects:
+                if o.id not in probes:
+                    probes[o.id] = SampleSet(
+                        [
+                            DelayedSample(
+                                load=functools.partial(
+                                    o.load,
+                                    self.database.original_directory,
+                                    self.database.original_extension,                                    
+                                ),
+                                id=o.id,
+                                path=o.path,
+                                annotations=self.database.annotations(o)
+                            )
+                        ],
+                        id=o.id,
+                        path=o.path,
+                        subject=o.client_id,
+                        references=[m],
+                    )
+                else:
+                    probes[o.id].references.append(m)
+     
+        return list(probes.values())
+
+
 class AlgorithmAdaptor:
     """Describes a biometric model based on :py:class:`bob.bio.base.algorithm.Algorithm`'s
 
@@ -256,7 +435,6 @@ class AlgorithmAdaptor:
                 A path leading to the fitted model
 
         """
-
         self.path = checkpoint + self.extension
         if not os.path.exists(self.path):  # needs training
             model = self.algorithm()
@@ -391,10 +569,9 @@ class AlgorithmAdaptor:
         score_sample_sets = []
 
         # TODO: temporary optimization
-        optimize = True
+        optimize = False
         references_stacked = None
-        ###############
-        
+        ###############        
         for i,p in enumerate(probes):
             if model.requires_projector_training:
                 data = [model.project(s.data) for s in p.samples]
@@ -420,20 +597,19 @@ class AlgorithmAdaptor:
                     def _compute_score(ref, probe_sample):
                         return Sample(model.score(ref.data, probe_sample), parent=ref)
 
-                    # Parellelizing the scoring
-                    #subprobe_scores_delayed = []
+                    # Parellelizing the scoring                    
                     for ref in [r for r in references if r.id in p.references]:
                         subprobe_scores.append(_compute_score(ref, s))
 
-                # Delaying the computation of a single score.
-                subprobe = SampleSet(subprobe_scores, parent=parent)
-                subprobe.subprobe_id = subprobe_id                
+                # Delaying the computation of a single score.                
+                subprobe = SampleSet(subprobe_scores, parent=p)
+                subprobe.subprobe_id = subprobe_id
 
                 # Chekpointing if necessary
                 if checkpoint is not None:
                     candidate = os.path.join(os.path.join(checkpoint, parent.path + ".txt"))
-                    bob.io.base.create_directories_safe(os.path.dirname(candidate))
-                    delayed_samples_subprobe = _save_scores_four_columns(candidate, subprobe)
+                    bob.io.base.create_directories_safe(os.path.dirname(candidate))                    
+                    delayed_samples_subprobe = save_scores_four_columns(candidate, subprobe)
                     subprobe.samples = [delayed_samples_subprobe]
 
                 score_sample_sets.append(subprobe)
@@ -441,11 +617,108 @@ class AlgorithmAdaptor:
         return score_sample_sets
 
 
-def _save_scores_four_columns(path, probe):
-    
-    with open(path, "w") as f:
-        for biometric_reference in probe.samples:
-            line = "{0} {1} {2} {3}\n".format(biometric_reference.subject, probe.subject, probe.path, biometric_reference.data)
-            f.write(line)
+from bob.pipelines.processor import ProcessorBlock
+class ProcessorBlockAdaptor(ProcessorBlock):
+    """
+    ProcessorBlock for bob.bio.base algorithms
 
-    return DelayedSample(functools.partial(open, path))
+    This basically wraps the functionality of `bob.bio.base` Preprocessors and Extractors
+    
+
+    Parameters
+    ----------
+       cls: 
+         Either a bob.bio.base preprocessor or extractor to be wrapped
+
+
+    Examples
+    --------
+    You can use this class to apply a chain of extractors on your data. For
+    example:
+
+        >>> from bob.bio.base.extractor import Linearize
+        >>> processor = ProcessorBlockAdaptor(bob_bio_processor=Linearize)        
+
+    """
+
+    def __init__(self, cls, **kwargs):
+        self.cls = cls
+        self.legacy_instance = None
+        super(ProcessorBlockAdaptor, self).__init__(is_fitable=False, **kwargs)
+
+
+    def _check_and_instanciate(self):
+        """
+        Check if the bob.bio.base legacy object was instanciated.
+        If so, just return the instance, if not, instantiated and return the instance
+        """
+
+        if self.legacy_instance is None:
+            self.legacy_instance = self.cls()
+        return self.legacy_instance
+
+
+    def read(self, name, default_extension=".hdf5"):        
+        if self is None:
+            # In case self is unbounded method
+            reader = bob.io.base.load
+        else:
+            legacy_instance = self._check_and_instanciate()
+
+            # Checking if the read function is from the Preprocessor/Extractor
+            reader = (
+                     getattr(legacy_instance, "read_data")
+                     if hasattr(legacy_instance, "read_data")
+                     else getattr(legacy_instance, "read_feature")
+                     )        
+        return reader(name+default_extension)
+
+
+    def write(self, X, name, default_extension=".hdf5"):
+        legacy_instance = self._check_and_instanciate()
+
+        # Checking if the read function is from the Preprocessor/Extractor
+        writer = (
+                 getattr(legacy_instance, "write_data")
+                 if hasattr(legacy_instance, "write_data")
+                 else getattr(legacy_instance, "write_feature")
+                 )
+
+        return writer(X, name+default_extension)
+
+
+    def fit(self, X, y=None, **kwargs):
+        """
+        Train (or fit) a processor
+
+        Parameters
+        ----------
+
+          X: array-like
+            Data used for training an arbitrary model
+
+          y: array-like (optional)
+            Possible labels for training an arbitrary model
+        """
+
+        raise NotImplemented("bob.bio.base preprocessors/extractors are not fittable")
+
+    
+    def transform(self, X, **kwargs):
+        """
+        Transform `X`
+        
+        Parameters
+        ----------
+
+          X: array-like
+            Data used for training an arbitrary model
+
+        Returns
+        -------
+          X_new: array-like
+            X trainsformed
+
+        """
+        legacy_instance = self._check_and_instanciate()        
+        return legacy_instance.__call__(X)
