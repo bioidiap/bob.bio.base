@@ -364,5 +364,3 @@ def compute_scores(
     ## for each model and then associate them here.
     all_references = dask.delayed(list)(references)
     return db.map_partitions(algorithm.score, all_references, background_model, checkpoints.get("probes", {}).get("scores")  )
-
-
