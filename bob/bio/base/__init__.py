@@ -4,7 +4,7 @@ from . import preprocessor
 from . import extractor
 from . import algorithm
 from . import annotator
-from . import processor
+from . import mixins
 
 from . import script
 from . import test

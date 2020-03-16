@@ -18,42 +18,8 @@ class Comparator(object):
     def __init__(self):
         pass
 
-    def _stack_samples_2_ndarray(self, samplesets, stack_per_sampleset=False):
-        """
-        Stack a set of :py:class:`bob.pipelines.sample.sample.SampleSet`
-        and convert them to :py:class:`numpy.ndarray`
-
-        Parameters
-        ----------
-
-            samplesets: :py:class:`bob.pipelines.sample.sample.SampleSet`
-                         Set of samples to be stackted
-
-            stack_per_sampleset: bool
-                If true will return a list of :py:class:`numpy.ndarray`, each one for a sample set
-
-        """
-
-        if stack_per_sampleset:
-            # TODO: Make it more efficient
-            all_data = []
-            for sampleset in samplesets:
-                all_data.append(
-                    numpy.array([sample.data for sample in sampleset.samples])
-                )
-            return all_data
-        else:
-            return numpy.array(
-                [
-                    sample.data
-                    for sampleset in samplesets
-                    for sample in sampleset.samples
-                ]
-            )
-
-
-    def enroll_samples(
-        self, references, background_model=None, checkpoint=None, *args, **kwargs
+    def _enroll_samples(
+        self, biometric_references, extractor=None, checkpoint=None, *args, **kwargs
     ):
         """This method should implement the sub-pipeline 1 of the Vanilla Biometrics Pipeline :ref:`_vanilla-pipeline-1`.
 
@@ -61,7 +27,7 @@ class Comparator(object):
 
         Parameters
         ----------
-            references : list
+            biometric_references : list
                 A list of :py:class:`SampleSet` objects to be used for
                 creating biometric references.  The sets must be identified
                 with a unique id and a path, for eventual checkpointing.
@@ -82,42 +48,13 @@ class Comparator(object):
         """
 
         retval = []
-        for k in references:
+        for k in biometric_references:
             # compute on-the-fly            
             data = [s.data for s in k.samples]
             retval.append(Sample(self.enroll(data), parent=k))
 
         return retval
 
-    def write_biometric_reference(self, biometric_reference, filename):
-        """Writes the enrolled model to the given file.
-        In this base class implementation:
-
-        - If the given model has a 'save' attribute, it calls ``model.save(bob.io.base.HDF5File(model_file), 'w')``.
-          In this case, the given model_file might be either a file name or a :py:class:`bob.io.base.HDF5File`.
-        - Otherwise, it uses :py:func:`bob.io.base.save` to do that.
-
-        If you have a different format, please overwrite this function.
-
-        **Parameters:**
-
-        model : object
-          A model as returned by the :py:meth:`enroll` function, which should be written.
-
-        model_file : str or :py:class:`bob.io.base.HDF5File`
-          The file open for writing, or the file name to write to.
-        """
-        import h5py
-
-        with h5py.File(filename, "w") as f:
-            f.create_dataset("biometric_reference", data=biometric_reference)
-
-    def read_biometric_reference(self, filename):
-        import h5py
-
-        with h5py.File(filename, "r") as f:
-            data = f["biometric_reference"].value
-        return data
 
     def enroll(self, data,  **kwargs):
         """
@@ -134,7 +71,7 @@ class Comparator(object):
         raise NotImplemented("Please, implement me")
 
 
-    def score_samples(self, probes, references, background_model=None, *args, **kwargs):
+    def _score_samples(self, probes, biometric_references, extractor=None, *args, **kwargs):
         """Scores a new sample against multiple (potential) references
 
         Parameters
@@ -144,12 +81,12 @@ class Comparator(object):
                 A list of :py:class:`SampleSet` objects to be used for
                 scoring the input references
 
-            references : list
+            biometric_references : list
                 A list of :py:class:`Sample` objects to be used for
                 scoring the input probes, must have an ``id`` attribute that
                 will be used to cross-reference which probes need to be scored.
 
-            background_model : 
+            extractor : 
                 Path pointing to stored model on disk
 
             *args, **kwargs :
@@ -176,7 +113,7 @@ class Comparator(object):
             for subprobe_id, (s, parent) in enumerate(zip(data, p.samples)):
                 # each sub-probe in the probe needs to be checked
                 subprobe_scores = []
-                for ref in [r for r in references if r.key in p.references]:
+                for ref in [r for r in biometric_references if r.key in p.references]:
                     subprobe_scores.append(
                         Sample(self.score(ref.data, s), parent=ref)
                     )
@@ -214,7 +151,7 @@ import scipy.spatial.distance
 from sklearn.utils.validation import check_array
 class DistanceComparator(Comparator):
 
-    def __init__(self,distance_function = scipy.spatial.distance.euclidean,factor=1):
+    def __init__(self,distance_function = scipy.spatial.distance.euclidean,factor=-1):
 
         self.distance_function = distance_function
         self.factor = factor

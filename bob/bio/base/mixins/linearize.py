@@ -3,7 +3,7 @@
 # @author: Tiago de Freitas Pereira <tiago.pereira@idiap.ch>
 
 
-from bob.pipelines.processor import CheckpointMixin, SampleMixin
+from bob.pipelines.mixins import CheckpointMixin, SampleMixin
 from sklearn.base import TransformerMixin
 from sklearn.utils.validation import check_array, check_is_fitted
 import numpy
