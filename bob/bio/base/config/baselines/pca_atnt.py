@@ -1,11 +1,28 @@
-from bob.bio.base.pipelines.vanilla_biometrics.legacy import DatabaseConnector, AlgorithmAdaptor
+#from bob.bio.base.pipelines.vanilla_biometrics.legacy import DatabaseConnector, AlgorithmAdaptor
 
 import bob.db.atnt
-
+from bob.bio.base.pipelines.vanilla_biometrics.legacy import DatabaseConnector
 database = DatabaseConnector(bob.db.atnt.Database(), protocol="Default")
 
 preprocessor = "face-detect"
 
-extractor = 'linearize'
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.decomposition import PCA
 
-algorithm = 'pca'
+from bob.pipelines.mixins import CheckpointMixin, SampleMixin
+from bob.bio.base.mixins import CheckpointSampleLinearize
+
+class CheckpointSamplePCA(CheckpointMixin, SampleMixin, PCA):
+    """
+    Enables SAMPLE and CHECKPOINTIN handling for https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+    """
+    pass
+
+#extractor = make_pipeline([CheckpointSampleLinearize(), CheckpointSamplePCA()])
+from bob.pipelines.mixins import dask_it
+extractor = Pipeline(steps=[('0',CheckpointSampleLinearize(features_dir="./example/extractor0")), 
+	                        ('1',CheckpointSamplePCA(features_dir="./example/extractor1", model_path="./example/pca.pkl"))])
+#extractor = dask_it(extractor)
+
+from bob.bio.base.pipelines.vanilla_biometrics.comparator import DistanceComparator
+algorithm = DistanceComparator()

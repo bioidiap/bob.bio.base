@@ -8,7 +8,7 @@ import copy
 import functools
 
 import bob.io.base
-from bob.pipelines.sample.sample import DelayedSample, SampleSet, Sample
+from bob.pipelines.sample import DelayedSample, SampleSet, Sample
 import numpy
 import logging
 import dask
@@ -72,10 +72,11 @@ class DatabaseConnector:
                             self.database.original_directory,
                             self.database.original_extension,
                         ),
-                        id=k.id,
+                        key=str(k.id),
                         path=k.path,
                     )
-                ]
+                ],
+                key=str(k.client_id)
             )
             for k in objects
         ]
@@ -118,14 +119,14 @@ class DatabaseConnector:
                                 self.database.original_directory,
                                 self.database.original_extension,
                             ),
-                            id=k.id,
+                            key=str(k.id),
                             path=k.path,
                         )
                         for k in objects
                     ],
-                    id=m,
+                    key=m,
                     path=str(m),
-                    subject=objects[0].client_id,
+                    subject=str(objects[0].client_id),
                 )
             )
 
@@ -173,13 +174,13 @@ class DatabaseConnector:
                                     self.database.original_directory,
                                     self.database.original_extension,
                                 ),
-                                id=o.id,
+                                key=str(o.id),
                                 path=o.path,
                             )
                         ],
-                        id=o.id,
+                        key=str(o.client_id),
                         path=o.path,
-                        subject=o.client_id,
+                        subject=str(o.client_id),
                         references=[m],
                     )
                 else:
