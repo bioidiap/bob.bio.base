@@ -182,10 +182,9 @@ def vanilla_biometrics(
             )
         
             if dask_client is not None:
-                result = result.compute(scheduler=dask_client)
+                #result = result.compute(scheduler=dask_client)
                 result = result.compute(scheduler="single-threaded")
 
-            #import ipdb; ipdb.set_trace()
             for probe in result:
                 for sample in probe.samples:
                     
