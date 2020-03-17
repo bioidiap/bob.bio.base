@@ -5,9 +5,12 @@
 
 from bob.pipelines.sample import Sample, SampleSet, DelayedSample
 import numpy
+import bob.io.base
+import os
+import functools
 
 
-class Comparator(object):
+class BiometricAlgorithm(object):
     """Describes a base biometric comparator for the Vanilla Biometrics Pipeline :ref:`_bob.bio.base.struct_bio_rec_sys`_.
 
     biometric model enrollement, via ``enroll()`` and scoring, with
@@ -50,10 +53,17 @@ class Comparator(object):
         retval = []
         for k in biometric_references:
             # compute on-the-fly            
-            data = [s.data for s in k.samples]
-            retval.append(Sample(self.enroll(data), parent=k))
+            retval.append(self._enroll_sample_set(k))
 
         return retval
+
+    def _enroll_sample_set(self, sampleset):
+
+        # Unpack the sampleset
+        data = [s.data for s in sampleset.samples]
+
+        # Enroll
+        return Sample(self.enroll(data), parent=sampleset)
 
 
     def enroll(self, data,  **kwargs):
@@ -106,24 +116,37 @@ class Comparator(object):
 
         retval = []
         for p in probes:
-            #data = numpy.vstack([s for s in p.samples])
-            data = [s.data for s in p.samples]
-
-
-            for subprobe_id, (s, parent) in enumerate(zip(data, p.samples)):
-                # each sub-probe in the probe needs to be checked
-                subprobe_scores = []
-                for ref in [r for r in biometric_references if r.key in p.references]:
-                    subprobe_scores.append(
-                        Sample(self.score(ref.data, s), parent=ref)
-                    )
-                subprobe = SampleSet(subprobe_scores, parent=p)
-                subprobe.subprobe_id = subprobe_id
-                retval.append(subprobe)
+            retval.append(self._score_sample_set(p, biometric_references, extractor))
         return retval
 
 
-    def score(self, biometric_reference, data,  **kwargs):
+    def _score_sample_set(self, sampleset, biometric_references, extractor):
+        """Given a sampleset for probing, compute the scores and retures a sample set with the scores
+        """
+
+        # Stacking the samples from a sampleset        
+        data = [s.data for s in sampleset.samples]
+
+        # Compute scores for each sample inside of the sample set
+        # TODO: In some cases we want to compute 1 score per sampleset (IJB-C)
+        # We should add an agregator function here so we can properlly agregate samples from 
+        # a sampleset either after or before scoring.
+        # To be honest, this should be the default behaviour
+        for subprobe_id, (s, parent) in enumerate(zip(data, sampleset.samples)):
+            # Creating one sample per comparison
+            subprobe_scores = []
+            for ref in [r for r in biometric_references if r.key in sampleset.references]:
+                subprobe_scores.append(
+                    Sample(self.score(ref.data, s, extractor), parent=ref)
+                )
+            # Creating one sampleset per probe
+            subprobe = SampleSet(subprobe_scores, parent=sampleset)
+            subprobe.subprobe_id = subprobe_id
+
+        return subprobe
+
+
+    def score(self, biometric_reference, data, extractor=None,  **kwargs):
         """It handles the score computation for one sample
 
         Parameters
@@ -147,9 +170,65 @@ class Comparator(object):
         raise NotImplemented("Please, implement me")
 
 
+from bob.pipelines.mixins import CheckpointMixin
+class BiometricAlgorithmCheckpointMixin(CheckpointMixin):
+    """Mixing used to checkpoint Enrolled and Scoring samples.
+
+    Examples
+    --------
+
+    >>> from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import BiometricAlgorithmCheckpointMixin, Distance
+    >>> class DistanceCheckpoint(BiometricAlgorithmCheckpointMixin, Distance) pass:
+    >>> biometric_algorithm = DistanceCheckpoint(features_dir="./")
+    >>> biometric_algorithm.enroll(sample)
+
+    It's possible to use it as with the :py:func:`bob.pipelines.mixins.mix_me_up` 
+
+    >>> from bob.pipelines.mixins import mix_me_up
+    >>> biometric_algorithm = mix_me_up([BiometricAlgorithmCheckpointMixin], Distance)(features_dir="./")
+    >>> biometric_algorithm.enroll(sample)
+
+    """
+
+
+    def _enroll_sample_set(self, sampleset):
+        """
+        Enroll a sample set with checkpointing
+        """
+
+
+        path = self.make_path(sampleset)
+        if path is None or not os.path.isfile(path):
+
+            # Enrolling the sample
+            enrolled_sample = super()._enroll_sample_set(sampleset)
+
+            # saving the new sample
+            self.save(enrolled_sample)
+
+            # Dealaying it.
+            # This seems inefficient, but it's crucial with large datasets
+            enrolled_sample = DelayedSample(functools.partial(bob.io.base.load, path), enrolled_sample)
+
+        else:
+            # If sample already there, just load
+            enrolled_sample = self.load(path)
+
+        return enrolled_sample
+
+
+    #def _score_sample_set(self, sampleset, biometric_references, extractor):
+    #   """Given a sampleset for probing, compute the scores and retures a sample set with the scores
+    #    """
+
+    #    scored_sample = 
+
+    #    return subprobe
+
+
 import scipy.spatial.distance
 from sklearn.utils.validation import check_array
-class DistanceComparator(Comparator):
+class Distance(BiometricAlgorithm):
 
     def __init__(self,distance_function = scipy.spatial.distance.euclidean,factor=-1):
 
