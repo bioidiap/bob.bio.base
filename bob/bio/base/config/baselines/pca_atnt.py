@@ -4,8 +4,6 @@ import bob.db.atnt
 from bob.bio.base.pipelines.vanilla_biometrics.legacy import DatabaseConnector
 database = DatabaseConnector(bob.db.atnt.Database(), protocol="Default")
 
-preprocessor = "face-detect"
-
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.decomposition import PCA
 
