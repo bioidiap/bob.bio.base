@@ -180,10 +180,14 @@ def vanilla_biometrics(
                 algorithm,
                 
             )
-        
-            if dask_client is not None:
-                #result = result.compute(scheduler=dask_client)
-                result = result.compute(scheduler="single-threaded")
+            
+            import dask.bag
+            if isinstance(result, dask.bag.core.Bag):
+                if dask_client is not None:
+                    result = result.compute(scheduler=dask_client)
+                else:
+                    logger.warning("`dask_client` not set. Your pipeline will run locally")
+                    result = result.compute()
 
             for probe in result:
                 for sample in probe.samples:
@@ -197,7 +201,7 @@ def vanilla_biometrics(
                     else:
                         raise TypeError("The output of the pipeline is not writeble")
 
-    #dask_client.shutdown()
+    dask_client.shutdown()
 
 
 
