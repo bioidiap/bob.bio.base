@@ -236,11 +236,12 @@ class BiometricAlgorithmCheckpointMixin(CheckpointMixin):
         scored_sample_set = super()._score_sample_set(sampleset, biometric_references, extractor)
 
         # Checkpointing score
-        path = os.path.join(self.score_dir, str(sampleset.key) + ".txt")
+        path = os.path.join(self.score_dir, str(sampleset.path) + ".txt")
         bob.io.base.create_directories_safe(os.path.dirname(path))
 
         delayed_scored_sample = save_scores_four_columns(path, scored_sample_set)
         scored_sample_set.samples = [delayed_scored_sample]
+
         return scored_sample_set
 
 
