@@ -201,8 +201,8 @@ def vanilla_biometrics(
                     else:
                         raise TypeError("The output of the pipeline is not writeble")
 
-    dask_client.shutdown()
-
+    if dask_client is not None:
+        dask_client.shutdown()
 
 
 @click.command()
