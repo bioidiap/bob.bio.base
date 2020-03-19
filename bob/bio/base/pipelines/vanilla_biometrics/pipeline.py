@@ -54,7 +54,6 @@ def train_background_model(background_model_samples, extractor):
 def create_biometric_reference(
     biometric_reference_samples, extractor, biometric_algorithm
 ):
-    
     biometric_reference_features = extractor.transform(biometric_reference_samples)
 
     # TODO: I KNOW THIS LOOKS UGLY, BUT THIS `MAP_PARTITIONS` HAS TO APPEAR SOMEWHERE
