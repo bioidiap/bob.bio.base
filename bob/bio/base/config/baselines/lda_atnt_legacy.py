@@ -67,7 +67,8 @@ extractor = Pipeline(
         ),
     ]
 )
-# extractor = dask_it(extractor)
+
+extractor = dask_it(extractor)
 
 from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import (
     Distance,
