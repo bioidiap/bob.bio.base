@@ -11,6 +11,7 @@ from sklearn.decomposition import PCA
 from bob.pipelines.mixins import CheckpointMixin, SampleMixin
 from bob.bio.base.mixins import CheckpointSampleLinearize
 from bob.bio.base.mixins.legacy import LegacyProcessorMixin, LegacyAlgorithmMixin
+from bob.bio.base.pipelines.vanilla_biometrics.legacy import LegacyBiometricAlgorithm
 
 
 class CheckpointSamplePCA(CheckpointMixin, SampleMixin, PCA):
@@ -51,7 +52,7 @@ preprocessor = mix_me_up((CheckpointMixin, SampleMixin), LegacyProcessorMixin)
 
 #### ALGORITHM LEGACY #####
 
-algorithm = functools.partial(bob.bio.base.algorithm.LDA, use_pinv=True, pca_subspace_dimension=0.90)
+algorithm_estimator = functools.partial(bob.bio.base.algorithm.LDA, use_pinv=True, pca_subspace_dimension=0.90)
 
 from bob.pipelines.mixins import dask_it
 
@@ -62,7 +63,7 @@ extractor = Pipeline(
         (
             "2",
             LegacyAlgorithmMixin(
-                callable=algorithm, features_dir="./example/extractor2", model_path="./example/"
+                callable=algorithm_estimator, features_dir="./example/extractor2", model_path="./example/"
             ),
         ),
     ]
@@ -70,12 +71,4 @@ extractor = Pipeline(
 
 extractor = dask_it(extractor)
 
-from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import (
-    Distance,
-    BiometricAlgorithmCheckpointMixin,
-)
-
-
-class CheckpointDistance(BiometricAlgorithmCheckpointMixin, Distance): pass
-algorithm = CheckpointDistance(features_dir="./example/")
-# algorithm = Distance()
+algorithm = LegacyBiometricAlgorithm(callable=algorithm_estimator, features_dir="./example/")
