@@ -189,6 +189,9 @@ def vanilla_biometrics(
                     logger.warning("`dask_client` not set. Your pipeline will run locally")
                     result = result.compute()
 
+            # Flatting out the list
+            import itertools
+            result = list(itertools.chain(*result))
             for probe in result:
                 for sample in probe.samples:
                     

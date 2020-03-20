@@ -119,7 +119,7 @@ class LegacyAlgorithmMixin(CheckpointMixin,SampleMixin,BaseEstimator):
     def __init__(self, callable=None, **kwargs):
         super().__init__(**kwargs)
         self.callable = callable
-        self.instance = None        
+        self.instance = None
         self.projector_file = None
 
 
@@ -157,7 +157,7 @@ class LegacyAlgorithmMixin(CheckpointMixin,SampleMixin,BaseEstimator):
             f = bob.io.base.HDF5File(path, "w")
 
             self.instance.write_feature(projected_data, f)
-            reader = self._get_reader(self.instance.read_feature, path)
+            reader = get_reader(self.instance.read_feature, path)
 
             return DelayedSample(reader, parent=sample)
 
@@ -190,13 +190,12 @@ class LegacyAlgorithmMixin(CheckpointMixin,SampleMixin,BaseEstimator):
             raise ValueError("Type not allowed %s" % type(X[0]))
 
 
-    def _get_reader(self, reader, path):
-        if(is_picklable(self.instance.read_feature)):
-            return functools.partial(reader, path)
-        else:
-            logger.warning(
-                        f"The method {reader} is not picklable. Shiping its unbounded method to `DelayedSample`."
-                    )
-            reader = reader.__func__  # The reader object might not be picklable
-            return functools.partial(reader, None, path)
-
+def get_reader(reader, path):
+    if(is_picklable(reader)):
+        return functools.partial(reader, path)
+    else:
+        logger.warning(
+                    f"The method {reader} is not picklable. Shiping its unbounded method to `DelayedSample`."
+                )
+        reader = reader.__func__  # The reader object might not be picklable
+        return functools.partial(reader, None, path)

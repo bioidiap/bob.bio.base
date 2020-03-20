@@ -132,6 +132,7 @@ class BiometricAlgorithm(object):
         # We should add an agregator function here so we can properlly agregate samples from 
         # a sampleset either after or before scoring.
         # To be honest, this should be the default behaviour
+        retval = []
         for subprobe_id, (s, parent) in enumerate(zip(data, sampleset.samples)):
             # Creating one sample per comparison
             subprobe_scores = []
@@ -140,11 +141,13 @@ class BiometricAlgorithm(object):
                 subprobe_scores.append(
                     Sample(self.score(ref.data, s, extractor), parent=ref)
                 )
+
             # Creating one sampleset per probe
             subprobe = SampleSet(subprobe_scores, parent=sampleset)
             subprobe.subprobe_id = subprobe_id
+            retval.append(subprobe)
 
-        return subprobe
+        return retval
 
 
     def score(self, biometric_reference, data, extractor=None,  **kwargs):
@@ -235,12 +238,13 @@ class BiometricAlgorithmCheckpointMixin(CheckpointMixin):
         # Computing score
         scored_sample_set = super()._score_sample_set(sampleset, biometric_references, extractor)
 
-        # Checkpointing score
-        path = os.path.join(self.score_dir, str(sampleset.path) + ".txt")
-        bob.io.base.create_directories_safe(os.path.dirname(path))
+        for s in scored_sample_set:
+            # Checkpointing score
+            path = os.path.join(self.score_dir, str(s.path) + ".txt")
+            bob.io.base.create_directories_safe(os.path.dirname(path))
 
-        delayed_scored_sample = save_scores_four_columns(path, scored_sample_set)
-        scored_sample_set.samples = [delayed_scored_sample]
+            delayed_scored_sample = save_scores_four_columns(path, s)
+            s.samples = [delayed_scored_sample]
 
         return scored_sample_set
 
@@ -304,6 +308,7 @@ class Distance(BiometricAlgorithm):
         return self.factor * self.distance_function(model, probe)
 
 
+
 def save_scores_four_columns(path, probe):
     """
     Write scores in the four columns format
@@ -315,4 +320,3 @@ def save_scores_four_columns(path, probe):
             f.write(line)
 
     return DelayedSample(functools.partial(open, path))
-

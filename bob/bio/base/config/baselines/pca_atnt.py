@@ -20,7 +20,7 @@ class CheckpointSamplePCA(CheckpointMixin, SampleMixin, PCA):
 from bob.pipelines.mixins import dask_it
 extractor = Pipeline(steps=[('0',CheckpointSampleLinearize(features_dir="./example/extractor0")), 
 	                        ('1',CheckpointSamplePCA(features_dir="./example/extractor1", model_path="./example/pca.pkl"))])
-extractor = dask_it(extractor)
+#extractor = dask_it(extractor)
 
 from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import Distance, BiometricAlgorithmCheckpointMixin
 class CheckpointDistance(BiometricAlgorithmCheckpointMixin, Distance):  pass
