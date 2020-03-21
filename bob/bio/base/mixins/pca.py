@@ -21,6 +21,7 @@ class SamplePCA(SampleMixin, PCA):
     """
     Enables SAMPLE handling for https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
     """
+
     pass
 
 
@@ -28,4 +29,5 @@ class CheckpointSamplePCA(CheckpointMixin, SampleMixin, PCA):
     """
     Enables SAMPLE and CHECKPOINTIN handling for https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
     """
+
     pass
