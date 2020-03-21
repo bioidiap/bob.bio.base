@@ -52,7 +52,7 @@ class BiometricAlgorithm(object):
 
         retval = []
         for k in biometric_references:
-            # compute on-the-fly            
+            # compute on-the-fly
             retval.append(self._enroll_sample_set(k))
 
         return retval
@@ -64,7 +64,6 @@ class BiometricAlgorithm(object):
 
         # Enroll
         return Sample(self.enroll(data), parent=sampleset)
-
 
     def enroll(self, data, extractor=None, **kwargs):
         """
@@ -80,8 +79,9 @@ class BiometricAlgorithm(object):
 
         raise NotImplemented("Please, implement me")
 
-
-    def _score_samples(self, probes, biometric_references, extractor=None, *args, **kwargs):
+    def _score_samples(
+        self, probes, biometric_references, extractor=None, *args, **kwargs
+    ):
         """Scores a new sample against multiple (potential) references
 
         Parameters
@@ -119,17 +119,16 @@ class BiometricAlgorithm(object):
             retval.append(self._score_sample_set(p, biometric_references, extractor))
         return retval
 
-
     def _score_sample_set(self, sampleset, biometric_references, extractor):
         """Given a sampleset for probing, compute the scores and retures a sample set with the scores
         """
 
-        # Stacking the samples from a sampleset        
+        # Stacking the samples from a sampleset
         data = [s.data for s in sampleset.samples]
 
         # Compute scores for each sample inside of the sample set
         # TODO: In some cases we want to compute 1 score per sampleset (IJB-C)
-        # We should add an agregator function here so we can properlly agregate samples from 
+        # We should add an agregator function here so we can properlly agregate samples from
         # a sampleset either after or before scoring.
         # To be honest, this should be the default behaviour
         retval = []
@@ -137,7 +136,9 @@ class BiometricAlgorithm(object):
             # Creating one sample per comparison
             subprobe_scores = []
 
-            for ref in [r for r in biometric_references if r.key in sampleset.references]:
+            for ref in [
+                r for r in biometric_references if r.key in sampleset.references
+            ]:
                 subprobe_scores.append(
                     Sample(self.score(ref.data, s, extractor), parent=ref)
                 )
@@ -149,8 +150,7 @@ class BiometricAlgorithm(object):
 
         return retval
 
-
-    def score(self, biometric_reference, data, extractor=None,  **kwargs):
+    def score(self, biometric_reference, data, extractor=None, **kwargs):
         """It handles the score computation for one sample
 
         Parameters
@@ -175,6 +175,8 @@ class BiometricAlgorithm(object):
 
 
 from bob.pipelines.mixins import CheckpointMixin
+
+
 class BiometricAlgorithmCheckpointMixin(CheckpointMixin):
     """Mixing used to checkpoint Enrolled and Scoring samples.
 
@@ -196,13 +198,13 @@ class BiometricAlgorithmCheckpointMixin(CheckpointMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.biometric_reference_dir = os.path.join(self.features_dir, "biometric_references")
+        self.biometric_reference_dir = os.path.join(
+            self.features_dir, "biometric_references"
+        )
         self.score_dir = os.path.join(self.features_dir, "scores")
-
 
     def save(self, sample, path):
         return bob.io.base.save(sample.data, path, create_directories=True)
-
 
     def _enroll_sample_set(self, sampleset):
         """
@@ -210,7 +212,9 @@ class BiometricAlgorithmCheckpointMixin(CheckpointMixin):
         """
 
         # Amending `models` directory
-        path = os.path.join(self.biometric_reference_dir, str(sampleset.key) + self.extension)
+        path = os.path.join(
+            self.biometric_reference_dir, str(sampleset.key) + self.extension
+        )
         if path is None or not os.path.isfile(path):
 
             # Enrolling the sample
@@ -221,22 +225,24 @@ class BiometricAlgorithmCheckpointMixin(CheckpointMixin):
 
             # Dealaying it.
             # This seems inefficient, but it's crucial for large datasets
-            delayed_enrolled_sample = DelayedSample(functools.partial(bob.io.base.load, path), enrolled_sample)
+            delayed_enrolled_sample = DelayedSample(
+                functools.partial(bob.io.base.load, path), enrolled_sample
+            )
 
         else:
             # If sample already there, just load
             delayed_enrolled_sample = self.load(path)
             delayed_enrolled_sample.key = sampleset.key
 
-
         return delayed_enrolled_sample
-
 
     def _score_sample_set(self, sampleset, biometric_references, extractor):
         """Given a sampleset for probing, compute the scores and retures a sample set with the scores
         """
         # Computing score
-        scored_sample_set = super()._score_sample_set(sampleset, biometric_references, extractor)
+        scored_sample_set = super()._score_sample_set(
+            sampleset, biometric_references, extractor
+        )
 
         for s in scored_sample_set:
             # Checkpointing score
@@ -251,15 +257,15 @@ class BiometricAlgorithmCheckpointMixin(CheckpointMixin):
 
 import scipy.spatial.distance
 from sklearn.utils.validation import check_array
-class Distance(BiometricAlgorithm):
 
-    def __init__(self,distance_function = scipy.spatial.distance.euclidean,factor=-1):
+
+class Distance(BiometricAlgorithm):
+    def __init__(self, distance_function=scipy.spatial.distance.euclidean, factor=-1):
 
         self.distance_function = distance_function
         self.factor = factor
 
-
-    def enroll(self, enroll_features,  **kwargs):
+    def enroll(self, enroll_features, **kwargs):
         """enroll(enroll_features) -> model
 
         Enrolls the model by storing all given input vectors.
@@ -280,7 +286,6 @@ class Distance(BiometricAlgorithm):
         enroll_features = check_array(enroll_features, allow_nd=True)
 
         return numpy.mean(enroll_features, axis=0)
-
 
     def score(self, model, probe, extractor=None, **kwargs):
         """score(model, probe) -> float
@@ -308,15 +313,16 @@ class Distance(BiometricAlgorithm):
         return self.factor * self.distance_function(model, probe)
 
 
-
 def save_scores_four_columns(path, probe):
     """
     Write scores in the four columns format
     """
-    
+
     with open(path, "w") as f:
         for biometric_reference in probe.samples:
-            line = "{0} {1} {2} {3}\n".format(biometric_reference.key, probe.key, probe.path, biometric_reference.data)
+            line = "{0} {1} {2} {3}\n".format(
+                biometric_reference.key, probe.key, probe.path, biometric_reference.data
+            )
             f.write(line)
 
     return DelayedSample(functools.partial(open, path))
