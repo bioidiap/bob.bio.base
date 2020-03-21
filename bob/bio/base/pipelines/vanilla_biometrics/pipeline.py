@@ -12,6 +12,7 @@ import dask.bag
 import dask.delayed
 from bob.pipelines.sample import samplesets_to_samples
 
+
 def biometric_pipeline(
     background_model_samples,
     biometric_reference_samples,
@@ -22,10 +23,7 @@ def biometric_pipeline(
 
     ## Training background model (fit will return even if samples is ``None``,
     ## in which case we suppose the algorithm is not trainable in any way)
-    extractor = train_background_model(
-        background_model_samples,
-        extractor
-    )
+    extractor = train_background_model(background_model_samples, extractor)
 
     ## Create biometric samples
     biometric_references = create_biometric_reference(
@@ -34,10 +32,7 @@ def biometric_pipeline(
 
     ## Scores all probes
     return compute_scores(
-        probe_samples,
-        biometric_references,
-        extractor,
-        biometric_algorithm,
+        probe_samples, biometric_references, extractor, biometric_algorithm
     )
 
 
@@ -64,10 +59,14 @@ def create_biometric_reference(
 
     if isinstance(biometric_reference_features, dask.bag.core.Bag):
         # ASSUMING THAT IS A DASK THING IS COMMING
-        biometric_references = biometric_reference_features.map_partitions(biometric_algorithm._enroll_samples)
+        biometric_references = biometric_reference_features.map_partitions(
+            biometric_algorithm._enroll_samples
+        )
     else:
-        biometric_references = biometric_algorithm._enroll_samples(biometric_reference_features)
-    
+        biometric_references = biometric_algorithm._enroll_samples(
+            biometric_reference_features
+        )
+
     # models is a list of Samples
     return biometric_references
 
@@ -94,10 +93,14 @@ def compute_scores(probe_samples, biometric_references, extractor, biometric_alg
 
         all_references = dask.delayed(list)(biometric_references)
 
-        scores = probe_features.map_partitions(biometric_algorithm._score_samples, all_references, extractor)
+        scores = probe_features.map_partitions(
+            biometric_algorithm._score_samples, all_references, extractor
+        )
 
     else:
-        scores = biometric_algorithm._score_samples(probe_features, biometric_references, extractor)
+        scores = biometric_algorithm._score_samples(
+            probe_features, biometric_references, extractor
+        )
 
     # scores is a list of Samples
     return scores

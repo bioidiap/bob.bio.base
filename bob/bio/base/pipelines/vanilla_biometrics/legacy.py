@@ -78,7 +78,7 @@ class DatabaseConnector:
                         path=k.path,
                     )
                 ],
-                key=str(k.client_id)
+                key=str(k.client_id),
             )
             for k in objects
         ]
@@ -191,7 +191,184 @@ class DatabaseConnector:
         return list(probes.values())
 
 
+class DatabaseConnectorAnnotated(DatabaseConnector):
+    """Wraps a bob.bio.base database and generates conforming samples for datasets
+    that has annotations
+
+    This connector allows wrapping generic bob.bio.base datasets and generate
+    samples that conform to the specifications of biometric pipelines defined
+    in this package.
+
+
+    Parameters
+    ----------
+
+    database : object
+        An instantiated version of a bob.bio.base.Database object
+
+    protocol : str
+        The name of the protocol to generate samples from.
+        To be plugged at :py:method:`bob.db.base.Database.objects`.
+
+    """
+
+    def __init__(self, database, protocol):
+        super(DatabaseConnectorAnnotated, self).__init__(database, protocol)
+
+    def background_model_samples(self):
+        """Returns :py:class:`Sample`'s to train a background model (group
+        ``world``).
+
+
+        Returns
+        -------
+
+            samples : list
+                List of samples conforming the pipeline API for background
+                model training.  See, e.g., :py:func:`.pipelines.first`.
+
+        """
+
+        # TODO: This should be organized by client
+        retval = []
+
+        objects = self.database.objects(protocol=self.protocol, groups="world")
+
+        return [
+            SampleSet(
+                [
+                    DelayedSample(
+                        load=functools.partial(
+                            k.load,
+                            self.database.original_directory,
+                            self.database.original_extension,
+                        ),
+                        id=k.id,
+                        path=k.path,
+                        annotations=self.database.annotations(k),
+                    )
+                ]
+            )
+            for k in objects
+        ]
+
+    def references(self, group="dev"):
+        """Returns :py:class:`Reference`'s to enroll biometric references
+
+
+        Parameters
+        ----------
+
+            group : :py:class:`str`, optional
+                A ``group`` to be plugged at
+                :py:meth:`bob.db.base.Database.objects`
+
+
+        Returns
+        -------
+
+            references : list
+                List of samples conforming the pipeline API for the creation of
+                biometric references.  See, e.g., :py:func:`.pipelines.first`.
+
+        """
+
+        retval = []
+
+        for m in self.database.model_ids_with_protocol(
+            protocol=self.protocol, groups=group
+        ):
+
+            objects = self.database.objects(
+                protocol=self.protocol, groups=group, model_ids=(m,), purposes="enroll"
+            )
+
+            retval.append(
+                SampleSet(
+                    [
+                        DelayedSample(
+                            load=functools.partial(
+                                k.load,
+                                self.database.original_directory,
+                                self.database.original_extension,
+                            ),
+                            id=k.id,
+                            path=k.path,
+                            annotations=self.database.annotations(k),
+                        )
+                        for k in objects
+                    ],
+                    id=m,
+                    path=str(m),
+                    subject=objects[0].client_id,
+                )
+            )
+
+        return retval
+
+    def probes(self, group):
+        """Returns :py:class:`Probe`'s to score biometric references
+
+
+        Parameters
+        ----------
+
+            group : str
+                A ``group`` to be plugged at
+                :py:meth:`bob.db.base.Database.objects`
+
+
+        Returns
+        -------
+
+            probes : list
+                List of samples conforming the pipeline API for the creation of
+                biometric probes.  See, e.g., :py:func:`.pipelines.first`.
+
+        """
+
+        probes = dict()
+
+        for m in self.database.model_ids_with_protocol(
+            protocol=self.protocol, groups=group
+        ):
+
+            # Getting all the probe objects from a particular biometric
+            # reference
+            objects = self.database.objects(
+                protocol=self.protocol, groups=group, model_ids=(m,), purposes="probe"
+            )
+
+            # Creating probe samples
+            for o in objects:
+                if o.id not in probes:
+                    probes[o.id] = SampleSet(
+                        [
+                            DelayedSample(
+                                load=functools.partial(
+                                    o.load,
+                                    self.database.original_directory,
+                                    self.database.original_extension,
+                                ),
+                                id=o.id,
+                                path=o.path,
+                                annotations=self.database.annotations(o),
+                            )
+                        ],
+                        id=o.id,
+                        path=o.path,
+                        subject=o.client_id,
+                        references=[m],
+                    )
+                else:
+                    probes[o.id].references.append(m)
+
+        return list(probes.values())
+
+
 from .biometric_algorithm import BiometricAlgorithm
+
+
 class LegacyBiometricAlgorithm(BiometricAlgorithm):
     """Biometric Algorithm that handles legacy :py:class:`bob.bio.base.algorithm.Algorithm`
 
@@ -219,27 +396,27 @@ class LegacyBiometricAlgorithm(BiometricAlgorithm):
         self.callable = callable
         self.instance = None
         self.projector_file = None
-        self.features_dir =  features_dir
-        self.biometric_reference_dir = os.path.join(self.features_dir, "biometric_references")
+        self.features_dir = features_dir
+        self.biometric_reference_dir = os.path.join(
+            self.features_dir, "biometric_references"
+        )
         self.score_dir = os.path.join(self.features_dir, "scores")
-        self.extension=".hdf5"
-
+        self.extension = ".hdf5"
 
     def _enroll_sample_set(self, sampleset):
         # Enroll
         return self.enroll(sampleset)
 
-
     def _score_sample_set(self, sampleset, biometric_references, extractor):
         """Given a sampleset for probing, compute the scores and retures a sample set with the scores
         """
 
-        # Stacking the samples from a sampleset        
+        # Stacking the samples from a sampleset
         data = [s for s in sampleset.samples]
 
         # Compute scores for each sample inside of the sample set
         # TODO: In some cases we want to compute 1 score per sampleset (IJB-C)
-        # We should add an agregator function here so we can properlly agregate samples from 
+        # We should add an agregator function here so we can properlly agregate samples from
         # a sampleset either after or before scoring.
         # To be honest, this should be the default behaviour
         retval = []
@@ -247,8 +424,10 @@ class LegacyBiometricAlgorithm(BiometricAlgorithm):
             # Creating one sample per comparison
             subprobe_scores = []
 
-            for ref in [r for r in biometric_references if r.key in sampleset.references]:
-                #subprobe_scores.append(self.score(ref.data, s, extractor))
+            for ref in [
+                r for r in biometric_references if r.key in sampleset.references
+            ]:
+                # subprobe_scores.append(self.score(ref.data, s, extractor))
                 subprobe_scores.append(
                     Sample(self.score(ref.data, s.data, extractor), parent=ref)
                 )
@@ -268,17 +447,20 @@ class LegacyBiometricAlgorithm(BiometricAlgorithm):
 
         return retval
 
-
-    def enroll(self, enroll_features,  **kwargs):
+    def enroll(self, enroll_features, **kwargs):
 
         if not isinstance(enroll_features, SampleSet):
-            raise ValueError(f"`enroll_features` should be the type SampleSet, not {enroll_features}")
+            raise ValueError(
+                f"`enroll_features` should be the type SampleSet, not {enroll_features}"
+            )
 
         # Instantiates and do the "real" fit
         if self.instance is None:
             self.instance = self.callable()
 
-        path = os.path.join(self.biometric_reference_dir, str(enroll_features.key) + self.extension)
+        path = os.path.join(
+            self.biometric_reference_dir, str(enroll_features.key) + self.extension
+        )
         if path is None or not os.path.isfile(path):
 
             # Enrolling
@@ -292,7 +474,6 @@ class LegacyBiometricAlgorithm(BiometricAlgorithm):
 
         reader = get_reader(self.instance.read_model, path)
         return DelayedSample(reader, parent=enroll_features)
-
 
     def score(self, model, probe, extractor=None, **kwargs):
 
