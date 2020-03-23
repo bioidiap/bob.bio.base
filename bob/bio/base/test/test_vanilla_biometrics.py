@@ -9,9 +9,6 @@ import tempfile
 from sklearn.utils.validation import check_is_fitted
 
 
-#from bob.bio.base.processor import Linearize, SampleLinearize, CheckpointSampleLinearize
-
-
 class DummyDatabase:
 
     def __init__(self, delayed=False, n_references=10, n_probes=10, dim=10, one_d = True):
@@ -61,7 +58,8 @@ class DummyDatabase:
         return probes
 
 
-from bob.bio.base.pipelines.vanilla_biometrics.comparator import DistanceComparator
+from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import Distance
+import itertools
 def test_distance_comparator():
     
     n_references = 10
@@ -70,40 +68,15 @@ def test_distance_comparator():
     database = DummyDatabase(delayed=False, n_references=n_references, n_probes=n_probes, dim=10, one_d = True)
     references = database.references()    
     probes = database.probes()
-
-    pass
-
-    comparator = DistanceComparator()
-    references = comparator.enroll_samples(references)
+    
+    comparator = Distance()
+    references = comparator._enroll_samples(references)
     assert len(references)== n_references
     assert references[0].data.shape == (dim,)
 
     probes = database.probes()
-    scores = comparator.score_samples(probes, references)
+    scores = comparator._score_samples(probes, references)
+    scores = list(itertools.chain(*scores))
     
     assert len(scores) == n_probes*n_references
     assert len(scores[0].samples)==n_references
-    
-    
-
-    ## Test the transformer only
-    #transformer = Linearize()
-    #X = numpy.zeros(shape=(10,10))
-    #X_tr = transformer.transform(X)
-    #assert X_tr.shape == (100,)
-
-
-    ## Test wrapped in to a Sample
-    #sample = Sample(X, key="1")
-    #transformer = SampleLinearize()
-    #X_tr = transformer.transform([sample])
-    #assert X_tr[0].data.shape == (100,)
-
-    ## Test checkpoint    
-    #with tempfile.TemporaryDirectory() as d:
-        #transformer = CheckpointSampleLinearize(features_dir=d)
-        #X_tr =  transformer.transform([sample])
-        #assert X_tr[0].data.shape == (100,)
-        #assert os.path.exists(os.path.join(d, "1.h5"))
-
-

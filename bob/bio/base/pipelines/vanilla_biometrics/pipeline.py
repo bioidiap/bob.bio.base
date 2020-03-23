@@ -12,6 +12,9 @@ import dask.bag
 import dask.delayed
 from bob.pipelines.sample import samplesets_to_samples
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 def biometric_pipeline(
     background_model_samples,
@@ -20,15 +23,20 @@ def biometric_pipeline(
     extractor,
     biometric_algorithm,
 ):
+    logger.info(f" >> Vanilla Biometrics: Training background model with pipeline {extractor}")
 
     ## Training background model (fit will return even if samples is ``None``,
     ## in which case we suppose the algorithm is not trainable in any way)
     extractor = train_background_model(background_model_samples, extractor)
 
+    logger.info(f" >> Creating biometric references with the biometric algorithm {biometric_algorithm}")
+
     ## Create biometric samples
     biometric_references = create_biometric_reference(
         biometric_reference_samples, extractor, biometric_algorithm
     )
+
+    logger.info(f" >> Computing scores with the biometric algorithm {biometric_algorithm}")
 
     ## Scores all probes
     return compute_scores(
@@ -38,7 +46,6 @@ def biometric_pipeline(
 
 def train_background_model(background_model_samples, extractor):
 
-    # TODO: Maybe here is supervised
     X, y = samplesets_to_samples(background_model_samples)
 
     extractor = extractor.fit(X, y=y)

@@ -83,12 +83,23 @@ class LegacyProcessorMixin(TransformerMixin):
 
     def transform(self, X):
 
-        X = check_array(X, allow_nd=True)
-
         # Instantiates and do the "real" transform
         if self.instance is None:
             self.instance = self.callable()
-        return [self.instance(x) for x in X]
+
+        if isinstance(X[0], dict):
+            # Handling annotations if it's the case
+            retval = []
+            for x in X:
+                data = x["data"]
+                annotations = x["annotations"]
+
+                retval.append(self.instance(data, annotations=annotations))
+            return retval
+
+        else:
+            X = check_array(X, allow_nd=True)
+            return [self.instance(x) for x in X]
 
 
 from bob.pipelines.mixins import CheckpointMixin, SampleMixin
