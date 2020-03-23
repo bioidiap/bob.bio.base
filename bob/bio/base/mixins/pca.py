@@ -7,7 +7,7 @@
 TODO: This should be deployed in bob.pipelines
 """
 
-from bob.pipelines.processor import CheckpointMixin, SampleMixin
+from bob.pipelines.mixins import CheckpointMixin, SampleMixin
 from sklearn.base import TransformerMixin
 from sklearn.decomposition import PCA
 import numpy

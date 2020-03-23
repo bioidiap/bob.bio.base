@@ -171,6 +171,8 @@ def vanilla_biometrics(
 
         with open(os.path.join(output,f"scores-{g}"), "w") as f:
             biometric_references = database.references(group=g)
+            
+            logger.info(f"Running vanilla biometrics for group {g}")
 
             result = biometric_pipeline(
                 database.background_model_samples(),
