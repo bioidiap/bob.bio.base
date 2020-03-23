@@ -46,6 +46,7 @@ class DatabaseConnector:
         self.directory = database.original_directory
         self.extension = database.original_extension
 
+
     def background_model_samples(self):
         """Returns :py:class:`Sample`'s to train a background model (group
         ``world``).
@@ -105,8 +106,7 @@ class DatabaseConnector:
         """
 
         retval = []
-
-        for m in self.database.model_ids(protocol=self.protocol, groups=group):
+        for m in self.database.model_ids_with_protocol(protocol=self.protocol, groups=group):
 
             objects = self.database.objects(
                 protocol=self.protocol, groups=group, model_ids=(m,), purposes="enroll"
@@ -157,7 +157,7 @@ class DatabaseConnector:
 
         probes = dict()
 
-        for m in self.database.model_ids(protocol=self.protocol, groups=group):
+        for m in self.database.model_ids_with_protocol(protocol=self.protocol, groups=group):
 
             # Getting all the probe objects from a particular biometric
             # reference
@@ -191,6 +191,30 @@ class DatabaseConnector:
         return list(probes.values())
 
 
+
+def _load_data_and_annotations(bio_file, annotations, original_directory, original_extension):
+    """
+    Return a tuple (data, annotations) given a :py:class:`bob.bio.base.database.BioFile` as input
+
+    Parameters
+    ----------
+
+     bio_file: :py:class:`bob.bio.base.database.BioFile`
+        Input bio file
+
+    Returns
+    -------
+        (data, annotations): A dictionary containing the raw data + annotations
+
+    """
+
+    data = bio_file.load(original_directory, original_extension)
+
+    # I know it sounds stupid to return the the annotations here without any transformation
+    # but I can't do `database.annotations(bio_file)`, SQLAlcheamy session is not picklable
+    return {"data": data, "annotations": annotations}
+
+
 class DatabaseConnectorAnnotated(DatabaseConnector):
     """Wraps a bob.bio.base database and generates conforming samples for datasets
     that has annotations
@@ -215,6 +239,7 @@ class DatabaseConnectorAnnotated(DatabaseConnector):
     def __init__(self, database, protocol):
         super(DatabaseConnectorAnnotated, self).__init__(database, protocol)
 
+
     def background_model_samples(self):
         """Returns :py:class:`Sample`'s to train a background model (group
         ``world``).
@@ -233,21 +258,19 @@ class DatabaseConnectorAnnotated(DatabaseConnector):
         retval = []
 
         objects = self.database.objects(protocol=self.protocol, groups="world")
-
         return [
             SampleSet(
                 [
                     DelayedSample(
                         load=functools.partial(
-                            k.load,
-                            self.database.original_directory,
-                            self.database.original_extension,
+                            _load_data_and_annotations, self.database.annotations(k), self.database.original_directory, self.database.original_extension
                         ),
-                        id=k.id,
+                        key=str(k.id),
                         path=k.path,
                         annotations=self.database.annotations(k),
                     )
-                ]
+                ],
+                key=str(k.client_id),
             )
             for k in objects
         ]
@@ -288,17 +311,16 @@ class DatabaseConnectorAnnotated(DatabaseConnector):
                     [
                         DelayedSample(
                             load=functools.partial(
-                                k.load,
-                                self.database.original_directory,
-                                self.database.original_extension,
+                                _load_data_and_annotations, self.database.annotations(k), self.database.original_directory, self.database.original_extension
                             ),
-                            id=k.id,
+                            key=k.id,
                             path=k.path,
+                            subject=str(objects[0].client_id),
                             annotations=self.database.annotations(k),
                         )
                         for k in objects
                     ],
-                    id=m,
+                    key=str(m),
                     path=str(m),
                     subject=objects[0].client_id,
                 )
@@ -346,16 +368,14 @@ class DatabaseConnectorAnnotated(DatabaseConnector):
                         [
                             DelayedSample(
                                 load=functools.partial(
-                                    o.load,
-                                    self.database.original_directory,
-                                    self.database.original_extension,
+                                    _load_data_and_annotations, self.database.annotations(o), self.database.original_directory, self.database.original_extension
                                 ),
-                                id=o.id,
+                                key=o.id,
                                 path=o.path,
                                 annotations=self.database.annotations(o),
                             )
                         ],
-                        id=o.id,
+                        key=o.id,
                         path=o.path,
                         subject=o.client_id,
                         references=[m],
