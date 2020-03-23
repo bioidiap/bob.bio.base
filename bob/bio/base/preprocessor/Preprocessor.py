@@ -5,6 +5,7 @@
 
 from .. import utils
 
+import warnings
 
 class Preprocessor (object):
     """This is the base class for all preprocessors.

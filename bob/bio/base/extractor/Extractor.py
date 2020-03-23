@@ -6,6 +6,8 @@
 import os
 
 from .. import utils
+import warnings
+
 
 class Extractor (object):
   """This is the base class for all feature extractors.
