@@ -91,7 +91,10 @@ class Algorithm (object):
   ):
 
     
-    warnings.warn("bob.bio.base.Algorithm is Deprecated", DeprecationWarning)
+    warnings.simplefilter('default')
+    warnings.warn("`bob.bio.base.algorithm.Algorithm` will be deprecated in 01/01/2021. "\
+                  "Please, implement your biometric algorithm using `bob.pipelines` (https://gitlab.idiap.ch/bob/bob.pipelines).", DeprecationWarning)
+
 
 
     self.performs_projection = performs_projection
