@@ -11,7 +11,7 @@ import functools
 import click
 
 from bob.extension.scripts.click_helper import verbosity_option, ResourceOption, ConfigCommand
-from bob.pipelines.sample.sample import DelayedSample, Sample
+from bob.pipelines.sample import DelayedSample, Sample
 
 import logging
 logger = logging.getLogger(__name__)
@@ -58,14 +58,6 @@ TODO: Work out this help
     epilog=EPILOG,
 )
 @click.option(
-    "--preprocessor",
-    "-p",
-    required=True,
-    cls=ResourceOption,
-    entry_point_group="bob.bio.preprocessor",  # This should be linked to bob.bio.base
-    help="Data preprocessing algorithm",
-)
-@click.option(
     "--extractor",
     "-e",
     required=True,
@@ -92,13 +84,10 @@ TODO: Work out this help
 @click.option(
     "--dask-client",
     "-l",
-    required=True,
+    required=False,
     cls=ResourceOption,
     entry_point_group="bob.pipelines.client",  # This should be linked to bob.bio.base
     help="Dask client for the execution of the pipeline.",
-)
-@click.option(
-    "--checkpointing", "-c", is_flag=True, help="Save checkpoints in this experiment?"
 )
 @click.option(
     "--group",
@@ -117,12 +106,10 @@ TODO: Work out this help
 )
 @verbosity_option(cls=ResourceOption)
 def vanilla_biometrics(
-    preprocessor,
     extractor,
     algorithm,
     database,
     dask_client,
-    checkpointing,
     group,
     output,
     **kwargs
@@ -180,62 +167,38 @@ def vanilla_biometrics(
     if not os.path.exists(output):
         os.makedirs(output)
  
-    if checkpointing:
-        checkpoints = {
-            "background": {
-                "preprocessor": os.path.join(output, "background", "preprocessed"),
-                "extractor": os.path.join(output, "background", "extracted"),
-                # at least, the next stage must be provided!
-                "model": os.path.join(output, "background", "model"),
-            },
-            "references": {
-                "preprocessor": os.path.join(output, "references", "preprocessed"),
-                "extractor": os.path.join(output, "references", "extracted"),
-                "enrolled": os.path.join(output, "references", "enrolled"),
-            },
-            "probes": {
-                "preprocessor": os.path.join(output, "probes", "preprocessed"),
-                "extractor": os.path.join(output, "probes", "extracted"),
-                "scores": os.path.join(output, "probes", "scores"),
-            },
-
-        }
-
-
-    # Defines the processing pipeline for loading samples
-    # Can add any number of steps!
-    pipeline = [("preprocessor",preprocessor),
-                ("extractor", extractor)]
-
-    # Mechanism that loads samples
-    # from ..bob_bio.blocks import SampleLoader
-    from bob.bio.base.pipelines.vanilla_biometrics.annotated_legacy import SampleLoaderAnnotated as SampleLoader
-    loader = SampleLoader(pipeline)
-
     for g in group:
 
         with open(os.path.join(output,f"scores-{g}"), "w") as f:
             biometric_references = database.references(group=g)
+            
+            logger.info(f"Running vanilla biometrics for group {g}")
 
             result = biometric_pipeline(
                 database.background_model_samples(),
                 biometric_references,
                 database.probes(group=g),
-                loader,
+                extractor,
                 algorithm,
-                npartitions=len(dask_client.cluster.workers),
-                checkpoints=checkpoints,
+                
             )
-            # result.visualize(os.path.join(output, "graph.pdf"), rankdir="LR")
-            result = result.compute(scheduler=dask_client)
-            #result = result.compute(scheduler="single-threaded")
+            
+            import dask.bag
+            if isinstance(result, dask.bag.core.Bag):
+                if dask_client is not None:
+                    result = result.compute(scheduler=dask_client)
+                else:
+                    logger.warning("`dask_client` not set. Your pipeline will run locally")
+                    result = result.compute()
 
-            #import ipdb; ipdb.set_trace()
+            # Flatting out the list
+            import itertools
+            result = list(itertools.chain(*result))
             for probe in result:
                 for sample in probe.samples:
                     
                     if isinstance(sample, Sample):
-                        line = "{0} {1} {2} {3}\n".format(reference.subject, probe.subject, probe.path, reference.data)
+                        line = "{0} {1} {2} {3}\n".format(sample.key, probe.key, probe.path, sample.data)
                         f.write(line)
                     elif isinstance(sample, DelayedSample):
                         lines = sample.load().readlines()
@@ -243,8 +206,8 @@ def vanilla_biometrics(
                     else:
                         raise TypeError("The output of the pipeline is not writeble")
 
-    dask_client.shutdown()
-
+    if dask_client is not None:
+        dask_client.shutdown()
 
 
 @click.command()

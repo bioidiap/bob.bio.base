@@ -6,6 +6,8 @@
 import os
 
 from .. import utils
+import warnings
+
 
 class Extractor (object):
   """This is the base class for all feature extractors.
@@ -52,6 +54,10 @@ class Extractor (object):
     self.min_extractor_file_size = min_extractor_file_size
     self.min_feature_file_size = min_feature_file_size
     self._kwargs = kwargs
+
+    warnings.simplefilter('default')
+    warnings.warn("`bob.bio.base.extractor.Extractor` will be deprecated in 01/01/2021. "\
+                  "Please, implement your biometric algorithm using `bob.pipelines` (https://gitlab.idiap.ch/bob/bob.pipelines).", DeprecationWarning)
 
 
   ############################################################
