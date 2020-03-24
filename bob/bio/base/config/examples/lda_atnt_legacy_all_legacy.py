@@ -1,25 +1,19 @@
 # from bob.bio.base.pipelines.vanilla_biometrics.legacy import DatabaseConnector, AlgorithmAdaptor
 
-import bob.db.atnt
-from bob.bio.base.pipelines.vanilla_biometrics.legacy import DatabaseConnector
+import bob.bio.base
+import bob.bio.face
 
-database = DatabaseConnector(bob.db.atnt.Database(), protocol="Default")
+## DATABASE
+
+from bob.bio.base.pipelines.vanilla_biometrics.legacy import DatabaseConnector
+database = DatabaseConnector(bob.bio.face.database.AtntBioDatabase(original_directory="./atnt"), protocol="Default")
+
 
 from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.decomposition import PCA
-
 from bob.pipelines.mixins import CheckpointMixin, SampleMixin
-from bob.bio.base.mixins import CheckpointSampleLinearize
 from bob.bio.base.mixins.legacy import LegacyProcessorMixin, LegacyAlgorithmMixin
+from bob.bio.base.transformers import CheckpointSampleLinearize, CheckpointSamplePCA
 from bob.bio.base.pipelines.vanilla_biometrics.legacy import LegacyBiometricAlgorithm
-
-
-class CheckpointSamplePCA(CheckpointMixin, SampleMixin, PCA):
-    """
-    Enables SAMPLE and CHECKPOINTIN handling for https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
-    """
-
-    pass
 
 
 #### PREPROCESSOR LEGACY ###

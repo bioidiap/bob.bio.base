@@ -1,24 +1,16 @@
 # from bob.bio.base.pipelines.vanilla_biometrics.legacy import DatabaseConnector, AlgorithmAdaptor
 
-import bob.db.atnt
-from bob.bio.base.pipelines.vanilla_biometrics.legacy import DatabaseConnector
 
-database = DatabaseConnector(bob.db.atnt.Database(), protocol="Default")
+### DATABASE
+import bob.bio.face
+from bob.bio.base.pipelines.vanilla_biometrics.legacy import DatabaseConnector
+database = DatabaseConnector(bob.bio.face.database.AtntBioDatabase(original_directory="./atnt"), protocol="Default")
+
 
 from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.decomposition import PCA
-
 from bob.pipelines.mixins import CheckpointMixin, SampleMixin
-from bob.bio.base.mixins import CheckpointSampleLinearize
-from bob.bio.base.mixins.legacy import LegacyProcessorMixin
-
-
-class CheckpointSamplePCA(CheckpointMixin, SampleMixin, PCA):
-    """
-    Enables SAMPLE and CHECKPOINTIN handling for https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
-    """
-
-    pass
+from bob.bio.base.mixins.legacy import LegacyProcessorMixin, LegacyAlgorithmMixin
+from bob.bio.base.transformers import CheckpointSampleLinearize, CheckpointSamplePCA
 
 
 #### PREPROCESSOR LEGACY ###
@@ -48,7 +40,6 @@ face_cropper = functools.partial(
 
 
 from bob.pipelines.mixins import mix_me_up
-
 preprocessor = mix_me_up((CheckpointMixin, SampleMixin), LegacyProcessorMixin)
 
 from bob.pipelines.mixins import dask_it
@@ -75,7 +66,5 @@ from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import (
 
 class CheckpointDistance(BiometricAlgorithmCheckpointMixin, Distance):
     pass
-
-
 algorithm = CheckpointDistance(features_dir="./example/")
 # algorithm = Distance()
