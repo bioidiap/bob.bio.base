@@ -75,7 +75,7 @@ class DatabaseConnector:
                             self.database.original_directory,
                             self.database.original_extension,
                         ),
-                        key=str(k.id),
+                        key=k.path,
                         path=k.path,
                     )
                 ],
@@ -121,12 +121,12 @@ class DatabaseConnector:
                                 self.database.original_directory,
                                 self.database.original_extension,
                             ),
-                            key=str(k.id),
+                            key=k.path,
                             path=k.path,
                         )
                         for k in objects
                     ],
-                    key=m,
+                    key=str(m),
                     path=str(m),
                     subject=str(objects[0].client_id),
                 )
@@ -176,14 +176,14 @@ class DatabaseConnector:
                                     self.database.original_directory,
                                     self.database.original_extension,
                                 ),
-                                key=str(o.id),
+                                key=o.path,
                                 path=o.path,
                             )
                         ],
                         key=str(o.client_id),
                         path=o.path,
                         subject=str(o.client_id),
-                        references=[m],
+                        references=[str(m)],
                     )
                 else:
                     probes[o.id].references.append(m)
@@ -265,7 +265,7 @@ class DatabaseConnectorAnnotated(DatabaseConnector):
                         load=functools.partial(
                             _load_data_and_annotations, k, self.database.annotations(k), self.database.original_directory, self.database.original_extension
                         ),
-                        key=str(k.id),
+                        key=k.path,
                         path=k.path,
                         annotations=self.database.annotations(k),
                     )
@@ -313,7 +313,7 @@ class DatabaseConnectorAnnotated(DatabaseConnector):
                             load=functools.partial(
                                 _load_data_and_annotations, k, self.database.annotations(k), self.database.original_directory, self.database.original_extension
                             ),
-                            key=k.id,
+                            key=k.path,
                             path=k.path,
                             subject=str(objects[0].client_id),
                             annotations=self.database.annotations(k),
@@ -370,18 +370,18 @@ class DatabaseConnectorAnnotated(DatabaseConnector):
                                 load=functools.partial(
                                     _load_data_and_annotations, o, self.database.annotations(o), self.database.original_directory, self.database.original_extension
                                 ),
-                                key=o.id,
+                                key=o.path,
                                 path=o.path,
                                 annotations=self.database.annotations(o),
                             )
                         ],
-                        key=o.id,
+                        key=str(o.client_id),
                         path=o.path,
                         subject=o.client_id,
-                        references=[m],
+                        references=[str(m)],
                     )
                 else:
-                    probes[o.id].references.append(m)
+                    probes[o.id].references.append(str(m))
 
         return list(probes.values())
 
