@@ -263,7 +263,7 @@ class DatabaseConnectorAnnotated(DatabaseConnector):
                 [
                     DelayedSample(
                         load=functools.partial(
-                            _load_data_and_annotations, self.database.annotations(k), self.database.original_directory, self.database.original_extension
+                            _load_data_and_annotations, k, self.database.annotations(k), self.database.original_directory, self.database.original_extension
                         ),
                         key=str(k.id),
                         path=k.path,
@@ -311,7 +311,7 @@ class DatabaseConnectorAnnotated(DatabaseConnector):
                     [
                         DelayedSample(
                             load=functools.partial(
-                                _load_data_and_annotations, self.database.annotations(k), self.database.original_directory, self.database.original_extension
+                                _load_data_and_annotations, k, self.database.annotations(k), self.database.original_directory, self.database.original_extension
                             ),
                             key=k.id,
                             path=k.path,
@@ -368,7 +368,7 @@ class DatabaseConnectorAnnotated(DatabaseConnector):
                         [
                             DelayedSample(
                                 load=functools.partial(
-                                    _load_data_and_annotations, self.database.annotations(o), self.database.original_directory, self.database.original_extension
+                                    _load_data_and_annotations, o, self.database.annotations(o), self.database.original_directory, self.database.original_extension
                                 ),
                                 key=o.id,
                                 path=o.path,
