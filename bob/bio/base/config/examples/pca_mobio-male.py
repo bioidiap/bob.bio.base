@@ -8,6 +8,9 @@ import bob.bio.face
 from bob.bio.base.mixins.legacy import LegacyProcessorMixin, LegacyAlgorithmMixin
 from bob.bio.base.pipelines.vanilla_biometrics.legacy import LegacyBiometricAlgorithm
 
+import os
+base_dir = "/idiap/temp/tpereira/mobio/pca"
+#base_dir = "./example"
 
 
 original_directory=rc['bob.db.mobio.directory']
@@ -54,12 +57,15 @@ from bob.pipelines.mixins import mix_me_up
 preprocessor = mix_me_up((CheckpointMixin, SampleMixin), LegacyProcessorMixin)
 
 from bob.pipelines.mixins import dask_it
-extractor = Pipeline(steps=[('0', preprocessor(callable=original_preprocessor, features_dir="./example/extractor0")),
-                            ('1',CheckpointSampleLinearize(features_dir="./example/extractor1")), 
-	                        ('2',CheckpointSamplePCA(features_dir="./example/extractor2", model_path="./example/pca.pkl"))])
-extractor = dask_it(extractor)
+extractor = Pipeline(steps=[
+	                        ('0', preprocessor(callable=original_preprocessor, features_dir=os.path.join(base_dir,"extractor0"))),
+                            ('1',CheckpointSampleLinearize(features_dir=os.path.join(base_dir,"extractor1"))), 
+	                        ('2',CheckpointSamplePCA(features_dir=os.path.join(base_dir,"extractor2"), model_path=os.path.join(base_dir,"pca.pkl")))
+	                       ])
+#extractor = dask_it(extractor)
 
 from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import Distance, BiometricAlgorithmCheckpointMixin
+
 class CheckpointDistance(BiometricAlgorithmCheckpointMixin, Distance):  pass
-algorithm = CheckpointDistance(features_dir="./example/")
+algorithm = CheckpointDistance(features_dir=base_dir)
 #algorithm = Distance()
