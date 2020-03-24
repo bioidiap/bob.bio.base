@@ -5,7 +5,7 @@
 
 from bob.pipelines.mixins import CheckpointMixin, SampleMixin
 from sklearn.base import TransformerMixin
-from sklearn.utils.validation import check_array, check_is_fitted
+from sklearn.utils.validation import check_array
 import numpy
 
 
@@ -14,9 +14,6 @@ class Linearize(TransformerMixin):
 
     If a ``dtype`` is specified in the contructor, it is assured that the resulting
     """
-
-    def fit(self, X, y=None):
-        return self
 
     def transform(self, X):
 

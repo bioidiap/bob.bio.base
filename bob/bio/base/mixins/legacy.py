@@ -97,6 +97,14 @@ class LegacyProcessorMixin(TransformerMixin):
             X = check_array(X, allow_nd=True)
             return [self.instance(x) for x in X]
 
+    def __setstate__(self):
+        # Handling unpicklable objects
+        self.instance = None
+
+    def __getstate__(self):
+        # Handling unpicklable objects
+        self.instance = None
+
 
 from bob.pipelines.mixins import CheckpointMixin, SampleMixin
 class LegacyAlgorithmMixin(CheckpointMixin, SampleMixin, BaseEstimator):
@@ -147,8 +155,6 @@ class LegacyAlgorithmMixin(CheckpointMixin, SampleMixin, BaseEstimator):
             # Organizing the date by class
             bob_X = scikit_to_bob_supervised(X, y)
             self.instance.train_projector(bob_X, self.projector_file)
-        else:
-            self.instance.train_projector(X, **fit_params)
 
         # Deleting the instance, so it's picklable
         self.instance = None
@@ -197,6 +203,14 @@ class LegacyAlgorithmMixin(CheckpointMixin, SampleMixin, BaseEstimator):
 
         else:
             raise ValueError("Type not allowed %s" % type(X[0]))
+
+    def __setstate__(self):
+        # Handling unpicklable objects
+        self.instance = None
+
+    def __getstate__(self):
+        # Handling unpicklable objects
+        self.instance = None
 
 
 def get_reader(reader, path):
