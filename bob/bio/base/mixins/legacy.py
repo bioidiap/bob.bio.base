@@ -78,15 +78,11 @@ class LegacyProcessorMixin(TransformerMixin):
         self.callable = callable
         self.instance = None
 
-    def fit(self, X, y=None, **fit_params):
-        return self
-
     def transform(self, X):
 
         # Instantiates and do the "real" transform
         if self.instance is None:
             self.instance = self.callable()
-
         if isinstance(X[0], dict):
             # Handling annotations if it's the case
             retval = []
@@ -103,8 +99,6 @@ class LegacyProcessorMixin(TransformerMixin):
 
 
 from bob.pipelines.mixins import CheckpointMixin, SampleMixin
-
-
 class LegacyAlgorithmMixin(CheckpointMixin, SampleMixin, BaseEstimator):
     """Class that wraps :py:class:`bob.bio.base.algorithm.Algoritm`
     
