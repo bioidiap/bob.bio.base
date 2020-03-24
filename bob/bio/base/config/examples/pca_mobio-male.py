@@ -7,11 +7,14 @@ import bob.bio.face
 
 from bob.bio.base.mixins.legacy import LegacyProcessorMixin, LegacyAlgorithmMixin
 from bob.bio.base.pipelines.vanilla_biometrics.legacy import LegacyBiometricAlgorithm
+from bob.bio.base.transformers import CheckpointSamplePCA
 
 import os
-base_dir = "/idiap/temp/tpereira/mobio/pca"
-#base_dir = "./example"
+#base_dir = "/idiap/temp/tpereira/mobio/pca"
+base_dir = "./example"
 
+
+### DATABASE
 
 original_directory=rc['bob.db.mobio.directory']
 annotation_directory=rc['bob.db.mobio.annotation_directory']
@@ -26,13 +29,8 @@ from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.decomposition import PCA
 
 from bob.pipelines.mixins import CheckpointMixin, SampleMixin
-from bob.bio.base.mixins import CheckpointSampleLinearize
+from bob.bio.base.transformers import CheckpointSampleLinearize
 
-class CheckpointSamplePCA(CheckpointMixin, SampleMixin, PCA):
-    """
-    Enables SAMPLE and CHECKPOINTIN handling for https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
-    """
-    pass
 
 
 
@@ -63,10 +61,9 @@ extractor = Pipeline(steps=[
                             ('1',CheckpointSampleLinearize(features_dir=os.path.join(base_dir,"extractor1"))), 
 	                        ('2',CheckpointSamplePCA(features_dir=os.path.join(base_dir,"extractor2"), model_path=os.path.join(base_dir,"pca.pkl")))
 	                       ])
-extractor = dask_it(extractor, npartitions=48)
+#extractor = dask_it(extractor, npartitions=48)
 
 from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import Distance, BiometricAlgorithmCheckpointMixin
 
 class CheckpointDistance(BiometricAlgorithmCheckpointMixin, Distance):  pass
 algorithm = CheckpointDistance(features_dir=base_dir)
-#algorithm = Distance()

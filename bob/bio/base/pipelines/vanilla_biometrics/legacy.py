@@ -186,7 +186,7 @@ class DatabaseConnector:
                         references=[str(m)],
                     )
                 else:
-                    probes[o.id].references.append(m)
+                    probes[o.id].references.append(str(m))
 
         return list(probes.values())
 

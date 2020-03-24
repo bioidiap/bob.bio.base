@@ -135,7 +135,6 @@ class BiometricAlgorithm(object):
         for subprobe_id, (s, parent) in enumerate(zip(data, sampleset.samples)):
             # Creating one sample per comparison
             subprobe_scores = []
-
             for ref in [
                 r for r in biometric_references if r.key in sampleset.references
             ]:

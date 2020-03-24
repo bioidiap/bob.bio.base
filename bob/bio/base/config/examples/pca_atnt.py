@@ -1,22 +1,14 @@
 #from bob.bio.base.pipelines.vanilla_biometrics.legacy import DatabaseConnector, AlgorithmAdaptor
 
-import bob.db.atnt
+import bob.bio.face
 from bob.bio.base.pipelines.vanilla_biometrics.legacy import DatabaseConnector
-database = DatabaseConnector(bob.db.atnt.Database(), protocol="Default")
+database = DatabaseConnector(bob.bio.face.database.AtntBioDatabase(original_directory="./atnt"), protocol="Default")
 
 from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.decomposition import PCA
-
 from bob.pipelines.mixins import CheckpointMixin, SampleMixin
-from bob.bio.base.mixins import CheckpointSampleLinearize
+from bob.bio.base.transformers import CheckpointSampleLinearize, CheckpointSamplePCA
 
-class CheckpointSamplePCA(CheckpointMixin, SampleMixin, PCA):
-    """
-    Enables SAMPLE and CHECKPOINTIN handling for https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
-    """
-    pass
 
-#extractor = make_pipeline([CheckpointSampleLinearize(), CheckpointSamplePCA()])
 from bob.pipelines.mixins import dask_it
 extractor = Pipeline(steps=[('0',CheckpointSampleLinearize(features_dir="./example/extractor0")), 
 	                        ('1',CheckpointSamplePCA(features_dir="./example/extractor1", model_path="./example/pca.pkl"))])
