@@ -55,6 +55,7 @@ original_preprocessor = functools.partial(
 
 from bob.pipelines.mixins import mix_me_up
 preprocessor = mix_me_up((CheckpointMixin, SampleMixin), LegacyProcessorMixin)
+#class preprocessor(CheckpointMixin, SampleMixin, LegacyProcessorMixin): pass
 
 from bob.pipelines.mixins import dask_it
 extractor = Pipeline(steps=[
@@ -62,7 +63,7 @@ extractor = Pipeline(steps=[
                             ('1',CheckpointSampleLinearize(features_dir=os.path.join(base_dir,"extractor1"))), 
 	                        ('2',CheckpointSamplePCA(features_dir=os.path.join(base_dir,"extractor2"), model_path=os.path.join(base_dir,"pca.pkl")))
 	                       ])
-extractor = dask_it(extractor)
+extractor = dask_it(extractor, npartitions=48)
 
 from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import Distance, BiometricAlgorithmCheckpointMixin
 
