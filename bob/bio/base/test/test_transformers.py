@@ -8,7 +8,7 @@ import numpy
 import tempfile
 from sklearn.utils.validation import check_is_fitted
 
-from bob.bio.base.mixins import Linearize, SampleLinearize, CheckpointSampleLinearize
+from bob.bio.base.transformers import Linearize, SampleLinearize, CheckpointSampleLinearize
 def test_linearize_processor():
     
     ## Test the transformer only
@@ -32,7 +32,7 @@ def test_linearize_processor():
         assert os.path.exists(os.path.join(d, "1.h5"))
 
 
-from bob.bio.base.mixins import SamplePCA, CheckpointSamplePCA
+from bob.bio.base.transformers import SamplePCA, CheckpointSamplePCA
 def test_pca_processor():
     
     ## Test wrapped in to a Sample
