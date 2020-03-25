@@ -1,69 +1,54 @@
-
-import functools
-import bob.db.atnt
-from bob.bio.base.pipelines.vanilla_biometrics.legacy import DatabaseConnector, DatabaseConnectorAnnotated
+from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import (
+    CheckpointDistance,
+)
+from bob.bio.base.pipelines.vanilla_biometrics.legacy import (
+    LegacyDatabaseConnector,
+    LegacyPreprocessor,
+)
+from bob.bio.face.database.mobio import MobioBioDatabase
+from bob.bio.face.preprocessor import FaceCrop
 from bob.extension import rc
-import bob.bio.face
-
-from bob.bio.base.mixins.legacy import LegacyProcessorMixin, LegacyAlgorithmMixin
-from bob.bio.base.pipelines.vanilla_biometrics.legacy import LegacyBiometricAlgorithm
-from bob.bio.base.transformers import CheckpointSamplePCA
-
-import os
-#base_dir = "/idiap/temp/tpereira/mobio/pca"
-base_dir = "./example"
+from bob.pipelines.transformers import CheckpointSampleLinearize, CheckpointSamplePCA
+from sklearn.pipeline import make_pipeline
+import functools
 
 
-### DATABASE
-
-original_directory=rc['bob.db.mobio.directory']
-annotation_directory=rc['bob.db.mobio.annotation_directory']
-database = DatabaseConnectorAnnotated(bob.bio.face.database.mobio.MobioBioDatabase(
-	                         original_directory=original_directory,
-	                         annotation_directory=annotation_directory,
-	                         original_extension=".png"
-	                         ), 
-	                         protocol="mobile0-male")
-
-from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.decomposition import PCA
-
-from bob.pipelines.mixins import CheckpointMixin, SampleMixin
-from bob.bio.base.transformers import CheckpointSampleLinearize
-
-
-
-
-#### PREPROCESSOR LEGACY ###
+database = LegacyDatabaseConnector(
+    MobioBioDatabase(
+        original_directory=rc["bob.db.mobio.directory"],
+        annotation_directory=rc["bob.db.mobio.annotation_directory"],
+        original_extension=".png",
+        protocol="mobile0-male",
+    )
+)
 
 # Using face crop
 CROPPED_IMAGE_HEIGHT = 80
 CROPPED_IMAGE_WIDTH = CROPPED_IMAGE_HEIGHT * 4 // 5
-
-## eye positions for frontal images
+# eye positions for frontal images
 RIGHT_EYE_POS = (CROPPED_IMAGE_HEIGHT // 5, CROPPED_IMAGE_WIDTH // 4 - 1)
 LEFT_EYE_POS = (CROPPED_IMAGE_HEIGHT // 5, CROPPED_IMAGE_WIDTH // 4 * 3)
+# FaceCrop
+preprocessor = functools.partial(
+    FaceCrop,
+    cropped_image_size=(CROPPED_IMAGE_HEIGHT, CROPPED_IMAGE_WIDTH),
+    cropped_positions={"leye": LEFT_EYE_POS, "reye": RIGHT_EYE_POS},
+)
 
-original_preprocessor = functools.partial(
-                  bob.bio.face.preprocessor.FaceCrop,
-                  cropped_image_size=(CROPPED_IMAGE_HEIGHT, CROPPED_IMAGE_WIDTH),
-                  cropped_positions={"leye": LEFT_EYE_POS, "reye": RIGHT_EYE_POS},
-               )
+transformer = make_pipeline(
+    LegacyPreprocessor(preprocessor),
+    CheckpointSampleLinearize(features_dir="./example/extractor0"),
+    CheckpointSamplePCA(
+        features_dir="./example/extractor1", model_path="./example/pca.pkl"
+    ),
+)
+algorithm = CheckpointDistance(features_dir="./example/")
 
+# comment out the code below to disable dask
+from bob.pipelines.mixins import estimator_dask_it, mix_me_up
+from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import (
+    BioAlgDaskMixin,
+)
 
-from bob.pipelines.mixins import mix_me_up
-preprocessor = mix_me_up((CheckpointMixin, SampleMixin), LegacyProcessorMixin)
-#class preprocessor(CheckpointMixin, SampleMixin, LegacyProcessorMixin): pass
-
-from bob.pipelines.mixins import dask_it
-extractor = Pipeline(steps=[
-	                        ('0', preprocessor(callable=original_preprocessor, features_dir=os.path.join(base_dir,"extractor0"))),
-                            ('1',CheckpointSampleLinearize(features_dir=os.path.join(base_dir,"extractor1"))), 
-	                        ('2',CheckpointSamplePCA(features_dir=os.path.join(base_dir,"extractor2"), model_path=os.path.join(base_dir,"pca.pkl")))
-	                       ])
-#extractor = dask_it(extractor, npartitions=48)
-
-from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import Distance, BiometricAlgorithmCheckpointMixin
-
-class CheckpointDistance(BiometricAlgorithmCheckpointMixin, Distance):  pass
-algorithm = CheckpointDistance(features_dir=base_dir)
+transformer = estimator_dask_it(transformer)
+algorithm = mix_me_up([BioAlgDaskMixin], algorithm)

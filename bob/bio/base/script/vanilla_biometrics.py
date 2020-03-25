@@ -5,26 +5,26 @@
 
 """Executes biometric pipeline"""
 
-import os
-import functools
-
 import click
 
-from bob.extension.scripts.click_helper import verbosity_option, ResourceOption, ConfigCommand
-from bob.pipelines.sample import DelayedSample, Sample
+from bob.extension.scripts.click_helper import (
+    verbosity_option,
+    ResourceOption,
+    ConfigCommand,
+)
 
 import logging
-logger = logging.getLogger(__name__)
 
+logger = logging.getLogger(__name__)
 
 
 EPILOG = """\b
 
- 
+
  Command line examples\n
  -----------------------
 
- 
+
  $ bob pipelines vanilla-biometrics my_experiment.py -vv
 
 
@@ -34,7 +34,7 @@ EPILOG = """\b
  >>> extractor = my_extractor() \n
  >>> algorithm = my_algorithm() \n
  >>> checkpoints = EXPLAIN CHECKPOINTING \n
- 
+
 \b
 
 
@@ -54,15 +54,14 @@ TODO: Work out this help
 
 
 @click.command(
-    entry_point_group='bob.pipelines.config', cls=ConfigCommand,
-    epilog=EPILOG,
+    entry_point_group="bob.pipelines.config", cls=ConfigCommand, epilog=EPILOG,
 )
 @click.option(
-    "--extractor",
+    "--transformer",
     "-e",
     required=True,
     cls=ResourceOption,
-    entry_point_group="bob.bio.extractor",  # This should be linked to bob.bio.base
+    entry_point_group="bob.pipelines.transformer",
     help="Feature extraction algorithm",
 )
 @click.option(
@@ -92,6 +91,7 @@ TODO: Work out this help
 @click.option(
     "--group",
     "-g",
+    "groups",
     type=click.Choice(["dev", "eval"]),
     multiple=True,
     default=("dev",),
@@ -106,13 +106,7 @@ TODO: Work out this help
 )
 @verbosity_option(cls=ResourceOption)
 def vanilla_biometrics(
-    extractor,
-    algorithm,
-    database,
-    dask_client,
-    group,
-    output,
-    **kwargs
+    transformer, algorithm, database, dask_client, groups, output, **kwargs
 ):
     """Runs the simplest biometrics pipeline.
 
@@ -121,7 +115,7 @@ def vanilla_biometrics(
 
     Sub-pipeline 1:\n
     ---------------
-    
+
     Training background model. Some biometric algorithms demands the training of background model, for instance, PCA/LDA matrix or a Neural networks. This sub-pipeline handles that and it consists of 3 steps:
 
     \b
@@ -133,13 +127,13 @@ def vanilla_biometrics(
 
     Sub-pipeline 2:\n
     ---------------
- 
+
     Creation of biometric references: This is a standard step in a biometric pipelines.
     Given a set of samples of one identity, create a biometric reference (a.k.a template) for sub identity. This sub-pipeline handles that in 3 steps and they are the following:
 
     \b
     raw_data --> preprocessing >> feature extraction >> enroll(background_model) --> biometric_reference
-    
+
     Note that this sub-pipeline depends on the previous one
 
 
@@ -150,99 +144,59 @@ def vanilla_biometrics(
 
     Probing: This is another standard step in biometric pipelines. Given one sample and one biometric reference, computes a score. Such score has different meanings depending on the scoring method your biometric algorithm uses. It's out of scope to explain in a help message to explain what scoring is for different biometric algorithms.
 
- 
+
     raw_data --> preprocessing >> feature extraction >> probe(biometric_reference, background_model) --> score
 
     Note that this sub-pipeline depends on the two previous ones
 
 
     """
-    
-    # Always turn-on the checkpointing
-    checkpointing = True
 
-    # Chooses the pipeline to run
     from bob.bio.base.pipelines.vanilla_biometrics.pipeline import biometric_pipeline
+    import dask.bag
+    import itertools
+    import os
+    from bob.pipelines.sample import Sample
 
     if not os.path.exists(output):
-        os.makedirs(output)
- 
-    for g in group:
+        os.makedirs(output, exist_ok=True)
 
-        with open(os.path.join(output,f"scores-{g}"), "w") as f:
-            biometric_references = database.references(group=g)
-            
-            logger.info(f"Running vanilla biometrics for group {g}")
+    for group in groups:
+
+        with open(os.path.join(output, f"scores-{group}"), "w") as f:
+            biometric_references = database.references(group=group)
+
+            logger.info(f"Running vanilla biometrics for group {group}")
 
             result = biometric_pipeline(
                 database.background_model_samples(),
                 biometric_references,
-                database.probes(group=g),
-                extractor,
+                database.probes(group=group),
+                transformer,
                 algorithm,
-                
             )
-            
-            import dask.bag
+
             if isinstance(result, dask.bag.core.Bag):
                 if dask_client is not None:
                     result = result.compute(scheduler=dask_client)
                 else:
-                    logger.warning("`dask_client` not set. Your pipeline will run locally")
+                    logger.warning(
+                        "`dask_client` not set. Your pipeline will run locally"
+                    )
                     result = result.compute()
 
             # Flatting out the list
-            import itertools
-            result = list(itertools.chain(*result))
+            result = itertools.chain(*result)
             for probe in result:
                 for sample in probe.samples:
-                    
+
                     if isinstance(sample, Sample):
-                        line = "{0} {1} {2} {3}\n".format(sample.key, probe.key, probe.path, sample.data)
+                        line = "{0} {1} {2} {3}\n".format(
+                            sample.key, probe.key, probe.path, sample.data
+                        )
                         f.write(line)
-                    elif isinstance(sample, DelayedSample):
-                        lines = sample.load().readlines()
-                        f.writelines(lines)
                     else:
                         raise TypeError("The output of the pipeline is not writeble")
 
     if dask_client is not None:
         dask_client.shutdown()
-
-
-@click.command()
-@click.argument("output-file")
-@verbosity_option(cls=ResourceOption)
-def vanilla_biometrics_template(output_file, **kwargs):
-    """
-    Generate an template configuration file for the vanilla biometrics pipeline
-    """
-
-    import bob.io.base
-
-    path = os.path.dirname(output_file)
-    logger.info(f"Writting template configuration file in {path}")
-    bob.io.base.create_directories_safe(path)
-
-    template = '''
-
-# Client dask. Look at https://gitlab.idiap.ch/bob/bob.pipelines/tree/master/bob/pipelines/config/distributed to find proper dask clients.
-# You don't need to necessary instantiate a dask client yourself. You can simply pipe those config files
-
-dask_client = my_client
-
-
-preprocessor = my_preprocessor
-
-
-extractor = my_extractor
-
-
-algorithm = my_algorithm
-
-
-database = my_database
-    
-'''
-
-    open(output_file, "w").write(template)
