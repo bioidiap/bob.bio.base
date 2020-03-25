@@ -1,20 +1,28 @@
-#from bob.bio.base.pipelines.vanilla_biometrics.legacy import DatabaseConnector, AlgorithmAdaptor
-
-import bob.bio.face
 from bob.bio.base.pipelines.vanilla_biometrics.legacy import DatabaseConnector
-database = DatabaseConnector(bob.bio.face.database.AtntBioDatabase(original_directory="./atnt"), protocol="Default")
+from sklearn.pipeline import make_pipeline
+from bob.pipelines.transformers import CheckpointSampleLinearize, CheckpointSamplePCA
+from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import (
+    CheckpointDistance,
+)
+from bob.bio.face.database import AtntBioDatabase
 
-from sklearn.pipeline import Pipeline, make_pipeline
-from bob.pipelines.mixins import CheckpointMixin, SampleMixin
-from bob.bio.base.transformers import CheckpointSampleLinearize, CheckpointSamplePCA
 
-
-from bob.pipelines.mixins import dask_it
-extractor = Pipeline(steps=[('0',CheckpointSampleLinearize(features_dir="./example/extractor0")), 
-	                        ('1',CheckpointSamplePCA(features_dir="./example/extractor1", model_path="./example/pca.pkl"))])
-#extractor = dask_it(extractor)
-
-from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import Distance, BiometricAlgorithmCheckpointMixin
-class CheckpointDistance(BiometricAlgorithmCheckpointMixin, Distance):  pass
+database = DatabaseConnector(
+    AtntBioDatabase(original_directory="./atnt"), protocol="Default"
+)
+transformer = make_pipeline(
+    CheckpointSampleLinearize(features_dir="./example/extractor0"),
+    CheckpointSamplePCA(
+        features_dir="./example/extractor1", model_path="./example/pca.pkl"
+    ),
+)
 algorithm = CheckpointDistance(features_dir="./example/")
-#algorithm = Distance()
+
+# comment out the code below to disable dask
+from bob.pipelines.mixins import estimator_dask_it, mix_me_up
+from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import (
+    BioAlgDaskMixin,
+)
+
+transformer = estimator_dask_it(transformer)
+algorithm = mix_me_up([BioAlgDaskMixin], algorithm)

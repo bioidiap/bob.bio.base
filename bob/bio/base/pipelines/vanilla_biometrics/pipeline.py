@@ -8,11 +8,8 @@ This file contains simple processing blocks meant to be used
 for bob.bio experiments
 """
 
-import dask.bag
-import dask.delayed
-from bob.pipelines.sample import samplesets_to_samples
-
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,94 +17,63 @@ def biometric_pipeline(
     background_model_samples,
     biometric_reference_samples,
     probe_samples,
-    extractor,
+    transformer,
     biometric_algorithm,
 ):
-    logger.info(f" >> Vanilla Biometrics: Training background model with pipeline {extractor}")
+    logger.info(
+        f" >> Vanilla Biometrics: Training background model with pipeline {transformer}"
+    )
 
-    ## Training background model (fit will return even if samples is ``None``,
-    ## in which case we suppose the algorithm is not trainable in any way)
-    extractor = train_background_model(background_model_samples, extractor)
+    # Training background model (fit will return even if samples is ``None``,
+    # in which case we suppose the algorithm is not trainable in any way)
+    transformer = train_background_model(background_model_samples, transformer)
 
-    logger.info(f" >> Creating biometric references with the biometric algorithm {biometric_algorithm}")
+    logger.info(
+        f" >> Creating biometric references with the biometric algorithm {biometric_algorithm}"
+    )
 
-    ## Create biometric samples
+    # Create biometric samples
     biometric_references = create_biometric_reference(
-        biometric_reference_samples, extractor, biometric_algorithm
+        biometric_reference_samples, transformer, biometric_algorithm
     )
 
-    logger.info(f" >> Computing scores with the biometric algorithm {biometric_algorithm}")
+    logger.info(
+        f" >> Computing scores with the biometric algorithm {biometric_algorithm}"
+    )
 
-    ## Scores all probes
+    # Scores all probes
     return compute_scores(
-        probe_samples, biometric_references, extractor, biometric_algorithm
+        probe_samples, biometric_references, transformer, biometric_algorithm
     )
 
 
-def train_background_model(background_model_samples, extractor):
-
-    X, y = samplesets_to_samples(background_model_samples)
-
-    extractor = extractor.fit(X, y=y)
-
-    return extractor
+def train_background_model(background_model_samples, transformer):
+    # background_model_samples is a list of Samples
+    transformer = transformer.fit(background_model_samples)
+    return transformer
 
 
 def create_biometric_reference(
-    biometric_reference_samples, extractor, biometric_algorithm
+    biometric_reference_samples, transformer, biometric_algorithm
 ):
-    biometric_reference_features = extractor.transform(biometric_reference_samples)
+    biometric_reference_features = transformer.transform(biometric_reference_samples)
 
-    # TODO: I KNOW THIS LOOKS UGLY, BUT THIS `MAP_PARTITIONS` HAS TO APPEAR SOMEWHERE
-    # I COULD WORK OUT A MIXIN FOR IT, BUT THE USER WOULD NEED TO SET THAT SOMETWHERE
-    # HERE'S ALREADY SETTING ONCE (for the pipeline) AND I DON'T WANT TO MAKE
-    # THEM SET IN ANOTHER PLACE
-    # LET'S DISCUSS THIS ON SLACK
-
-    if isinstance(biometric_reference_features, dask.bag.core.Bag):
-        # ASSUMING THAT IS A DASK THING IS COMMING
-        biometric_references = biometric_reference_features.map_partitions(
-            biometric_algorithm._enroll_samples
-        )
-    else:
-        biometric_references = biometric_algorithm._enroll_samples(
-            biometric_reference_features
-        )
+    biometric_references = biometric_algorithm.enroll_samples(
+        biometric_reference_features
+    )
 
     # models is a list of Samples
     return biometric_references
 
 
-def compute_scores(probe_samples, biometric_references, extractor, biometric_algorithm):
+def compute_scores(
+    probe_samples, biometric_references, transformer, biometric_algorithm
+):
 
     # probes is a list of SampleSets
-    probe_features = extractor.transform(probe_samples)
+    probe_features = transformer.transform(probe_samples)
 
-    # TODO: I KNOW THIS LOOKS UGLY, BUT THIS `MAP_PARTITIONS` HAS TO APPEAR SOMEWHERE
-    # I COULD WORK OUT A MIXIN FOR IT, BUT THE USER WOULD NEED TO SET THAT SOMETWHERE
-    # HERE'S ALREADY SETTING ONCE (for the pipeline) AND I DON'T WANT TO MAKE
-    # THEM SET IN ANOTHER PLACE
-    # LET'S DISCUSS THIS ON SLACK
-    if isinstance(probe_features, dask.bag.core.Bag):
-        # ASSUMING THAT IS A DASK THING IS COMMING
-
-        ## TODO: Here, we are sending all computed biometric references to all
-        ## probes.  It would be more efficient if only the models related to each
-        ## probe are sent to the probing split.  An option would be to use caching
-        ## and allow the ``score`` function above to load the required data from
-        ## the disk, directly.  A second option would be to generate named delays
-        ## for each model and then associate them here.
-
-        all_references = dask.delayed(list)(biometric_references)
-
-        scores = probe_features.map_partitions(
-            biometric_algorithm._score_samples, all_references, extractor
-        )
-
-    else:
-        scores = biometric_algorithm._score_samples(
-            probe_features, biometric_references, extractor
-        )
+    scores = biometric_algorithm.score_samples(probe_features, biometric_references)
 
     # scores is a list of Samples
     return scores

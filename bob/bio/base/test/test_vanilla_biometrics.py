@@ -19,10 +19,10 @@ class DummyDatabase:
         self.one_d = one_d
 
 
-    def _create_random_1dsamples(self, n_samples, offset, dim):        
+    def _create_random_1dsamples(self, n_samples, offset, dim):
         return [ Sample(numpy.random.rand(dim), key=i) for i in range(offset,offset+n_samples) ]
 
-    def _create_random_2dsamples(self, n_samples, offset, dim):        
+    def _create_random_2dsamples(self, n_samples, offset, dim):
         return [ Sample(numpy.random.rand(dim, dim), key=i) for i in range(offset,offset+n_samples) ]
 
     def _create_random_sample_set(self, n_sample_set=10, n_samples=2):
@@ -30,7 +30,7 @@ class DummyDatabase:
         # Just generate random samples
         sample_set = [SampleSet(samples=[], key=i) for i in range(n_sample_set)]
 
-        offset = 0        
+        offset = 0
         for s in sample_set:
             if self.one_d:
                 s.samples = self._create_random_1dsamples(n_samples, offset, self.dim)
@@ -61,22 +61,22 @@ class DummyDatabase:
 from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import Distance
 import itertools
 def test_distance_comparator():
-    
+
     n_references = 10
     dim = 10
     n_probes = 10
     database = DummyDatabase(delayed=False, n_references=n_references, n_probes=n_probes, dim=10, one_d = True)
-    references = database.references()    
+    references = database.references()
     probes = database.probes()
-    
+
     comparator = Distance()
-    references = comparator._enroll_samples(references)
+    references = comparator.enroll_samples(references)
     assert len(references)== n_references
     assert references[0].data.shape == (dim,)
 
     probes = database.probes()
-    scores = comparator._score_samples(probes, references)
+    scores = comparator.score_samples(probes, references)
     scores = list(itertools.chain(*scores))
-    
+
     assert len(scores) == n_probes*n_references
     assert len(scores[0].samples)==n_references
