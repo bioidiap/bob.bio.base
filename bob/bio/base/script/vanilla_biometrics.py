@@ -183,7 +183,7 @@ def vanilla_biometrics(
                     logger.warning(
                         "`dask_client` not set. Your pipeline will run locally"
                     )
-                    result = result.compute()
+                    result = result.compute(scheduler="single-threaded")
 
             # Flatting out the list
             result = itertools.chain(*result)

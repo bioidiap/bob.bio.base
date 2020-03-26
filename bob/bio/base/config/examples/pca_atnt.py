@@ -24,5 +24,5 @@ from bob.bio.base.pipelines.vanilla_biometrics.mixins import (
     BioAlgDaskMixin,
 )
 
-#transformer = estimator_dask_it(transformer)
-#algorithm = mix_me_up(BioAlgDaskMixin, algorithm)
+transformer = estimator_dask_it(transformer)
+algorithm = mix_me_up(BioAlgDaskMixin, algorithm)
