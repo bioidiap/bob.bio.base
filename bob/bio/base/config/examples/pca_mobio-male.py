@@ -1,9 +1,9 @@
-from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import (
+from bob.bio.base.pipelines.vanilla_biometrics.implemented import (
     CheckpointDistance,
 )
 from bob.bio.base.pipelines.vanilla_biometrics.legacy import (
-    LegacyDatabaseConnector,
-    LegacyPreprocessor,
+    DatabaseConnector,
+    Preprocessor,
 )
 from bob.bio.face.database.mobio import MobioBioDatabase
 from bob.bio.face.preprocessor import FaceCrop
@@ -13,7 +13,7 @@ from sklearn.pipeline import make_pipeline
 import functools
 
 
-database = LegacyDatabaseConnector(
+database = DatabaseConnector(
     MobioBioDatabase(
         original_directory=rc["bob.db.mobio.directory"],
         annotation_directory=rc["bob.db.mobio.annotation_directory"],
@@ -36,17 +36,17 @@ preprocessor = functools.partial(
 )
 
 transformer = make_pipeline(
-    LegacyPreprocessor(preprocessor),
-    CheckpointSampleLinearize(features_dir="./example/extractor0"),
+    Preprocessor(preprocessor, features_dir="./example/extractor0"),
+    CheckpointSampleLinearize(features_dir="./example/extractor1"),
     CheckpointSamplePCA(
-        features_dir="./example/extractor1", model_path="./example/pca.pkl"
+        features_dir="./example/extractor2", model_path="./example/pca.pkl"
     ),
 )
 algorithm = CheckpointDistance(features_dir="./example/")
 
 # comment out the code below to disable dask
 from bob.pipelines.mixins import estimator_dask_it, mix_me_up
-from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import (
+from bob.bio.base.pipelines.vanilla_biometrics.mixins import (
     BioAlgDaskMixin,
 )
 

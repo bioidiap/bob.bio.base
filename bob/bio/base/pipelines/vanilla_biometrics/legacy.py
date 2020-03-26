@@ -13,7 +13,7 @@ from bob.io.base import HDF5File
 from bob.pipelines.mixins import SampleMixin, CheckpointMixin
 from bob.pipelines.sample import DelayedSample, SampleSet, Sample
 from bob.pipelines.utils import is_picklable
-from sklearn.base import TransformerMixin
+from sklearn.base import TransformerMixin, BaseEstimator
 import logging
 
 logger = logging.getLogger("bob.bio.base")
@@ -24,6 +24,7 @@ def _biofile_to_delayed_sample(biofile, database):
         load=functools.partial(
             biofile.load, database.original_directory, database.original_extension,
         ),
+        subject=str(biofile.client_id),
         key=biofile.path,
         path=biofile.path,
         annotations=database.annotations(biofile),
@@ -50,7 +51,7 @@ class DatabaseConnector(Database):
 
     """
 
-    def __init__(self, database, **kwargs):        
+    def __init__(self, database, **kwargs):
         self.database = database
 
     def background_model_samples(self):
@@ -175,7 +176,7 @@ class _NonPickableWrapper:
         return super().__getstate__()
 
 
-class _Preprocessor(_NonPickableWrapper, TransformerMixin):
+class _Preprocessor(_NonPickableWrapper, TransformerMixin, BaseEstimator):
     def transform(self, X, annotations):
         return [self.instance(data, annot) for data, annot in zip(X, annotations)]
 
@@ -212,7 +213,7 @@ def _split_X_by_y(X, y):
     return training_data
 
 
-class _Extractor(_NonPickableWrapper, TransformerMixin):
+class _Extractor(_NonPickableWrapper, TransformerMixin, BaseEstimator):
     def transform(self, X, metadata=None):
         if self.requires_metadata:
             return [self.instance(data, metadata=m) for data, m in zip(X, metadata)]
@@ -267,7 +268,7 @@ class Extractor(CheckpointMixin, SampleMixin, _Extractor):
         return self
 
 
-class _AlgorithmTransformer(_NonPickableWrapper, TransformerMixin):
+class _AlgorithmTransformer(_NonPickableWrapper, TransformerMixin, BaseEstimator):
     def transform(self, X):
         return [self.instance.project(feature) for feature in X]
 
@@ -279,7 +280,7 @@ class _AlgorithmTransformer(_NonPickableWrapper, TransformerMixin):
         if self.instance.split_training_features_by_client:
             training_data = _split_X_by_y(X, y)
 
-        self.instance.train_projector(self, training_data, self.model_path)
+        self.instance.train_projector(training_data, self.model_path)
         return self
 
     def _more_tags(self):

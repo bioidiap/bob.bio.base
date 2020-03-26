@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from bob.pipelines.sample import Sample, SampleSet, DelayedSample
 import functools
 
+
 class BioAlgorithm(metaclass=ABCMeta):
     """Describes a base biometric comparator for the Vanilla Biometrics Pipeline :ref:`_bob.bio.base.struct_bio_rec_sys`_.
 
@@ -102,7 +103,9 @@ class BioAlgorithm(metaclass=ABCMeta):
             for ref in [
                 r for r in biometric_references if r.key in sampleset.references
             ]:
-                subprobe_scores.append(Sample(self.score(ref.data, s), parent=ref))
+                score = self.score(ref.data, s)
+                data = make_score_line(ref.subject, sampleset.subject, sampleset.path, score)
+                subprobe_scores.append(Sample(data, parent=ref))
 
             # Creating one sampleset per probe
             subprobe = SampleSet(subprobe_scores, parent=sampleset)
@@ -192,6 +195,18 @@ class Database(metaclass=ABCMeta):
         pass
 
 
+def make_score_line(
+    biometric_reference_subject, probe_subject, probe_path, score,
+):
+    data = "{0} {1} {2} {3}\n".format(
+        biometric_reference_subject,
+        probe_subject,
+        probe_path,
+        score,
+    )
+    return data
+
+
 def save_scores_four_columns(path, probe):
     """
     Write scores in the four columns format
@@ -199,7 +214,7 @@ def save_scores_four_columns(path, probe):
 
     with open(path, "w") as f:
         for biometric_reference in probe.samples:
-            line = "{0} {1} {2} {3}\n".format(
+            line = make_score_line(
                 biometric_reference.subject,
                 probe.subject,
                 probe.path,
@@ -207,4 +222,8 @@ def save_scores_four_columns(path, probe):
             )
             f.write(line)
 
-    return  DelayedSample(functools.partial(open, path), parent=probe)
+    def load():
+        with open(path) as f:
+            return f.read()
+
+    return DelayedSample(load, parent=probe)
