@@ -26,7 +26,7 @@ class BioAlgCheckpointMixin(CheckpointMixin):
 
     """
 
-    def __init__(self, features_dir, **kwargs):
+    def __init__(self, features_dir="", **kwargs):
         super().__init__(features_dir=features_dir, **kwargs)
         self.biometric_reference_dir = os.path.join(
             features_dir, "biometric_references"
@@ -63,15 +63,16 @@ class BioAlgCheckpointMixin(CheckpointMixin):
             # If sample already there, just load
             delayed_enrolled_sample = self.load(path)
             delayed_enrolled_sample.key = sampleset.key
+            delayed_enrolled_sample.subject = sampleset.subject
 
         return delayed_enrolled_sample
 
     def _score_sample_set(self, sampleset, biometric_references):
         """Given a sampleset for probing, compute the scores and retures a sample set with the scores
         """
+
         # Computing score
         scored_sample_set = super()._score_sample_set(sampleset, biometric_references)
-
         for s in scored_sample_set:
             # Checkpointing score
             path = os.path.join(self.score_dir, str(s.path) + ".txt")

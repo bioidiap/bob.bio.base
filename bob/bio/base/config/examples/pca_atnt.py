@@ -1,7 +1,7 @@
 from bob.bio.base.pipelines.vanilla_biometrics.legacy import DatabaseConnector
 from sklearn.pipeline import make_pipeline
 from bob.pipelines.transformers import CheckpointSampleLinearize, CheckpointSamplePCA
-from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import (
+from bob.bio.base.pipelines.vanilla_biometrics.implemented import (
     CheckpointDistance,
 )
 from bob.bio.face.database import AtntBioDatabase
@@ -20,9 +20,9 @@ algorithm = CheckpointDistance(features_dir="./example/")
 
 # comment out the code below to disable dask
 from bob.pipelines.mixins import estimator_dask_it, mix_me_up
-from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import (
+from bob.bio.base.pipelines.vanilla_biometrics.mixins import (
     BioAlgDaskMixin,
 )
 
-transformer = estimator_dask_it(transformer)
-algorithm = mix_me_up([BioAlgDaskMixin], algorithm)
+#transformer = estimator_dask_it(transformer)
+#algorithm = mix_me_up(BioAlgDaskMixin, algorithm)

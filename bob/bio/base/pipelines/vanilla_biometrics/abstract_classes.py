@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from bob.pipelines.sample import Sample, SampleSet, DelayedSample
-
+import functools
 
 class BioAlgorithm(metaclass=ABCMeta):
     """Describes a base biometric comparator for the Vanilla Biometrics Pipeline :ref:`_bob.bio.base.struct_bio_rec_sys`_.
@@ -95,6 +95,7 @@ class BioAlgorithm(metaclass=ABCMeta):
         # a sampleset either after or before scoring.
         # To be honest, this should be the default behaviour
         retval = []
+
         for subprobe_id, (s, parent) in enumerate(zip(data, sampleset.samples)):
             # Creating one sample per comparison
             subprobe_scores = []
@@ -201,13 +202,9 @@ def save_scores_four_columns(path, probe):
             line = "{0} {1} {2} {3}\n".format(
                 biometric_reference.subject,
                 probe.subject,
-                probe.key,
+                probe.path,
                 biometric_reference.data,
             )
             f.write(line)
 
-    def load():
-        with open(path) as f:
-            return [float(line.split()[-1]) for line in f]
-
-    return DelayedSample(load, parent=probe)
+    return  DelayedSample(functools.partial(open, path), parent=probe)
