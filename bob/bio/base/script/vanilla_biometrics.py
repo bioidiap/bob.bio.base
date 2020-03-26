@@ -156,7 +156,7 @@ def vanilla_biometrics(
     import dask.bag
     import itertools
     import os
-    from bob.pipelines.sample import Sample
+    from bob.pipelines.sample import Sample, DelayedSample
 
     if not os.path.exists(output):
         os.makedirs(output, exist_ok=True)
@@ -189,12 +189,10 @@ def vanilla_biometrics(
             result = itertools.chain(*result)
             for probe in result:
                 for sample in probe.samples:
-
                     if isinstance(sample, Sample):
-                        line = "{0} {1} {2} {3}\n".format(
-                            sample.key, probe.key, probe.path, sample.data
-                        )
-                        f.write(line)
+                        f.write("{0} {1} {2} {3}\n".format(sample.key, probe.key, probe.path, sample.data))
+                    elif isinstance(sample, DelayedSample):
+                        f.writelines(sample.load().readlines())
                     else:
                         raise TypeError("The output of the pipeline is not writeble")
 

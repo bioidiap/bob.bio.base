@@ -7,7 +7,7 @@ import os
 import functools
 from collections import defaultdict
 
-from .... import utils
+from bob.bio.base import utils
 from .abstract_classes import BioAlgorithm, Database, save_scores_four_columns
 from bob.io.base import HDF5File
 from bob.pipelines.mixins import SampleMixin, CheckpointMixin
@@ -30,7 +30,7 @@ def _biofile_to_delayed_sample(biofile, database):
     )
 
 
-class LegacyDatabaseConnector(Database):
+class DatabaseConnector(Database):
     """Wraps a bob.bio.base database and generates conforming samples
 
     This connector allows wrapping generic bob.bio.base datasets and generate
@@ -50,8 +50,7 @@ class LegacyDatabaseConnector(Database):
 
     """
 
-    def __init__(self, database, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, database, **kwargs):        
         self.database = database
 
     def background_model_samples(self):
@@ -96,7 +95,7 @@ class LegacyDatabaseConnector(Database):
         retval = []
         for m in self.database.model_ids(groups=group):
 
-            objects = self.database.enroll_files(groups=group, model_id=m)
+            objects = self.database.enroll_files(group=group, model_id=m)
 
             retval.append(
                 SampleSet(
@@ -137,7 +136,6 @@ class LegacyDatabaseConnector(Database):
             # Getting all the probe objects from a particular biometric
             # reference
             objects = self.database.probe_files(group=group, model_id=m)
-
             # Creating probe samples
             for o in objects:
                 if o.id not in probes:
@@ -194,7 +192,7 @@ def _get_pickable_method(method):
     return method
 
 
-class LegacyPreprocessor(CheckpointMixin, SampleMixin, _Preprocessor):
+class Preprocessor(CheckpointMixin, SampleMixin, _Preprocessor):
     def __init__(self, callable, **kwargs):
         instance = callable()
         super().__init__(
@@ -236,7 +234,7 @@ class _Extractor(_NonPickableWrapper, TransformerMixin):
         return {"requires_fit": self.instance.requires_training}
 
 
-class LegacyExtractor(CheckpointMixin, SampleMixin, _Extractor):
+class Extractor(CheckpointMixin, SampleMixin, _Extractor):
     def __init__(self, callable, model_path, **kwargs):
         instance = callable()
 
@@ -288,7 +286,7 @@ class _AlgorithmTransformer(_NonPickableWrapper, TransformerMixin):
         return {"requires_fit": self.instance.requires_projector_training}
 
 
-class LegacyAlgorithmAsTransformer(CheckpointMixin, SampleMixin, _AlgorithmTransformer):
+class AlgorithmAsTransformer(CheckpointMixin, SampleMixin, _AlgorithmTransformer):
     """Class that wraps :py:class:`bob.bio.base.algorithm.Algoritm`
 
     :py:method:`LegacyAlgorithmrMixin.fit` maps to :py:method:`bob.bio.base.algorithm.Algoritm.train_projector`
@@ -341,7 +339,7 @@ class LegacyAlgorithmAsTransformer(CheckpointMixin, SampleMixin, _AlgorithmTrans
         return self
 
 
-class LegacyAlgorithmAsBioAlg(BioAlgorithm, _NonPickableWrapper):
+class AlgorithmAsBioAlg(BioAlgorithm, _NonPickableWrapper):
     """Biometric Algorithm that handles legacy :py:class:`bob.bio.base.algorithm.Algorithm`
 
 
