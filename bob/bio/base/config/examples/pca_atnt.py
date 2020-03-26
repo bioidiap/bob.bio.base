@@ -5,10 +5,11 @@ from bob.bio.base.pipelines.vanilla_biometrics.implemented import (
     CheckpointDistance,
 )
 from bob.bio.face.database import AtntBioDatabase
+import os
 
 
 database = DatabaseConnector(
-    AtntBioDatabase(original_directory="./atnt"), protocol="Default"
+    AtntBioDatabase(original_directory=os.environ.get("ATNT_DATABASE_DIRECTORY")), protocol="Default"
 )
 transformer = make_pipeline(
     CheckpointSampleLinearize(features_dir="./example/extractor0"),
@@ -18,11 +19,11 @@ transformer = make_pipeline(
 )
 algorithm = CheckpointDistance(features_dir="./example/")
 
-# comment out the code below to disable dask
-from bob.pipelines.mixins import estimator_dask_it, mix_me_up
-from bob.bio.base.pipelines.vanilla_biometrics.mixins import (
-    BioAlgDaskMixin,
-)
+# # comment out the code below to disable dask
+# from bob.pipelines.mixins import estimator_dask_it, mix_me_up
+# from bob.bio.base.pipelines.vanilla_biometrics.mixins import (
+#     BioAlgDaskMixin,
+# )
 
-transformer = estimator_dask_it(transformer)
-algorithm = mix_me_up(BioAlgDaskMixin, algorithm)
+# transformer = estimator_dask_it(transformer)
+# algorithm = mix_me_up(BioAlgDaskMixin, algorithm)

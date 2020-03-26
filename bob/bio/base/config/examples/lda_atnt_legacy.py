@@ -2,20 +2,17 @@ from bob.bio.face.database import AtntBioDatabase
 from bob.bio.base.algorithm import LDA
 from bob.bio.face.preprocessor import FaceCrop
 from sklearn.pipeline import make_pipeline
-from bob.bio.base.mixins.legacy import (
-    LegacyPreprocessor,
-    LegacyAlgorithmAsTransformer,
-)
 from bob.pipelines.transformers import CheckpointSampleLinearize
-from bob.bio.base.pipelines.vanilla_biometrics.legacy import LegacyDatabaseConnector
+from bob.bio.base.pipelines.vanilla_biometrics.legacy import DatabaseConnector, Preprocessor, AlgorithmAsTransformer
 import functools
-from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import (
+from bob.bio.base.pipelines.vanilla_biometrics.implemented import (
+    Distance,
     CheckpointDistance,
 )
 
 # DATABASE
 
-database = LegacyDatabaseConnector(
+database = DatabaseConnector(
     AtntBioDatabase(original_directory="./atnt", protocol="Default"),
 )
 
@@ -49,20 +46,20 @@ lda = functools.partial(LDA, use_pinv=True, pca_subspace_dimension=0.90)
 
 
 transformer = make_pipeline(
-    LegacyPreprocessor(callable=face_cropper, features_dir="./example/transformer0"),
+    Preprocessor(callable=face_cropper, features_dir="./example/transformer0"),
     CheckpointSampleLinearize(features_dir="./example/transformer1"),
-    LegacyAlgorithmAsTransformer(
-        callable=lda, features_dir="./example/transformer2", model_path="./example/"
+    AlgorithmAsTransformer(
+        callable=lda, features_dir="./example/transformer2", model_path="./example/lda_projector.hdf5"
     ),
 )
 
-
 algorithm = CheckpointDistance(features_dir="./example/")
+# algorithm = Distance()
 
 
 # comment out the code below to disable dask
 from bob.pipelines.mixins import estimator_dask_it, mix_me_up
-from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import (
+from bob.bio.base.pipelines.vanilla_biometrics.mixins import (
     BioAlgDaskMixin,
 )
 
