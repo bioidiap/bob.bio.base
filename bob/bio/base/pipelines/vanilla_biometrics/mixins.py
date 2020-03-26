@@ -87,7 +87,7 @@ class BioAlgCheckpointMixin(CheckpointMixin):
 class BioAlgDaskMixin:
     def enroll_samples(self, biometric_reference_features):
         biometric_references = biometric_reference_features.map_partitions(
-            self.enroll_samples
+            super().enroll_samples
         )
         return biometric_references
 
@@ -102,5 +102,5 @@ class BioAlgDaskMixin:
 
         all_references = dask.delayed(list)(biometric_references)
 
-        scores = probe_features.map_partitions(self.score_samples, all_references)
+        scores = probe_features.map_partitions(super().score_samples, all_references)
         return scores
