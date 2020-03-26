@@ -4,8 +4,6 @@
 import os
 import abc
 import six
-# Nose is detecting a function as a test function, while it is not...
-from numpy.testing.decorators import setastest
 import bob.db.base
 
 
@@ -64,6 +62,10 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
     The arguments of the `Database` base class constructor.
 
     """
+
+    # tell test runners (such as nose and pytest) that this class is not a test class
+    ___test___ = False
+
     def __init__(
             self,
             name,
@@ -302,7 +304,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
 
         protocol: str
           The protocol for which the groups should be retrieved.
-          If you do not have protocols defined, just ignore this field. 
+          If you do not have protocols defined, just ignore this field.
         """
         raise NotImplementedError("This function must be implemented in your derived class.")
 
@@ -436,7 +438,6 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
         else:
             return files
 
-    @setastest(False)
     def test_files(self, groups=['dev']):
         """test_files(groups = ['dev']) -> files
 
