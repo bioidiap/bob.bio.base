@@ -96,7 +96,6 @@ class BioAlgorithm(metaclass=ABCMeta):
         # a sampleset either after or before scoring.
         # To be honest, this should be the default behaviour
         retval = []
-
         for subprobe_id, (s, parent) in enumerate(zip(data, sampleset.samples)):
             # Creating one sample per comparison
             subprobe_scores = []
@@ -104,7 +103,9 @@ class BioAlgorithm(metaclass=ABCMeta):
                 r for r in biometric_references if r.key in sampleset.references
             ]:
                 score = self.score(ref.data, s)
-                data = make_score_line(ref.subject, sampleset.subject, sampleset.path, score)
+                data = make_four_colums_score(
+                    ref.subject, sampleset.subject, sampleset.path, score
+                )
                 subprobe_scores.append(Sample(data, parent=ref))
 
             # Creating one sampleset per probe
@@ -195,32 +196,23 @@ class Database(metaclass=ABCMeta):
         pass
 
 
-def make_score_line(
+def make_four_colums_score(
     biometric_reference_subject, probe_subject, probe_path, score,
 ):
     data = "{0} {1} {2} {3}\n".format(
-        biometric_reference_subject,
-        probe_subject,
-        probe_path,
-        score,
+        biometric_reference_subject, probe_subject, probe_path, score,
     )
     return data
 
 
-def save_scores_four_columns(path, probe):
+def create_score_delayed_sample(path, probe):
     """
     Write scores in the four columns format
     """
 
     with open(path, "w") as f:
-        for biometric_reference in probe.samples:
-            line = make_score_line(
-                biometric_reference.subject,
-                probe.subject,
-                probe.path,
-                biometric_reference.data,
-            )
-            f.write(line)
+        for score_line in probe.samples:
+            f.write(score_line.data)
 
     def load():
         with open(path) as f:

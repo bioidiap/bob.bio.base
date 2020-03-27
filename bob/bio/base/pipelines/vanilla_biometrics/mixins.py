@@ -4,7 +4,7 @@ import bob.io.base
 import os
 import functools
 import dask
-from .abstract_classes import save_scores_four_columns
+from .abstract_classes import create_score_delayed_sample
 
 
 class BioAlgCheckpointMixin(CheckpointMixin):
@@ -61,9 +61,7 @@ class BioAlgCheckpointMixin(CheckpointMixin):
 
         else:
             # If sample already there, just load
-            delayed_enrolled_sample = self.load(path)
-            delayed_enrolled_sample.key = sampleset.key
-            delayed_enrolled_sample.subject = sampleset.subject
+            delayed_enrolled_sample = self.load(sampleset, path)
 
         return delayed_enrolled_sample
 
@@ -76,9 +74,9 @@ class BioAlgCheckpointMixin(CheckpointMixin):
         for s in scored_sample_set:
             # Checkpointing score
             path = os.path.join(self.score_dir, str(s.path) + ".txt")
-            bob.io.base.create_directories_safe(os.path.dirname(path))
+            os.makedirs(os.path.dirname(path), exist_ok=True)
 
-            delayed_scored_sample = save_scores_four_columns(path, s)
+            delayed_scored_sample = create_score_delayed_sample(path, s)
             s.samples = [delayed_scored_sample]
 
         return scored_sample_set
