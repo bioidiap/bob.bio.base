@@ -53,6 +53,8 @@ transformer = make_pipeline(
     ),
 )
 
+
+
 algorithm = CheckpointDistance(features_dir="./example/")
 # algorithm = Distance()
 

@@ -2,21 +2,21 @@ from bob.bio.face.database import AtntBioDatabase
 from bob.bio.base.algorithm import LDA
 from bob.bio.face.preprocessor import FaceCrop
 from sklearn.pipeline import make_pipeline
-from bob.bio.base.mixins.legacy import (
-    LegacyPreprocessor,
-    LegacyAlgorithmAsTransformer,
-    LegacyAlgorithmAsBioAlg,
-)
 from bob.pipelines.transformers import CheckpointSampleLinearize
-from bob.bio.base.pipelines.vanilla_biometrics.legacy import LegacyDatabaseConnector
+from bob.bio.base.pipelines.vanilla_biometrics.legacy import DatabaseConnector, Preprocessor, AlgorithmAsTransformer, AlgorithmAsBioAlg
 import functools
+from bob.bio.base.pipelines.vanilla_biometrics.implemented import (
+    Distance,
+    CheckpointDistance,
+)
+import os
 
 # DATABASE
-
-database = LegacyDatabaseConnector(
+database = DatabaseConnector(
     AtntBioDatabase(original_directory="./atnt", protocol="Default"),
 )
 
+base_dir = "example"
 
 # PREPROCESSOR LEGACY
 
@@ -47,19 +47,19 @@ lda = functools.partial(LDA, use_pinv=True, pca_subspace_dimension=0.90)
 
 
 transformer = make_pipeline(
-    LegacyPreprocessor(callable=face_cropper, features_dir="./example/transformer0"),
-    CheckpointSampleLinearize(features_dir="./example/transformer1"),
-    LegacyAlgorithmAsTransformer(
-        callable=lda, features_dir="./example/transformer2", model_path="./example/"
+    Preprocessor(callable=face_cropper, features_dir=os.path.join(base_dir,"transformer0")),
+    CheckpointSampleLinearize(features_dir=os.path.join(base_dir,"transformer1")),
+    AlgorithmAsTransformer(
+        callable=lda, features_dir=os.path.join(base_dir,"transformer2"), model_path=os.path.join(base_dir, "lda.hdf5")
     ),
 )
 
-algorithm = LegacyAlgorithmAsBioAlg(callable=lda, features_dir="./example/")
+
+algorithm = AlgorithmAsBioAlg(callable=lda, features_dir="./example/")
 
 
-# comment out the code below to disable dask
 from bob.pipelines.mixins import estimator_dask_it, mix_me_up
-from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import (
+from bob.bio.base.pipelines.vanilla_biometrics.mixins import (
     BioAlgDaskMixin,
 )
 

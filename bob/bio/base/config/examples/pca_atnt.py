@@ -8,22 +8,24 @@ from bob.bio.face.database import AtntBioDatabase
 import os
 
 
-database = DatabaseConnector(
-    AtntBioDatabase(original_directory=os.environ.get("ATNT_DATABASE_DIRECTORY")), protocol="Default"
-)
+base_dir = "example"
+
+database = DatabaseConnector(AtntBioDatabase(original_directory="./atnt", protocol="Default"))
+
 transformer = make_pipeline(
-    CheckpointSampleLinearize(features_dir="./example/extractor0"),
+    CheckpointSampleLinearize(features_dir=os.path.join(base_dir, "linearize")),
     CheckpointSamplePCA(
-        features_dir="./example/extractor1", model_path="./example/pca.pkl"
+        features_dir=os.path.join(base_dir, "pca_features"), model_path=os.path.join(base_dir, "pca.pkl")
     ),
 )
-algorithm = CheckpointDistance(features_dir="./example/")
+algorithm = CheckpointDistance(features_dir=base_dir)
 
 # # comment out the code below to disable dask
-# from bob.pipelines.mixins import estimator_dask_it, mix_me_up
-# from bob.bio.base.pipelines.vanilla_biometrics.mixins import (
-#     BioAlgDaskMixin,
-# )
+from bob.pipelines.mixins import estimator_dask_it, mix_me_up
+from bob.bio.base.pipelines.vanilla_biometrics.mixins import (
+    BioAlgDaskMixin,
+)
 
-# transformer = estimator_dask_it(transformer)
-# algorithm = mix_me_up(BioAlgDaskMixin, algorithm)
+transformer = estimator_dask_it(transformer)
+algorithm = mix_me_up([BioAlgDaskMixin], algorithm)
+
