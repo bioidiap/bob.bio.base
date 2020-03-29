@@ -173,12 +173,12 @@ class _NonPickableWrapper:
     def __setstate__(self, d):
         # Handling unpicklable objects
         self._instance = None
-        #return super().__setstate__(d)
+        # return super().__setstate__(d)
 
     def __getstate__(self):
         # Handling unpicklable objects
         self._instance = None
-        #return super().__getstate__()
+        # return super().__getstate__()
 
 
 class _Preprocessor(_NonPickableWrapper, TransformerMixin, BaseEstimator):
@@ -345,7 +345,7 @@ class AlgorithmAsTransformer(CheckpointMixin, SampleMixin, _AlgorithmTransformer
         return self
 
 
-class AlgorithmAsBioAlg(BioAlgorithm, _NonPickableWrapper):
+class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
     """Biometric Algorithm that handles legacy :py:class:`bob.bio.base.algorithm.Algorithm`
 
 
@@ -387,19 +387,35 @@ class AlgorithmAsBioAlg(BioAlgorithm, _NonPickableWrapper):
         # We should add an agregator function here so we can properlly agregate samples from
         # a sampleset either after or before scoring.
         # To be honest, this should be the default behaviour
+
+        def _write_sample(ref, probe, score):
+            data = make_four_colums_score(ref.subject, probe.subject, probe.path, score)
+            return Sample(data, parent=ref)
+
         retval = []
         for subprobe_id, s in enumerate(sampleset.samples):
             # Creating one sample per comparison
             subprobe_scores = []
 
-            for ref in [
-                r for r in biometric_references if r.key in sampleset.references
-            ]:
-                score = self.score(ref.data, s.data)
-                data = make_four_colums_score(
-                    ref.subject, sampleset.subject, sampleset.path, score
+            if self.allow_score_multiple_references:
+                if self.stacked_biometric_references is None:
+                    self.stacked_biometric_references = [
+                        ref.data for ref in biometric_references
+                    ]
+                scores = self.score_multiple_biometric_references(
+                    self.stacked_biometric_references, s.data
                 )
-                subprobe_scores.append(Sample(data, parent=ref))
+
+                # Wrapping the scores in samples
+                for ref, score in zip(biometric_references, scores):
+                    subprobe_scores.append(_write_sample(ref, sampleset, score))
+
+            else:
+                for ref in [
+                    r for r in biometric_references if r.key in sampleset.references
+                ]:
+                    score = self.score(ref.data, s.data)
+                    subprobe_scores.append(_write_sample(ref, sampleset, score))
 
             # Creating one sampleset per probe
             subprobe = SampleSet(subprobe_scores, parent=sampleset)
@@ -438,5 +454,17 @@ class AlgorithmAsBioAlg(BioAlgorithm, _NonPickableWrapper):
         reader = _get_pickable_method(self.instance.read_model)
         return DelayedSample(functools.partial(reader, path), parent=enroll_features)
 
-    def score(self, model, probe, **kwargs):
-        return self.instance.score(model, probe)
+    def score(self, biometric_reference, data, **kwargs):
+        return self.instance.score(biometric_reference, data)
+
+    def score_multiple_biometric_references(self, biometric_references, data, **kwargs):
+        """
+        It handles the score computation of one probe against multiple biometric references using legacy
+        `bob.bio.base`
+
+        Basically it wraps :py:meth:`bob.bio.base.algorithm.Algorithm.score_for_multiple_models`.
+
+        """
+
+        scores = self.instance.score_for_multiple_models(biometric_references, data)
+        return scores

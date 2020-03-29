@@ -55,7 +55,6 @@ extractor = functools.partial(
     node_distance=(8, 8),
 )
 
-
 transformer = make_pipeline(
     Preprocessor(preprocessor, features_dir=os.path.join(base_dir, "face_cropper")),
     Extractor(extractor, features_dir=os.path.join(base_dir, "gabor_graph")),
@@ -71,7 +70,8 @@ gabor_jet = functools.partial(
     gabor_sigma=math.sqrt(2.0) * math.pi,
 )
 
-algorithm = AlgorithmAsBioAlg(callable=gabor_jet, features_dir=base_dir)
+algorithm = AlgorithmAsBioAlg(callable=gabor_jet, features_dir=base_dir, allow_score_multiple_references=True)
+#algorithm = AlgorithmAsBioAlg(callable=gabor_jet, features_dir=base_dir)
 
 
 # comment out the code below to disable dask

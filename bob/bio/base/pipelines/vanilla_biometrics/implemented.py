@@ -3,11 +3,14 @@ from sklearn.utils.validation import check_array
 import numpy
 from .abstract_classes import BioAlgorithm
 from .mixins import BioAlgCheckpointMixin
+from scipy.spatial.distance import cdist
 
 
 class Distance(BioAlgorithm):
-    def __init__(self, distance_function=scipy.spatial.distance.euclidean, factor=-1):
-
+    def __init__(
+        self, distance_function=scipy.spatial.distance.euclidean, factor=-1, **kwargs
+    ):
+        super().__init__(**kwargs)
         self.distance_function = distance_function
         self.factor = factor
 
@@ -33,7 +36,7 @@ class Distance(BioAlgorithm):
 
         return numpy.mean(enroll_features, axis=0)
 
-    def score(self, model, probe):
+    def score(self, biometric_reference, data):
         """score(model, probe) -> float
 
         Computes the distance of the model to the probe using the distance function specified in the constructor.
@@ -54,9 +57,18 @@ class Distance(BioAlgorithm):
           A similarity value between ``model`` and ``probe``
         """
 
-        probe = probe.flatten()
+        data = data.flatten()
         # return the negative distance (as a similarity measure)
-        return self.factor * self.distance_function(model, probe)
+        return self.factor * self.distance_function(biometric_reference, data)
+
+    def score_multiple_biometric_references(self, biometric_references, data):
+        data = data.flatten()
+        references_stacked = numpy.vstack(biometric_references)
+        scores = self.factor * cdist(
+            references_stacked, data.reshape(1, -1), self.distance_function
+        )
+
+        return list(scores.flatten())
 
 
 class CheckpointDistance(BioAlgCheckpointMixin, Distance):

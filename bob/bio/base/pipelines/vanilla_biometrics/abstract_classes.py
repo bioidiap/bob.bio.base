@@ -19,7 +19,7 @@ class BioAlgorithm(metaclass=ABCMeta):
 
     """
 
-    def __init__(self, allow_score_multiple_references=False):
+    def __init__(self, allow_score_multiple_references=False, **kwargs):
         self.allow_score_multiple_references = allow_score_multiple_references
         self.stacked_biometric_references = None
 
@@ -126,10 +126,10 @@ class BioAlgorithm(metaclass=ABCMeta):
                 scores = self.score_multiple_biometric_references(
                     self.stacked_biometric_references, s
                 )
-
+                
                 # Wrapping the scores in samples
                 for ref, score in zip(biometric_references, scores):
-                    subprobe_scores.append(_write_sample(ref, sampleset, score[0]))
+                    subprobe_scores.append(_write_sample(ref, sampleset, score))
             else:
 
                 for ref in [
@@ -172,7 +172,7 @@ class BioAlgorithm(metaclass=ABCMeta):
     @abstractmethod
     def score_multiple_biometric_references(self, biometric_references, data):
         """
-        It handles the score computation of one probe and multiple biometric references
+        It handles the score computation of one probe against multiple biometric references
         This method is called is called if `allow_scoring_multiple_references` is set to true
 
         Parameters
