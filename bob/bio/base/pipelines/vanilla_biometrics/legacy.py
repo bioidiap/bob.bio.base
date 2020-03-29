@@ -173,12 +173,12 @@ class _NonPickableWrapper:
     def __setstate__(self, d):
         # Handling unpicklable objects
         self._instance = None
-        return super().__setstate__(d)
+        #return super().__setstate__(d)
 
     def __getstate__(self):
         # Handling unpicklable objects
         self._instance = None
-        return super().__getstate__()
+        #return super().__getstate__()
 
 
 class _Preprocessor(_NonPickableWrapper, TransformerMixin, BaseEstimator):

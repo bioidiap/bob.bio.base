@@ -9,7 +9,19 @@ class BioAlgorithm(metaclass=ABCMeta):
     biometric model enrollement, via ``enroll()`` and scoring, with
     ``score()``.
 
+    Parameters
+    ----------
+
+        allow_score_multiple_references: bool
+          If true will call `self.score_multiple_biometric_references`, at scoring time, to compute scores in one shot with multiple probes.
+          This optiization is useful when all probes needs to be compared with all biometric references AND
+          your scoring function allows this broadcast computation.
+
     """
+
+    def __init__(self, allow_score_multiple_references=False):
+        self.allow_score_multiple_references = allow_score_multiple_references
+        self.stacked_biometric_references = None
 
     def enroll_samples(self, biometric_references):
         """This method should implement the sub-pipeline 1 of the Vanilla Biometrics Pipeline :ref:`_vanilla-pipeline-1`.
@@ -96,17 +108,35 @@ class BioAlgorithm(metaclass=ABCMeta):
         # a sampleset either after or before scoring.
         # To be honest, this should be the default behaviour
         retval = []
+
+        def _write_sample(ref, probe, score):
+            data = make_four_colums_score(ref.subject, probe.subject, probe.path, score)
+            return Sample(data, parent=ref)
+
         for subprobe_id, (s, parent) in enumerate(zip(data, sampleset.samples)):
             # Creating one sample per comparison
             subprobe_scores = []
-            for ref in [
-                r for r in biometric_references if r.key in sampleset.references
-            ]:
-                score = self.score(ref.data, s)
-                data = make_four_colums_score(
-                    ref.subject, sampleset.subject, sampleset.path, score
+
+            if self.allow_score_multiple_references:
+                # Multiple scoring
+                if self.stacked_biometric_references is None:
+                    self.stacked_biometric_references = [
+                        ref.data for ref in biometric_references
+                    ]
+                scores = self.score_multiple_biometric_references(
+                    self.stacked_biometric_references, s
                 )
-                subprobe_scores.append(Sample(data, parent=ref))
+
+                # Wrapping the scores in samples
+                for ref, score in zip(biometric_references, scores):
+                    subprobe_scores.append(_write_sample(ref, sampleset, score[0]))
+            else:
+
+                for ref in [
+                    r for r in biometric_references if r.key in sampleset.references
+                ]:
+                    score = self.score(ref.data, s)
+                    subprobe_scores.append(_write_sample(ref, sampleset, score))
 
             # Creating one sampleset per probe
             subprobe = SampleSet(subprobe_scores, parent=sampleset)
@@ -135,6 +165,23 @@ class BioAlgorithm(metaclass=ABCMeta):
                 For each sample in a probe, returns as many scores as there are
                 samples in the probe, together with the probe's and the
                 relevant reference's subject identifiers.
+
+        """
+        pass
+
+    @abstractmethod
+    def score_multiple_biometric_references(self, biometric_references, data):
+        """
+        It handles the score computation of one probe and multiple biometric references
+        This method is called is called if `allow_scoring_multiple_references` is set to true
+
+        Parameters
+        ----------
+
+            biometric_references: list
+                List of biometric references to be scored
+            data:
+                Data used for the creation of ONE BIOMETRIC REFERENCE
 
         """
         pass

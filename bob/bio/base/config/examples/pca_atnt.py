@@ -18,7 +18,7 @@ transformer = make_pipeline(
         features_dir=os.path.join(base_dir, "pca_features"), model_path=os.path.join(base_dir, "pca.pkl")
     ),
 )
-algorithm = CheckpointDistance(features_dir=base_dir)
+algorithm = CheckpointDistance(features_dir=base_dir, allow_score_multiple_references=True)
 
 # # comment out the code below to disable dask
 from bob.pipelines.mixins import estimator_dask_it, mix_me_up
