@@ -182,11 +182,14 @@ class _NonPickableWrapper:
 
 
 class _Preprocessor(_NonPickableWrapper, TransformerMixin, BaseEstimator):
-    def transform(self, X, annotations):
-        return [self.instance(data, annot) for data, annot in zip(X, annotations)]
+    def transform(self, X, annotations=None):
+        if annotations is None:
+            return [self.instance(data) for data in X]
+        else:
+            return [self.instance(data, annot) for data, annot in zip(X, annotations)]
 
     def _more_tags(self):
-        return {"stateless": True}
+        return {"stateless": True, "requires_fit": False}
 
 
 def _get_pickable_method(method):
@@ -199,11 +202,11 @@ def _get_pickable_method(method):
 
 
 class Preprocessor(CheckpointMixin, SampleMixin, _Preprocessor):
-    def __init__(self, callable, **kwargs):
+    def __init__(self, callable, transform_extra_arguments=(("annotations", "annotations"),), **kwargs):
         instance = callable()
         super().__init__(
             callable=callable,
-            transform_extra_arguments=(("annotations", "annotations"),),
+            transform_extra_arguments=transform_extra_arguments,
             load_func=_get_pickable_method(instance.read_data),
             save_func=_get_pickable_method(instance.write_data),
             **kwargs,
