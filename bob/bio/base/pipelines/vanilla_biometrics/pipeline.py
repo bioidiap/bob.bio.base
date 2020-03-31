@@ -9,6 +9,7 @@ for bob.bio experiments
 """
 
 import logging
+import numpy
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ def biometric_pipeline(
     probe_samples,
     transformer,
     biometric_algorithm,
+    allow_scoring_with_all_biometric_references=False,
 ):
     logger.info(
         f" >> Vanilla Biometrics: Training background model with pipeline {transformer}"
@@ -43,12 +45,25 @@ def biometric_pipeline(
 
     # Scores all probes
     return compute_scores(
-        probe_samples, biometric_references, transformer, biometric_algorithm
+        probe_samples,
+        biometric_references,
+        transformer,
+        biometric_algorithm,
+        allow_scoring_with_all_biometric_references,
     )
 
 
 def train_background_model(background_model_samples, transformer):
     # background_model_samples is a list of Samples
+
+    # We might have algorithms that has no data for training
+    if len(background_model_samples) <= 0:
+        logger.warning(
+            "There's no data to train background model."
+            "For the rest of the execution it will be assumed that the pipeline is stateless."
+        )
+        return transformer
+
     transformer = transformer.fit(background_model_samples)
     return transformer
 
@@ -67,13 +82,21 @@ def create_biometric_reference(
 
 
 def compute_scores(
-    probe_samples, biometric_references, transformer, biometric_algorithm
+    probe_samples,
+    biometric_references,
+    transformer,
+    biometric_algorithm,
+    allow_scoring_with_all_biometric_references=False,
 ):
 
     # probes is a list of SampleSets
     probe_features = transformer.transform(probe_samples)
 
-    scores = biometric_algorithm.score_samples(probe_features, biometric_references)
+    scores = biometric_algorithm.score_samples(
+        probe_features,
+        biometric_references,
+        allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+    )
 
     # scores is a list of Samples
     return scores
