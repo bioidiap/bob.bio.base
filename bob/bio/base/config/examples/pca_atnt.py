@@ -11,6 +11,7 @@ import os
 base_dir = "example"
 
 database = DatabaseConnector(AtntBioDatabase(original_directory="./atnt", protocol="Default"))
+database.allow_scoring_with_all_biometric_references = True
 
 transformer = make_pipeline(
     CheckpointSampleLinearize(features_dir=os.path.join(base_dir, "linearize")),
@@ -26,6 +27,7 @@ from bob.bio.base.pipelines.vanilla_biometrics.mixins import (
     BioAlgDaskMixin,
 )
 
-transformer = estimator_dask_it(transformer)
-algorithm = mix_me_up([BioAlgDaskMixin], algorithm)
+from bob.bio.base.pipelines.vanilla_biometrics import VanillaBiometrics, dask_vanilla_biometrics
 
+pipeline = VanillaBiometrics(transformer, algorithm)
+#pipeline = dask_vanilla_biometrics(VanillaBiometrics(transformer, algorithm))

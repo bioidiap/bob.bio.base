@@ -57,20 +57,12 @@ TODO: Work out this help
     entry_point_group="bob.pipelines.config", cls=ConfigCommand, epilog=EPILOG,
 )
 @click.option(
-    "--transformer",
-    "-e",
+    "--pipeline",
+    "-p",
     required=True,
     cls=ResourceOption,
-    entry_point_group="bob.pipelines.transformer",
+    entry_point_group="bob.pipelines.pipeline",
     help="Feature extraction algorithm",
-)
-@click.option(
-    "--algorithm",
-    "-a",
-    required=True,
-    cls=ResourceOption,
-    entry_point_group="bob.bio.algorithm",  # This should be linked to bob.bio.base
-    help="Biometric Algorithm (class that implements the methods: `fit`, `enroll` and `score`)",
 )
 @click.option(
     "--database",
@@ -106,7 +98,7 @@ TODO: Work out this help
 )
 @verbosity_option(cls=ResourceOption)
 def vanilla_biometrics(
-    transformer, algorithm, database, dask_client, groups, output, **kwargs
+    pipeline, database, dask_client, groups, output, **kwargs
 ):
     """Runs the simplest biometrics pipeline.
 
@@ -152,7 +144,7 @@ def vanilla_biometrics(
 
     """
 
-    from bob.bio.base.pipelines.vanilla_biometrics.pipeline import biometric_pipeline
+    from bob.bio.base.pipelines.vanilla_biometrics.pipeline import VanillaBiometrics
     import dask.bag
     import itertools
     import os
@@ -174,14 +166,11 @@ def vanilla_biometrics(
                 else False
             )
 
-            result = biometric_pipeline(
-                database.background_model_samples(),
-                biometric_references,
-                database.probes(group=group),
-                transformer,
-                algorithm,
-                allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references
-            )
+            result = pipeline(database.background_model_samples(),
+                              biometric_references,
+                              database.probes(group=group),
+                              allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references
+                              )
 
             if isinstance(result, dask.bag.core.Bag):
                 if dask_client is not None:

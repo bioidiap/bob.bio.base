@@ -44,12 +44,7 @@ transformer = make_pipeline(
 )
 algorithm = CheckpointDistance(features_dir="./example/")
 
-# comment out the code below to disable dask
-from bob.pipelines.mixins import estimator_dask_it, mix_me_up
-from bob.bio.base.pipelines.vanilla_biometrics.mixins import (
-    BioAlgDaskMixin,
-)
+from bob.bio.base.pipelines.vanilla_biometrics import VanillaBiometrics, dask_vanilla_biometrics
 
-transformer = estimator_dask_it(transformer)
-algorithm = mix_me_up([BioAlgDaskMixin], algorithm)
-
+#pipeline = VanillaBiometrics(transformer, algorithm)
+pipeline = dask_vanilla_biometrics(VanillaBiometrics(transformer, algorithm), npartitions=48)

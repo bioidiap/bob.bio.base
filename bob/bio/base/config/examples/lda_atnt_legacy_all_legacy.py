@@ -58,10 +58,7 @@ transformer = make_pipeline(
 algorithm = AlgorithmAsBioAlg(callable=lda, features_dir="./example/")
 
 
-from bob.pipelines.mixins import estimator_dask_it, mix_me_up
-from bob.bio.base.pipelines.vanilla_biometrics.mixins import (
-    BioAlgDaskMixin,
-)
+from bob.bio.base.pipelines.vanilla_biometrics import VanillaBiometrics, dask_vanilla_biometrics
 
-transformer = estimator_dask_it(transformer)
-algorithm = mix_me_up([BioAlgDaskMixin], algorithm)
+#pipeline = VanillaBiometrics(transformer, algorithm)
+pipeline = dask_vanilla_biometrics(VanillaBiometrics(transformer, algorithm))
