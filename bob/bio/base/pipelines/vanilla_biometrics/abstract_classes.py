@@ -12,10 +12,6 @@ class BioAlgorithm(metaclass=ABCMeta):
     Parameters
     ----------
 
-        allow_score_multiple_references: bool
-          If true will call `self.score_multiple_biometric_references`, at scoring time, to compute scores in one shot with multiple probes.
-          This optiization is useful when all probes needs to be compared with all biometric references AND
-          your scoring function allows this broadcast computation.
 
     """
 
@@ -65,7 +61,7 @@ class BioAlgorithm(metaclass=ABCMeta):
         """
         pass
 
-    def score_samples(self, probe_features, biometric_references):
+    def score_samples(self, probe_features, biometric_references, allow_scoring_with_all_biometric_references=False):
         """Scores a new sample against multiple (potential) references
 
         Parameters
@@ -80,6 +76,12 @@ class BioAlgorithm(metaclass=ABCMeta):
                 scoring the input probes, must have an ``id`` attribute that
                 will be used to cross-reference which probes need to be scored.
 
+            allow_scoring_with_all_biometric_references: bool
+                If true will call `self.score_multiple_biometric_references`, at scoring time, to compute scores in one shot with multiple probes.
+                This optiization is useful when all probes needs to be compared with all biometric references AND
+                your scoring function allows this broadcast computation.
+
+
         Returns
         -------
 
@@ -92,10 +94,10 @@ class BioAlgorithm(metaclass=ABCMeta):
 
         retval = []
         for p in probe_features:
-            retval.append(self._score_sample_set(p, biometric_references))
+            retval.append(self._score_sample_set(p, biometric_references, allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references))
         return retval
 
-    def _score_sample_set(self, sampleset, biometric_references):
+    def _score_sample_set(self, sampleset, biometric_references, allow_scoring_with_all_biometric_references):
         """Given a sampleset for probing, compute the scores and retures a sample set with the scores
         """
 
@@ -117,7 +119,7 @@ class BioAlgorithm(metaclass=ABCMeta):
             # Creating one sample per comparison
             subprobe_scores = []
 
-            if self.allow_score_multiple_references:
+            if allow_scoring_with_all_biometric_references:
                 # Multiple scoring
                 if self.stacked_biometric_references is None:
                     self.stacked_biometric_references = [

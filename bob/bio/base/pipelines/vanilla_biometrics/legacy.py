@@ -202,7 +202,12 @@ def _get_pickable_method(method):
 
 
 class Preprocessor(CheckpointMixin, SampleMixin, _Preprocessor):
-    def __init__(self, callable, transform_extra_arguments=(("annotations", "annotations"),), **kwargs):
+    def __init__(
+        self,
+        callable,
+        transform_extra_arguments=(("annotations", "annotations"),),
+        **kwargs,
+    ):
         instance = callable()
         super().__init__(
             callable=callable,
@@ -240,7 +245,10 @@ class _Extractor(_NonPickableWrapper, TransformerMixin, BaseEstimator):
         return self
 
     def _more_tags(self):
-        return {"requires_fit": self.instance.requires_training}
+        return {
+            "requires_fit": self.instance.requires_training,
+            "stateless": not self.instance.requires_training,
+        }
 
 
 class Extractor(CheckpointMixin, SampleMixin, _Extractor):
@@ -381,7 +389,12 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
         # Enroll
         return self.enroll(sampleset)
 
-    def _score_sample_set(self, sampleset, biometric_references):
+    def _score_sample_set(
+        self,
+        sampleset,
+        biometric_references,
+        allow_scoring_with_all_biometric_references=False,
+    ):
         """Given a sampleset for probing, compute the scores and retures a sample set with the scores
         """
 
@@ -400,7 +413,7 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
             # Creating one sample per comparison
             subprobe_scores = []
 
-            if self.allow_score_multiple_references:
+            if allow_scoring_with_all_biometric_references:
                 if self.stacked_biometric_references is None:
                     self.stacked_biometric_references = [
                         ref.data for ref in biometric_references

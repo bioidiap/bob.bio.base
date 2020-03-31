@@ -65,12 +65,21 @@ class BioAlgCheckpointMixin(CheckpointMixin):
 
         return delayed_enrolled_sample
 
-    def _score_sample_set(self, sampleset, biometric_references):
+    def _score_sample_set(
+        self,
+        sampleset,
+        biometric_references,
+        allow_scoring_with_all_biometric_references=False
+    ):
         """Given a sampleset for probing, compute the scores and retures a sample set with the scores
         """
 
         # Computing score
-        scored_sample_set = super()._score_sample_set(sampleset, biometric_references)
+        scored_sample_set = super()._score_sample_set(
+            sampleset,
+            biometric_references,
+            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+        )
         for s in scored_sample_set:
             # Checkpointing score
             path = os.path.join(self.score_dir, str(s.path) + ".txt")
@@ -89,7 +98,12 @@ class BioAlgDaskMixin:
         )
         return biometric_references
 
-    def score_samples(self, probe_features, biometric_references):
+    def score_samples(
+        self,
+        probe_features,
+        biometric_references,
+        allow_scoring_with_all_biometric_references=False,
+    ):
 
         # TODO: Here, we are sending all computed biometric references to all
         # probes.  It would be more efficient if only the models related to each
@@ -100,5 +114,9 @@ class BioAlgDaskMixin:
 
         all_references = dask.delayed(list)(biometric_references)
 
-        scores = probe_features.map_partitions(super().score_samples, all_references)
+        scores = probe_features.map_partitions(
+            super().score_samples,
+            all_references,
+            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+        )
         return scores

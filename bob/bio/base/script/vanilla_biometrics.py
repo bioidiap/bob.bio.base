@@ -168,12 +168,19 @@ def vanilla_biometrics(
 
             logger.info(f"Running vanilla biometrics for group {group}")
 
+            allow_scoring_with_all_biometric_references = (
+                database.allow_scoring_with_all_biometric_references
+                if hasattr(database, "allow_scoring_with_all_biometric_references")
+                else False
+            )
+
             result = biometric_pipeline(
                 database.background_model_samples(),
                 biometric_references,
                 database.probes(group=group),
                 transformer,
                 algorithm,
+                allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references
             )
 
             if isinstance(result, dask.bag.core.Bag):
