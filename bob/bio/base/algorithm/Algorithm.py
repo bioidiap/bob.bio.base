@@ -214,10 +214,11 @@ class Algorithm (object):
     score : float
       The fused similarity between the given ``models`` and the ``probe``.
     """
+
     if isinstance(models, list):
-      return self.model_fusion_function([self.score(model, probe) for model in models])
+      return [self.score(model, probe) for model in models]
     elif isinstance(models, numpy.ndarray):
-      return self.model_fusion_function([self.score(models[i,:], probe) for i in range(models.shape[0])])
+      return [self.score(models[i,:], probe) for i in range(models.shape[0])]
     else:
       raise ValueError("The model does not have the desired format (list, array, ...)")
 

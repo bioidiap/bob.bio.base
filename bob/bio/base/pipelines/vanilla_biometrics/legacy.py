@@ -20,6 +20,7 @@ from bob.pipelines.sample import DelayedSample, SampleSet, Sample
 from bob.pipelines.utils import is_picklable
 from sklearn.base import TransformerMixin, BaseEstimator
 import logging
+import copy
 
 logger = logging.getLogger("bob.bio.base")
 
@@ -72,9 +73,7 @@ class DatabaseConnector(Database):
                 model training.  See, e.g., :py:func:`.pipelines.first`.
 
         """
-
         objects = self.database.training_files()
-
         return [_biofile_to_delayed_sample(k, self.database) for k in objects]
 
     def references(self, group="dev"):
@@ -376,7 +375,9 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
 
     """
 
-    def __init__(self, callable, features_dir, extension=".hdf5", **kwargs):
+    def __init__(
+        self, callable, features_dir, extension=".hdf5", model_path=None, **kwargs
+    ):
         super().__init__(callable, **kwargs)
         self.features_dir = features_dir
         self.biometric_reference_dir = os.path.join(
@@ -384,10 +385,48 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
         )
         self.score_dir = os.path.join(self.features_dir, "scores")
         self.extension = extension
+        self.model_path = model_path
+        self.is_projector_loaded = False
 
     def _enroll_sample_set(self, sampleset):
         # Enroll
         return self.enroll(sampleset)
+
+    def _load_projector(self):
+        """
+        Run :py:meth:`bob.bio.base.algorithm.Algorithm.load_projector` if necessary by
+        :py:class:`bob.bio.base.algorithm.Algorithm`
+        """
+        if self.instance.performs_projection and not self.is_projector_loaded:
+            if self.model_path is None:
+                raise ValueError(
+                    "Algorithm " + f"{self. instance} performs_projection. Hence, "
+                    "`model_path` needs to passed in `AlgorithmAsBioAlg.__init__`"
+                )
+            else:
+                # Loading model
+                self.instance.load_projector(self.model_path)
+                self.is_projector_loaded = True
+
+    def _restore_state_of_ref(self, ref):
+        """
+        There are some algorithms that :py:meth:`bob.bio.base.algorithm.Algorithm.read_model` or 
+        :py:meth:`bob.bio.base.algorithm.Algorithm.read_feature` depends
+        on the state of `self` to be properly loaded.
+        In these cases, it's not possible to rely only in the unbounded method extracted by
+        :py:func:`_get_pickable_method`.
+
+        This function replaces the current state of these objects (that are not)
+        by bounding them with `self.instance`
+        """
+        
+        if isinstance(ref, DelayedSample):
+            new_ref = copy.copy(ref)
+
+            new_ref.load = functools.partial(ref.load.func, self.instance, ref.load.args[1])
+            return new_ref
+        else:
+            return ref
 
     def _score_sample_set(
         self,
@@ -408,20 +447,31 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
             data = make_four_colums_score(ref.subject, probe.subject, probe.path, score)
             return Sample(data, parent=ref)
 
+        self._load_projector()
         retval = []
+
         for subprobe_id, s in enumerate(sampleset.samples):
             # Creating one sample per comparison
             subprobe_scores = []
 
             if allow_scoring_with_all_biometric_references:
                 if self.stacked_biometric_references is None:
+
+                    if self.instance.performs_projection:
+                        # Hydrating the state of biometric references 
+                        biometric_references = [
+                            self._restore_state_of_ref(ref)
+                            for ref in biometric_references
+                        ]
+
                     self.stacked_biometric_references = [
                         ref.data for ref in biometric_references
                     ]
+
+                s = self._restore_state_of_ref(s)
                 scores = self.score_multiple_biometric_references(
                     self.stacked_biometric_references, s.data
                 )
-
                 # Wrapping the scores in samples
                 for ref, score in zip(biometric_references, scores):
                     subprobe_scores.append(_write_sample(ref, sampleset, score))
@@ -430,6 +480,7 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
                 for ref in [
                     r for r in biometric_references if r.key in sampleset.references
                 ]:
+                    ref = self._restore_state_of_ref(ref)
                     score = self.score(ref.data, s.data)
                     subprobe_scores.append(_write_sample(ref, sampleset, score))
 
@@ -458,6 +509,7 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
         path = os.path.join(
             self.biometric_reference_dir, str(enroll_features.key) + self.extension
         )
+        self._load_projector()
         if path is None or not os.path.isfile(path):
             # Enrolling
             data = [s.data for s in enroll_features.samples]
