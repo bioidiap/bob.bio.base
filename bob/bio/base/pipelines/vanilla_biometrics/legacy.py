@@ -17,10 +17,10 @@ from .abstract_classes import (
 from bob.io.base import HDF5File
 from bob.pipelines.mixins import SampleMixin, CheckpointMixin
 from bob.pipelines.sample import DelayedSample, SampleSet, Sample
-from bob.pipelines.utils import is_picklable
 from sklearn.base import TransformerMixin, BaseEstimator
 import logging
 import copy
+
 
 logger = logging.getLogger("bob.bio.base")
 
@@ -165,19 +165,23 @@ class _NonPickableWrapper:
 
     @property
     def instance(self):
-        if self._instance is None:
+        # Input can be a functools.partial or an object
+        if isinstance(self.callable, functools.partial) and self._instance is None:
             self._instance = self.callable()
+        else:
+            self._instance = self.callable
+
         return self._instance
 
     def __setstate__(self, d):
         # Handling unpicklable objects
-        self._instance = None
-        # return super().__setstate__(d)
+        self.__dict__ = d
 
     def __getstate__(self):
-        # Handling unpicklable objects
-        self._instance = None
-        # return super().__getstate__()
+        # Handling unpicklable objects        
+        if isinstance(self.callable, functools.partial):
+            self._instance = None
+        return self.__dict__
 
 
 class _Preprocessor(_NonPickableWrapper, TransformerMixin, BaseEstimator):
@@ -192,6 +196,7 @@ class _Preprocessor(_NonPickableWrapper, TransformerMixin, BaseEstimator):
 
 
 def _get_pickable_method(method):
+    from bob.pipelines.utils import is_picklable
     if not is_picklable(method):
         logger.warning(
             f"The method {method} is not picklable. Returning its unbounded method"
@@ -207,12 +212,18 @@ class Preprocessor(CheckpointMixin, SampleMixin, _Preprocessor):
         transform_extra_arguments=(("annotations", "annotations"),),
         **kwargs,
     ):
-        instance = callable()
+        
+        # Input can be a functools.partial or an object
+        if isinstance(callable, functools.partial):
+            instance = callable()
+        else:
+            instance = callable
+
         super().__init__(
             callable=callable,
             transform_extra_arguments=transform_extra_arguments,
-            load_func=_get_pickable_method(instance.read_data),
-            save_func=_get_pickable_method(instance.write_data),
+            load_func=instance.read_data,
+            save_func=instance.write_data,
             **kwargs,
         )
 
@@ -252,7 +263,11 @@ class _Extractor(_NonPickableWrapper, TransformerMixin, BaseEstimator):
 
 class Extractor(CheckpointMixin, SampleMixin, _Extractor):
     def __init__(self, callable, model_path=None, **kwargs):
-        instance = callable()
+        # Input can be a functools.partial or an object        
+        if isinstance(callable, functools.partial):
+            instance = callable()
+        else:
+            instance = callable
 
         transform_extra_arguments = None
         self.requires_metadata = False
@@ -268,8 +283,8 @@ class Extractor(CheckpointMixin, SampleMixin, _Extractor):
             callable=callable,
             transform_extra_arguments=transform_extra_arguments,
             fit_extra_arguments=fit_extra_arguments,
-            load_func=_get_pickable_method(instance.read_feature),
-            save_func=_get_pickable_method(instance.write_feature),
+            load_func=instance.read_feature,
+            save_func=instance.write_feature,
             model_path=model_path,
             **kwargs,
         )
@@ -283,9 +298,30 @@ class Extractor(CheckpointMixin, SampleMixin, _Extractor):
         return self
 
 
-class _AlgorithmTransformer(_NonPickableWrapper, TransformerMixin, BaseEstimator):
+class _AlgorithmTransformer(TransformerMixin, BaseEstimator):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.is_projector_loaded = False
+
     def transform(self, X):
+        self._load_projector()
         return [self.instance.project(feature) for feature in X]
+
+    def _load_projector(self):
+        """
+        Run :py:meth:`bob.bio.base.algorithm.Algorithm.load_projector` if necessary by
+        :py:class:`bob.bio.base.algorithm.Algorithm`
+        """
+        if self.instance.performs_projection:
+            if self.model_path is None:
+                raise ValueError(
+                    "Algorithm " + f"{self.instance} performs_projection. Hence, "
+                    "`model_path` needs to passed in `AlgorithmAsTransformer.__init__`"
+                )
+            else:
+                # Loading model
+                self.instance.load_projector(self.model_path)
 
     def fit(self, X, y=None):
         if not self.instance.requires_projector_training:
@@ -421,9 +457,9 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
         """
         
         if isinstance(ref, DelayedSample):
-            new_ref = copy.copy(ref)
-
+            new_ref = copy.copy(ref)            
             new_ref.load = functools.partial(ref.load.func, self.instance, ref.load.args[1])
+            #new_ref.load = functools.partial(ref.load.func, self.instance, ref.load.args[1])
             return new_ref
         else:
             return ref
@@ -456,19 +492,11 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
 
             if allow_scoring_with_all_biometric_references:
                 if self.stacked_biometric_references is None:
-
-                    if self.instance.performs_projection:
-                        # Hydrating the state of biometric references 
-                        biometric_references = [
-                            self._restore_state_of_ref(ref)
-                            for ref in biometric_references
-                        ]
-
                     self.stacked_biometric_references = [
                         ref.data for ref in biometric_references
                     ]
 
-                s = self._restore_state_of_ref(s)
+                #s = self._restore_state_of_ref(s)
                 scores = self.score_multiple_biometric_references(
                     self.stacked_biometric_references, s.data
                 )
@@ -480,7 +508,7 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
                 for ref in [
                     r for r in biometric_references if r.key in sampleset.references
                 ]:
-                    ref = self._restore_state_of_ref(ref)
+                    
                     score = self.score(ref.data, s.data)
                     subprobe_scores.append(_write_sample(ref, sampleset, score))
 
@@ -518,9 +546,9 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
             # Checkpointing
             os.makedirs(os.path.dirname(path), exist_ok=True)
             self.instance.write_model(model, path)
-
-        reader = _get_pickable_method(self.instance.read_model)
-        return DelayedSample(functools.partial(reader, path), parent=enroll_features)
+        
+        reader = self.instance.read_model
+        return  DelayedSample(functools.partial(reader, path), parent=enroll_features)
 
     def score(self, biometric_reference, data, **kwargs):
         return self.instance.score(biometric_reference, data)
@@ -532,7 +560,6 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
 
         Basically it wraps :py:meth:`bob.bio.base.algorithm.Algorithm.score_for_multiple_models`.
 
-        """
-
+        """        
         scores = self.instance.score_for_multiple_models(biometric_references, data)
         return scores

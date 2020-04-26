@@ -36,18 +36,15 @@ RIGHT_EYE_POS = (CROPPED_IMAGE_HEIGHT // 5, CROPPED_IMAGE_WIDTH // 4 - 1)
 LEFT_EYE_POS = (CROPPED_IMAGE_HEIGHT // 5, CROPPED_IMAGE_WIDTH // 4 * 3)
 
 # FaceCrop
-preprocessor = functools.partial(
-    bob.bio.face.preprocessor.INormLBP,
-    face_cropper=functools.partial(
-        bob.bio.face.preprocessor.FaceCrop,
+preprocessor = bob.bio.face.preprocessor.INormLBP(
+    face_cropper=bob.bio.face.preprocessor.FaceCrop(
         cropped_image_size=(CROPPED_IMAGE_HEIGHT, CROPPED_IMAGE_WIDTH),
         cropped_positions={"leye": LEFT_EYE_POS, "reye": RIGHT_EYE_POS},
         color_channel="gray",
     ),
 )
 
-extractor = functools.partial(
-    bob.bio.face.extractor.GridGraph,
+extractor = bob.bio.face.extractor.GridGraph(
     # Gabor parameters
     gabor_sigma=math.sqrt(2.0) * math.pi,
     # what kind of information to extract
@@ -63,9 +60,7 @@ transformer = make_pipeline(
 
 
 ## algorithm
-
-gabor_jet = functools.partial(
-    bob.bio.face.algorithm.GaborJet,
+gabor_jet = bob.bio.face.algorithm.GaborJet(
     gabor_jet_similarity_type="PhaseDiffPlusCanberra",
     multiple_feature_scoring="max_jet",
     gabor_sigma=math.sqrt(2.0) * math.pi,
@@ -73,10 +68,9 @@ gabor_jet = functools.partial(
 
 algorithm = AlgorithmAsBioAlg(callable=gabor_jet, features_dir=base_dir, allow_score_multiple_references=True)
 #algorithm = AlgorithmAsBioAlg(callable=gabor_jet, features_dir=base_dir)
-
-
 from bob.bio.base.pipelines.vanilla_biometrics import VanillaBiometrics, dask_vanilla_biometrics
 
 #pipeline = VanillaBiometrics(transformer, algorithm)
-pipeline = dask_vanilla_biometrics(VanillaBiometrics(transformer, algorithm), npartitions=48)
+#pipeline = dask_vanilla_biometrics(VanillaBiometrics(transformer, algorithm), npartitions=48)
+pipeline = VanillaBiometrics(transformer, algorithm)
 

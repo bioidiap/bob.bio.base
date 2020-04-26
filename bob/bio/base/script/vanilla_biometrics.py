@@ -77,7 +77,6 @@ TODO: Work out this help
     "-l",
     required=False,
     cls=ResourceOption,
-    entry_point_group="bob.pipelines.client",  # This should be linked to bob.bio.base
     help="Dask client for the execution of the pipeline.",
 )
 @click.option(
@@ -151,7 +150,7 @@ def vanilla_biometrics(
     from bob.pipelines.sample import Sample, DelayedSample
 
     if not os.path.exists(output):
-        os.makedirs(output, exist_ok=True)
+        os.makedirs(output, exist_ok=True)    
 
     for group in groups:
 
