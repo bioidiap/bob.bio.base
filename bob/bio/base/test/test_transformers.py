@@ -5,22 +5,17 @@ from bob.bio.base.preprocessor import Preprocessor
 from bob.bio.base.extractor import Extractor
 from bob.bio.base.algorithm import Algorithm
 from bob.bio.base.transformers import (
-    PreprocessorTransformer,
-    ExtractorTransformer,
-    AlgorithmTransformer,
+    TransformerPreprocessor,
+    TransformerExtractor,
+    TransformerAlgorithm,
 )
+from bob.bio.base.wrappers import wrap_bob_bio_legacy
+from sklearn.pipeline import make_pipeline
 import bob.pipelines as mario
 import numpy as np
 import tempfile
 import os
 import bob.io.base
-from bob.bio.base.wrappers import (
-    wrap_preprocessor,
-    wrap_extractor,
-    wrap_algorithm,
-    wrap_transform_bob,
-)
-from sklearn.pipeline import make_pipeline
 
 
 class _FakePreprocesor(Preprocessor):
@@ -29,7 +24,7 @@ class _FakePreprocesor(Preprocessor):
 
 
 class _FakeExtractor(Extractor):
-    def __call__(self, data, metadata=None):
+    def __call__(self, data):
         return data.flatten()
 
 
@@ -39,7 +34,7 @@ class _FakeExtractorFittable(Extractor):
         self.requires_training = True
         self.model = None
 
-    def __call__(self, data, metadata=None):
+    def __call__(self, data):
         return data @ self.model
 
     def train(self, training_data, extractor_file):
@@ -49,12 +44,15 @@ class _FakeExtractorFittable(Extractor):
 
 class _FakeAlgorithm(Algorithm):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.requires_training = True
-        self.split_training_features_by_client = True
+        super().__init__(
+            performs_projection=True,
+            requires_projector_training=True,
+            split_training_features_by_client=True,
+            **kwargs
+        )
         self.model = None
 
-    def project(self, data, metadata=None):
+    def project(self, data):
         return data + self.model
 
     def train_projector(self, training_features, projector_file):
@@ -104,7 +102,7 @@ def assert_checkpoints(transformed_sample, dir_name):
 def test_preprocessor():
 
     preprocessor = _FakePreprocesor()
-    preprocessor_transformer = PreprocessorTransformer(preprocessor)
+    preprocessor_transformer = TransformerPreprocessor(preprocessor)
 
     # Testing sample
     transform_extra_arguments = [("annotations", "annotations")]
@@ -137,7 +135,7 @@ def test_preprocessor():
 def test_extractor():
 
     extractor = _FakeExtractor()
-    extractor_transformer = ExtractorTransformer(extractor)
+    extractor_transformer = TransformerExtractor(extractor)
 
     # Testing sample
     sample_transformer = mario.SampleWrapper(extractor_transformer)
@@ -169,7 +167,7 @@ def test_extractor_fittable():
 
         extractor_file = os.path.join(dir_name, "Extractor.hdf5")
         extractor = _FakeExtractorFittable()
-        extractor_transformer = ExtractorTransformer(
+        extractor_transformer = TransformerExtractor(
             extractor, model_path=extractor_file
         )
 
@@ -205,11 +203,11 @@ def test_algorithm():
     with tempfile.TemporaryDirectory() as dir_name:
 
         projector_file = os.path.join(dir_name, "Projector.hdf5")
-        projector_pkl = os.path.join(dir_name, "Projector.pkl")  # Testing pickling
+        projector_pkl = os.path.join(dir_name, "Projector.pkl")
 
         algorithm = _FakeAlgorithm()
-        algorithm_transformer = AlgorithmTransformer(
-            algorithm, projector_file=projector_file
+        algorithm_transformer = TransformerAlgorithm(
+            algorithm, model_path=projector_file
         )
 
         # Testing sample
@@ -238,7 +236,7 @@ def test_algorithm():
             features_dir=dir_name,
             load_func=algorithm.read_feature,
             save_func=algorithm.write_feature,
-            model_path=projector_pkl,
+            model_path=projector_pkl,  # this will pickle the algorithm.
         )
         # Fitting again to assert if it loads again
         checkpointing_transformer = checkpointing_transformer.fit(training_samples)
@@ -252,25 +250,18 @@ def test_algorithm():
 
 
 def test_wrap_bob_pipeline():
-
     def run_pipeline(with_dask):
         with tempfile.TemporaryDirectory() as dir_name:
 
             pipeline = make_pipeline(
-                wrap_transform_bob(
-                    _FakePreprocesor(),
-                    dir_name,
-                    transform_extra_arguments=(("annotations", "annotations"),),
-                ),
-                wrap_transform_bob(_FakeExtractor(), dir_name,),
-                wrap_transform_bob(
-                    _FakeAlgorithm(), dir_name, fit_extra_arguments=(("y", "subject"),)
-                ),
+                wrap_bob_bio_legacy(_FakePreprocesor(), dir_name,),
+                wrap_bob_bio_legacy(_FakeExtractor(), dir_name,),
+                wrap_bob_bio_legacy(_FakeAlgorithm(), dir_name),
             )
             oracle = [7.0, 7.0, 7.0, 7.0]
             training_samples = generate_samples(n_subjects=2, n_samples_per_subject=2)
             test_samples = generate_samples(n_subjects=1, n_samples_per_subject=1)
-            if with_dask:                
+            if with_dask:
                 pipeline = mario.wrap(["dask"], pipeline)
                 transformed_samples = (
                     pipeline.fit(training_samples).transform(test_samples).compute()

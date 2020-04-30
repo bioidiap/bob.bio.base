@@ -1,6 +1,5 @@
 from abc import ABCMeta, abstractmethod
 from bob.pipelines.sample import Sample, SampleSet, DelayedSample
-import functools
 
 
 class BioAlgorithm(metaclass=ABCMeta):
@@ -128,7 +127,7 @@ class BioAlgorithm(metaclass=ABCMeta):
                 scores = self.score_multiple_biometric_references(
                     self.stacked_biometric_references, s
                 )
-                
+
                 # Wrapping the scores in samples
                 for ref, score in zip(biometric_references, scores):
                     subprobe_scores.append(_write_sample(ref, sampleset, score))

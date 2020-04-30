@@ -25,7 +25,7 @@ import copy
 logger = logging.getLogger("bob.bio.base")
 
 
-def _biofile_to_delayed_sample(biofile, database):
+def biofile_to_delayed_sample(biofile, database):
     return DelayedSample(
         load=functools.partial(
             biofile.load, database.original_directory, database.original_extension,
@@ -74,7 +74,7 @@ class DatabaseConnector(Database):
 
         """
         objects = self.database.training_files()
-        return [_biofile_to_delayed_sample(k, self.database) for k in objects]
+        return [biofile_to_delayed_sample(k, self.database) for k in objects]
 
     def references(self, group="dev"):
         """Returns :py:class:`Reference`'s to enroll biometric references
@@ -104,7 +104,7 @@ class DatabaseConnector(Database):
 
             retval.append(
                 SampleSet(
-                    [_biofile_to_delayed_sample(k, self.database) for k in objects],
+                    [biofile_to_delayed_sample(k, self.database) for k in objects],
                     key=str(m),
                     path=str(m),
                     subject=str(objects[0].client_id),
@@ -145,7 +145,7 @@ class DatabaseConnector(Database):
             for o in objects:
                 if o.id not in probes:
                     probes[o.id] = SampleSet(
-                        [_biofile_to_delayed_sample(o, self.database)],
+                        [biofile_to_delayed_sample(o, self.database)],
                         key=str(o.client_id),
                         path=o.path,
                         subject=str(o.client_id),
@@ -212,7 +212,7 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
 
     def _restore_state_of_ref(self, ref):
         """
-        There are some algorithms that :py:meth:`bob.bio.base.algorithm.Algorithm.read_model` or 
+        There are some algorithms that :py:meth:`bob.bio.base.algorithm.Algorithm.read_model` or
         :py:meth:`bob.bio.base.algorithm.Algorithm.read_feature` depends
         on the state of `self` to be properly loaded.
         In these cases, it's not possible to rely only in the unbounded method extracted by
@@ -221,9 +221,9 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
         This function replaces the current state of these objects (that are not)
         by bounding them with `self.instance`
         """
-        
+
         if isinstance(ref, DelayedSample):
-            new_ref = copy.copy(ref)            
+            new_ref = copy.copy(ref)
             new_ref.load = functools.partial(ref.load.func, self.instance, ref.load.args[1])
             #new_ref.load = functools.partial(ref.load.func, self.instance, ref.load.args[1])
             return new_ref
@@ -274,7 +274,7 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
                 for ref in [
                     r for r in biometric_references if r.key in sampleset.references
                 ]:
-                    
+
                     score = self.score(ref.data, s.data)
                     subprobe_scores.append(_write_sample(ref, sampleset, score))
 
@@ -312,7 +312,7 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
             # Checkpointing
             os.makedirs(os.path.dirname(path), exist_ok=True)
             self.instance.write_model(model, path)
-        
+
         reader = self.instance.read_model
         return  DelayedSample(functools.partial(reader, path), parent=enroll_features)
 
@@ -326,6 +326,6 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
 
         Basically it wraps :py:meth:`bob.bio.base.algorithm.Algorithm.score_for_multiple_models`.
 
-        """        
+        """
         scores = self.instance.score_for_multiple_models(biometric_references, data)
         return scores

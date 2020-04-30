@@ -164,10 +164,10 @@ def dask_vanilla_biometrics(pipeline, npartitions=None):
        Number of partitions for the initial `Dask.bag`
     """
 
-    from bob.pipelines.mixins import estimator_dask_it, mix_me_up
+    from bob.pipelines import wrap
     from bob.bio.base.pipelines.vanilla_biometrics.mixins import BioAlgDaskMixin
 
-    transformer = estimator_dask_it(pipeline.transformer, npartitions=npartitions)
-    biometric_algorithm = mix_me_up([BioAlgDaskMixin], pipeline.biometric_algorithm)
+    transformer = wrap(["dask"], pipeline.transformer, npartitions=npartitions)
+    biometric_algorithm = wrap([BioAlgDaskMixin], pipeline.biometric_algorithm)
 
     return VanillaBiometrics(transformer, biometric_algorithm)
