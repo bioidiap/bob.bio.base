@@ -17,7 +17,6 @@ from .abstract_classes import (
 from bob.io.base import HDF5File
 from bob.pipelines.mixins import SampleMixin, CheckpointMixin
 from bob.pipelines.sample import DelayedSample, SampleSet, Sample
-from sklearn.base import TransformerMixin, BaseEstimator
 import logging
 import copy
 

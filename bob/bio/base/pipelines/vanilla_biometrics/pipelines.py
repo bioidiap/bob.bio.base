@@ -14,7 +14,7 @@ import numpy
 logger = logging.getLogger(__name__)
 
 
-class VanillaBiometrics(object):
+class VanillaBiometricsPipeline(object):
     """
     Vanilla Biometrics Pipeline
 
@@ -120,7 +120,7 @@ class VanillaBiometrics(object):
         biometric_reference_features = self.transformer.transform(
             biometric_reference_samples
         )
-
+        
         biometric_references = self.biometric_algorithm.enroll_samples(
             biometric_reference_features
         )
@@ -137,7 +137,7 @@ class VanillaBiometrics(object):
 
         # probes is a list of SampleSets
         probe_features = self.transformer.transform(probe_samples)
-
+        
         scores = self.biometric_algorithm.score_samples(
             probe_features,
             biometric_references,

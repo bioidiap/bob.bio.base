@@ -23,17 +23,17 @@ from bob.bio.base.wrappers import (
 from sklearn.pipeline import make_pipeline
 
 
-class _FakePreprocesor(Preprocessor):
+class FakePreprocesor(Preprocessor):
     def __call__(self, data, annotations=None):
         return data + annotations
 
 
-class _FakeExtractor(Extractor):
+class FakeExtractor(Extractor):
     def __call__(self, data, metadata=None):
         return data.flatten()
 
 
-class _FakeExtractorFittable(Extractor):
+class FakeExtractorFittable(Extractor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.requires_training = True
@@ -47,7 +47,7 @@ class _FakeExtractorFittable(Extractor):
         bob.io.base.save(self.model, extractor_file)
 
 
-class _FakeAlgorithm(Algorithm):
+class FakeAlgorithm(Algorithm):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.requires_training = True
@@ -103,7 +103,7 @@ def assert_checkpoints(transformed_sample, dir_name):
 
 def test_preprocessor():
 
-    preprocessor = _FakePreprocesor()
+    preprocessor = FakePreprocesor()
     preprocessor_transformer = PreprocessorTransformer(preprocessor)
 
     # Testing sample
@@ -136,7 +136,7 @@ def test_preprocessor():
 
 def test_extractor():
 
-    extractor = _FakeExtractor()
+    extractor = FakeExtractor()
     extractor_transformer = ExtractorTransformer(extractor)
 
     # Testing sample
@@ -168,7 +168,7 @@ def test_extractor_fittable():
     with tempfile.TemporaryDirectory() as dir_name:
 
         extractor_file = os.path.join(dir_name, "Extractor.hdf5")
-        extractor = _FakeExtractorFittable()
+        extractor = FakeExtractorFittable()
         extractor_transformer = ExtractorTransformer(
             extractor, model_path=extractor_file
         )
@@ -207,7 +207,7 @@ def test_algorithm():
         projector_file = os.path.join(dir_name, "Projector.hdf5")
         projector_pkl = os.path.join(dir_name, "Projector.pkl")  # Testing pickling
 
-        algorithm = _FakeAlgorithm()
+        algorithm = FakeAlgorithm()
         algorithm_transformer = AlgorithmTransformer(
             algorithm, projector_file=projector_file
         )
@@ -258,13 +258,13 @@ def test_wrap_bob_pipeline():
 
             pipeline = make_pipeline(
                 wrap_transform_bob(
-                    _FakePreprocesor(),
+                    FakePreprocesor(),
                     dir_name,
                     transform_extra_arguments=(("annotations", "annotations"),),
                 ),
-                wrap_transform_bob(_FakeExtractor(), dir_name,),
+                wrap_transform_bob(FakeExtractor(), dir_name,),
                 wrap_transform_bob(
-                    _FakeAlgorithm(), dir_name, fit_extra_arguments=(("y", "subject"),)
+                    FakeAlgorithm(), dir_name
                 ),
             )
             oracle = [7.0, 7.0, 7.0, 7.0]

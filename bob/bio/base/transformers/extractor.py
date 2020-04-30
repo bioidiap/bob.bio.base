@@ -5,6 +5,7 @@ from sklearn.base import TransformerMixin, BaseEstimator
 from bob.bio.base.extractor import Extractor
 from . import split_X_by_y
 
+
 class ExtractorTransformer(TransformerMixin, BaseEstimator):
     """
     Scikit learn transformer for :any:`bob.bio.base.extractor.Extractor`.
@@ -29,7 +30,7 @@ class ExtractorTransformer(TransformerMixin, BaseEstimator):
                 "`callable` should be an instance of `bob.bio.base.extractor.Extractor`"
             )
 
-        if callable.requires_training and (model_path is None or model_path==""):
+        if callable.requires_training and (model_path is None or model_path == ""):
             raise ValueError(
                 f"`model_path` needs to be set if extractor {callable} requires training"
             )

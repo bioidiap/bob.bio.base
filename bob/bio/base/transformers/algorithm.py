@@ -7,6 +7,7 @@ from bob.pipelines.utils import is_picklable
 from . import split_X_by_y
 import os
 
+
 class AlgorithmTransformer(TransformerMixin, BaseEstimator):
     """Class that wraps :any:`bob.bio.base.algorithm.Algoritm`
 
@@ -56,8 +57,8 @@ class AlgorithmTransformer(TransformerMixin, BaseEstimator):
 
     def fit(self, X, y=None):
         if not self.callable.requires_training:
-            return self        
-        training_data = X        
+            return self
+        training_data = X
         if self.callable.split_training_features_by_client:
             training_data = split_X_by_y(X, y)
 
@@ -65,7 +66,7 @@ class AlgorithmTransformer(TransformerMixin, BaseEstimator):
         self.callable.train_projector(training_data, self.projector_file)
         return self
 
-    def transform(self, X, metadata=None):        
+    def transform(self, X, metadata=None):
         if metadata is None:
             return [self.callable.project(data) for data in X]
         else:
@@ -75,4 +76,7 @@ class AlgorithmTransformer(TransformerMixin, BaseEstimator):
             ]
 
     def _more_tags(self):
-        return {"stateless": not self.callable.requires_training, "requires_fit": self.callable.requires_training}
+        return {
+            "stateless": not self.callable.requires_training,
+            "requires_fit": self.callable.requires_training,
+        }

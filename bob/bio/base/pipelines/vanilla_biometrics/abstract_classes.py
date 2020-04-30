@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# vim: set fileencoding=utf-8 :
+
+
 from abc import ABCMeta, abstractmethod
 from bob.pipelines.sample import Sample, SampleSet, DelayedSample
 import functools
@@ -11,7 +15,8 @@ class BioAlgorithm(metaclass=ABCMeta):
 
     Parameters
     ----------
-
+      allow_score_multiple_references: bool
+         If true, your scoring function can be executed by :any:`BioAlgorithm.score_multiple_biometric_references`
 
     """
 
@@ -111,10 +116,6 @@ class BioAlgorithm(metaclass=ABCMeta):
         # To be honest, this should be the default behaviour
         retval = []
 
-        def _write_sample(ref, probe, score):
-            data = make_four_colums_score(ref.subject, probe.subject, probe.path, score)
-            return Sample(data, parent=ref)
-
         for subprobe_id, (s, parent) in enumerate(zip(data, sampleset.samples)):
             # Creating one sample per comparison
             subprobe_scores = []
@@ -129,20 +130,20 @@ class BioAlgorithm(metaclass=ABCMeta):
                     self.stacked_biometric_references, s
                 )
                 
-                # Wrapping the scores in samples
-                for ref, score in zip(biometric_references, scores):
-                    subprobe_scores.append(_write_sample(ref, sampleset, score))
+                # Wrapping the scores in samples                
+                for ref, score in zip(biometric_references, scores):                    
+                    subprobe_scores.append(Sample(score, parent=ref))
             else:
 
                 for ref in [
                     r for r in biometric_references if r.key in sampleset.references
                 ]:
                     score = self.score(ref.data, s)
-                    subprobe_scores.append(_write_sample(ref, sampleset, score))
+                    subprobe_scores.append(Sample(score, parent=ref))
 
             # Creating one sampleset per probe
-            subprobe = SampleSet(subprobe_scores, parent=sampleset)
-            subprobe.subprobe_id = subprobe_id
+            subprobe = SampleSet(subprobe_scores, parent=parent)
+            subprobe.subject = sampleset.subject            
             retval.append(subprobe)
 
         return retval
@@ -245,13 +246,27 @@ class Database(metaclass=ABCMeta):
         pass
 
 
-def make_four_colums_score(
-    biometric_reference_subject, probe_subject, probe_path, score,
-):
-    data = "{0} {1} {2} {3}\n".format(
-        biometric_reference_subject, probe_subject, probe_path, score,
-    )
-    return data
+class ScoreWriter(metaclass=ABCMeta):
+    """
+    Defines base methods to read, write scores and concatenate scores
+    for :any:`BioAlgorithm`
+    """
+
+    def __init__(self, extension=".txt"):
+        self.extension = extension
+
+    @abstractmethod
+    def write(self, sampleset, path):
+        pass
+
+
+    @abstractmethod
+    def read(self, path):
+        pass
+
+    @abstractmethod
+    def concatenate_write_scores(self, sampleset, path):
+        pass
 
 
 def create_score_delayed_sample(path, probe):

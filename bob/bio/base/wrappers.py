@@ -13,9 +13,11 @@ import bob.pipelines as mario
 import os
 
 
-
 def wrap_transform_bob(
-    bob_object, dir_name, fit_extra_arguments=None, transform_extra_arguments=None
+    bob_object,
+    dir_name,
+    fit_extra_arguments=(("y", "subject"),),
+    transform_extra_arguments=None,
 ):
     """
     Wraps either :any:`bob.bio.base.preprocessor.Preprocessor`, :any:`bob.bio.base.extractor.Extractor`
