@@ -75,7 +75,4 @@ class AlgorithmTransformer(TransformerMixin, BaseEstimator):
             ]
 
     def _more_tags(self):
-        if self.callable.requires_training:
-            return {"stateless": False, "requires_fit": True}
-        else:
-            return {"stateless": True, "requires_fit": False}
+        return {"stateless": not self.callable.requires_training, "requires_fit": self.callable.requires_training}
