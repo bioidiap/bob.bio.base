@@ -148,6 +148,69 @@ class VanillaBiometrics(object):
         return scores
 
 
+class VanillaBiometricsZTNorm(object):
+    """
+    Vanilla Biometrics Pipelines that runs ZT Score Normalization
+    """
+
+    def __init__(vanilla_pipeline):
+        self.vanilla_pipeline = vanilla_pipeline
+
+    def __call__(
+        self,
+        background_model_samples,
+        biometric_reference_samples,
+        probe_samples,
+        z_probe_samples,
+        t_biometric_reference_samples,
+        allow_scoring_with_all_biometric_references=False,
+    ):
+        logger.info(
+            f" >> Vanilla Biometrics: Training background model with pipeline {self.transformer}"
+        )
+
+        # Training background model (fit will return even if samples is ``None``,
+        # in which case we suppose the algorithm is not trainable in any way)
+        self.vanilla_pipeline.transformer = self.vanilla_pipeline.train_background_model(
+            background_model_samples
+        )
+
+        logger.info(
+            f" >> Creating biometric references with the biometric algorithm {self.biometric_algorithm}"
+        )
+
+        # Create biometric samples
+        biometric_references = self.vanilla_pipeline.create_biometric_reference(
+            biometric_reference_samples
+        )
+
+        logger.info(
+            f" >> Computing scores with the biometric algorithm {self.biometric_algorithm}"
+        )
+
+        # Scores all probes
+        scores = self.vanilla_pipeline.compute_scores(
+            probe_samples,
+            biometric_references,
+            allow_scoring_with_all_biometric_references,
+        )
+
+        # Return a list of SampleSets containing the Z-Statistics per
+        # biometric reference
+        zstatistics = self.compute_zstatistics(
+            zprobe_samples,
+            biometric_references,
+            allow_scoring_with_all_biometric_references,
+        )
+        z_norm_scores = self.znorm(scores, zstatistics)
+
+
+        # Create t-biometric references
+        t_biometric_references = self.vanilla_pipeline.create_biometric_reference(
+            t_biometric_reference_samples
+        )
+
+
 def dask_vanilla_biometrics(pipeline, npartitions=None):
     """
     Given a :py:class:`VanillaBiometrics`, wraps :py:meth:`VanillaBiometrics.transformer` and
