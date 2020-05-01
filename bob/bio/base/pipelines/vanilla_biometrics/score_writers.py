@@ -34,7 +34,7 @@ class FourColumnsScoreWriter(ScoreWriter):
                 )
                 for biometric_reference in probe
             ]
-            filename = os.path.join(path, probe.subject)
+            filename = os.path.join(path, probe.subject) + ".txt"
             open(filename, "w").writelines(lines)
             checkpointed_scores.append(
                 SampleSet(
