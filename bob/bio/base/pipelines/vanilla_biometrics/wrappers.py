@@ -1,10 +1,12 @@
-from bob.pipelines.sample import DelayedSample
+from bob.pipelines import DelayedSample
 import bob.io.base
 import os
 import dask
-from .abstract_classes import create_score_delayed_sample, BioAlgorithm
 import functools
 from .score_writers import FourColumnsScoreWriter
+from .abstract_classes import BioAlgorithm
+
+import bob.pipelines as mario
 
 
 class BioAlgorithmCheckpointWrapper(BioAlgorithm):
@@ -44,16 +46,14 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         force=False,
         **kwargs
     ):
-        super().__init__(base_dir=base_dir, **kwargs)
-        self.biometric_reference_dir = os.path.join(
-            base_dir, "biometric_references"
-        )
+        super().__init__(**kwargs)
+
+        self.biometric_reference_dir = os.path.join(base_dir, "biometric_references")
         self.score_dir = os.path.join(base_dir, "scores")
         self.biometric_algorithm = biometric_algorithm
         self.force = force
-        self._biometric_reference_extension = ".hdf5"        
+        self._biometric_reference_extension = ".hdf5"
         self.score_writer = score_writer
-
 
     def enroll(self, enroll_features):
         return self.biometric_algorithm.enroll(enroll_features)
@@ -99,31 +99,34 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         biometric_references,
         allow_scoring_with_all_biometric_references=False,
     ):
-        """Given a sampleset for probing, compute the scores and retures a sample set with the scores
+        """Given a sampleset for probing, compute the scores and returns a sample set with the scores
         """
+
+        # TODO: WE CAN'T REUSE THE ALREADY WRITTEN SCORE FILE FOR LOADING
+        #       UNLESS WE SAVE THE PICKLED THE SAMPLESET WITH THE SCORES
 
         path = os.path.join(self.score_dir, str(sampleset.key))
 
-        if self.force or not os.path.exists(path):            
-            # Computing score
-            scored_sample_set = self.biometric_algorithm._score_sample_set(
-                sampleset,
-                biometric_references,
-                allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
-            )
+        # Computing score
+        scored_sample_set = self.biometric_algorithm._score_sample_set(
+            sampleset,
+            biometric_references,
+            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+        )
 
-            scored_sample_set = self.score_writer.write(scored_sample_set, path)
-        else:
-            # TODO: WRITE LOAD CHECKPOINT
-            pass
+        scored_sample_set = self.score_writer.write(scored_sample_set, path)
 
         return scored_sample_set
 
 
-class BioAlgDaskMixin:
+class BioAlgorithmDaskWrapper(BioAlgorithm):
+    def __init__(self, biometric_algorithm, **kwargs):
+        self.biometric_algorithm = biometric_algorithm
+
     def enroll_samples(self, biometric_reference_features):
+
         biometric_references = biometric_reference_features.map_partitions(
-            super().enroll_samples
+            self.biometric_algorithm.enroll_samples
         )
         return biometric_references
 
@@ -144,8 +147,44 @@ class BioAlgDaskMixin:
         all_references = dask.delayed(list)(biometric_references)
 
         scores = probe_features.map_partitions(
-            super().score_samples,
+            self.biometric_algorithm.score_samples,
             all_references,
             allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
         )
         return scores
+
+    def enroll(self, data):
+        return self.biometric_algorithm.enroll(data)
+
+    def score(self, biometric_reference, data):
+        return self.biometric_algorithm.score(biometric_reference, data)
+
+    def score_multiple_biometric_references(self, biometric_references, data):
+        return self.biometric_algorithm.score_multiple_biometric_references(
+            biometric_references, data
+        )
+
+
+def dask_vanilla_biometrics(vanila_biometrics_pipeline, npartitions=None):
+    """
+    Given a :any:`VanillaBiometrics`, wraps :any:`VanillaBiometrics.transformer` and
+    :any:`VanillaBiometrics.biometric_algorithm` to be executed with dask
+
+    Parameters
+    ----------
+
+    vanila_biometrics_pipeline: :any:`VanillaBiometrics`
+       Vanilla Biometrics based pipeline to be dasked
+
+    npartitions: int
+       Number of partitions for the initial :any:`dask.bag`
+    """
+
+    vanila_biometrics_pipeline.transformer = mario.wrap(
+        ["dask"], vanila_biometrics_pipeline.transformer, npartitions=npartitions
+    )
+    vanila_biometrics_pipeline.biometric_algorithm = BioAlgorithmDaskWrapper(
+        vanila_biometrics_pipeline.biometric_algorithm
+    )
+
+    return vanila_biometrics_pipeline
