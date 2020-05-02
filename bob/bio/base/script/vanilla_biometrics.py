@@ -158,7 +158,6 @@ def vanilla_biometrics(pipeline, database, dask_client, groups, output, **kwargs
         biometric_references = database.references(group=group)
 
         logger.info(f"Running vanilla biometrics for group {group}")
-
         allow_scoring_with_all_biometric_references = (
             database.allow_scoring_with_all_biometric_references
             if hasattr(database, "allow_scoring_with_all_biometric_references")
@@ -182,14 +181,15 @@ def vanilla_biometrics(pipeline, database, dask_client, groups, output, **kwargs
                 result = result.compute(scheduler="single-threaded")
 
         # Check if there's a score writer hooked in
-        if isinstance(pipeline.biometric_algorithm, BioAlgorithmCheckpointWrapper):
+        if hasattr(pipeline.biometric_algorithm, "score_writer"):
             pipeline.biometric_algorithm.score_writer.concatenate_write_scores(result, score_file_name)
         else:
-            # Flatting out the list
-            result = itertools.chain(*result)
-            for probe in result:
-                for sample in probe.samples:
-                    f.write(sample.data)
+            with open(score_file_name, "w") as f:
+                # Flatting out the list
+                result = itertools.chain(*result)
+                for probe in result:
+                    for sample in probe.samples:
+                        f.writelines(sample.data)
 
     if dask_client is not None:
         dask_client.shutdown()
