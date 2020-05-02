@@ -4,6 +4,7 @@
 from bob.bio.base.preprocessor import Preprocessor
 from bob.bio.base.extractor import Extractor
 from bob.bio.base.algorithm import Algorithm
+import scipy
 from bob.bio.base.transformers import (
     PreprocessorTransformer,
     ExtractorTransformer,
@@ -40,17 +41,18 @@ class FakeExtractorFittable(Extractor):
         self.model = None
 
     def __call__(self, data, metadata=None):
-        return data @ self.model
+        model = self.model
+        return data @ model
 
     def train(self, training_data, extractor_file):
-        self.model = training_data
+        self.model = np.vstack(training_data)
         bob.io.base.save(self.model, extractor_file)
 
 
 class FakeAlgorithm(Algorithm):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.requires_training = True
+        self.requires_projector_training = True
         self.split_training_features_by_client = True
         self.model = None
 
@@ -63,6 +65,12 @@ class FakeAlgorithm(Algorithm):
 
     def load_projector(self, projector_file):
         self.model = bob.io.base.load(projector_file)
+
+    def enroll(self, enroll_features):
+        return np.mean(enroll_features, axis=0)
+
+    def score(self, model, data):
+        return scipy.spatial.distance.euclidean(model, data)
 
 
 def generate_samples(n_subjects, n_samples_per_subject, shape=(2, 2), annotations=1):
@@ -175,7 +183,6 @@ def test_extractor_fittable():
 
         # Testing sample
         sample_transformer = mario.SampleWrapper(extractor_transformer)
-
         # Fitting
         training_data = np.arange(4).reshape(2, 2)
         training_samples = [mario.Sample(training_data, key="1")]
@@ -252,7 +259,6 @@ def test_algorithm():
 
 
 def test_wrap_bob_pipeline():
-
     def run_pipeline(with_dask):
         with tempfile.TemporaryDirectory() as dir_name:
 
@@ -263,14 +269,12 @@ def test_wrap_bob_pipeline():
                     transform_extra_arguments=(("annotations", "annotations"),),
                 ),
                 wrap_transform_bob(FakeExtractor(), dir_name,),
-                wrap_transform_bob(
-                    FakeAlgorithm(), dir_name
-                ),
+                wrap_transform_bob(FakeAlgorithm(), dir_name),
             )
             oracle = [7.0, 7.0, 7.0, 7.0]
             training_samples = generate_samples(n_subjects=2, n_samples_per_subject=2)
             test_samples = generate_samples(n_subjects=1, n_samples_per_subject=1)
-            if with_dask:                
+            if with_dask:
                 pipeline = mario.wrap(["dask"], pipeline)
                 transformed_samples = (
                     pipeline.fit(training_samples).transform(test_samples).compute()

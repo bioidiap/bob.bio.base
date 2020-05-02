@@ -103,7 +103,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         """
 
         # TODO: WE CAN'T REUSE THE ALREADY WRITTEN SCORE FILE FOR LOADING
-        #       UNLESS WE SAVE THE PICKLED THE SAMPLESET WITH THE SCORES
+        #       UNLESS WE SAVE THE PICKLED SAMPLESET WITH THE SCORES
 
         path = os.path.join(self.score_dir, str(sampleset.key))
 

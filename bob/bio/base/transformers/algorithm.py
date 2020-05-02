@@ -19,10 +19,9 @@ class AlgorithmTransformer(TransformerMixin, BaseEstimator):
     -------
 
         Wrapping LDA algorithm with functtools
-        >>> from bob.bio.base.pipelines.vanilla_biometrics.legacy import LegacyAlgorithmAsTransformer
+        >>> from bob.bio.base.pipelines.vanilla_biometrics import AlgorithmTransformer
         >>> from bob.bio.base.algorithm import LDA
-        >>> import functools
-        >>> transformer = LegacyAlgorithmAsTransformer(functools.partial(LDA, use_pinv=True, pca_subspace_dimension=0.90))
+        >>> transformer = AlgorithmTransformer(LDA(use_pinv=True, pca_subspace_dimension=0.90)
 
 
     Parameters
@@ -41,7 +40,7 @@ class AlgorithmTransformer(TransformerMixin, BaseEstimator):
                 "`callable` should be an instance of `bob.bio.base.extractor.Algorithm`"
             )
 
-        if callable.requires_training and (
+        if callable.requires_projector_training and (
             projector_file is None or projector_file == ""
         ):
             raise ValueError(
@@ -56,7 +55,7 @@ class AlgorithmTransformer(TransformerMixin, BaseEstimator):
         super().__init__(**kwargs)
 
     def fit(self, X, y=None):
-        if not self.callable.requires_training:
+        if not self.callable.requires_projector_training:
             return self
         training_data = X
         if self.callable.split_training_features_by_client:
@@ -77,6 +76,6 @@ class AlgorithmTransformer(TransformerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {
-            "stateless": not self.callable.requires_training,
-            "requires_fit": self.callable.requires_training,
+            "stateless": not self.callable.requires_projector_training,
+            "requires_fit": self.callable.requires_projector_training,
         }

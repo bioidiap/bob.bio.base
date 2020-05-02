@@ -11,15 +11,15 @@ from bob.bio.base import utils
 from .abstract_classes import (
     BioAlgorithm,
     Database,
-    create_score_delayed_sample,
-    make_four_colums_score,
 )
 from bob.io.base import HDF5File
-from bob.pipelines.mixins import SampleMixin, CheckpointMixin
-from bob.pipelines.sample import DelayedSample, SampleSet, Sample
+from bob.pipelines import DelayedSample, SampleSet, Sample
 import logging
 import copy
 
+from .score_writers import FourColumnsScoreWriter
+
+from bob.bio.base.algorithm import Algorithm
 
 logger = logging.getLogger("bob.bio.base")
 
@@ -156,78 +156,106 @@ class DatabaseConnector(Database):
         return list(probes.values())
 
 
-class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
-    """Biometric Algorithm that handles legacy :py:class:`bob.bio.base.algorithm.Algorithm`
+class BioAlgorithmLegacy(BioAlgorithm):
+    """Biometric Algorithm that handlesy :any:`bob.bio.base.algorithm.Algorithm`
 
-
-    :py:method:`BioAlgorithm.enroll` maps to :py:method:`bob.bio.base.algorithm.Algoritm.enroll`
-
-    :py:method:`BioAlgorithm.score` maps :py:method:`bob.bio.base.algorithm.Algoritm.score`
-
-
-    Example
-    -------
+    In this design, :any:`BioAlgorithm.enroll` maps to :any:`bob.bio.base.algorithm.Algorithm.enroll` and 
+    :any:`BioAlgorithm.score` maps :any:`bob.bio.base.algorithm.Algorithm.score`
+    
+    .. note::
+        Legacy algorithms are always checkpointable     
 
 
     Parameters
     ----------
-      callable: callable
-         Calleble function that instantiates the bob.bio.base.algorithm.Algorithm
+      callable: ``collection.callable``
+         Callable function that instantiates the :any:`bob.bio.base.algorithm.Algorithm`
+
+
+    Example
+    -------
+        >>> from bob.bio.base.pipelines.vanilla_biometrics import BioAlgorithmLegacy
+        >>> from bob.bio.base.algorithm import PCA
+        >>> biometric_algorithm = BioAlgorithmLegacy(PCA())
 
     """
 
     def __init__(
-        self, callable, features_dir, extension=".hdf5", model_path=None, **kwargs
+        self,
+        callable,
+        base_dir,
+        force=False,
+        projector_file=None,
+        score_writer=FourColumnsScoreWriter(),
+        **kwargs,
     ):
-        super().__init__(callable, **kwargs)
-        self.features_dir = features_dir
-        self.biometric_reference_dir = os.path.join(
-            self.features_dir, "biometric_references"
-        )
-        self.score_dir = os.path.join(self.features_dir, "scores")
-        self.extension = extension
-        self.model_path = model_path
-        self.is_projector_loaded = False
+        super().__init__(**kwargs)
+
+        if not isinstance(callable, Algorithm):
+            raise ValueError(
+                f"Only `bob.bio.base.Algorithm` supported, not `{callable}`"
+            )
+        logger.info(f"Using `bob.bio.base` legacy algorithm {callable}")
+
+        if callable.requires_projector_training and projector_file is None:
+            raise ValueError(f"{callable} requires a `projector_file` to be set")
+
+        self.callable = callable
+        self.is_background_model_loaded = False
+
+        self.projector_file = projector_file
+        self.biometric_reference_dir = os.path.join(base_dir, "biometric_references")
+        self._biometric_reference_extension = ".hdf5"
+        self.score_dir = os.path.join(base_dir, "scores")
+        self.score_writer = score_writer
+        self.force = force
+
+    def load_legacy_background_model(self):
+        # Loading background model
+        if not self.is_background_model_loaded:
+            self.callable.load_projector(self.projector_file)
+            self.is_background_model_loaded = True
+
+    def enroll(self, enroll_features, **kwargs):
+        self.load_legacy_background_model()
+        return self.callable.enroll(enroll_features)
+
+    def score(self, biometric_reference, data, **kwargs):
+        self.load_legacy_background_model()
+        scores = self.callable.score(biometric_reference, data)
+        if isinstance(scores, list):
+            scores = self.callable.probe_fusion_function(scores)
+        return scores
+
+    def score_multiple_biometric_references(self, biometric_references, data, **kwargs):
+        scores = self.callable.score_for_multiple_models(biometric_references, data)
+        return scores
+
+    def write_biometric_reference(self, sample, path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        self.callable.write_model(sample.data, path)
 
     def _enroll_sample_set(self, sampleset):
-        # Enroll
-        return self.enroll(sampleset)
+        """
+        Enroll a sample set with checkpointing
+        """
+        # Amending `models` directory
+        path = os.path.join(
+            self.biometric_reference_dir,
+            str(sampleset.key) + self._biometric_reference_extension,
+        )
 
-    def _load_projector(self):
-        """
-        Run :py:meth:`bob.bio.base.algorithm.Algorithm.load_projector` if necessary by
-        :py:class:`bob.bio.base.algorithm.Algorithm`
-        """
-        if self.instance.performs_projection and not self.is_projector_loaded:
-            if self.model_path is None:
-                raise ValueError(
-                    "Algorithm " + f"{self. instance} performs_projection. Hence, "
-                    "`model_path` needs to passed in `AlgorithmAsBioAlg.__init__`"
-                )
-            else:
-                # Loading model
-                self.instance.load_projector(self.model_path)
-                self.is_projector_loaded = True
+        if self.force or not os.path.exists(path):
+            enrolled_sample = super()._enroll_sample_set(sampleset)
 
-    def _restore_state_of_ref(self, ref):
-        """
-        There are some algorithms that :py:meth:`bob.bio.base.algorithm.Algorithm.read_model` or 
-        :py:meth:`bob.bio.base.algorithm.Algorithm.read_feature` depends
-        on the state of `self` to be properly loaded.
-        In these cases, it's not possible to rely only in the unbounded method extracted by
-        :py:func:`_get_pickable_method`.
+            # saving the new sample
+            self.write_biometric_reference(enrolled_sample, path)
 
-        This function replaces the current state of these objects (that are not)
-        by bounding them with `self.instance`
-        """
-        
-        if isinstance(ref, DelayedSample):
-            new_ref = copy.copy(ref)            
-            new_ref.load = functools.partial(ref.load.func, self.instance, ref.load.args[1])
-            #new_ref.load = functools.partial(ref.load.func, self.instance, ref.load.args[1])
-            return new_ref
-        else:
-            return ref
+        delayed_enrolled_sample = DelayedSample(
+            functools.partial(self.callable.read_model, path), parent=sampleset
+        )
+
+        return delayed_enrolled_sample
 
     def _score_sample_set(
         self,
@@ -235,96 +263,14 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
         biometric_references,
         allow_scoring_with_all_biometric_references=False,
     ):
-        """Given a sampleset for probing, compute the scores and retures a sample set with the scores
-        """
-
-        # Compute scores for each sample inside of the sample set
-        # TODO: In some cases we want to compute 1 score per sampleset (IJB-C)
-        # We should add an agregator function here so we can properlly agregate samples from
-        # a sampleset either after or before scoring.
-        # To be honest, this should be the default behaviour
-
-        def _write_sample(ref, probe, score):
-            data = make_four_colums_score(ref.subject, probe.subject, probe.path, score)
-            return Sample(data, parent=ref)
-
-        self._load_projector()
-        retval = []
-
-        for subprobe_id, s in enumerate(sampleset.samples):
-            # Creating one sample per comparison
-            subprobe_scores = []
-
-            if allow_scoring_with_all_biometric_references:
-                if self.stacked_biometric_references is None:
-                    self.stacked_biometric_references = [
-                        ref.data for ref in biometric_references
-                    ]
-
-                #s = self._restore_state_of_ref(s)
-                scores = self.score_multiple_biometric_references(
-                    self.stacked_biometric_references, s.data
-                )
-                # Wrapping the scores in samples
-                for ref, score in zip(biometric_references, scores):
-                    subprobe_scores.append(_write_sample(ref, sampleset, score))
-
-            else:
-                for ref in [
-                    r for r in biometric_references if r.key in sampleset.references
-                ]:
-                    
-                    score = self.score(ref.data, s.data)
-                    subprobe_scores.append(_write_sample(ref, sampleset, score))
-
-            # Creating one sampleset per probe
-            subprobe = SampleSet(subprobe_scores, parent=sampleset)
-            subprobe.subprobe_id = subprobe_id
-
-            # Checkpointing score MANDATORY FOR LEGACY
-            path = os.path.join(self.score_dir, str(subprobe.path) + ".txt")
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-
-            delayed_scored_sample = create_score_delayed_sample(path, subprobe)
-            subprobe.samples = [delayed_scored_sample]
-
-            retval.append(subprobe)
-
-        return retval
-
-    def enroll(self, enroll_features, **kwargs):
-
-        if not isinstance(enroll_features, SampleSet):
-            raise ValueError(
-                f"`enroll_features` should be the type SampleSet, not {enroll_features}"
-            )
-
-        path = os.path.join(
-            self.biometric_reference_dir, str(enroll_features.key) + self.extension
+        path = os.path.join(self.score_dir, str(sampleset.key))
+        # Computing score
+        scored_sample_set = super()._score_sample_set(
+            sampleset,
+            biometric_references,
+            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
         )
-        self._load_projector()
-        if path is None or not os.path.isfile(path):
-            # Enrolling
-            data = [s.data for s in enroll_features.samples]
-            model = self.instance.enroll(data)
 
-            # Checkpointing
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            self.instance.write_model(model, path)
-        
-        reader = self.instance.read_model
-        return  DelayedSample(functools.partial(reader, path), parent=enroll_features)
+        scored_sample_set = self.score_writer.write(scored_sample_set, path)
 
-    def score(self, biometric_reference, data, **kwargs):
-        return self.instance.score(biometric_reference, data)
-
-    def score_multiple_biometric_references(self, biometric_references, data, **kwargs):
-        """
-        It handles the score computation of one probe against multiple biometric references using legacy
-        `bob.bio.base`
-
-        Basically it wraps :py:meth:`bob.bio.base.algorithm.Algorithm.score_for_multiple_models`.
-
-        """        
-        scores = self.instance.score_for_multiple_models(biometric_references, data)
-        return scores
+        return scored_sample_set
