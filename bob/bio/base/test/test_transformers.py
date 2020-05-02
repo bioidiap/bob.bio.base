@@ -277,7 +277,7 @@ def test_wrap_bob_pipeline():
             if with_dask:
                 pipeline = mario.wrap(["dask"], pipeline)
                 transformed_samples = (
-                    pipeline.fit(training_samples).transform(test_samples).compute()
+                    pipeline.fit(training_samples).transform(test_samples).compute(scheduler="single-threaded")
                 )
             else:
                 transformed_samples = pipeline.fit(training_samples).transform(

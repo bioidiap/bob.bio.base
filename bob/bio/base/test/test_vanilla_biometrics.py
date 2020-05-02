@@ -148,7 +148,7 @@ def test_on_memory():
             )
 
             if with_dask:
-                scores = scores.compute()
+                scores = scores.compute(scheduler="single-threaded")
 
             assert len(scores) == 10
             for probe_ssets in scores:
