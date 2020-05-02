@@ -7,7 +7,7 @@ import os
 import numpy as np
 import tempfile
 from sklearn.pipeline import make_pipeline
-from bob.bio.base.wrappers import wrap_transform_bob
+from bob.bio.base.wrappers import wrap_bob_legacy
 from bob.bio.base.test.test_transformers import FakePreprocesor, FakeExtractor, FakeAlgorithm
 from bob.bio.base.pipelines.vanilla_biometrics import (
     Distance,
@@ -96,25 +96,25 @@ class DummyDatabase:
 
 def _make_transformer(dir_name):
     pipeline = make_pipeline(
-        wrap_transform_bob(
+        wrap_bob_legacy(
             FakePreprocesor(),
             dir_name,
             transform_extra_arguments=(("annotations", "annotations"),),
         ),
-        wrap_transform_bob(FakeExtractor(), dir_name,)
+        wrap_bob_legacy(FakeExtractor(), dir_name,)
     )
 
     return pipeline
 
 def _make_transformer_with_algorithm(dir_name):
     pipeline = make_pipeline(
-        wrap_transform_bob(
+        wrap_bob_legacy(
             FakePreprocesor(),
             dir_name,
             transform_extra_arguments=(("annotations", "annotations"),),
         ),
-        wrap_transform_bob(FakeExtractor(), dir_name),
-        wrap_transform_bob(FakeAlgorithm(), dir_name)
+        wrap_bob_legacy(FakeExtractor(), dir_name),
+        wrap_bob_legacy(FakeAlgorithm(), dir_name)
     )
 
     return pipeline

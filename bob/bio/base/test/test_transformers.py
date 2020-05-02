@@ -19,7 +19,7 @@ from bob.bio.base.wrappers import (
     wrap_preprocessor,
     wrap_extractor,
     wrap_algorithm,
-    wrap_transform_bob,
+    wrap_bob_legacy,
 )
 from sklearn.pipeline import make_pipeline
 
@@ -263,13 +263,13 @@ def test_wrap_bob_pipeline():
         with tempfile.TemporaryDirectory() as dir_name:
 
             pipeline = make_pipeline(
-                wrap_transform_bob(
+                wrap_bob_legacy(
                     FakePreprocesor(),
                     dir_name,
                     transform_extra_arguments=(("annotations", "annotations"),),
                 ),
-                wrap_transform_bob(FakeExtractor(), dir_name,),
-                wrap_transform_bob(FakeAlgorithm(), dir_name),
+                wrap_bob_legacy(FakeExtractor(), dir_name,),
+                wrap_bob_legacy(FakeAlgorithm(), dir_name),
             )
             oracle = [7.0, 7.0, 7.0, 7.0]
             training_samples = generate_samples(n_subjects=2, n_samples_per_subject=2)

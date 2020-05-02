@@ -13,7 +13,7 @@ import bob.pipelines as mario
 import os
 
 
-def wrap_transform_bob(
+def wrap_bob_legacy(
     bob_object,
     dir_name,
     fit_extra_arguments=(("y", "subject"),),
