@@ -175,14 +175,14 @@ def vanilla_biometrics(pipeline, database, dask_client, groups, output, **kwargs
             if dask_client is not None:
                 result = result.compute(scheduler=dask_client)
             else:
-                logger.warning(
-                    "`dask_client` not set. Your pipeline will run locally"
-                )
+                logger.warning("`dask_client` not set. Your pipeline will run locally")
                 result = result.compute(scheduler="single-threaded")
 
-        # Check if there's a score writer hooked in
+        # Check if there's a score writer hooked in        
         if hasattr(pipeline.biometric_algorithm, "score_writer"):
-            pipeline.biometric_algorithm.score_writer.concatenate_write_scores(result, score_file_name)
+            pipeline.biometric_algorithm.score_writer.concatenate_write_scores(
+                result, score_file_name
+            )
         else:
             with open(score_file_name, "w") as f:
                 # Flatting out the list
