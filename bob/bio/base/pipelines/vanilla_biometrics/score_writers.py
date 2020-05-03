@@ -34,7 +34,7 @@ class FourColumnsScoreWriter(ScoreWriter):
                 )
                 for biometric_reference in probe
             ]
-            filename = os.path.join(path, probe.subject) + ".txt"
+            filename = os.path.join(path, str(probe.subject)) + ".txt"
             open(filename, "w").writelines(lines)
             checkpointed_scores.append(
                 SampleSet(
@@ -69,7 +69,17 @@ class FourColumnsScoreWriter(ScoreWriter):
 class CSVScoreWriter(ScoreWriter):
     """
     Read and write scores in CSV format, shipping all metadata with the scores    
+
+    Parameters
+    ----------
+
+    n_sample_sets: 
+        Number of samplesets in one chunk
+
     """
+
+    def __init__(self, n_sample_sets=1000):
+        self.n_sample_sets = n_sample_sets
 
     def write(self, probe_sampleset, path):
         """
@@ -108,7 +118,7 @@ class CSVScoreWriter(ScoreWriter):
         header, probe_dict, bioref_dict = create_csv_header(probe_sampleset[0])
 
         for probe in probe_sampleset:
-            filename = os.path.join(path, probe.subject) + ".csv"
+            filename = os.path.join(path, str(probe.subject)) + ".csv"
             with open(filename, "w") as f:
 
                 csv_write = csv.writer(f)
@@ -150,14 +160,23 @@ class CSVScoreWriter(ScoreWriter):
         """
         Given a list of samplsets, write them all in a single file
         """
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        f = open(filename, "w")
-        first = True
-        for samplesets in samplesets_list:
+
+        # CSV files tends to be very big
+        # here, here we write them in chunks
+
+        base_dir = os.path.splitext(filename)[0]
+        os.makedirs(base_dir, exist_ok=True)
+        f = None
+        for i, samplesets in enumerate(samplesets_list):
+            if i% self.n_sample_sets==0:
+                if f is not None:
+                    f.close()
+                    del f
+
+                filename = os.path.join(base_dir, f"chunk_{i}.csv")
+                f = open(filename, "w")
+
             for sset in samplesets:
                 for s in sset:
-                    if first:
-                        f.writelines(s.data)
-                        first = False
-                    else:
-                        f.writelines(s.data[1:])
+                    f.writelines(s.data)
+            samplesets_list[i] = None

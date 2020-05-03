@@ -122,6 +122,9 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
 class BioAlgorithmDaskWrapper(BioAlgorithm):
     def __init__(self, biometric_algorithm, **kwargs):
         self.biometric_algorithm = biometric_algorithm
+        # Copying attribute
+        if hasattr(biometric_algorithm, "score_writer"):
+            self.score_writer = biometric_algorithm.score_writer
 
     def enroll_samples(self, biometric_reference_features):
 
