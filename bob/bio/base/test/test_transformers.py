@@ -16,10 +16,12 @@ import tempfile
 import os
 import bob.io.base
 from bob.bio.base.wrappers import (
-    wrap_preprocessor,
-    wrap_extractor,
-    wrap_algorithm,
-    wrap_bob_legacy,
+    wrap_checkpoint_preprocessor,
+    wrap_checkpoint_extractor,
+    wrap_checkpoint_algorithm,
+    wrap_sample_preprocessor,
+    wrap_sample_extractor,
+    wrap_sample_algorithm,
 )
 from sklearn.pipeline import make_pipeline
 
@@ -30,7 +32,7 @@ class FakePreprocesor(Preprocessor):
 
 
 class FakeExtractor(Extractor):
-    def __call__(self, data, metadata=None):
+    def __call__(self, data):
         return data.flatten()
 
 
@@ -56,7 +58,7 @@ class FakeAlgorithm(Algorithm):
         self.split_training_features_by_client = True
         self.model = None
 
-    def project(self, data, metadata=None):
+    def project(self, data):
         return data + self.model
 
     def train_projector(self, training_features, projector_file):
@@ -259,25 +261,30 @@ def test_algorithm():
 
 
 def test_wrap_bob_pipeline():
-    def run_pipeline(with_dask):
+    def run_pipeline(with_dask, with_checkpoint):
         with tempfile.TemporaryDirectory() as dir_name:
+            if with_checkpoint:
+                pipeline = make_pipeline(
+                    wrap_checkpoint_preprocessor(FakePreprocesor(), dir_name,),
+                    wrap_checkpoint_extractor(FakeExtractor(), dir_name,),
+                    wrap_checkpoint_algorithm(FakeAlgorithm(), dir_name),
+                )
+            else:
+                pipeline = make_pipeline(
+                    wrap_sample_preprocessor(FakePreprocesor()),
+                    wrap_sample_extractor(FakeExtractor(), dir_name,),
+                    wrap_sample_algorithm(FakeAlgorithm(), dir_name),
+                )
 
-            pipeline = make_pipeline(
-                wrap_bob_legacy(
-                    FakePreprocesor(),
-                    dir_name,
-                    transform_extra_arguments=(("annotations", "annotations"),),
-                ),
-                wrap_bob_legacy(FakeExtractor(), dir_name,),
-                wrap_bob_legacy(FakeAlgorithm(), dir_name),
-            )
             oracle = [7.0, 7.0, 7.0, 7.0]
             training_samples = generate_samples(n_subjects=2, n_samples_per_subject=2)
             test_samples = generate_samples(n_subjects=1, n_samples_per_subject=1)
             if with_dask:
                 pipeline = mario.wrap(["dask"], pipeline)
                 transformed_samples = (
-                    pipeline.fit(training_samples).transform(test_samples).compute(scheduler="single-threaded")
+                    pipeline.fit(training_samples)
+                    .transform(test_samples)
+                    .compute(scheduler="single-threaded")
                 )
             else:
                 transformed_samples = pipeline.fit(training_samples).transform(
@@ -285,5 +292,7 @@ def test_wrap_bob_pipeline():
                 )
             assert assert_sample(transformed_samples, oracle)
 
-    run_pipeline(False)
-    run_pipeline(True)
+    run_pipeline(False, False)
+    run_pipeline(False, True)
+    run_pipeline(True, False)
+    run_pipeline(True, True)

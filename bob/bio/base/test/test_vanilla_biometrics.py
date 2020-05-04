@@ -8,7 +8,11 @@ import numpy as np
 import tempfile
 from sklearn.pipeline import make_pipeline
 from bob.bio.base.wrappers import wrap_bob_legacy
-from bob.bio.base.test.test_transformers import FakePreprocesor, FakeExtractor, FakeAlgorithm
+from bob.bio.base.test.test_transformers import (
+    FakePreprocesor,
+    FakeExtractor,
+    FakeAlgorithm,
+)
 from bob.bio.base.pipelines.vanilla_biometrics import (
     Distance,
     VanillaBiometricsPipeline,
@@ -16,13 +20,14 @@ from bob.bio.base.pipelines.vanilla_biometrics import (
     dask_vanilla_biometrics,
     FourColumnsScoreWriter,
     CSVScoreWriter,
-    BioAlgorithmLegacy
+    BioAlgorithmLegacy,
 )
 
 import bob.pipelines as mario
 import uuid
 import shutil
 import itertools
+
 
 class DummyDatabase:
     def __init__(self, delayed=False, n_references=10, n_probes=10, dim=10, one_d=True):
@@ -36,13 +41,23 @@ class DummyDatabase:
 
     def _create_random_1dsamples(self, n_samples, offset, dim):
         return [
-            Sample(np.random.rand(dim), key=str(uuid.uuid4()), annotations=1, subject=str(i))
+            Sample(
+                np.random.rand(dim),
+                key=str(uuid.uuid4()),
+                annotations=1,
+                subject=str(i),
+            )
             for i in range(offset, offset + n_samples)
         ]
 
     def _create_random_2dsamples(self, n_samples, offset, dim):
         return [
-            Sample(np.random.rand(dim, dim), key=str(uuid.uuid4()), annotations=1, subject=str(i))
+            Sample(
+                np.random.rand(dim, dim),
+                key=str(uuid.uuid4()),
+                annotations=1,
+                subject=str(i),
+            )
             for i in range(offset, offset + n_samples)
         ]
 
@@ -74,7 +89,7 @@ class DummyDatabase:
         return sample_set
 
     def background_model_samples(self):
-        samples = [sset.samples for sset in self._create_random_sample_set()]        
+        samples = [sset.samples for sset in self._create_random_sample_set()]
         return list(itertools.chain(*samples))
 
     def references(self):
@@ -101,10 +116,11 @@ def _make_transformer(dir_name):
             dir_name,
             transform_extra_arguments=(("annotations", "annotations"),),
         ),
-        wrap_bob_legacy(FakeExtractor(), dir_name,)
+        wrap_bob_legacy(FakeExtractor(), dir_name,),
     )
 
     return pipeline
+
 
 def _make_transformer_with_algorithm(dir_name):
     pipeline = make_pipeline(
@@ -114,7 +130,7 @@ def _make_transformer_with_algorithm(dir_name):
             transform_extra_arguments=(("annotations", "annotations"),),
         ),
         wrap_bob_legacy(FakeExtractor(), dir_name),
-        wrap_bob_legacy(FakeAlgorithm(), dir_name)
+        wrap_bob_legacy(FakeAlgorithm(), dir_name),
     )
 
     return pipeline
@@ -197,7 +213,9 @@ def test_checkpoint_bioalg_as_transformer():
             if isinstance(score_writer, CSVScoreWriter):
                 base_path = os.path.join(dir_name, "concatenated_scores")
                 score_writer.concatenate_write_scores(scores, base_path)
-                assert len(open(os.path.join(base_path, "chunk_0.csv")).readlines()) == 101
+                assert (
+                    len(open(os.path.join(base_path, "chunk_0.csv")).readlines()) == 101
+                )
             else:
                 filename = os.path.join(dir_name, "concatenated_scores.txt")
                 score_writer.concatenate_write_scores(scores, filename)
@@ -205,24 +223,24 @@ def test_checkpoint_bioalg_as_transformer():
 
         run_pipeline(False)
         run_pipeline(False)  # Checking if the checkpointng works
-        shutil.rmtree(dir_name) # Deleting the cache so it runs again from scratch
+        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         # Dask
         run_pipeline(True)
         run_pipeline(True)  # Checking if the checkpointng works
-        shutil.rmtree(dir_name) # Deleting the cache so it runs again from scratch
+        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         # CSVWriter
         run_pipeline(False, CSVScoreWriter())
-        run_pipeline(False, CSVScoreWriter()) # Checking if the checkpointng works
-        shutil.rmtree(dir_name) # Deleting the cache so it runs again from scratch
+        run_pipeline(False, CSVScoreWriter())  # Checking if the checkpointng works
+        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         # CSVWriter + Dask
         run_pipeline(True, CSVScoreWriter())
-        run_pipeline(True, CSVScoreWriter()) # Checking if the checkpointng works
+        run_pipeline(True, CSVScoreWriter())  # Checking if the checkpointng works
 
 
 def test_checkpoint_bioalg_as_bioalg():
@@ -231,12 +249,15 @@ def test_checkpoint_bioalg_as_bioalg():
 
         def run_pipeline(with_dask, score_writer=FourColumnsScoreWriter()):
             database = DummyDatabase()
-            
+
             transformer = _make_transformer_with_algorithm(dir_name)
             projector_file = transformer[2].estimator.estimator.projector_file
 
             biometric_algorithm = BioAlgorithmLegacy(
-                FakeAlgorithm(), base_dir=dir_name, score_writer=score_writer, projector_file=projector_file
+                FakeAlgorithm(),
+                base_dir=dir_name,
+                score_writer=score_writer,
+                projector_file=projector_file,
             )
 
             vanilla_biometrics_pipeline = VanillaBiometricsPipeline(
@@ -265,11 +286,11 @@ def test_checkpoint_bioalg_as_bioalg():
 
         run_pipeline(False)
         run_pipeline(False)  # Checking if the checkpointng works
-        shutil.rmtree(dir_name) # Deleting the cache so it runs again from scratch
+        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         # Dask
         run_pipeline(True)
         run_pipeline(True)  # Checking if the checkpointng works
-        shutil.rmtree(dir_name) # Deleting the cache so it runs again from scratch
+        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
