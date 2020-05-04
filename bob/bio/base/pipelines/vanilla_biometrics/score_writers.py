@@ -178,5 +178,8 @@ class CSVScoreWriter(ScoreWriter):
 
             for sset in samplesets:
                 for s in sset:
-                    f.writelines(s.data)
+                    if i==0:
+                        f.writelines(s.data)
+                    else:
+                        f.writelines(s.data[1:])
             samplesets_list[i] = None
