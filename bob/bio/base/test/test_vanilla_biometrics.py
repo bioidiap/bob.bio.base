@@ -191,13 +191,16 @@ def test_checkpoint_bioalg_as_transformer():
                 database.probes(),
                 allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
             )
-
-            filename = os.path.join(dir_name, "concatenated_scores.txt")
-            score_writer.concatenate_write_scores(scores, filename)
+            if with_dask:
+                scores = scores.compute(scheduler="single-threaded")
 
             if isinstance(score_writer, CSVScoreWriter):
-                assert len(open(filename).readlines()) == 101
+                base_path = os.path.join(dir_name, "concatenated_scores")
+                score_writer.concatenate_write_scores(scores, base_path)
+                assert len(open(os.path.join(base_path, "chunk_0.csv")).readlines()) == 101
             else:
+                filename = os.path.join(dir_name, "concatenated_scores.txt")
+                score_writer.concatenate_write_scores(scores, filename)
                 assert len(open(filename).readlines()) == 100
 
         run_pipeline(False)
