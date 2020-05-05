@@ -58,6 +58,8 @@ def wrap_bob_legacy(
             bob_object,
             features_dir=os.path.join(dir_name, "extractor"),
             model_path=dir_name,
+            fit_extra_arguments=fit_extra_arguments,
+            transform_extra_arguments=transform_extra_arguments,
             **kwargs
         )
     elif isinstance(bob_object, Algorithm):
@@ -65,6 +67,8 @@ def wrap_bob_legacy(
             bob_object,
             features_dir=os.path.join(dir_name, "algorithm"),
             model_path=dir_name,
+            fit_extra_arguments=fit_extra_arguments,
+            transform_extra_arguments=transform_extra_arguments,
             **kwargs
         )
     else:
