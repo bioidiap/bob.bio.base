@@ -10,6 +10,8 @@ for bob.bio experiments
 
 import logging
 import numpy
+from .score_writers import FourColumnsScoreWriter
+
 
 logger = logging.getLogger(__name__)
 
@@ -61,12 +63,20 @@ class VanillaBiometricsPipeline(object):
       biometric_algorithm: :py:class:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm`
         Biometrics algorithm object that implements the methods `enroll` and `score` methods
 
+      score_writer: :any:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classe.ScoreWriter`
+          Format to write scores. Default to :any:`FourColumnsScoreWriter`
 
     """
 
-    def __init__(self, transformer, biometric_algorithm):
+    def __init__(
+        self,
+        transformer,
+        biometric_algorithm,
+        score_writer=FourColumnsScoreWriter("./scores.txt"),
+    ):
         self.transformer = transformer
         self.biometric_algorithm = biometric_algorithm
+        self.score_writer = score_writer
 
     def __call__(
         self,
@@ -97,11 +107,16 @@ class VanillaBiometricsPipeline(object):
         )
 
         # Scores all probes
-        return self.compute_scores(
+        scores = self.compute_scores(
             probe_samples,
             biometric_references,
             allow_scoring_with_all_biometric_references,
         )
+
+        if self.score_writer is not None:
+            return self.write_scores(scores)
+
+        return scores
 
     def train_background_model(self, background_model_samples):
         # background_model_samples is a list of Samples
@@ -146,6 +161,9 @@ class VanillaBiometricsPipeline(object):
 
         # scores is a list of Samples
         return scores
+
+    def write_scores(self, scores):
+        return self.score_writer.write(scores)
 
 
 class ZNormVanillaBiometricsPipeline(VanillaBiometricsPipeline):
@@ -203,12 +221,9 @@ class ZNormVanillaBiometricsPipeline(VanillaBiometricsPipeline):
         )
 
     def compute_znorm_scores(self, zprobe_samples, probe_scores, biometric_references):
-        
-        import ipdb; ipdb.set_trace()
 
         z_scores = self.vanilla_biometrics_pipeline.compute_scores(
             zprobe_samples, biometric_references
         )
-
 
         pass

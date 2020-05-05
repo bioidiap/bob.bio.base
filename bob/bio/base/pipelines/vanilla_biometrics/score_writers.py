@@ -7,7 +7,7 @@ from bob.pipelines import SampleSet, DelayedSample
 from .abstract_classes import ScoreWriter
 import functools
 import csv
-
+import uuid
 
 class FourColumnsScoreWriter(ScoreWriter):
     """
@@ -15,51 +15,34 @@ class FourColumnsScoreWriter(ScoreWriter):
     :any:`bob.bio.base.score.load.four_column`
     """
 
-    def write(self, probe_sampleset, path):
+    def write(self, probe_sampleset):
         """
         Write scores and returns a :any:`bob.pipelines.DelayedSample` containing
         the instruction to open the score file
         """
 
-        os.makedirs(path, exist_ok=True)
-        checkpointed_scores = []
+        os.makedirs(self.path, exist_ok=True)
+        n_lines = 0
+        filename = os.path.join(self.path, str(uuid.uuid4()) + ".txt")
+        with open(filename, "w") as f:
+            for probe in probe_sampleset:
 
-        lines = [
-            "{0} {1} {2} {3}\n".format(
-                biometric_reference.subject,
-                probe_sampleset.subject,
-                probe_sampleset.key,
-                biometric_reference.data,
-            )
-            for biometric_reference in probe_sampleset
-        ]
-        filename = os.path.join(path, str(probe_sampleset.subject)) + ".txt"
-        open(filename, "w").writelines(lines)
+                # If it's delayed, load it
+                if isinstance(probe[0], DelayedSample):
+                    probe.samples = probe.samples[0].data
 
-        return SampleSet(
-            [
-                DelayedSample(
-                    functools.partial(self.read, filename), parent=probe_sampleset
-                )
-            ],
-            parent=probe_sampleset,
-        )
-
-    def read(self, path):
-        """
-        Base Instruction to load a score file
-        """
-        return open(path).readlines()
-
-    def concatenate_write_scores(self, samplesets, filename):
-        """
-        Given a list of samplsets, write them all in a single file
-        """
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        f = open(filename, "w")
-        for sset in samplesets:
-            for scores in sset:
-                f.writelines(scores.data)
+                lines = [
+                    "{0} {1} {2} {3}\n".format(
+                        biometric_reference.subject,
+                        probe.subject,
+                        probe.key,
+                        biometric_reference.data,
+                    )
+                    for biometric_reference in probe
+                ]
+                n_lines += len(probe)
+                f.writelines(lines)
+        return [filename]
 
 
 class CSVScoreWriter(ScoreWriter):
@@ -69,21 +52,32 @@ class CSVScoreWriter(ScoreWriter):
     Parameters
     ----------
 
-    n_sample_sets: 
-        Number of samplesets in one chunk
+    path: str
+        Directory to save the scores
+
+    n_sample_sets: int
+        Number of samplesets in one chunk of scores
+
+    exclude_list: list
+        List of metadata to exclude from the CSV file
 
     """
 
-    def __init__(self, n_sample_sets=1000):
+    def __init__(
+        self,
+        path,
+        n_sample_sets=1000,
+        exclude_list=["samples", "key", "data", "load", "_data", "references", "annotations"],
+    ):
+        super().__init__(path)
         self.n_sample_sets = n_sample_sets
+        self.exclude_list = exclude_list
 
-    def write(self, probe_sampleset, path):
+    def write(self, probe_sampleset):
         """
         Write scores and returns a :any:`bob.pipelines.DelayedSample` containing
         the instruction to open the score file
         """
-
-        exclude_list = ["samples", "key", "data", "load", "_data", "references"]
 
         def create_csv_header(probe_sampleset):
             first_biometric_reference = probe_sampleset[0]
@@ -91,13 +85,13 @@ class CSVScoreWriter(ScoreWriter):
             probe_dict = dict(
                 (k, f"probe_{k}")
                 for k in probe_sampleset.__dict__.keys()
-                if k not in exclude_list
+                if k not in self.exclude_list
             )
 
             bioref_dict = dict(
                 (k, f"bio_ref_{k}")
                 for k in first_biometric_reference.__dict__.keys()
-                if k not in exclude_list
+                if k not in self.exclude_list
             )
 
             header = (
@@ -108,23 +102,35 @@ class CSVScoreWriter(ScoreWriter):
             )
             return header, probe_dict, bioref_dict
 
-        os.makedirs(path, exist_ok=True)
-        checkpointed_scores = []
+        os.makedirs(self.path, exist_ok=True)
+        header, probe_dict, bioref_dict = create_csv_header(probe_sampleset[0])
 
-        header, probe_dict, bioref_dict = create_csv_header(probe_sampleset)
+        f = None
+        filename = os.path.join(self.path, str(uuid.uuid4()))
+        filenames = []
+        for i, probe in enumerate(probe_sampleset):
+            if i % self.n_sample_sets == 0:
+                filename = filename + "_" + f"chunk_{i}.csv"
+                filenames.append(filename)
+                if f is not None:
+                    f.close()
+                    del f
 
-        filename = os.path.join(path, str(probe_sampleset.subject)) + ".csv"
-        with open(filename, "w") as f:
-
-            csv_write = csv.writer(f)
-            csv_write.writerow(header)
+                f = open(filename, "w")
+                csv_writer = csv.writer(f)
+                if i == 0:
+                    csv_writer.writerow(header)
 
             rows = []
-            probe_row = [str(probe_sampleset.key)] + [
-                str(probe_sampleset.__dict__[k]) for k in probe_dict.keys()
+            probe_row = [str(probe.key)] + [
+                str(probe.__dict__[k]) for k in probe_dict.keys()
             ]
 
-            for biometric_reference in probe_sampleset:
+            # If it's delayed, load it
+            if isinstance(probe[0], DelayedSample):
+                probe.samples = probe.samples[0].data
+
+            for biometric_reference in probe:
                 bio_ref_row = [
                     str(biometric_reference.__dict__[k])
                     for k in list(bioref_dict.keys()) + ["data"]
@@ -132,45 +138,6 @@ class CSVScoreWriter(ScoreWriter):
 
                 rows.append(probe_row + bio_ref_row)
 
-            csv_write.writerows(rows)
-            return SampleSet(
-                [
-                    DelayedSample(
-                        functools.partial(self.read, filename), parent=probe_sampleset
-                    )
-                ],
-                parent=probe_sampleset,
-            )
-
-    def read(self, path):
-        """
-        Base Instruction to load a score file
-        """
-        return open(path).readlines()
-
-    def concatenate_write_scores(self, samplesets, filename):
-        """
-        Given a list of samplsets, write them all in a single file
-        """
-
-        # CSV files tends to be very big
-        # here, here we write them in chunks
-
-        base_dir = os.path.splitext(filename)[0]
-        os.makedirs(base_dir, exist_ok=True)
-        f = None
-        for i, sset in enumerate(samplesets):
-            if i % self.n_sample_sets == 0:
-                if f is not None:
-                    f.close()
-                    del f
-
-                filename = os.path.join(base_dir, f"chunk_{i}.csv")
-                f = open(filename, "w")
-
-            for scores in sset:
-                if i == 0:
-                    f.writelines(scores.data)
-                else:
-                    f.writelines(scores.data[1:])
-            sset.samples = None
+            csv_writer.writerows(rows)
+        f.close()
+        return filenames

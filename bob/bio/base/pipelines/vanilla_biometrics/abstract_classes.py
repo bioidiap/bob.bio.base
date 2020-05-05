@@ -131,7 +131,6 @@ class BioAlgorithm(metaclass=ABCMeta):
     ):
         """Given one sampleset for probing, compute the scores and returns a sample set with the scores
         """
-
         scores_biometric_references = []
         if allow_scoring_with_all_biometric_references:
             # Optimized scoring
@@ -291,17 +290,10 @@ class ScoreWriter(metaclass=ABCMeta):
     for :any:`BioAlgorithm`
     """
 
-    def __init__(self, extension=".txt"):
+    def __init__(self, path, extension=".txt"):
+        self.path = path
         self.extension = extension
 
     @abstractmethod
     def write(self, sampleset, path):
-        pass
-
-    @abstractmethod
-    def read(self, path):
-        pass
-
-    @abstractmethod
-    def concatenate_write_scores(self, sampleset, path):
         pass

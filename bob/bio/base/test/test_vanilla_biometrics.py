@@ -157,7 +157,7 @@ def test_on_memory():
             biometric_algorithm = Distance()
 
             vanilla_biometrics_pipeline = VanillaBiometricsPipeline(
-                transformer, biometric_algorithm
+                transformer, biometric_algorithm, None,
             )
 
             if with_dask:
@@ -193,17 +193,20 @@ def test_checkpoint_bioalg_as_transformer():
 
     with tempfile.TemporaryDirectory() as dir_name:
 
-        def run_pipeline(with_dask, score_writer=FourColumnsScoreWriter()):
+        def run_pipeline(
+            with_dask,
+            score_writer=FourColumnsScoreWriter(os.path.join(dir_name, "final_scores")),
+        ):
             database = DummyDatabase()
 
             transformer = _make_transformer(dir_name)
 
             biometric_algorithm = BioAlgorithmCheckpointWrapper(
-                Distance(), base_dir=dir_name, score_writer=score_writer
+                Distance(), base_dir=dir_name
             )
 
             vanilla_biometrics_pipeline = VanillaBiometricsPipeline(
-                transformer, biometric_algorithm
+                transformer, biometric_algorithm, score_writer=score_writer
             )
 
             if with_dask:
@@ -220,17 +223,17 @@ def test_checkpoint_bioalg_as_transformer():
 
             if with_dask:
                 scores = scores.compute(scheduler="single-threaded")
-
-            if isinstance(score_writer, CSVScoreWriter):
-                base_path = os.path.join(dir_name, "concatenated_scores")
-                score_writer.concatenate_write_scores(scores, base_path)
-                assert (
-                    len(open(os.path.join(base_path, "chunk_0.csv")).readlines()) == 101
-                )
+                total_scores = np.sum([len(open(f).readlines()) for f in scores])
             else:
-                filename = os.path.join(dir_name, "concatenated_scores.txt")
-                score_writer.concatenate_write_scores(scores, filename)
-                assert len(open(filename).readlines()) == 100
+                total_scores = len(open(scores[0]).readlines())
+
+            if isinstance(score_writer, FourColumnsScoreWriter):
+                assert total_scores == 100  # counting lines
+            elif isinstance(score_writer, CSVScoreWriter):
+
+                assert (
+                    total_scores == 100 + 2 if with_dask else 100 + 1
+                )  # 100 plus 2 headers
 
         run_pipeline(False)
         run_pipeline(False)  # Checking if the checkpointng works
@@ -244,21 +247,29 @@ def test_checkpoint_bioalg_as_transformer():
         os.makedirs(dir_name, exist_ok=True)
 
         # CSVWriter
-        run_pipeline(False, CSVScoreWriter())
-        run_pipeline(False, CSVScoreWriter())  # Checking if the checkpointng works
+        run_pipeline(
+            False, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
+        )
+        run_pipeline(
+            False, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
+        )  # Checking if the checkpointng works
         shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         # CSVWriter + Dask
-        run_pipeline(True, CSVScoreWriter())
-        run_pipeline(True, CSVScoreWriter())  # Checking if the checkpointng works
+        run_pipeline(
+            True, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
+        )
+        run_pipeline(
+            True, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
+        )  # Checking if the checkpointng works
 
 
 def test_checkpoint_bioalg_as_bioalg():
 
     with tempfile.TemporaryDirectory() as dir_name:
 
-        def run_pipeline(with_dask, score_writer=FourColumnsScoreWriter()):
+        def run_pipeline(with_dask, score_writer=FourColumnsScoreWriter(dir_name)):
             database = DummyDatabase()
 
             transformer = _make_transformer_with_algorithm(dir_name)
@@ -287,13 +298,13 @@ def test_checkpoint_bioalg_as_bioalg():
                 allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
             )
 
-            filename = os.path.join(dir_name, "concatenated_scores.txt")
-            score_writer.concatenate_write_scores(scores, filename)
-
-            if isinstance(score_writer, CSVScoreWriter):
-                assert len(open(filename).readlines()) == 101
+            if with_dask:
+                scores = scores.compute(scheduler="single-threaded")
+                total_scores = np.sum([len(open(f).readlines()) for f in scores])
             else:
-                assert len(open(filename).readlines()) == 100
+                total_scores = len(open(scores[0]).readlines())
+
+            assert total_scores == 100  # counting lines
 
         run_pipeline(False)
         run_pipeline(False)  # Checking if the checkpointng works

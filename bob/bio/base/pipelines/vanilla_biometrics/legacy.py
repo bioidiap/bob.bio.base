@@ -16,7 +16,7 @@ from bob.io.base import HDF5File
 from bob.pipelines import DelayedSample, SampleSet, Sample
 import logging
 import copy
-
+import pickle
 from .score_writers import FourColumnsScoreWriter
 
 from bob.bio.base.algorithm import Algorithm
@@ -181,13 +181,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
     """
 
     def __init__(
-        self,
-        instance,
-        base_dir,
-        force=False,
-        projector_file=None,
-        score_writer=FourColumnsScoreWriter(),
-        **kwargs,
+        self, instance, base_dir, force=False, projector_file=None, **kwargs,
     ):
         super().__init__(**kwargs)
 
@@ -207,7 +201,6 @@ class BioAlgorithmLegacy(BioAlgorithm):
         self.biometric_reference_dir = os.path.join(base_dir, "biometric_references")
         self._biometric_reference_extension = ".hdf5"
         self.score_dir = os.path.join(base_dir, "scores")
-        self.score_writer = score_writer
         self.force = force
 
     def load_legacy_background_model(self):
@@ -257,20 +250,36 @@ class BioAlgorithmLegacy(BioAlgorithm):
 
         return delayed_enrolled_sample
 
+    def write_scores(self, samples, path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        open(path, "wb").write(pickle.dumps(samples))
+
     def _score_sample_set(
         self,
         sampleset,
         biometric_references,
         allow_scoring_with_all_biometric_references=False,
     ):
-        path = os.path.join(self.score_dir, str(sampleset.key))
-        # Computing score
-        scored_sample_set = super()._score_sample_set(
-            sampleset,
-            biometric_references,
-            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
-        )
+        def _load(path):
+            return pickle.loads(open(path, "rb").read())
 
-        scored_sample_set = self.score_writer.write(scored_sample_set, path)
+        path = os.path.join(self.score_dir, str(sampleset.key) + ".pkl")
+
+        if self.force or not os.path.exists(path):
+
+            # Computing score
+            scored_sample_set = super()._score_sample_set(
+                sampleset,
+                biometric_references,
+                allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+            )
+
+            self.write_scores(scored_sample_set.samples, path)
+            scored_sample_set = SampleSet(
+                [DelayedSample(functools.partial(_load, path), parent=sampleset)],
+                parent=sampleset,
+            )
+        else:
+            scored_sample_set = SampleSet(_load(path), parent=sampleset)
 
         return scored_sample_set

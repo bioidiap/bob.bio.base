@@ -1,11 +1,11 @@
-from bob.pipelines import DelayedSample
+from bob.pipelines import DelayedSample, SampleSet
 import bob.io.base
 import os
 import dask
 import functools
 from .score_writers import FourColumnsScoreWriter
 from .abstract_classes import BioAlgorithm
-
+import pickle
 import bob.pipelines as mario
 
 
@@ -23,9 +23,6 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         extension: str
             File extension
 
-        score_writer: :any:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classe.ScoreWriter`
-            Format to write scores. Default to :any:`FourColumnsScoreWriter`
-
         force: bool
           If True, will recompute scores and biometric references no matter if a file exists
 
@@ -42,7 +39,6 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         self,
         biometric_algorithm,
         base_dir,
-        score_writer=FourColumnsScoreWriter(),
         force=False,
         **kwargs
     ):
@@ -53,7 +49,6 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         self.biometric_algorithm = biometric_algorithm
         self.force = force
         self._biometric_reference_extension = ".hdf5"
-        self.score_writer = score_writer
 
     def enroll(self, enroll_features):
         return self.biometric_algorithm.enroll(enroll_features)
@@ -68,6 +63,10 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
 
     def write_biometric_reference(self, sample, path):
         return bob.io.base.save(sample.data, path, create_directories=True)
+
+    def write_scores(self, samples, path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        open(path, "wb").write(pickle.dumps(samples))
 
     def _enroll_sample_set(self, sampleset):
         """
@@ -102,19 +101,30 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         """Given a sampleset for probing, compute the scores and returns a sample set with the scores
         """
 
-        # TODO: WE CAN'T REUSE THE ALREADY WRITTEN SCORE FILE FOR LOADING
-        #       UNLESS WE SAVE THE PICKLED SAMPLESET WITH THE SCORES
+        def _load(path):
+            return pickle.loads(open(path, "rb").read())
 
-        path = os.path.join(self.score_dir, str(sampleset.key))
+        path = os.path.join(self.score_dir, str(sampleset.key) + ".pkl")
 
-        # Computing score
-        scored_sample_set = self.biometric_algorithm._score_sample_set(
-            sampleset,
-            biometric_references,
-            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
-        )
+        if self.force or not os.path.exists(path):
 
-        scored_sample_set = self.score_writer.write(scored_sample_set, path)
+            # Computing score
+            scored_sample_set = self.biometric_algorithm._score_sample_set(
+                sampleset,
+                biometric_references,
+                allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+            )
+            self.write_scores(scored_sample_set.samples, path)
+            scored_sample_set = SampleSet(
+                [
+                    DelayedSample(
+                        functools.partial(_load, path), parent=sampleset
+                    )
+                ],
+                parent=sampleset,
+            )
+        else:
+            scored_sample_set = SampleSet(_load(path), parent=sampleset)
 
         return scored_sample_set
 
@@ -122,9 +132,6 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
 class BioAlgorithmDaskWrapper(BioAlgorithm):
     def __init__(self, biometric_algorithm, **kwargs):
         self.biometric_algorithm = biometric_algorithm
-        # Copying attribute
-        if hasattr(biometric_algorithm, "score_writer"):
-            self.score_writer = biometric_algorithm.score_writer
 
     def enroll_samples(self, biometric_reference_features):
 
@@ -189,5 +196,11 @@ def dask_vanilla_biometrics(vanila_biometrics_pipeline, npartitions=None):
     vanila_biometrics_pipeline.biometric_algorithm = BioAlgorithmDaskWrapper(
         vanila_biometrics_pipeline.biometric_algorithm
     )
+
+    def _write_scores(scores):
+        return scores.map_partitions(vanila_biometrics_pipeline.write_scores_on_dask)
+    vanila_biometrics_pipeline.write_scores_on_dask = vanila_biometrics_pipeline.write_scores
+    vanila_biometrics_pipeline.write_scores = _write_scores
+
 
     return vanila_biometrics_pipeline
