@@ -2,8 +2,10 @@ import scipy.spatial.distance
 from sklearn.utils.validation import check_array
 import numpy
 from .abstract_classes import BioAlgorithm
-from .mixins import BioAlgCheckpointMixin
 from scipy.spatial.distance import cdist
+import os
+from bob.pipelines import DelayedSample, Sample, SampleSet
+import functools
 
 
 class Distance(BioAlgorithm):
@@ -69,7 +71,3 @@ class Distance(BioAlgorithm):
         )
 
         return list(scores.flatten())
-
-
-class CheckpointDistance(BioAlgCheckpointMixin, Distance):
-    pass

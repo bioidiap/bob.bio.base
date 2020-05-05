@@ -14,7 +14,7 @@ import numpy
 logger = logging.getLogger(__name__)
 
 
-class VanillaBiometrics(object):
+class VanillaBiometricsPipeline(object):
     """
     Vanilla Biometrics Pipeline
 
@@ -120,7 +120,7 @@ class VanillaBiometrics(object):
         biometric_reference_features = self.transformer.transform(
             biometric_reference_samples
         )
-
+        
         biometric_references = self.biometric_algorithm.enroll_samples(
             biometric_reference_features
         )
@@ -137,7 +137,7 @@ class VanillaBiometrics(object):
 
         # probes is a list of SampleSets
         probe_features = self.transformer.transform(probe_samples)
-
+        
         scores = self.biometric_algorithm.score_samples(
             probe_features,
             biometric_references,
@@ -146,28 +146,3 @@ class VanillaBiometrics(object):
 
         # scores is a list of Samples
         return scores
-
-
-def dask_vanilla_biometrics(pipeline, npartitions=None):
-    """
-    Given a :py:class:`VanillaBiometrics`, wraps :py:meth:`VanillaBiometrics.transformer` and
-    :py:class:`VanillaBiometrics.biometric_algorithm` with Dask delayeds
-
-    Parameters
-    ----------
-
-    pipeline: :py:class:`VanillaBiometrics`
-       Vanilla Biometrics based pipeline to be dasked
-
-
-    npartitions: int
-       Number of partitions for the initial `Dask.bag`
-    """
-
-    from bob.pipelines.mixins import estimator_dask_it, mix_me_up
-    from bob.bio.base.pipelines.vanilla_biometrics.mixins import BioAlgDaskMixin
-
-    transformer = estimator_dask_it(pipeline.transformer, npartitions=npartitions)
-    biometric_algorithm = mix_me_up([BioAlgDaskMixin], pipeline.biometric_algorithm)
-
-    return VanillaBiometrics(transformer, biometric_algorithm)

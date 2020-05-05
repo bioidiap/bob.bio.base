@@ -11,16 +11,15 @@ from bob.bio.base import utils
 from .abstract_classes import (
     BioAlgorithm,
     Database,
-    create_score_delayed_sample,
-    make_four_colums_score,
 )
 from bob.io.base import HDF5File
-from bob.pipelines.mixins import SampleMixin, CheckpointMixin
-from bob.pipelines.sample import DelayedSample, SampleSet, Sample
-from bob.pipelines.utils import is_picklable
-from sklearn.base import TransformerMixin, BaseEstimator
+from bob.pipelines import DelayedSample, SampleSet, Sample
 import logging
 import copy
+
+from .score_writers import FourColumnsScoreWriter
+
+from bob.bio.base.algorithm import Algorithm
 
 logger = logging.getLogger("bob.bio.base")
 
@@ -157,276 +156,106 @@ class DatabaseConnector(Database):
         return list(probes.values())
 
 
-class _NonPickableWrapper:
-    def __init__(self, callable, **kwargs):
-        super().__init__(**kwargs)
-        self.callable = callable
-        self._instance = None
+class BioAlgorithmLegacy(BioAlgorithm):
+    """Biometric Algorithm that handlesy :any:`bob.bio.base.algorithm.Algorithm`
 
-    @property
-    def instance(self):
-        if self._instance is None:
-            self._instance = self.callable()
-        return self._instance
-
-    def __setstate__(self, d):
-        # Handling unpicklable objects
-        self._instance = None
-        # return super().__setstate__(d)
-
-    def __getstate__(self):
-        # Handling unpicklable objects
-        self._instance = None
-        # return super().__getstate__()
+    In this design, :any:`BioAlgorithm.enroll` maps to :any:`bob.bio.base.algorithm.Algorithm.enroll` and 
+    :any:`BioAlgorithm.score` maps :any:`bob.bio.base.algorithm.Algorithm.score`
+    
+    .. note::
+        Legacy algorithms are always checkpointable     
 
 
-class _Preprocessor(_NonPickableWrapper, TransformerMixin, BaseEstimator):
-    def transform(self, X, annotations=None):
-        if annotations is None:
-            return [self.instance(data) for data in X]
-        else:
-            return [self.instance(data, annot) for data, annot in zip(X, annotations)]
-
-    def _more_tags(self):
-        return {"stateless": True, "requires_fit": False}
+    Parameters
+    ----------
+      instance: object
+         An instance of :any:`bob.bio.base.algorithm.Algorithm`
 
 
-def _get_pickable_method(method):
-    if not is_picklable(method):
-        logger.warning(
-            f"The method {method} is not picklable. Returning its unbounded method"
-        )
-        method = functools.partial(method.__func__, None)
-    return method
+    Example
+    -------
+        >>> from bob.bio.base.pipelines.vanilla_biometrics import BioAlgorithmLegacy
+        >>> from bob.bio.base.algorithm import PCA
+        >>> biometric_algorithm = BioAlgorithmLegacy(PCA())
 
+    """
 
-class Preprocessor(CheckpointMixin, SampleMixin, _Preprocessor):
     def __init__(
         self,
-        callable,
-        transform_extra_arguments=(("annotations", "annotations"),),
+        instance,
+        base_dir,
+        force=False,
+        projector_file=None,
+        score_writer=FourColumnsScoreWriter(),
         **kwargs,
     ):
-        instance = callable()
-        super().__init__(
-            callable=callable,
-            transform_extra_arguments=transform_extra_arguments,
-            load_func=_get_pickable_method(instance.read_data),
-            save_func=_get_pickable_method(instance.write_data),
-            **kwargs,
-        )
+        super().__init__(**kwargs)
 
+        if not isinstance(instance, Algorithm):
+            raise ValueError(
+                f"Only `bob.bio.base.Algorithm` supported, not `{instance}`"
+            )
+        logger.info(f"Using `bob.bio.base` legacy algorithm {instance}")
 
-def _split_X_by_y(X, y):
-    training_data = defaultdict(list)
-    for x1, y1 in zip(X, y):
-        training_data[y1].append(x1)
-    training_data = training_data.values()
-    return training_data
+        if instance.requires_projector_training and projector_file is None:
+            raise ValueError(f"{instance} requires a `projector_file` to be set")
 
+        self.instance = instance
+        self.is_background_model_loaded = False
 
-class _Extractor(_NonPickableWrapper, TransformerMixin, BaseEstimator):
-    def transform(self, X, metadata=None):
-        if self.requires_metadata:
-            return [self.instance(data, metadata=m) for data, m in zip(X, metadata)]
-        else:
-            return [self.instance(data) for data in X]
+        self.projector_file = projector_file
+        self.biometric_reference_dir = os.path.join(base_dir, "biometric_references")
+        self._biometric_reference_extension = ".hdf5"
+        self.score_dir = os.path.join(base_dir, "scores")
+        self.score_writer = score_writer
+        self.force = force
 
-    def fit(self, X, y=None):
-        if not self.instance.requires_training:
-            return self
+    def load_legacy_background_model(self):
+        # Loading background model
+        if not self.is_background_model_loaded:
+            self.instance.load_projector(self.projector_file)
+            self.is_background_model_loaded = True
 
-        training_data = X
-        if self.instance.split_training_data_by_client:
-            training_data = _split_X_by_y(X, y)
+    def enroll(self, enroll_features, **kwargs):
+        self.load_legacy_background_model()
+        return self.instance.enroll(enroll_features)
 
-        self.instance.train(self, training_data, self.model_path)
-        return self
+    def score(self, biometric_reference, data, **kwargs):
+        self.load_legacy_background_model()
+        scores = self.instance.score(biometric_reference, data)
+        if isinstance(scores, list):
+            scores = self.instance.probe_fusion_function(scores)
+        return scores
 
-    def _more_tags(self):
-        return {
-            "requires_fit": self.instance.requires_training,
-            "stateless": not self.instance.requires_training,
-        }
+    def score_multiple_biometric_references(self, biometric_references, data, **kwargs):
+        scores = self.instance.score_for_multiple_models(biometric_references, data)
+        return scores
 
-
-class Extractor(CheckpointMixin, SampleMixin, _Extractor):
-    def __init__(self, callable, model_path=None, **kwargs):
-        instance = callable()
-
-        transform_extra_arguments = None
-        self.requires_metadata = False
-        if utils.is_argument_available("metadata", instance.__call__):
-            transform_extra_arguments = (("metadata", "metadata"),)
-            self.requires_metadata = True
-
-        fit_extra_arguments = None
-        if instance.requires_training and instance.split_training_data_by_client:
-            fit_extra_arguments = (("y", "subject"),)
-
-        super().__init__(
-            callable=callable,
-            transform_extra_arguments=transform_extra_arguments,
-            fit_extra_arguments=fit_extra_arguments,
-            load_func=_get_pickable_method(instance.read_feature),
-            save_func=_get_pickable_method(instance.write_feature),
-            model_path=model_path,
-            **kwargs,
-        )
-
-    def load_model(self):
-        self.instance.load(self.model_path)
-        return self
-
-    def save_model(self):
-        # we have already saved the model in .fit()
-        return self
-
-
-class _AlgorithmTransformer(_NonPickableWrapper, TransformerMixin, BaseEstimator):
-    def transform(self, X):
-        return [self.instance.project(feature) for feature in X]
-
-    def fit(self, X, y=None):
-        if not self.instance.requires_projector_training:
-            return self
-
-        training_data = X
-        if self.instance.split_training_features_by_client:
-            training_data = _split_X_by_y(X, y)
-
-        self.instance.train_projector(training_data, self.model_path)
-        return self
-
-    def _more_tags(self):
-        return {"requires_fit": self.instance.requires_projector_training}
-
-
-class AlgorithmAsTransformer(CheckpointMixin, SampleMixin, _AlgorithmTransformer):
-    """Class that wraps :py:class:`bob.bio.base.algorithm.Algoritm`
-
-    :py:method:`LegacyAlgorithmrMixin.fit` maps to :py:method:`bob.bio.base.algorithm.Algoritm.train_projector`
-
-    :py:method:`LegacyAlgorithmrMixin.transform` maps :py:method:`bob.bio.base.algorithm.Algoritm.project`
-
-    Example
-    -------
-
-        Wrapping LDA algorithm with functtools
-        >>> from bob.bio.base.pipelines.vanilla_biometrics.legacy import LegacyAlgorithmAsTransformer
-        >>> from bob.bio.base.algorithm import LDA
-        >>> import functools
-        >>> transformer = LegacyAlgorithmAsTransformer(functools.partial(LDA, use_pinv=True, pca_subspace_dimension=0.90))
-
-
-
-    Parameters
-    ----------
-      callable: callable
-         Calleble function that instantiates the bob.bio.base.algorithm.Algorithm
-
-    """
-
-    def __init__(self, callable, model_path, **kwargs):
-        instance = callable()
-
-        fit_extra_arguments = None
-        if (
-            instance.requires_projector_training
-            and instance.split_training_features_by_client
-        ):
-            fit_extra_arguments = (("y", "subject"),)
-
-        super().__init__(
-            callable=callable,
-            fit_extra_arguments=fit_extra_arguments,
-            load_func=_get_pickable_method(instance.read_feature),
-            save_func=_get_pickable_method(instance.write_feature),
-            model_path=model_path,
-            **kwargs,
-        )
-
-    def load_model(self):
-        self.instance.load_projector(self.model_path)
-        return self
-
-    def save_model(self):
-        # we have already saved the model in .fit()
-        return self
-
-
-class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
-    """Biometric Algorithm that handles legacy :py:class:`bob.bio.base.algorithm.Algorithm`
-
-
-    :py:method:`BioAlgorithm.enroll` maps to :py:method:`bob.bio.base.algorithm.Algoritm.enroll`
-
-    :py:method:`BioAlgorithm.score` maps :py:method:`bob.bio.base.algorithm.Algoritm.score`
-
-
-    Example
-    -------
-
-
-    Parameters
-    ----------
-      callable: callable
-         Calleble function that instantiates the bob.bio.base.algorithm.Algorithm
-
-    """
-
-    def __init__(
-        self, callable, features_dir, extension=".hdf5", model_path=None, **kwargs
-    ):
-        super().__init__(callable, **kwargs)
-        self.features_dir = features_dir
-        self.biometric_reference_dir = os.path.join(
-            self.features_dir, "biometric_references"
-        )
-        self.score_dir = os.path.join(self.features_dir, "scores")
-        self.extension = extension
-        self.model_path = model_path
-        self.is_projector_loaded = False
+    def write_biometric_reference(self, sample, path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        self.instance.write_model(sample.data, path)
 
     def _enroll_sample_set(self, sampleset):
-        # Enroll
-        return self.enroll(sampleset)
-
-    def _load_projector(self):
         """
-        Run :py:meth:`bob.bio.base.algorithm.Algorithm.load_projector` if necessary by
-        :py:class:`bob.bio.base.algorithm.Algorithm`
+        Enroll a sample set with checkpointing
         """
-        if self.instance.performs_projection and not self.is_projector_loaded:
-            if self.model_path is None:
-                raise ValueError(
-                    "Algorithm " + f"{self. instance} performs_projection. Hence, "
-                    "`model_path` needs to passed in `AlgorithmAsBioAlg.__init__`"
-                )
-            else:
-                # Loading model
-                self.instance.load_projector(self.model_path)
-                self.is_projector_loaded = True
+        # Amending `models` directory
+        path = os.path.join(
+            self.biometric_reference_dir,
+            str(sampleset.key) + self._biometric_reference_extension,
+        )
 
-    def _restore_state_of_ref(self, ref):
-        """
-        There are some algorithms that :py:meth:`bob.bio.base.algorithm.Algorithm.read_model` or 
-        :py:meth:`bob.bio.base.algorithm.Algorithm.read_feature` depends
-        on the state of `self` to be properly loaded.
-        In these cases, it's not possible to rely only in the unbounded method extracted by
-        :py:func:`_get_pickable_method`.
+        if self.force or not os.path.exists(path):
+            enrolled_sample = super()._enroll_sample_set(sampleset)
 
-        This function replaces the current state of these objects (that are not)
-        by bounding them with `self.instance`
-        """
-        
-        if isinstance(ref, DelayedSample):
-            new_ref = copy.copy(ref)
+            # saving the new sample
+            self.write_biometric_reference(enrolled_sample, path)
 
-            new_ref.load = functools.partial(ref.load.func, self.instance, ref.load.args[1])
-            return new_ref
-        else:
-            return ref
+        delayed_enrolled_sample = DelayedSample(
+            functools.partial(self.instance.read_model, path), parent=sampleset
+        )
+
+        return delayed_enrolled_sample
 
     def _score_sample_set(
         self,
@@ -434,105 +263,14 @@ class AlgorithmAsBioAlg(_NonPickableWrapper, BioAlgorithm):
         biometric_references,
         allow_scoring_with_all_biometric_references=False,
     ):
-        """Given a sampleset for probing, compute the scores and retures a sample set with the scores
-        """
-
-        # Compute scores for each sample inside of the sample set
-        # TODO: In some cases we want to compute 1 score per sampleset (IJB-C)
-        # We should add an agregator function here so we can properlly agregate samples from
-        # a sampleset either after or before scoring.
-        # To be honest, this should be the default behaviour
-
-        def _write_sample(ref, probe, score):
-            data = make_four_colums_score(ref.subject, probe.subject, probe.path, score)
-            return Sample(data, parent=ref)
-
-        self._load_projector()
-        retval = []
-
-        for subprobe_id, s in enumerate(sampleset.samples):
-            # Creating one sample per comparison
-            subprobe_scores = []
-
-            if allow_scoring_with_all_biometric_references:
-                if self.stacked_biometric_references is None:
-
-                    if self.instance.performs_projection:
-                        # Hydrating the state of biometric references 
-                        biometric_references = [
-                            self._restore_state_of_ref(ref)
-                            for ref in biometric_references
-                        ]
-
-                    self.stacked_biometric_references = [
-                        ref.data for ref in biometric_references
-                    ]
-
-                s = self._restore_state_of_ref(s)
-                scores = self.score_multiple_biometric_references(
-                    self.stacked_biometric_references, s.data
-                )
-                # Wrapping the scores in samples
-                for ref, score in zip(biometric_references, scores):
-                    subprobe_scores.append(_write_sample(ref, sampleset, score))
-
-            else:
-                for ref in [
-                    r for r in biometric_references if r.key in sampleset.references
-                ]:
-                    ref = self._restore_state_of_ref(ref)
-                    score = self.score(ref.data, s.data)
-                    subprobe_scores.append(_write_sample(ref, sampleset, score))
-
-            # Creating one sampleset per probe
-            subprobe = SampleSet(subprobe_scores, parent=sampleset)
-            subprobe.subprobe_id = subprobe_id
-
-            # Checkpointing score MANDATORY FOR LEGACY
-            path = os.path.join(self.score_dir, str(subprobe.path) + ".txt")
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-
-            delayed_scored_sample = create_score_delayed_sample(path, subprobe)
-            subprobe.samples = [delayed_scored_sample]
-
-            retval.append(subprobe)
-
-        return retval
-
-    def enroll(self, enroll_features, **kwargs):
-
-        if not isinstance(enroll_features, SampleSet):
-            raise ValueError(
-                f"`enroll_features` should be the type SampleSet, not {enroll_features}"
-            )
-
-        path = os.path.join(
-            self.biometric_reference_dir, str(enroll_features.key) + self.extension
+        path = os.path.join(self.score_dir, str(sampleset.key))
+        # Computing score
+        scored_sample_set = super()._score_sample_set(
+            sampleset,
+            biometric_references,
+            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
         )
-        self._load_projector()
-        if path is None or not os.path.isfile(path):
-            # Enrolling
-            data = [s.data for s in enroll_features.samples]
-            model = self.instance.enroll(data)
 
-            # Checkpointing
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            self.instance.write_model(model, path)
+        scored_sample_set = self.score_writer.write(scored_sample_set, path)
 
-        reader = _get_pickable_method(self.instance.read_model)
-        return DelayedSample(functools.partial(reader, path), parent=enroll_features)
-
-    def score(self, biometric_reference, data, **kwargs):
-        return self.instance.score(biometric_reference, data)
-
-    def score_multiple_biometric_references(self, biometric_references, data, **kwargs):
-        """
-        It handles the score computation of one probe against multiple biometric references using legacy
-        `bob.bio.base`
-
-        Basically it wraps :py:meth:`bob.bio.base.algorithm.Algorithm.score_for_multiple_models`.
-
-        """
-
-        scores = self.instance.score_for_multiple_models(biometric_references, data)
-        return scores
+        return scored_sample_set

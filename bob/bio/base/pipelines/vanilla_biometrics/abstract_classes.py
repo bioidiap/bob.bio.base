@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# vim: set fileencoding=utf-8 :
+
+
 from abc import ABCMeta, abstractmethod
 from bob.pipelines.sample import Sample, SampleSet, DelayedSample
 import functools
@@ -9,14 +13,9 @@ class BioAlgorithm(metaclass=ABCMeta):
     biometric model enrollement, via ``enroll()`` and scoring, with
     ``score()``.
 
-    Parameters
-    ----------
-
-
     """
 
-    def __init__(self, allow_score_multiple_references=False, **kwargs):
-        self.allow_score_multiple_references = allow_score_multiple_references
+    def __init__(self, **kwargs):
         self.stacked_biometric_references = None
 
     def enroll_samples(self, biometric_references):
@@ -61,7 +60,12 @@ class BioAlgorithm(metaclass=ABCMeta):
         """
         pass
 
-    def score_samples(self, probe_features, biometric_references, allow_scoring_with_all_biometric_references=False):
+    def score_samples(
+        self,
+        probe_features,
+        biometric_references,
+        allow_scoring_with_all_biometric_references=False,
+    ):
         """Scores a new sample against multiple (potential) references
 
         Parameters
@@ -78,7 +82,7 @@ class BioAlgorithm(metaclass=ABCMeta):
 
             allow_scoring_with_all_biometric_references: bool
                 If true will call `self.score_multiple_biometric_references`, at scoring time, to compute scores in one shot with multiple probes.
-                This optiization is useful when all probes needs to be compared with all biometric references AND
+                This optimization is useful when all probes needs to be compared with all biometric references AND
                 your scoring function allows this broadcast computation.
 
 
@@ -87,18 +91,29 @@ class BioAlgorithm(metaclass=ABCMeta):
 
             scores : list
                 For each sample in a probe, returns as many scores as there are
-                samples in the probe, together with the probe's and the
+                samples in the probe, together with the probes and the
                 relevant reference's subject identifiers.
 
         """
 
         retval = []
         for p in probe_features:
-            retval.append(self._score_sample_set(p, biometric_references, allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references))
+            retval.append(
+                self._score_sample_set(
+                    p,
+                    biometric_references,
+                    allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+                )
+            )
         return retval
 
-    def _score_sample_set(self, sampleset, biometric_references, allow_scoring_with_all_biometric_references):
-        """Given a sampleset for probing, compute the scores and retures a sample set with the scores
+    def _score_sample_set(
+        self,
+        sampleset,
+        biometric_references,
+        allow_scoring_with_all_biometric_references,
+    ):
+        """Given a sampleset for probing, compute the scores and returns a sample set with the scores
         """
 
         # Stacking the samples from a sampleset
@@ -106,15 +121,10 @@ class BioAlgorithm(metaclass=ABCMeta):
 
         # Compute scores for each sample inside of the sample set
         # TODO: In some cases we want to compute 1 score per sampleset (IJB-C)
-        # We should add an agregator function here so we can properlly agregate samples from
+        # We should add an aggregator function here so we can properly aggregator samples from
         # a sampleset either after or before scoring.
-        # To be honest, this should be the default behaviour
+        # To be honest, this should be the default behavior
         retval = []
-
-        def _write_sample(ref, probe, score):
-            data = make_four_colums_score(ref.subject, probe.subject, probe.path, score)
-            return Sample(data, parent=ref)
-
         for subprobe_id, (s, parent) in enumerate(zip(data, sampleset.samples)):
             # Creating one sample per comparison
             subprobe_scores = []
@@ -128,21 +138,25 @@ class BioAlgorithm(metaclass=ABCMeta):
                 scores = self.score_multiple_biometric_references(
                     self.stacked_biometric_references, s
                 )
-                
+
                 # Wrapping the scores in samples
                 for ref, score in zip(biometric_references, scores):
-                    subprobe_scores.append(_write_sample(ref, sampleset, score))
+                    subprobe_scores.append(Sample(score, parent=ref))
             else:
 
                 for ref in [
                     r for r in biometric_references if r.key in sampleset.references
                 ]:
                     score = self.score(ref.data, s)
-                    subprobe_scores.append(_write_sample(ref, sampleset, score))
+                    subprobe_scores.append(Sample(score, parent=ref))
 
-            # Creating one sampleset per probe
-            subprobe = SampleSet(subprobe_scores, parent=sampleset)
-            subprobe.subprobe_id = subprobe_id
+            # Fetching metadata from the probe
+            kwargs = dict(
+                (metadata, sampleset.__dict__[metadata])
+                for metadata in sampleset.__dict__.keys()
+                if metadata not in ["samples", "key", "data", "load", "_data"]
+            )
+            subprobe = SampleSet(subprobe_scores, parent=parent, **kwargs)
             retval.append(subprobe)
 
         return retval
@@ -245,26 +259,23 @@ class Database(metaclass=ABCMeta):
         pass
 
 
-def make_four_colums_score(
-    biometric_reference_subject, probe_subject, probe_path, score,
-):
-    data = "{0} {1} {2} {3}\n".format(
-        biometric_reference_subject, probe_subject, probe_path, score,
-    )
-    return data
-
-
-def create_score_delayed_sample(path, probe):
+class ScoreWriter(metaclass=ABCMeta):
     """
-    Write scores in the four columns format
+    Defines base methods to read, write scores and concatenate scores
+    for :any:`BioAlgorithm`
     """
 
-    with open(path, "w") as f:
-        for score_line in probe.samples:
-            f.write(score_line.data)
+    def __init__(self, extension=".txt"):
+        self.extension = extension
 
-    def load():
-        with open(path) as f:
-            return f.read()
+    @abstractmethod
+    def write(self, sampleset, path):
+        pass
 
-    return DelayedSample(load, parent=probe)
+    @abstractmethod
+    def read(self, path):
+        pass
+
+    @abstractmethod
+    def concatenate_write_scores(self, sampleset, path):
+        pass

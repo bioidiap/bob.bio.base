@@ -23,8 +23,6 @@ IO-related functions
 Pipelines
 ~~~~~~~~~
 
-.. autosummary::
-   bob.bio.base.pipelines.vanilla_biometrics.biometric_pipeline
 
 
 Functions dealing with resources
@@ -71,18 +69,13 @@ Plotting
    bob.bio.base.script.figure.Dir
    bob.bio.base.script.figure.Hist
 
-OpenBR conversions
-------------------
-.. autosummary::
-   bob.bio.base.score.openbr.write_matrix
-   bob.bio.base.score.openbr.write_score_file
+
 
 Details
 -------
 
 
 .. automodule:: bob.bio.base.score.load
-.. automodule:: bob.bio.base.score.openbr
 .. automodule:: bob.bio.base.script.figure
 .. automodule:: bob.bio.base.script.commands
 .. automodule:: bob.bio.base.script.gen

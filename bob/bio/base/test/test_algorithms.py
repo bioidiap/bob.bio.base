@@ -111,7 +111,7 @@ def test_pca():
   # compare model with probe
   probe = pca1.read_feature(pkg_resources.resource_filename('bob.bio.base.test', 'data/pca_projected.hdf5'))
   reference_score = -251.53563107
-  assert abs(pca1.score(model, probe) - reference_score) < 1e-5, "The scores differ: %3.8f, %3.8f" % (pca1.score(model, probe), reference_score)
+  assert abs(numpy.mean(pca1.score(model, probe)) - reference_score) < 1e-5, "The scores differ: %3.8f, %3.8f" % (pca1.score(model, probe), reference_score)
   assert abs(pca1.score_for_multiple_probes(model, [probe, probe]) - reference_score) < 1e-5
 
   # test the calculation of the subspace dimension based on percentage of variance
@@ -180,12 +180,11 @@ def test_lda():
   # enroll model from random features
   enroll = utils.random_training_set(5, 5, 0., 255., seed=21)
   model = lda1.enroll(enroll)
-  _compare(model, pkg_resources.resource_filename('bob.bio.base.test', 'data/lda_model.hdf5'), lda1.write_model, lda1.read_model)
-
+  _compare(model, pkg_resources.resource_filename('bob.bio.base.test', 'data/lda_model.hdf5'), lda1.write_model, lda1.read_model)  
   # compare model with probe
   probe = lda1.read_feature(pkg_resources.resource_filename('bob.bio.base.test', 'data/lda_projected.hdf5'))
   reference_score = -233.30450012
-  assert abs(lda1.score(model, probe) - reference_score) < 1e-5, "The scores differ: %3.8f, %3.8f" % (lda1.score(model, probe), reference_score)
+  assert abs(numpy.mean(lda1.score(model, probe)) - reference_score) < 1e-5, "The scores differ: %3.8f, %3.8f" % (lda1.score(model, probe), reference_score)
   assert abs(lda1.score_for_multiple_probes(model, [probe, probe]) - reference_score) < 1e-5
 
   # test the calculation of the subspace dimension based on percentage of variance
