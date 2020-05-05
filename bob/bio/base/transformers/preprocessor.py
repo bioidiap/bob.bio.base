@@ -12,7 +12,7 @@ class PreprocessorTransformer(TransformerMixin, BaseEstimator):
     ----------
 
       instance: object
-         Instance of `bob.bio.base.preprocessor.Preprocessor`
+         An instance of `bob.bio.base.preprocessor.Preprocessor`
 
 
     """

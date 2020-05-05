@@ -14,7 +14,7 @@ class ExtractorTransformer(TransformerMixin, BaseEstimator):
     ----------
 
       instance: object
-         Instance of `bob.bio.base.extractor.Extractor`
+         An instance of `bob.bio.base.extractor.Extractor`
 
       model_path: ``str``
          Model path in case :any:`bob.bio.base.extractor.Extractor.requires_training` is equals to true
