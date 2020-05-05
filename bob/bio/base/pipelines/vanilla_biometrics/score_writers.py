@@ -20,33 +20,30 @@ class FourColumnsScoreWriter(ScoreWriter):
         Write scores and returns a :any:`bob.pipelines.DelayedSample` containing
         the instruction to open the score file
         """
+
         os.makedirs(path, exist_ok=True)
         checkpointed_scores = []
 
-        for probe in probe_sampleset:
-
-            lines = [
-                "{0} {1} {2} {3}\n".format(
-                    biometric_reference.subject,
-                    probe.subject,
-                    probe.key,
-                    biometric_reference.data,
-                )
-                for biometric_reference in probe
-            ]
-            filename = os.path.join(path, str(probe.subject)) + ".txt"
-            open(filename, "w").writelines(lines)
-            checkpointed_scores.append(
-                SampleSet(
-                    [
-                        DelayedSample(
-                            functools.partial(self.read, filename), parent=probe
-                        )
-                    ],
-                    parent=probe,
-                )
+        lines = [
+            "{0} {1} {2} {3}\n".format(
+                biometric_reference.subject,
+                probe_sampleset.subject,
+                probe_sampleset.key,
+                biometric_reference.data,
             )
-        return checkpointed_scores
+            for biometric_reference in probe_sampleset
+        ]
+        filename = os.path.join(path, str(probe_sampleset.subject)) + ".txt"
+        open(filename, "w").writelines(lines)
+
+        return SampleSet(
+            [
+                DelayedSample(
+                    functools.partial(self.read, filename), parent=probe_sampleset
+                )
+            ],
+            parent=probe_sampleset,
+        )
 
     def read(self, path):
         """
@@ -54,16 +51,15 @@ class FourColumnsScoreWriter(ScoreWriter):
         """
         return open(path).readlines()
 
-    def concatenate_write_scores(self, samplesets_list, filename):
+    def concatenate_write_scores(self, samplesets, filename):
         """
         Given a list of samplsets, write them all in a single file
         """
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         f = open(filename, "w")
-        for samplesets in samplesets_list:
-            for sset in samplesets:
-                for s in sset:
-                    f.writelines(s.data)
+        for sset in samplesets:
+            for scores in sset:
+                f.writelines(scores.data)
 
 
 class CSVScoreWriter(ScoreWriter):
@@ -115,40 +111,36 @@ class CSVScoreWriter(ScoreWriter):
         os.makedirs(path, exist_ok=True)
         checkpointed_scores = []
 
-        header, probe_dict, bioref_dict = create_csv_header(probe_sampleset[0])
+        header, probe_dict, bioref_dict = create_csv_header(probe_sampleset)
 
-        for probe in probe_sampleset:
-            filename = os.path.join(path, str(probe.subject)) + ".csv"
-            with open(filename, "w") as f:
+        filename = os.path.join(path, str(probe_sampleset.subject)) + ".csv"
+        with open(filename, "w") as f:
 
-                csv_write = csv.writer(f)
-                csv_write.writerow(header)
+            csv_write = csv.writer(f)
+            csv_write.writerow(header)
 
-                rows = []
-                probe_row = [str(probe.key)] + [
-                    str(probe.__dict__[k]) for k in probe_dict.keys()
+            rows = []
+            probe_row = [str(probe_sampleset.key)] + [
+                str(probe_sampleset.__dict__[k]) for k in probe_dict.keys()
+            ]
+
+            for biometric_reference in probe_sampleset:
+                bio_ref_row = [
+                    str(biometric_reference.__dict__[k])
+                    for k in list(bioref_dict.keys()) + ["data"]
                 ]
 
-                for biometric_reference in probe:
-                    bio_ref_row = [
-                        str(biometric_reference.__dict__[k])
-                        for k in list(bioref_dict.keys()) + ["data"]
-                    ]
+                rows.append(probe_row + bio_ref_row)
 
-                    rows.append(probe_row + bio_ref_row)
-
-                csv_write.writerows(rows)
-                checkpointed_scores.append(
-                    SampleSet(
-                        [
-                            DelayedSample(
-                                functools.partial(self.read, filename), parent=probe
-                            )
-                        ],
-                        parent=probe,
+            csv_write.writerows(rows)
+            return SampleSet(
+                [
+                    DelayedSample(
+                        functools.partial(self.read, filename), parent=probe_sampleset
                     )
-                )
-        return checkpointed_scores
+                ],
+                parent=probe_sampleset,
+            )
 
     def read(self, path):
         """
@@ -156,7 +148,7 @@ class CSVScoreWriter(ScoreWriter):
         """
         return open(path).readlines()
 
-    def concatenate_write_scores(self, samplesets_list, filename):
+    def concatenate_write_scores(self, samplesets, filename):
         """
         Given a list of samplsets, write them all in a single file
         """
@@ -167,8 +159,8 @@ class CSVScoreWriter(ScoreWriter):
         base_dir = os.path.splitext(filename)[0]
         os.makedirs(base_dir, exist_ok=True)
         f = None
-        for i, samplesets in enumerate(samplesets_list):
-            if i% self.n_sample_sets==0:
+        for i, sset in enumerate(samplesets):
+            if i % self.n_sample_sets == 0:
                 if f is not None:
                     f.close()
                     del f
@@ -176,10 +168,9 @@ class CSVScoreWriter(ScoreWriter):
                 filename = os.path.join(base_dir, f"chunk_{i}.csv")
                 f = open(filename, "w")
 
-            for sset in samplesets:
-                for s in sset:
-                    if i==0:
-                        f.writelines(s.data)
-                    else:
-                        f.writelines(s.data[1:])
-            samplesets_list[i] = None
+            for scores in sset:
+                if i == 0:
+                    f.writelines(scores.data)
+                else:
+                    f.writelines(scores.data[1:])
+            sset.samples = None

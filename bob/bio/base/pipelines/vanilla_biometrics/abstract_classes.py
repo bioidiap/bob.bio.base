@@ -5,6 +5,15 @@
 from abc import ABCMeta, abstractmethod
 from bob.pipelines.sample import Sample, SampleSet, DelayedSample
 import functools
+import numpy as np
+
+
+def average_scores(scores):
+    """
+    Given a :any:`numpy.ndarray` coming from multiple probes, 
+    average them
+    """
+    return np.mean(scores, axis=0)
 
 
 class BioAlgorithm(metaclass=ABCMeta):
@@ -13,10 +22,17 @@ class BioAlgorithm(metaclass=ABCMeta):
     biometric model enrollement, via ``enroll()`` and scoring, with
     ``score()``.
 
+    Parameters
+    ----------
+
+        score_reduction_operation: ``collections.callable``
+           Callable containing the score reduction function to be applied in the samples in a sampleset
+
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, score_reduction_operation=average_scores,**kwargs):
         self.stacked_biometric_references = None
+        self.score_reduction_operation = average_scores
 
     def enroll_samples(self, biometric_references):
         """This method should implement the sub-pipeline 1 of the Vanilla Biometrics Pipeline :ref:`_vanilla-pipeline-1`.
@@ -113,53 +129,63 @@ class BioAlgorithm(metaclass=ABCMeta):
         biometric_references,
         allow_scoring_with_all_biometric_references,
     ):
-        """Given a sampleset for probing, compute the scores and returns a sample set with the scores
+        """Given one sampleset for probing, compute the scores and returns a sample set with the scores
         """
 
-        # Stacking the samples from a sampleset
-        data = [s.data for s in sampleset.samples]
+        scores_biometric_references = []
+        if allow_scoring_with_all_biometric_references:
+            # Optimized scoring
+            # This is useful when you scoring function can be compared with a
+            # static batch of biometric references
+            total_scores = []
+            for probe_sample in sampleset:
 
-        # Compute scores for each sample inside of the sample set
-        # TODO: In some cases we want to compute 1 score per sampleset (IJB-C)
-        # We should add an aggregator function here so we can properly aggregator samples from
-        # a sampleset either after or before scoring.
-        # To be honest, this should be the default behavior
-        retval = []
-        for subprobe_id, (s, parent) in enumerate(zip(data, sampleset.samples)):
-            # Creating one sample per comparison
-            subprobe_scores = []
-
-            if allow_scoring_with_all_biometric_references:
                 # Multiple scoring
                 if self.stacked_biometric_references is None:
                     self.stacked_biometric_references = [
                         ref.data for ref in biometric_references
                     ]
                 scores = self.score_multiple_biometric_references(
-                    self.stacked_biometric_references, s
+                    self.stacked_biometric_references, probe_sample.data
                 )
+                total_scores.append(scores)
 
-                # Wrapping the scores in samples
-                for ref, score in zip(biometric_references, scores):
-                    subprobe_scores.append(Sample(score, parent=ref))
-            else:
+            # Reducing them
+            total_scores = self.score_reduction_operation(total_scores)
 
+            # Wrapping the scores in samples
+            for ref, score in zip(biometric_references, total_scores):
+                scores_biometric_references.append(Sample(score, parent=ref))
+
+        else:
+            # Non optimizing scoring
+            # There are some protocols where each probe has
+            # to be scored with a specific list of biometric_references
+            total_scores = []
+            for probe_sample in sampleset:
+                scores = []
                 for ref in [
-                    r for r in biometric_references if r.key in sampleset.references
+                    r for r in biometric_references if str(r.subject) in sampleset.references
                 ]:
-                    score = self.score(ref.data, s)
-                    subprobe_scores.append(Sample(score, parent=ref))
+                    scores.append(self.score(ref.data, probe_sample.data))
+                total_scores.append(scores)
 
-            # Fetching metadata from the probe
-            kwargs = dict(
-                (metadata, sampleset.__dict__[metadata])
-                for metadata in sampleset.__dict__.keys()
-                if metadata not in ["samples", "key", "data", "load", "_data"]
-            )
-            subprobe = SampleSet(subprobe_scores, parent=parent, **kwargs)
-            retval.append(subprobe)
+            total_scores = self.score_reduction_operation(np.array(total_scores))
 
-        return retval
+            for ref, score in zip([
+                r for r in biometric_references if str(r.subject) in sampleset.references
+            ], total_scores):
+
+                scores_biometric_references.append(Sample(score, parent=ref))
+
+        # Fetching metadata from the probe
+        kwargs = dict(
+            (metadata, sampleset.__dict__[metadata])
+            for metadata in sampleset.__dict__.keys()
+            if metadata not in ["samples", "key", "data", "load", "_data"]
+        )
+        return SampleSet(scores_biometric_references, parent=sampleset, **kwargs)
+
 
     @abstractmethod
     def score(self, biometric_reference, data):

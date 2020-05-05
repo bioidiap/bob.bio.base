@@ -61,10 +61,10 @@ class DummyDatabase:
             for i in range(offset, offset + n_samples)
         ]
 
-    def _create_random_sample_set(self, n_sample_set=10, n_samples=2):
+    def _create_random_sample_set(self, n_sample_set=10, n_samples=2, seed=10):
 
         # Just generate random samples
-        np.random.seed(10)
+        np.random.seed(seed)
         sample_set = [
             SampleSet(
                 samples=[],
@@ -89,20 +89,29 @@ class DummyDatabase:
         return sample_set
 
     def background_model_samples(self):
-        samples = [sset.samples for sset in self._create_random_sample_set()]
+        samples = [sset.samples for sset in self._create_random_sample_set(seed=10)]
         return list(itertools.chain(*samples))
 
     def references(self):
-        return self._create_random_sample_set(self.n_references, self.dim)
+        return self._create_random_sample_set(self.n_references, self.dim, seed=11)
 
     def probes(self):
         probes = []
 
-        probes = self._create_random_sample_set(n_sample_set=10, n_samples=1)
+        probes = self._create_random_sample_set(n_sample_set=10, n_samples=1, seed=12)
         for p in probes:
-            p.references = list(range(self.n_references))
+            p.references = [str(r) for r in list(range(self.n_references))]
 
         return probes
+
+    def zprobes(self):
+        zprobes = []
+
+        zprobes = self._create_random_sample_set(n_sample_set=10, n_samples=1, seed=13)
+        for p in zprobes:
+            p.references = [str(r) for r in list(range(self.n_references))]
+
+        return zprobes
 
     @property
     def allow_scoring_with_all_biometric_references(self):
@@ -140,7 +149,7 @@ def test_on_memory():
 
     with tempfile.TemporaryDirectory() as dir_name:
 
-        def run_pipeline(with_dask):
+        def run_pipeline(with_dask, allow_scoring_with_all_biometric_references):
             database = DummyDatabase()
 
             transformer = _make_transformer(dir_name)
@@ -160,23 +169,24 @@ def test_on_memory():
                 database.background_model_samples(),
                 database.references(),
                 database.probes(),
-                allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
+                allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
             )
 
             if with_dask:
                 scores = scores.compute(scheduler="single-threaded")
 
             assert len(scores) == 10
-            for probe_ssets in scores:
-                for probe in probe_ssets:
-                    assert len(probe) == 10
+            for sample_scores in scores:
+                assert len(sample_scores) == 10
+                for score in sample_scores:
+                    assert isinstance(score.data, float)
 
-        run_pipeline(False)
-        run_pipeline(False)  # Testing checkpoint
+        run_pipeline(False, True)
+        run_pipeline(False, False)  # Testing checkpoint
         shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
-        run_pipeline(True)
-        run_pipeline(True)  # Testing checkpoint
+        run_pipeline(True, True)
+        run_pipeline(True, True)  # Testing checkpoint
 
 
 def test_checkpoint_bioalg_as_transformer():
@@ -207,6 +217,7 @@ def test_checkpoint_bioalg_as_transformer():
                 database.probes(),
                 allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
             )
+
             if with_dask:
                 scores = scores.compute(scheduler="single-threaded")
 

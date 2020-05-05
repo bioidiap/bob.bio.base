@@ -120,7 +120,7 @@ class VanillaBiometricsPipeline(object):
         biometric_reference_features = self.transformer.transform(
             biometric_reference_samples
         )
-        
+
         biometric_references = self.biometric_algorithm.enroll_samples(
             biometric_reference_features
         )
@@ -137,7 +137,7 @@ class VanillaBiometricsPipeline(object):
 
         # probes is a list of SampleSets
         probe_features = self.transformer.transform(probe_samples)
-        
+
         scores = self.biometric_algorithm.score_samples(
             probe_features,
             biometric_references,
@@ -146,3 +146,69 @@ class VanillaBiometricsPipeline(object):
 
         # scores is a list of Samples
         return scores
+
+
+class ZNormVanillaBiometricsPipeline(VanillaBiometricsPipeline):
+    def __init__(self, vanilla_biometrics_pipeline):
+        self.vanilla_biometrics_pipeline = vanilla_biometrics_pipeline
+
+    def __call__(
+        self,
+        background_model_samples,
+        biometric_reference_samples,
+        probe_samples,
+        zprobe_samples,
+        allow_scoring_with_all_biometric_references=False,
+    ):
+
+        self.transformer = self.train_background_model(background_model_samples)
+
+        # Create biometric samples
+        biometric_references = self.create_biometric_reference(
+            biometric_reference_samples
+        )
+
+        raw_scores = self.vanilla_biometrics_pipeline(
+            background_model_samples,
+            biometric_reference_samples,
+            probe_samples,
+            allow_scoring_with_all_biometric_references,
+        )
+
+        return self.compute_znorm_scores(
+            zprobe_samples, raw_scores, biometric_references
+        )
+
+    def train_background_model(self, background_model_samples):
+        return self.vanilla_biometrics_pipeline.train_background_model(
+            background_model_samples
+        )
+
+    def create_biometric_reference(self, biometric_reference_samples):
+        return self.vanilla_biometrics_pipeline.create_biometric_reference(
+            biometric_reference_samples
+        )
+
+    def compute_scores(
+        self,
+        probe_samples,
+        biometric_references,
+        allow_scoring_with_all_biometric_references=False,
+    ):
+
+        return self.vanilla_biometrics_pipeline.compute_scores(
+            probe_samples,
+            biometric_references,
+            allow_scoring_with_all_biometric_references,
+        )
+
+    def compute_znorm_scores(self, zprobe_samples, probe_scores, biometric_references):
+        
+        import ipdb; ipdb.set_trace()
+
+        z_scores = self.vanilla_biometrics_pipeline.compute_scores(
+            zprobe_samples, biometric_references
+        )
+
+
+        pass
