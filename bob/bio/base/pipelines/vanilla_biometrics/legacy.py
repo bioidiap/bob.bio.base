@@ -168,7 +168,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
 
     Parameters
     ----------
-      callable: ``collection.callable``
+      instance: ``collection.callable``
          Callable function that instantiates the :any:`bob.bio.base.algorithm.Algorithm`
 
 
@@ -182,7 +182,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
 
     def __init__(
         self,
-        callable,
+        instance,
         base_dir,
         force=False,
         projector_file=None,
@@ -191,16 +191,16 @@ class BioAlgorithmLegacy(BioAlgorithm):
     ):
         super().__init__(**kwargs)
 
-        if not isinstance(callable, Algorithm):
+        if not isinstance(instance, Algorithm):
             raise ValueError(
-                f"Only `bob.bio.base.Algorithm` supported, not `{callable}`"
+                f"Only `bob.bio.base.Algorithm` supported, not `{instance}`"
             )
-        logger.info(f"Using `bob.bio.base` legacy algorithm {callable}")
+        logger.info(f"Using `bob.bio.base` legacy algorithm {instance}")
 
-        if callable.requires_projector_training and projector_file is None:
-            raise ValueError(f"{callable} requires a `projector_file` to be set")
+        if instance.requires_projector_training and projector_file is None:
+            raise ValueError(f"{instance} requires a `projector_file` to be set")
 
-        self.callable = callable
+        self.instance = instance
         self.is_background_model_loaded = False
 
         self.projector_file = projector_file
@@ -213,27 +213,27 @@ class BioAlgorithmLegacy(BioAlgorithm):
     def load_legacy_background_model(self):
         # Loading background model
         if not self.is_background_model_loaded:
-            self.callable.load_projector(self.projector_file)
+            self.instance.load_projector(self.projector_file)
             self.is_background_model_loaded = True
 
     def enroll(self, enroll_features, **kwargs):
         self.load_legacy_background_model()
-        return self.callable.enroll(enroll_features)
+        return self.instance.enroll(enroll_features)
 
     def score(self, biometric_reference, data, **kwargs):
         self.load_legacy_background_model()
-        scores = self.callable.score(biometric_reference, data)
+        scores = self.instance.score(biometric_reference, data)
         if isinstance(scores, list):
-            scores = self.callable.probe_fusion_function(scores)
+            scores = self.instance.probe_fusion_function(scores)
         return scores
 
     def score_multiple_biometric_references(self, biometric_references, data, **kwargs):
-        scores = self.callable.score_for_multiple_models(biometric_references, data)
+        scores = self.instance.score_for_multiple_models(biometric_references, data)
         return scores
 
     def write_biometric_reference(self, sample, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        self.callable.write_model(sample.data, path)
+        self.instance.write_model(sample.data, path)
 
     def _enroll_sample_set(self, sampleset):
         """
@@ -252,7 +252,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
             self.write_biometric_reference(enrolled_sample, path)
 
         delayed_enrolled_sample = DelayedSample(
-            functools.partial(self.callable.read_model, path), parent=sampleset
+            functools.partial(self.instance.read_model, path), parent=sampleset
         )
 
         return delayed_enrolled_sample
