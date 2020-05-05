@@ -168,7 +168,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
 
     Parameters
     ----------
-      instance: ``collection.callable``
+      instance: object
          Callable function that instantiates the :any:`bob.bio.base.algorithm.Algorithm`
 
 

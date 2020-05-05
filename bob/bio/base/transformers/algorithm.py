@@ -26,7 +26,7 @@ class AlgorithmTransformer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-      instance: ``collections.callable``
+      instance: object
          Callable function that instantiates the bob.bio.base.algorithm.Algorithm
 
     """
