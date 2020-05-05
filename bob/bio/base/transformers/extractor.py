@@ -13,7 +13,7 @@ class ExtractorTransformer(TransformerMixin, BaseEstimator):
     Parameters
     ----------
 
-      callable: ``collections.Callable``
+      instance: ``collections.callable``
          Instance of `bob.bio.base.extractor.Extractor`
 
       model_path: ``str``
@@ -22,44 +22,44 @@ class ExtractorTransformer(TransformerMixin, BaseEstimator):
     """
 
     def __init__(
-        self, callable, model_path=None, **kwargs,
+        self, instance, model_path=None, **kwargs,
     ):
 
-        if not isinstance(callable, Extractor):
+        if not isinstance(instance, Extractor):
             raise ValueError(
-                "`callable` should be an instance of `bob.bio.base.extractor.Extractor`"
+                "`instance` should be an instance of `bob.bio.base.extractor.Extractor`"
             )
 
-        if callable.requires_training and (model_path is None or model_path == ""):
+        if instance.requires_training and (model_path is None or model_path == ""):
             raise ValueError(
-                f"`model_path` needs to be set if extractor {callable} requires training"
+                f"`model_path` needs to be set if extractor {instance} requires training"
             )
 
-        self.callable = callable
+        self.instance = instance
         self.model_path = model_path
         super().__init__(**kwargs)
 
     def fit(self, X, y=None):
-        if not self.callable.requires_training:
+        if not self.instance.requires_training:
             return self
 
         training_data = X
-        if self.callable.split_training_data_by_client:
+        if self.instance.split_training_data_by_client:
             training_data = split_X_by_y(X, y)
 
-        self.callable.train(training_data, self.model_path)
+        self.instance.train(training_data, self.model_path)
         return self
 
     def transform(self, X, metadata=None):
         if metadata is None:
-            return [self.callable(data) for data in X]
+            return [self.instance(data) for data in X]
         else:
             return [
-                self.callable(data, metadata) for data, metadata in zip(X, metadata)
+                self.instance(data, metadata) for data, metadata in zip(X, metadata)
             ]
 
     def _more_tags(self):
         return {
-            "stateless": not self.callable.requires_training,
-            "requires_fit": self.callable.requires_training,
+            "stateless": not self.instance.requires_training,
+            "requires_fit": self.instance.requires_training,
         }

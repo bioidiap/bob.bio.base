@@ -11,7 +11,7 @@ class PreprocessorTransformer(TransformerMixin, BaseEstimator):
     Parameters
     ----------
 
-      callable: ``collections.Callable``
+      instance: ``collections.callable``
          Instance of `bob.bio.base.preprocessor.Preprocessor`
 
 
@@ -19,21 +19,21 @@ class PreprocessorTransformer(TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
-        callable,
+        instance,
         **kwargs,
     ):
 
-        if not isinstance(callable, Preprocessor):
-            raise ValueError("`callable` should be an instance of `bob.bio.base.preprocessor.Preprocessor`")
+        if not isinstance(instance, Preprocessor):
+            raise ValueError("`instance` should be an instance of `bob.bio.base.preprocessor.Preprocessor`")
 
-        self.callable = callable
+        self.instance = instance
         super().__init__(**kwargs)
 
     def transform(self, X, annotations=None):
         if annotations is None:
-            return [self.callable(data) for data in X]
+            return [self.instance(data) for data in X]
         else:
-            return [self.callable(data, annot) for data, annot in zip(X, annotations)]
+            return [self.instance(data, annot) for data, annot in zip(X, annotations)]
 
     def _more_tags(self):
         return {"stateless": True, "requires_fit": False}

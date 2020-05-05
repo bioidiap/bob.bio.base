@@ -26,56 +26,56 @@ class AlgorithmTransformer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-      callable: ``collections.callable``
+      instance: ``collections.callable``
          Callable function that instantiates the bob.bio.base.algorithm.Algorithm
 
     """
 
     def __init__(
-        self, callable, projector_file=None, **kwargs,
+        self, instance, projector_file=None, **kwargs,
     ):
 
-        if not isinstance(callable, Algorithm):
+        if not isinstance(instance, Algorithm):
             raise ValueError(
-                "`callable` should be an instance of `bob.bio.base.extractor.Algorithm`"
+                "`instance` should be an instance of `bob.bio.base.extractor.Algorithm`"
             )
 
-        if callable.requires_projector_training and (
+        if instance.requires_projector_training and (
             projector_file is None or projector_file == ""
         ):
             raise ValueError(
-                f"`projector_file` needs to be set if extractor {callable} requires training"
+                f"`projector_file` needs to be set if extractor {instance} requires training"
             )
 
-        if not is_picklable(callable):
-            raise ValueError(f"{callable} needs to be picklable")
+        if not is_picklable(instance):
+            raise ValueError(f"{instance} needs to be picklable")
 
-        self.callable = callable
+        self.instance = instance
         self.projector_file = projector_file
         super().__init__(**kwargs)
 
     def fit(self, X, y=None):
-        if not self.callable.requires_projector_training:
+        if not self.instance.requires_projector_training:
             return self
         training_data = X
-        if self.callable.split_training_features_by_client:
+        if self.instance.split_training_features_by_client:
             training_data = split_X_by_y(X, y)
 
         os.makedirs(os.path.dirname(self.projector_file), exist_ok=True)
-        self.callable.train_projector(training_data, self.projector_file)
+        self.instance.train_projector(training_data, self.projector_file)
         return self
 
     def transform(self, X, metadata=None):
         if metadata is None:
-            return [self.callable.project(data) for data in X]
+            return [self.instance.project(data) for data in X]
         else:
             return [
-                self.callable.project(data, metadata)
+                self.instance.project(data, metadata)
                 for data, metadata in zip(X, metadata)
             ]
 
     def _more_tags(self):
         return {
-            "stateless": not self.callable.requires_projector_training,
-            "requires_fit": self.callable.requires_projector_training,
+            "stateless": not self.instance.requires_projector_training,
+            "requires_fit": self.instance.requires_projector_training,
         }
