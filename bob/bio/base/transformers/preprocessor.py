@@ -11,7 +11,7 @@ class PreprocessorTransformer(TransformerMixin, BaseEstimator):
     Parameters
     ----------
 
-      instance: ``collections.callable``
+      instance: object
          Instance of `bob.bio.base.preprocessor.Preprocessor`
 
 
