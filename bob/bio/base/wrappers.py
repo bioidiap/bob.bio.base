@@ -20,6 +20,7 @@ def wrap_bob_legacy(
     fit_extra_arguments=(("y", "subject"),),
     transform_extra_arguments=None,
     dask_it=False,
+    **kwargs
 ):
     """
     Wraps either :any:`bob.bio.base.preprocessor.Preprocessor`, :any:`bob.bio.base.extractor.Extractor`
@@ -50,18 +51,21 @@ def wrap_bob_legacy(
     if isinstance(bob_object, Preprocessor):
         transformer = wrap_checkpoint_preprocessor(
             bob_object, features_dir=os.path.join(dir_name, "preprocessor"),
+            **kwargs
         )
     elif isinstance(bob_object, Extractor):
         transformer = wrap_checkpoint_extractor(
             bob_object,
             features_dir=os.path.join(dir_name, "extractor"),
             model_path=dir_name,
+            **kwargs
         )
     elif isinstance(bob_object, Algorithm):
         transformer = wrap_checkpoint_algorithm(
             bob_object,
             features_dir=os.path.join(dir_name, "algorithm"),
             model_path=dir_name,
+            **kwargs
         )
     else:
         raise ValueError(
