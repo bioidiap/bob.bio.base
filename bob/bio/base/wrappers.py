@@ -17,7 +17,7 @@ from bob.bio.base.utils import is_argument_available
 def wrap_bob_legacy(
     bob_object,
     dir_name,
-    fit_extra_arguments=(("y", "subject"),),
+    fit_extra_arguments=None,
     transform_extra_arguments=None,
     dask_it=False,
     **kwargs
