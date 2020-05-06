@@ -11,6 +11,7 @@ for bob.bio experiments
 import logging
 import numpy
 from .score_writers import FourColumnsScoreWriter
+from .wrappers import BioAlgorithmZTNormWrapper
 
 
 logger = logging.getLogger(__name__)
@@ -107,7 +108,7 @@ class VanillaBiometricsPipeline(object):
         )
 
         # Scores all probes
-        scores = self.compute_scores(
+        scores, _ = self.compute_scores(
             probe_samples,
             biometric_references,
             allow_scoring_with_all_biometric_references,
@@ -160,15 +161,55 @@ class VanillaBiometricsPipeline(object):
         )
 
         # scores is a list of Samples
-        return scores
+        return scores, probe_features
 
     def write_scores(self, scores):
         return self.score_writer.write(scores)
 
 
-class ZNormVanillaBiometricsPipeline(VanillaBiometricsPipeline):
-    def __init__(self, vanilla_biometrics_pipeline):
+class ZTNormVanillaBiometricsPipeline(object):
+    """
+    Apply Z, T or ZT Score normalization on top of VanillaBiometric Pipeline
+
+    Reference bibliography from: A Generative Model for Score Normalization in Speaker Recognition
+    https://arxiv.org/pdf/1709.09868.pdf
+
+
+    Example
+    -------
+       >>> transformer = make_pipeline([])
+       >>> biometric_algorithm = Distance()
+       >>> vanilla_biometrics_pipeline = VanillaBiometricsPipeline(transformer, biometric_algorithm)
+       >>> zt_pipeline = ZTNormVanillaBiometricsPipeline(vanilla_biometrics_pipeline)
+       >>> zt_pipeline(...)
+
+    Parameters
+    ----------
+
+        vanilla_biometrics_pipeline: :any:`VanillaBiometricsPipeline`
+          An instance :any:`VanillaBiometricsPipeline` to the wrapped with score normalization
+
+        z_norm: bool
+          If True, applies ZScore normalization on top of raw scores.
+
+        t_norm: bool
+          If True, applies TScore normalization on top of raw scores.
+          If both, z_norm and t_norm are true, it applies score normalization
+
+    """
+
+
+    def __init__(self, vanilla_biometrics_pipeline, z_norm=True, t_norm=True):
         self.vanilla_biometrics_pipeline = vanilla_biometrics_pipeline
+        # Wrapping with ZTNorm
+        self.vanilla_biometrics_pipeline.biometric_algorithm = BioAlgorithmZTNormWrapper(
+            self.vanilla_biometrics_pipeline.biometric_algorithm
+        )
+        self.z_norm = z_norm
+        self.t_norm = t_norm
+
+        if not z_norm and not t_norm:
+            raise ValueError("Both z_norm and t_norm are False. No normalization will be applied")
 
     def __call__(
         self,
@@ -176,6 +217,7 @@ class ZNormVanillaBiometricsPipeline(VanillaBiometricsPipeline):
         biometric_reference_samples,
         probe_samples,
         zprobe_samples,
+        t_biometric_reference_samples,
         allow_scoring_with_all_biometric_references=False,
     ):
 
@@ -186,16 +228,44 @@ class ZNormVanillaBiometricsPipeline(VanillaBiometricsPipeline):
             biometric_reference_samples
         )
 
-        raw_scores = self.vanilla_biometrics_pipeline(
-            background_model_samples,
-            biometric_reference_samples,
+        raw_scores, probe_features = self.compute_scores(
             probe_samples,
+            biometric_references,
             allow_scoring_with_all_biometric_references,
         )
 
-        return self.compute_znorm_scores(
-            zprobe_samples, raw_scores, biometric_references
+        # Z NORM
+        if self.z_norm:
+            z_normed_scores, z_probe_features = self.compute_znorm_scores(
+                zprobe_samples,
+                raw_scores,
+                biometric_references,
+                allow_scoring_with_all_biometric_references,
+            )
+        if not self.t_norm:
+            return z_normed_scores
+
+        # T NORM
+        t_normed_scores, t_biometric_references = self.compute_tnorm_scores(
+            t_biometric_reference_samples,
+            probe_features,
+            raw_scores,
+            allow_scoring_with_all_biometric_references,
         )
+        if not self.z_norm:
+            return t_normed_scores
+
+
+        # ZT NORM
+        zt_normed_scores = self.compute_ztnorm_scores(
+            z_probe_features,
+            t_biometric_references,
+            z_normed_scores,
+            t_normed_scores,
+            allow_scoring_with_all_biometric_references,
+        )
+
+        return zt_normed_scores
 
     def train_background_model(self, background_model_samples):
         return self.vanilla_biometrics_pipeline.train_background_model(
@@ -220,10 +290,74 @@ class ZNormVanillaBiometricsPipeline(VanillaBiometricsPipeline):
             allow_scoring_with_all_biometric_references,
         )
 
-    def compute_znorm_scores(self, zprobe_samples, probe_scores, biometric_references):
+    def compute_znorm_scores(
+        self,
+        zprobe_samples,
+        probe_scores,
+        biometric_references,
+        allow_scoring_with_all_biometric_references=False,
+    ):
 
-        z_scores = self.vanilla_biometrics_pipeline.compute_scores(
+        z_scores, z_probe_features = self.compute_scores(
             zprobe_samples, biometric_references
         )
 
-        pass
+        z_normed_scores = self.vanilla_biometrics_pipeline.biometric_algorithm.compute_norm_scores(
+            z_scores, probe_scores, allow_scoring_with_all_biometric_references,
+        )
+
+        return z_normed_scores, z_probe_features
+
+    def compute_tnorm_scores(
+        self,
+        t_biometric_reference_samples,
+        probe_features,
+        probe_scores,
+        allow_scoring_with_all_biometric_references=False,
+    ):
+
+        t_biometric_references = self.create_biometric_reference(
+            t_biometric_reference_samples
+        )
+
+        # Reusing the probe features
+        t_scores = self.vanilla_biometrics_pipeline.biometric_algorithm.score_samples(
+            probe_features,
+            t_biometric_references,
+            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+        )
+
+        t_normed_scores = self.vanilla_biometrics_pipeline.biometric_algorithm.compute_norm_scores(
+            t_scores, probe_scores, allow_scoring_with_all_biometric_references,
+        )
+
+        return t_normed_scores, t_biometric_references
+
+    def compute_ztnorm_scores(self,
+            z_probe_features,
+            t_biometric_references,
+            z_normed_scores,
+            t_normed_scores,
+            allow_scoring_with_all_biometric_references=False
+            ):
+
+
+        # Reusing the zprobe_features and t_biometric_references
+        zt_scores = self.vanilla_biometrics_pipeline.biometric_algorithm.score_samples(
+            z_probe_features,
+            t_biometric_references,
+            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+        )
+
+        # Z Normalizing the T-normed scores
+        z_normed_t_normed = self.vanilla_biometrics_pipeline.biometric_algorithm.compute_norm_scores(
+            zt_scores, t_normed_scores, allow_scoring_with_all_biometric_references,
+        )
+
+        # (Z Normalizing the T-normed scores) the Z normed scores
+        zt_normed_scores = self.vanilla_biometrics_pipeline.biometric_algorithm.compute_norm_scores(
+            z_normed_t_normed, z_normed_scores, allow_scoring_with_all_biometric_references,
+        )
+
+
+        return zt_normed_scores

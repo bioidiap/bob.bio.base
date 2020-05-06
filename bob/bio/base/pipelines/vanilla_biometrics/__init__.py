@@ -1,4 +1,4 @@
-from .pipelines import VanillaBiometricsPipeline, ZNormVanillaBiometricsPipeline
+from .pipelines import VanillaBiometricsPipeline, ZTNormVanillaBiometricsPipeline
 
 from .biometric_algorithms import Distance
 from .score_writers import FourColumnsScoreWriter, CSVScoreWriter

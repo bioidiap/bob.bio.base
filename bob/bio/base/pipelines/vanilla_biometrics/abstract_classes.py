@@ -121,6 +121,7 @@ class BioAlgorithm(metaclass=ABCMeta):
                     allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
                 )
             )
+
         return retval
 
     def _score_sample_set(

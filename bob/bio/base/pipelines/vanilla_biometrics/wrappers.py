@@ -1,4 +1,4 @@
-from bob.pipelines import DelayedSample, SampleSet
+from bob.pipelines import DelayedSample, SampleSet, Sample
 import bob.io.base
 import os
 import dask
@@ -7,6 +7,7 @@ from .score_writers import FourColumnsScoreWriter
 from .abstract_classes import BioAlgorithm
 import pickle
 import bob.pipelines as mario
+import numpy as np
 
 
 class BioAlgorithmCheckpointWrapper(BioAlgorithm):
@@ -35,13 +36,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
 
     """
 
-    def __init__(
-        self,
-        biometric_algorithm,
-        base_dir,
-        force=False,
-        **kwargs
-    ):
+    def __init__(self, biometric_algorithm, base_dir, force=False, **kwargs):
         super().__init__(**kwargs)
 
         self.biometric_reference_dir = os.path.join(base_dir, "biometric_references")
@@ -116,11 +111,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
             )
             self.write_scores(scored_sample_set.samples, path)
             scored_sample_set = SampleSet(
-                [
-                    DelayedSample(
-                        functools.partial(_load, path), parent=sampleset
-                    )
-                ],
+                [DelayedSample(functools.partial(_load, path), parent=sampleset)],
                 parent=sampleset,
             )
         else:
@@ -199,8 +190,82 @@ def dask_vanilla_biometrics(vanila_biometrics_pipeline, npartitions=None):
 
     def _write_scores(scores):
         return scores.map_partitions(vanila_biometrics_pipeline.write_scores_on_dask)
-    vanila_biometrics_pipeline.write_scores_on_dask = vanila_biometrics_pipeline.write_scores
+
+    vanila_biometrics_pipeline.write_scores_on_dask = (
+        vanila_biometrics_pipeline.write_scores
+    )
     vanila_biometrics_pipeline.write_scores = _write_scores
 
-
     return vanila_biometrics_pipeline
+
+
+class BioAlgorithmZTNormWrapper(BioAlgorithm):
+    """
+    Wraps an algorithm with Z-Norm scores
+    """
+
+    def __init__(self, biometric_algorithm, **kwargs):
+
+        self.biometric_algorithm = biometric_algorithm
+        super().__init__(**kwargs)
+
+    def enroll(self, enroll_features):
+        return self.biometric_algorithm.enroll(enroll_features)
+
+    def score(self, biometric_reference, data):
+        return self.biometric_algorithm.score(biometric_reference, data)
+
+    def score_multiple_biometric_references(self, biometric_references, data):
+        return self.biometric_algorithm.score_multiple_biometric_references(
+            biometric_references, data
+        )
+
+    def compute_norm_scores(
+        self,
+        base_norm_scores,
+        probe_scores,
+        allow_scoring_with_all_biometric_references=False,
+    ):
+        """
+        Base normalization function
+        """
+
+        def _norm(score, mu, std):
+            return (score - mu) / std
+
+        score_floats = np.array([s.data for sset in base_norm_scores for s in sset])
+        mu = np.mean(score_floats)
+        std = np.std(score_floats)
+
+        # Normalizing
+        normed_score_samples = []
+        for probe in probe_scores:
+            sampleset = SampleSet([], parent=probe)
+            for biometric_reference_score in probe:
+                score = _norm(biometric_reference_score.data, mu, std)
+                new_sample = Sample(score, parent=biometric_reference_score)
+                sampleset.samples.append(new_sample)
+            normed_score_samples.append(sampleset)
+
+        return normed_score_samples
+
+
+    def compute_ztnorm_scores(
+        self,
+        z_probe_features,
+        t_biometrics_references,
+        z_scores,
+        t_scores,
+        probe_scores,
+        allow_scoring_with_all_biometric_references=False
+    ):
+
+        # TxZ scores
+        txz_scores_sset = self.biometric_algorithm.score_samples(
+            z_probe_features,
+            t_biometrics_references,
+            allow_scoring_with_all_biometric_references,
+        )
+   
+
+        pass

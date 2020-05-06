@@ -107,11 +107,19 @@ class DummyDatabase:
     def zprobes(self):
         zprobes = []
 
-        zprobes = self._create_random_sample_set(n_sample_set=10, n_samples=1, seed=13)
+        zprobes = self._create_random_sample_set(n_sample_set=10, n_samples=1, seed=14)
         for p in zprobes:
+            p.subject = "z-" + str(p.subject)
             p.references = [str(r) for r in list(range(self.n_references))]
 
         return zprobes
+
+
+    def treferences(self):
+        t_sset = self._create_random_sample_set(self.n_references, self.dim, seed=15)
+        for t in t_sset:
+            t.subject = "t_" + str(t.subject)
+        return t_sset
 
     @property
     def allow_scoring_with_all_biometric_references(self):
