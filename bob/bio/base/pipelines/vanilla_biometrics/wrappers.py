@@ -201,7 +201,7 @@ def dask_vanilla_biometrics(vanila_biometrics_pipeline, npartitions=None):
 
 class BioAlgorithmZTNormWrapper(BioAlgorithm):
     """
-    Wraps an algorithm with Z-Norm scores
+    Wraps an :any:`BioAlgorithm` with ZT score normalization
     """
 
     def __init__(self, biometric_algorithm, **kwargs):
@@ -220,29 +220,39 @@ class BioAlgorithmZTNormWrapper(BioAlgorithm):
             biometric_references, data
         )
 
-    def compute_norm_scores(
+    def _norm(self, score, mu, std):
+        return (score - mu) / std
+
+
+    def compute_znorm_scores(
         self,
         base_norm_scores,
         probe_scores,
         allow_scoring_with_all_biometric_references=False,
     ):
         """
-        Base normalization function
+        Base Z-normalization function
         """
 
-        def _norm(score, mu, std):
-            return (score - mu) / std
-
+        # Dumping all scores
         score_floats = np.array([s.data for sset in base_norm_scores for s in sset])
-        mu = np.mean(score_floats)
-        std = np.std(score_floats)
+
+        # Reshaping in PROBE vs BIOMETRIC_REFERENCES
+        n_probes = len(base_norm_scores)
+        n_references = len(base_norm_scores[0].references)
+        score_floats = score_floats.reshape((n_probes, n_references))
+
+        # AXIS ON THE MODELS
+        big_mu = np.mean(score_floats, axis=0)
+        big_std = np.std(score_floats, axis=0)
 
         # Normalizing
+        # TODO: THIS TENDS TO BE EXTREMLY SLOW
         normed_score_samples = []
         for probe in probe_scores:
             sampleset = SampleSet([], parent=probe)
-            for biometric_reference_score in probe:
-                score = _norm(biometric_reference_score.data, mu, std)
+            for mu, std, biometric_reference_score in zip(big_mu, big_std, probe):
+                score = self._norm(biometric_reference_score.data, mu, std)
                 new_sample = Sample(score, parent=biometric_reference_score)
                 sampleset.samples.append(new_sample)
             normed_score_samples.append(sampleset)
@@ -250,22 +260,37 @@ class BioAlgorithmZTNormWrapper(BioAlgorithm):
         return normed_score_samples
 
 
-    def compute_ztnorm_scores(
+    def compute_tnorm_scores(
         self,
-        z_probe_features,
-        t_biometrics_references,
-        z_scores,
-        t_scores,
+        base_norm_scores,
         probe_scores,
-        allow_scoring_with_all_biometric_references=False
+        allow_scoring_with_all_biometric_references=False,
     ):
+        """
+        Base Z-normalization function
+        """
 
-        # TxZ scores
-        txz_scores_sset = self.biometric_algorithm.score_samples(
-            z_probe_features,
-            t_biometrics_references,
-            allow_scoring_with_all_biometric_references,
-        )
-   
+        # Dumping all scores
+        score_floats = np.array([s.data for sset in base_norm_scores for s in sset])
 
-        pass
+        # Reshaping in PROBE vs BIOMETRIC_REFERENCES
+        n_probes = len(base_norm_scores)
+        n_references = len(base_norm_scores[0].references)
+        score_floats = score_floats.reshape((n_probes, n_references))
+
+        # AXIS ON THE PROBES
+        big_mu = np.mean(score_floats, axis=1)
+        big_std = np.std(score_floats, axis=1)
+
+        # Normalizing
+        # TODO: THIS TENDS TO BE EXTREMLY SLOW
+        normed_score_samples = []
+        for mu, std, probe in zip(big_mu, big_std,probe_scores):
+            sampleset = SampleSet([], parent=probe)
+            for biometric_reference_score in probe:
+                score = self._norm(biometric_reference_score.data, mu, std)
+                new_sample = Sample(score, parent=biometric_reference_score)
+                sampleset.samples.append(new_sample)
+            normed_score_samples.append(sampleset)
+
+        return normed_score_samples

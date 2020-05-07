@@ -114,6 +114,7 @@ class VanillaBiometricsPipeline(object):
             allow_scoring_with_all_biometric_references,
         )
 
+
         if self.score_writer is not None:
             return self.write_scores(scores)
 
@@ -216,8 +217,8 @@ class ZTNormVanillaBiometricsPipeline(object):
         background_model_samples,
         biometric_reference_samples,
         probe_samples,
-        zprobe_samples,
-        t_biometric_reference_samples,
+        zprobe_samples=None,
+        t_biometric_reference_samples=None,
         allow_scoring_with_all_biometric_references=False,
     ):
 
@@ -236,23 +237,32 @@ class ZTNormVanillaBiometricsPipeline(object):
 
         # Z NORM
         if self.z_norm:
+            if zprobe_samples is None:
+                raise ValueError("No samples for `z_norm` was provided")
+
+
             z_normed_scores, z_probe_features = self.compute_znorm_scores(
                 zprobe_samples,
                 raw_scores,
                 biometric_references,
                 allow_scoring_with_all_biometric_references,
             )
-        if not self.t_norm:
+        if self.t_norm:
+            if t_biometric_reference_samples is None:
+                raise ValueError("No samples for `t_norm` was provided")
+        else:
+            # In case z_norm=True and t_norm=False
             return z_normed_scores
 
         # T NORM
-        t_normed_scores, t_biometric_references = self.compute_tnorm_scores(
+        t_normed_scores, t_scores, t_biometric_references = self.compute_tnorm_scores(
             t_biometric_reference_samples,
             probe_features,
             raw_scores,
             allow_scoring_with_all_biometric_references,
         )
         if not self.z_norm:
+            # In case z_norm=False and t_norm=True
             return t_normed_scores
 
 
@@ -261,7 +271,7 @@ class ZTNormVanillaBiometricsPipeline(object):
             z_probe_features,
             t_biometric_references,
             z_normed_scores,
-            t_normed_scores,
+            t_scores,
             allow_scoring_with_all_biometric_references,
         )
 
@@ -290,6 +300,21 @@ class ZTNormVanillaBiometricsPipeline(object):
             allow_scoring_with_all_biometric_references,
         )
 
+    def _inject_references(self, probe_samples, biometric_references):
+        """
+        Inject references in the current sampleset,
+        so it can run the scores
+        """
+
+        ########## WARNING #######
+        #### I'M MUTATING OBJECTS HERE. THIS CAN GO WRONG
+
+        references = [s.subject  for s in biometric_references]
+        for probe in probe_samples:
+            probe.references = references
+        return probe_samples
+
+
     def compute_znorm_scores(
         self,
         zprobe_samples,
@@ -298,11 +323,13 @@ class ZTNormVanillaBiometricsPipeline(object):
         allow_scoring_with_all_biometric_references=False,
     ):
 
+        zprobe_samples = self._inject_references(zprobe_samples, biometric_references)
+
         z_scores, z_probe_features = self.compute_scores(
             zprobe_samples, biometric_references
         )
 
-        z_normed_scores = self.vanilla_biometrics_pipeline.biometric_algorithm.compute_norm_scores(
+        z_normed_scores = self.vanilla_biometrics_pipeline.biometric_algorithm.compute_znorm_scores(
             z_scores, probe_scores, allow_scoring_with_all_biometric_references,
         )
 
@@ -320,6 +347,8 @@ class ZTNormVanillaBiometricsPipeline(object):
             t_biometric_reference_samples
         )
 
+        probe_features = self._inject_references(probe_features, t_biometric_references)
+
         # Reusing the probe features
         t_scores = self.vanilla_biometrics_pipeline.biometric_algorithm.score_samples(
             probe_features,
@@ -327,20 +356,21 @@ class ZTNormVanillaBiometricsPipeline(object):
             allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
         )
 
-        t_normed_scores = self.vanilla_biometrics_pipeline.biometric_algorithm.compute_norm_scores(
+        t_normed_scores = self.vanilla_biometrics_pipeline.biometric_algorithm.compute_tnorm_scores(
             t_scores, probe_scores, allow_scoring_with_all_biometric_references,
         )
 
-        return t_normed_scores, t_biometric_references
+        return t_normed_scores, t_scores, t_biometric_references
 
     def compute_ztnorm_scores(self,
             z_probe_features,
             t_biometric_references,
             z_normed_scores,
-            t_normed_scores,
+            t_scores,
             allow_scoring_with_all_biometric_references=False
             ):
 
+        z_probe_features = self._inject_references(z_probe_features, t_biometric_references)
 
         # Reusing the zprobe_features and t_biometric_references
         zt_scores = self.vanilla_biometrics_pipeline.biometric_algorithm.score_samples(
@@ -350,12 +380,12 @@ class ZTNormVanillaBiometricsPipeline(object):
         )
 
         # Z Normalizing the T-normed scores
-        z_normed_t_normed = self.vanilla_biometrics_pipeline.biometric_algorithm.compute_norm_scores(
-            zt_scores, t_normed_scores, allow_scoring_with_all_biometric_references,
+        z_normed_t_normed = self.vanilla_biometrics_pipeline.biometric_algorithm.compute_znorm_scores(
+            zt_scores, t_scores, allow_scoring_with_all_biometric_references,
         )
 
         # (Z Normalizing the T-normed scores) the Z normed scores
-        zt_normed_scores = self.vanilla_biometrics_pipeline.biometric_algorithm.compute_norm_scores(
+        zt_normed_scores = self.vanilla_biometrics_pipeline.biometric_algorithm.compute_tnorm_scores(
             z_normed_t_normed, z_normed_scores, allow_scoring_with_all_biometric_references,
         )
 
