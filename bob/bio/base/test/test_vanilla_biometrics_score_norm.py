@@ -20,7 +20,8 @@ from bob.bio.base.test.test_vanilla_biometrics import DummyDatabase, _make_trans
 from bob.bio.base.pipelines.vanilla_biometrics import (
     Distance,
     VanillaBiometricsPipeline,
-    ZTNormVanillaBiometricsPipeline,
+    ZTNormPipeline,
+    ZTNormDaskWrapper,
     BioAlgorithmCheckpointWrapper,
     dask_vanilla_biometrics,
     BioAlgorithmLegacy,
@@ -108,127 +109,162 @@ def test_norm_mechanics():
         # and bob.bio.base is PROBES vs BIOMETRIC_REFERENCES
         return np.array([s.data for sset in scores for s in sset]).reshape(shape).T
 
-    ############
-    # Prepating stubs
-    ############
-    n_references = 2
-    n_probes = 3
-    n_t_references = 4
-    n_z_probes = 5
+    def run(with_dask):
+        ############
+        # Prepating stubs
+        ############
+        n_references = 10
+        n_probes = 34
+        n_t_references = 44
+        n_z_probes = 15
+        dim = 5
 
-    references = np.arange(10).reshape(
-        n_references, 5
-    )  # two references (each row different identity)
-    probes = (
-        np.arange(15).reshape(n_probes, 5) * 10
-    )  # three probes (each row different identity matching with references)
+        references = np.arange(n_references*dim).reshape(
+            n_references, dim
+        )  # two references (each row different identity)
+        probes = (
+            np.arange(n_probes * dim).reshape(n_probes, dim) * 10
+        )  # three probes (each row different identity matching with references)
 
-    t_references = np.arange(20).reshape(
-        n_t_references, 5
-    )  # four T-REFERENCES (each row different identity)
-    z_probes = (
-        np.arange(25).reshape(n_z_probes, 5) * 10
-    )  # five Z-PROBES (each row different identity matching with t references)
+        t_references = np.arange(n_t_references *dim).reshape(
+            n_t_references, dim
+        )  # four T-REFERENCES (each row different identity)
+        z_probes = (
+            np.arange(n_z_probes * dim).reshape(n_z_probes, dim) * 10
+        )  # five Z-PROBES (each row different identity matching with t references)
 
-    (
-        raw_scores_ref,
-        z_normed_scores_ref,
-        t_normed_scores_ref,
-        zt_normed_scores_ref,
-    ) = zt_norm_stubs(references, probes, t_references, z_probes)
+        (
+            raw_scores_ref,
+            z_normed_scores_ref,
+            t_normed_scores_ref,
+            zt_normed_scores_ref,
+        ) = zt_norm_stubs(references, probes, t_references, z_probes)
 
-    ############
-    # Preparing the samples
-    ############
+        ############
+        # Preparing the samples
+        ############
 
-    biometric_reference_sample_sets = _create_sample_sets(references, 0)
-    reference_ids = [r.subject for r in biometric_reference_sample_sets]
+        # Creating enrollment samples
+        biometric_reference_sample_sets = _create_sample_sets(references, 0)
+        t_reference_sample_sets = _create_sample_sets(t_references, 20)
 
-    probe_sample_sets = _create_sample_sets(probes, 10, reference_ids)
+        # Fetching ids
+        reference_ids = [r.subject for r in biometric_reference_sample_sets]
+        t_reference_ids = [r.subject for r in t_reference_sample_sets]
+        ids = reference_ids + t_reference_ids
 
-    t_reference_sample_sets = _create_sample_sets(t_references, 20)
-    t_reference_ids = [r.subject for r in t_reference_sample_sets]
-
-    #z_probe_sample_sets = _create_sample_sets(z_probes, 30, t_reference_ids)
-    z_probe_sample_sets = _create_sample_sets(z_probes, 30, t_reference_ids)
-
-    ############
-    # TESTING REGULAR SCORING
-    #############
-    transformer = FunctionTransformer(func=_do_nothing_fn)
-    biometric_algorithm = Distance(factor=1)
-    vanilla_pipeline = VanillaBiometricsPipeline(
-        transformer, biometric_algorithm, score_writer=None
-    )
-    score_sampes = vanilla_pipeline(
-        [], biometric_reference_sample_sets, probe_sample_sets,
-        allow_scoring_with_all_biometric_references=True
-    )
-
-    raw_scores = _dump_scores_from_samples(score_sampes, shape=(n_probes, n_references))
-
-    assert np.allclose(raw_scores, raw_scores_ref)
+        probe_sample_sets = _create_sample_sets(probes, 10, ids)
+        z_probe_sample_sets = _create_sample_sets(z_probes, 30, ids)
 
 
-    ############
-    # TESTING Z-NORM
-    #############
-    z_vanilla_pipeline = ZTNormVanillaBiometricsPipeline(vanilla_pipeline,
-        z_norm=True,
-        t_norm=False,
-    )
+        ############
+        # TESTING REGULAR SCORING
+        #############
 
-    z_normed_score_samples = z_vanilla_pipeline(
-        [],
-        biometric_reference_sample_sets,
-        copy.deepcopy(probe_sample_sets),
-        z_probe_sample_sets,
-        t_reference_sample_sets,
-    )
+        transformer = make_pipeline(FunctionTransformer(func=_do_nothing_fn))
+        biometric_algorithm = Distance(factor=1)
 
-    z_normed_scores = _dump_scores_from_samples(z_normed_score_samples, shape=(n_probes, n_references))
-    assert np.allclose(z_normed_scores, z_normed_scores_ref)
-
-    ############
-    # TESTING T-NORM
-    #############
-    t_vanilla_pipeline = ZTNormVanillaBiometricsPipeline(vanilla_pipeline,
-        z_norm=False,
-        t_norm=True,
-    )
-
-    t_normed_score_samples = t_vanilla_pipeline(
-        [],
-        biometric_reference_sample_sets,
-        copy.deepcopy(probe_sample_sets),
-        z_probe_sample_sets,
-        t_reference_sample_sets,
-    )
-
-    t_normed_scores = _dump_scores_from_samples(t_normed_score_samples, shape=(n_probes, n_references))
-    assert np.allclose(t_normed_scores, t_normed_scores_ref)
+        vanilla_pipeline = VanillaBiometricsPipeline(
+            transformer, biometric_algorithm, score_writer=None
+        )        
+        if with_dask:
+            vanilla_pipeline = dask_vanilla_biometrics(vanilla_pipeline)
 
 
-    ############
-    # TESTING ZT-NORM
-    #############
-    zt_vanilla_pipeline = ZTNormVanillaBiometricsPipeline(vanilla_pipeline,
-        z_norm=True,
-        t_norm=True,
-    )
+        score_samples = vanilla_pipeline(
+            [], biometric_reference_sample_sets, probe_sample_sets,
+            allow_scoring_with_all_biometric_references=True
+        )
 
-    zt_normed_score_samples = zt_vanilla_pipeline(
-        [],
-        biometric_reference_sample_sets,
-        copy.deepcopy(probe_sample_sets),
-        z_probe_sample_sets,
-        t_reference_sample_sets,
-    )
+        if with_dask:
+            score_samples = score_samples.compute(scheduler="single-threaded")
 
-    zt_normed_scores = _dump_scores_from_samples(zt_normed_score_samples, shape=(n_probes, n_references))
-    assert np.allclose(zt_normed_scores, zt_normed_scores_ref)
+        raw_scores = _dump_scores_from_samples(score_samples, shape=(n_probes, n_references))
+        assert np.allclose(raw_scores, raw_scores_ref)
 
+        ############
+        # TESTING Z-NORM
+        #############
+        
+        z_vanilla_pipeline = ZTNormPipeline(vanilla_pipeline,
+            z_norm=True,
+            t_norm=False,
+        )
+        if with_dask:
+            z_vanilla_pipeline.ztnorm_solver = ZTNormDaskWrapper(z_vanilla_pipeline.ztnorm_solver)
 
+        z_normed_score_samples = z_vanilla_pipeline(
+            [],
+            biometric_reference_sample_sets,
+            copy.deepcopy(probe_sample_sets),
+            z_probe_sample_sets,
+            t_reference_sample_sets,
+        )        
+
+        if with_dask:
+            z_normed_score_samples = z_normed_score_samples.compute(scheduler="single-threaded")
+
+        z_normed_scores = _dump_scores_from_samples(z_normed_score_samples, shape=(n_probes, n_references))
+        assert np.allclose(z_normed_scores, z_normed_scores_ref)
+        
+
+        ############
+        # TESTING T-NORM
+        #############
+        
+        t_vanilla_pipeline = ZTNormPipeline(vanilla_pipeline,
+            z_norm=False,
+            t_norm=True,
+        )
+        if with_dask:
+            t_vanilla_pipeline.ztnorm_solver = ZTNormDaskWrapper(t_vanilla_pipeline.ztnorm_solver)
+
+        t_normed_score_samples = t_vanilla_pipeline(
+            [],
+            biometric_reference_sample_sets,
+            copy.deepcopy(probe_sample_sets),
+            z_probe_sample_sets,
+            t_reference_sample_sets,
+        )
+        
+        if with_dask:
+            t_normed_score_samples = t_normed_score_samples.compute(scheduler='single-threaded')
+
+        t_normed_scores = _dump_scores_from_samples(t_normed_score_samples, shape=(n_probes, n_references))
+        assert np.allclose(t_normed_scores, t_normed_scores_ref)
+        
+        
+        ############
+        # TESTING ZT-NORM
+        #############
+        zt_vanilla_pipeline = ZTNormPipeline(vanilla_pipeline,
+            z_norm=True,
+            t_norm=True,
+        )
+
+        if with_dask:
+            zt_vanilla_pipeline.ztnorm_solver = ZTNormDaskWrapper(zt_vanilla_pipeline.ztnorm_solver)
+
+        zt_normed_score_samples = zt_vanilla_pipeline(
+            [],
+            biometric_reference_sample_sets,
+            copy.deepcopy(probe_sample_sets),
+            z_probe_sample_sets,
+            t_reference_sample_sets,
+        )
+
+        if with_dask:
+            zt_normed_score_samples = zt_normed_score_samples.compute()
+
+        zt_normed_scores = _dump_scores_from_samples(zt_normed_score_samples, shape=(n_probes, n_references))
+
+        assert np.allclose(zt_normed_scores, zt_normed_scores_ref)
+        
+    # No dask
+    run(False)
+
+    # With dask
+    run(True)
 
 
 def test_znorm_on_memory():
@@ -243,7 +279,7 @@ def test_znorm_on_memory():
 
             biometric_algorithm = Distance()
 
-            vanilla_biometrics_pipeline = ZTNormVanillaBiometricsPipeline(
+            vanilla_biometrics_pipeline = ZTNormPipeline(
                 VanillaBiometricsPipeline(transformer, biometric_algorithm)
             )
 
@@ -267,8 +303,8 @@ def test_znorm_on_memory():
             assert len(scores) == 10
 
         run_pipeline(False)
-        # run_pipeline(False)  # Testing checkpoint
+        run_pipeline(False)  # Testing checkpoint
         # shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
         # os.makedirs(dir_name, exist_ok=True)
-        # run_pipeline(True)
-        # run_pipeline(True)  # Testing checkpoint
+        #run_pipeline(True)
+        #run_pipeline(True)  # Testing checkpoint

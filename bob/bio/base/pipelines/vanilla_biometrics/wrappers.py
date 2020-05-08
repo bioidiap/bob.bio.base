@@ -8,6 +8,7 @@ from .abstract_classes import BioAlgorithm
 import pickle
 import bob.pipelines as mario
 import numpy as np
+from .zt_norm import ZTNormPipeline, ZTNormDaskWrapper
 
 
 class BioAlgorithmCheckpointWrapper(BioAlgorithm):
@@ -121,6 +122,10 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
 
 
 class BioAlgorithmDaskWrapper(BioAlgorithm):
+    """
+    Wrap :any:`BioAlgorithm` to work with DASK
+    """
+
     def __init__(self, biometric_algorithm, **kwargs):
         self.biometric_algorithm = biometric_algorithm
 
@@ -166,7 +171,7 @@ class BioAlgorithmDaskWrapper(BioAlgorithm):
         )
 
 
-def dask_vanilla_biometrics(vanila_biometrics_pipeline, npartitions=None):
+def dask_vanilla_biometrics(pipeline, npartitions=None):
     """
     Given a :any:`VanillaBiometrics`, wraps :any:`VanillaBiometrics.transformer` and
     :any:`VanillaBiometrics.biometric_algorithm` to be executed with dask
@@ -174,123 +179,35 @@ def dask_vanilla_biometrics(vanila_biometrics_pipeline, npartitions=None):
     Parameters
     ----------
 
-    vanila_biometrics_pipeline: :any:`VanillaBiometrics`
+    pipeline: :any:`VanillaBiometrics`
        Vanilla Biometrics based pipeline to be dasked
 
     npartitions: int
        Number of partitions for the initial :any:`dask.bag`
     """
 
-    vanila_biometrics_pipeline.transformer = mario.wrap(
-        ["dask"], vanila_biometrics_pipeline.transformer, npartitions=npartitions
-    )
-    vanila_biometrics_pipeline.biometric_algorithm = BioAlgorithmDaskWrapper(
-        vanila_biometrics_pipeline.biometric_algorithm
-    )
+    if isinstance(pipeline, ZTNormPipeline):
+        # Dasking the first part of the pipelines
+        pipeline = dask_vanilla_biometrics(pipeline.vanila_biometrics_pipeline, npartitions)
 
-    def _write_scores(scores):
-        return scores.map_partitions(vanila_biometrics_pipeline.write_scores_on_dask)
+        pipeline.ztnorm_solver = ZTNormDaskWrapper(pipeline.ztnorm_solver)        
 
-    vanila_biometrics_pipeline.write_scores_on_dask = (
-        vanila_biometrics_pipeline.write_scores
-    )
-    vanila_biometrics_pipeline.write_scores = _write_scores
+    else:
 
-    return vanila_biometrics_pipeline
-
-
-class BioAlgorithmZTNormWrapper(BioAlgorithm):
-    """
-    Wraps an :any:`BioAlgorithm` with ZT score normalization
-    """
-
-    def __init__(self, biometric_algorithm, **kwargs):
-
-        self.biometric_algorithm = biometric_algorithm
-        super().__init__(**kwargs)
-
-    def enroll(self, enroll_features):
-        return self.biometric_algorithm.enroll(enroll_features)
-
-    def score(self, biometric_reference, data):
-        return self.biometric_algorithm.score(biometric_reference, data)
-
-    def score_multiple_biometric_references(self, biometric_references, data):
-        return self.biometric_algorithm.score_multiple_biometric_references(
-            biometric_references, data
+        pipeline.transformer = mario.wrap(
+            ["dask"], pipeline.transformer, npartitions=npartitions
+        )
+        pipeline.biometric_algorithm = BioAlgorithmDaskWrapper(
+            pipeline.biometric_algorithm
         )
 
-    def _norm(self, score, mu, std):
-        return (score - mu) / std
+        def _write_scores(scores):
+            return scores.map_partitions(pipeline.write_scores_on_dask)
 
+        pipeline.write_scores_on_dask = (
+            pipeline.write_scores
+        )
+        pipeline.write_scores = _write_scores
 
-    def compute_znorm_scores(
-        self,
-        base_norm_scores,
-        probe_scores,
-        allow_scoring_with_all_biometric_references=False,
-    ):
-        """
-        Base Z-normalization function
-        """
+    return pipeline
 
-        # Dumping all scores
-        score_floats = np.array([s.data for sset in base_norm_scores for s in sset])
-
-        # Reshaping in PROBE vs BIOMETRIC_REFERENCES
-        n_probes = len(base_norm_scores)
-        n_references = len(base_norm_scores[0].references)
-        score_floats = score_floats.reshape((n_probes, n_references))
-
-        # AXIS ON THE MODELS
-        big_mu = np.mean(score_floats, axis=0)
-        big_std = np.std(score_floats, axis=0)
-
-        # Normalizing
-        # TODO: THIS TENDS TO BE EXTREMLY SLOW
-        normed_score_samples = []
-        for probe in probe_scores:
-            sampleset = SampleSet([], parent=probe)
-            for mu, std, biometric_reference_score in zip(big_mu, big_std, probe):
-                score = self._norm(biometric_reference_score.data, mu, std)
-                new_sample = Sample(score, parent=biometric_reference_score)
-                sampleset.samples.append(new_sample)
-            normed_score_samples.append(sampleset)
-
-        return normed_score_samples
-
-
-    def compute_tnorm_scores(
-        self,
-        base_norm_scores,
-        probe_scores,
-        allow_scoring_with_all_biometric_references=False,
-    ):
-        """
-        Base Z-normalization function
-        """
-
-        # Dumping all scores
-        score_floats = np.array([s.data for sset in base_norm_scores for s in sset])
-
-        # Reshaping in PROBE vs BIOMETRIC_REFERENCES
-        n_probes = len(base_norm_scores)
-        n_references = len(base_norm_scores[0].references)
-        score_floats = score_floats.reshape((n_probes, n_references))
-
-        # AXIS ON THE PROBES
-        big_mu = np.mean(score_floats, axis=1)
-        big_std = np.std(score_floats, axis=1)
-
-        # Normalizing
-        # TODO: THIS TENDS TO BE EXTREMLY SLOW
-        normed_score_samples = []
-        for mu, std, probe in zip(big_mu, big_std,probe_scores):
-            sampleset = SampleSet([], parent=probe)
-            for biometric_reference_score in probe:
-                score = self._norm(biometric_reference_score.data, mu, std)
-                new_sample = Sample(score, parent=biometric_reference_score)
-                sampleset.samples.append(new_sample)
-            normed_score_samples.append(sampleset)
-
-        return normed_score_samples
