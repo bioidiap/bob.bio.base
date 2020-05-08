@@ -119,7 +119,7 @@ class ZTNormPipeline(object):
             allow_scoring_with_all_biometric_references,
         )
 
-        return zt_normed_scores
+        return raw_scores, z_normed_scores, t_normed_scores, zt_normed_scores
 
     def train_background_model(self, background_model_samples):
         return self.vanilla_biometrics_pipeline.train_background_model(

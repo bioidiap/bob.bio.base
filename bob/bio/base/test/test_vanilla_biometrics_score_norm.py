@@ -35,6 +35,7 @@ from scipy.spatial.distance import cdist
 from sklearn.preprocessing import FunctionTransformer
 import copy
 
+
 def zt_norm_stubs(references, probes, t_references, z_probes):
     def _norm(scores, norm_base_scores, axis=1):
         mu = np.mean(norm_base_scores, axis=axis)
@@ -113,20 +114,20 @@ def test_norm_mechanics():
         ############
         # Prepating stubs
         ############
-        n_references = 10
-        n_probes = 34
-        n_t_references = 44
-        n_z_probes = 15
+        n_references = 20
+        n_probes = 30
+        n_t_references = 41
+        n_z_probes = 53
         dim = 5
 
-        references = np.arange(n_references*dim).reshape(
+        references = np.arange(n_references * dim).reshape(
             n_references, dim
         )  # two references (each row different identity)
         probes = (
             np.arange(n_probes * dim).reshape(n_probes, dim) * 10
         )  # three probes (each row different identity matching with references)
 
-        t_references = np.arange(n_t_references *dim).reshape(
+        t_references = np.arange(n_t_references * dim).reshape(
             n_t_references, dim
         )  # four T-REFERENCES (each row different identity)
         z_probes = (
@@ -156,7 +157,6 @@ def test_norm_mechanics():
         probe_sample_sets = _create_sample_sets(probes, 10, ids)
         z_probe_sample_sets = _create_sample_sets(z_probes, 30, ids)
 
-
         ############
         # TESTING REGULAR SCORING
         #############
@@ -166,32 +166,36 @@ def test_norm_mechanics():
 
         vanilla_pipeline = VanillaBiometricsPipeline(
             transformer, biometric_algorithm, score_writer=None
-        )        
+        )
         if with_dask:
             vanilla_pipeline = dask_vanilla_biometrics(vanilla_pipeline)
 
-
         score_samples = vanilla_pipeline(
-            [], biometric_reference_sample_sets, probe_sample_sets,
-            allow_scoring_with_all_biometric_references=True
+            [],
+            biometric_reference_sample_sets,
+            probe_sample_sets,
+            allow_scoring_with_all_biometric_references=True,
         )
 
         if with_dask:
             score_samples = score_samples.compute(scheduler="single-threaded")
 
-        raw_scores = _dump_scores_from_samples(score_samples, shape=(n_probes, n_references))
+        raw_scores = _dump_scores_from_samples(
+            score_samples, shape=(n_probes, n_references)
+        )
         assert np.allclose(raw_scores, raw_scores_ref)
 
         ############
         # TESTING Z-NORM
         #############
-        
-        z_vanilla_pipeline = ZTNormPipeline(vanilla_pipeline,
-            z_norm=True,
-            t_norm=False,
+
+        z_vanilla_pipeline = ZTNormPipeline(
+            vanilla_pipeline, z_norm=True, t_norm=False,
         )
         if with_dask:
-            z_vanilla_pipeline.ztnorm_solver = ZTNormDaskWrapper(z_vanilla_pipeline.ztnorm_solver)
+            z_vanilla_pipeline.ztnorm_solver = ZTNormDaskWrapper(
+                z_vanilla_pipeline.ztnorm_solver
+            )
 
         z_normed_score_samples = z_vanilla_pipeline(
             [],
@@ -199,25 +203,29 @@ def test_norm_mechanics():
             copy.deepcopy(probe_sample_sets),
             z_probe_sample_sets,
             t_reference_sample_sets,
-        )        
+        )
 
         if with_dask:
-            z_normed_score_samples = z_normed_score_samples.compute(scheduler="single-threaded")
+            z_normed_score_samples = z_normed_score_samples.compute(
+                scheduler="single-threaded"
+            )
 
-        z_normed_scores = _dump_scores_from_samples(z_normed_score_samples, shape=(n_probes, n_references))
+        z_normed_scores = _dump_scores_from_samples(
+            z_normed_score_samples, shape=(n_probes, n_references)
+        )
         assert np.allclose(z_normed_scores, z_normed_scores_ref)
-        
 
         ############
         # TESTING T-NORM
         #############
-        
-        t_vanilla_pipeline = ZTNormPipeline(vanilla_pipeline,
-            z_norm=False,
-            t_norm=True,
+
+        t_vanilla_pipeline = ZTNormPipeline(
+            vanilla_pipeline, z_norm=False, t_norm=True,
         )
         if with_dask:
-            t_vanilla_pipeline.ztnorm_solver = ZTNormDaskWrapper(t_vanilla_pipeline.ztnorm_solver)
+            t_vanilla_pipeline.ztnorm_solver = ZTNormDaskWrapper(
+                t_vanilla_pipeline.ztnorm_solver
+            )
 
         t_normed_score_samples = t_vanilla_pipeline(
             [],
@@ -226,26 +234,35 @@ def test_norm_mechanics():
             z_probe_sample_sets,
             t_reference_sample_sets,
         )
-        
-        if with_dask:
-            t_normed_score_samples = t_normed_score_samples.compute(scheduler='single-threaded')
 
-        t_normed_scores = _dump_scores_from_samples(t_normed_score_samples, shape=(n_probes, n_references))
+        if with_dask:
+            t_normed_score_samples = t_normed_score_samples.compute(
+                scheduler="single-threaded"
+            )
+
+        t_normed_scores = _dump_scores_from_samples(
+            t_normed_score_samples, shape=(n_probes, n_references)
+        )
         assert np.allclose(t_normed_scores, t_normed_scores_ref)
-        
-        
+
         ############
         # TESTING ZT-NORM
         #############
-        zt_vanilla_pipeline = ZTNormPipeline(vanilla_pipeline,
-            z_norm=True,
-            t_norm=True,
+        zt_vanilla_pipeline = ZTNormPipeline(
+            vanilla_pipeline, z_norm=True, t_norm=True,
         )
 
         if with_dask:
-            zt_vanilla_pipeline.ztnorm_solver = ZTNormDaskWrapper(zt_vanilla_pipeline.ztnorm_solver)
+            zt_vanilla_pipeline.ztnorm_solver = ZTNormDaskWrapper(
+                zt_vanilla_pipeline.ztnorm_solver
+            )
 
-        zt_normed_score_samples = zt_vanilla_pipeline(
+        (
+            raw_score_samples,
+            z_normed_score_samples,
+            t_normed_score_samples,
+            zt_normed_score_samples,
+        ) = zt_vanilla_pipeline(
             [],
             biometric_reference_sample_sets,
             copy.deepcopy(probe_sample_sets),
@@ -254,12 +271,40 @@ def test_norm_mechanics():
         )
 
         if with_dask:
-            zt_normed_score_samples = zt_normed_score_samples.compute()
+            raw_score_samples = raw_score_samples.compute(
+                scheduler="single-threaded"
+            )
+            z_normed_score_samples = z_normed_score_samples.compute(
+                scheduler="single-threaded"
+            )
+            t_normed_score_samples = t_normed_score_samples.compute(
+                scheduler="single-threaded"
+            )
+            zt_normed_score_samples = zt_normed_score_samples.compute(
+                scheduler="single-threaded"
+            )
 
-        zt_normed_scores = _dump_scores_from_samples(zt_normed_score_samples, shape=(n_probes, n_references))
 
+        raw_scores = _dump_scores_from_samples(
+            raw_score_samples, shape=(n_probes, n_references)
+        )
+        assert np.allclose(raw_scores, raw_scores_ref)
+
+        z_normed_scores = _dump_scores_from_samples(
+            z_normed_score_samples, shape=(n_probes, n_references)
+        )
+        assert np.allclose(t_normed_scores, t_normed_scores_ref)
+
+        t_normed_scores = _dump_scores_from_samples(
+            t_normed_score_samples, shape=(n_probes, n_references)
+        )
+        assert np.allclose(t_normed_scores, t_normed_scores_ref)
+
+        zt_normed_scores = _dump_scores_from_samples(
+            zt_normed_score_samples, shape=(n_probes, n_references)
+        )
         assert np.allclose(zt_normed_scores, zt_normed_scores_ref)
-        
+
     # No dask
     run(False)
 
@@ -288,7 +333,7 @@ def test_znorm_on_memory():
                     vanilla_biometrics_pipeline, npartitions=2
                 )
 
-            scores = vanilla_biometrics_pipeline(
+            raw_scores, z_scores, t_scores, zt_scores = vanilla_biometrics_pipeline(
                 database.background_model_samples(),
                 database.references(),
                 database.probes(),
@@ -298,13 +343,19 @@ def test_znorm_on_memory():
             )
 
             if with_dask:
-                scores = scores.compute(scheduler="single-threaded")
+                raw_scores = raw_scores.compute(scheduler="single-threaded")
+                z_scores = z_scores.compute(scheduler="single-threaded")
+                t_scores = t_scores.compute(scheduler="single-threaded")
+                zt_scores = zt_scores.compute(scheduler="single-threaded")
 
-            assert len(scores) == 10
+            assert len(raw_scores) == 10
+            assert len(z_scores) == 10
+            assert len(t_scores) == 10
+            assert len(zt_scores) == 10
 
         run_pipeline(False)
         run_pipeline(False)  # Testing checkpoint
         # shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
         # os.makedirs(dir_name, exist_ok=True)
-        #run_pipeline(True)
-        #run_pipeline(True)  # Testing checkpoint
+        # run_pipeline(True)
+        # run_pipeline(True)  # Testing checkpoint
