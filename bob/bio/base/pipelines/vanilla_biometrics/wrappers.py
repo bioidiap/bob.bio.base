@@ -100,7 +100,16 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         def _load(path):
             return pickle.loads(open(path, "rb").read())
 
-        path = os.path.join(self.score_dir, str(sampleset.key) + ".pkl")
+        def _make_name(sampleset, biometric_references):
+            # The score file name is composed by sampleset key and the
+            # first 3 biometric_references
+            name = str(sampleset.key)
+            suffix = "_".join([s.key for s in biometric_references[0:3]])
+            return name + suffix
+
+        path = os.path.join(
+            self.score_dir, _make_name(sampleset, biometric_references) + ".pkl"
+        )
 
         if self.force or not os.path.exists(path):
 
@@ -111,6 +120,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
                 allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
             )
             self.write_scores(scored_sample_set.samples, path)
+
             scored_sample_set = SampleSet(
                 [DelayedSample(functools.partial(_load, path), parent=sampleset)],
                 parent=sampleset,
@@ -188,9 +198,11 @@ def dask_vanilla_biometrics(pipeline, npartitions=None):
 
     if isinstance(pipeline, ZTNormPipeline):
         # Dasking the first part of the pipelines
-        pipeline = dask_vanilla_biometrics(pipeline.vanila_biometrics_pipeline, npartitions)
+        pipeline = dask_vanilla_biometrics(
+            pipeline.vanila_biometrics_pipeline, npartitions
+        )
 
-        pipeline.ztnorm_solver = ZTNormDaskWrapper(pipeline.ztnorm_solver)        
+        pipeline.ztnorm_solver = ZTNormDaskWrapper(pipeline.ztnorm_solver)
 
     else:
 
@@ -204,10 +216,7 @@ def dask_vanilla_biometrics(pipeline, npartitions=None):
         def _write_scores(scores):
             return scores.map_partitions(pipeline.write_scores_on_dask)
 
-        pipeline.write_scores_on_dask = (
-            pipeline.write_scores
-        )
+        pipeline.write_scores_on_dask = pipeline.write_scores
         pipeline.write_scores = _write_scores
 
     return pipeline
-

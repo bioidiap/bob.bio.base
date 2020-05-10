@@ -112,7 +112,6 @@ class VanillaBiometricsPipeline(object):
             allow_scoring_with_all_biometric_references,
         )
 
-
         if self.score_writer is not None:
             return self.write_scores(scores)
 

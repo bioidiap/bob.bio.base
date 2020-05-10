@@ -9,8 +9,12 @@ computes Z, T and ZT Score Normalization of a :any:`BioAlgorithm`
 from bob.pipelines import DelayedSample, Sample, SampleSet
 import numpy as np
 import dask
-
+import functools
+import pickle
+import os
+from .score_writers import FourColumnsScoreWriter
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -45,13 +49,20 @@ class ZTNormPipeline(object):
 
     """
 
-    def __init__(self, vanilla_biometrics_pipeline, z_norm=True, t_norm=True):
+    def __init__(
+        self,
+        vanilla_biometrics_pipeline,
+        z_norm=True,
+        t_norm=True,
+        score_writer=FourColumnsScoreWriter("./scores.txt"),
+    ):
         self.vanilla_biometrics_pipeline = vanilla_biometrics_pipeline
 
         self.ztnorm_solver = ZTNorm()
 
         self.z_norm = z_norm
         self.t_norm = t_norm
+        self.score_writer = score_writer
 
         if not z_norm and not t_norm:
             raise ValueError(
@@ -85,7 +96,6 @@ class ZTNormPipeline(object):
         if self.z_norm:
             if zprobe_samples is None:
                 raise ValueError("No samples for `z_norm` was provided")
-
             z_normed_scores, z_probe_features = self.compute_znorm_scores(
                 zprobe_samples,
                 raw_scores,
@@ -144,19 +154,6 @@ class ZTNormPipeline(object):
             allow_scoring_with_all_biometric_references,
         )
 
-    def _inject_references(self, probe_samples, biometric_references):
-        """
-        Inject references in the current sampleset,
-        so it can run the scores
-        """
-
-        ########## WARNING #######
-        #### I'M MUTATING OBJECTS HERE. THIS CAN GO WRONG
-        references = [s.subject for s in biometric_references]
-        for probe in probe_samples:
-            probe.references = references
-        return probe_samples
-
     def compute_znorm_scores(
         self,
         zprobe_samples,
@@ -165,7 +162,7 @@ class ZTNormPipeline(object):
         allow_scoring_with_all_biometric_references=False,
     ):
 
-        #zprobe_samples = self._inject_references(zprobe_samples, biometric_references)
+        # zprobe_samples = self._inject_references(zprobe_samples, biometric_references)
 
         z_scores, z_probe_features = self.compute_scores(
             zprobe_samples, biometric_references
@@ -189,7 +186,7 @@ class ZTNormPipeline(object):
             t_biometric_reference_samples
         )
 
-        #probe_features = self._inject_references(probe_features, t_biometric_references)
+        # probe_features = self._inject_references(probe_features, t_biometric_references)
 
         # Reusing the probe features
         t_scores = self.vanilla_biometrics_pipeline.biometric_algorithm.score_samples(
@@ -213,9 +210,9 @@ class ZTNormPipeline(object):
         allow_scoring_with_all_biometric_references=False,
     ):
 
-        #z_probe_features = self._inject_references(
+        # z_probe_features = self._inject_references(
         #    z_probe_features, t_biometric_references
-        #)
+        # )
 
         # Reusing the zprobe_features and t_biometric_references
         zt_scores = self.vanilla_biometrics_pipeline.biometric_algorithm.score_samples(
@@ -225,7 +222,9 @@ class ZTNormPipeline(object):
         )
 
         # Z Normalizing the T-normed scores
-        z_normed_t_normed = self.ztnorm_solver.compute_znorm_scores(t_scores, zt_scores, t_biometric_references)
+        z_normed_t_normed = self.ztnorm_solver.compute_znorm_scores(
+            t_scores, zt_scores, t_biometric_references
+        )
 
         # (Z Normalizing the T-normed scores) the Z normed scores
         zt_normed_scores = self.ztnorm_solver.compute_tnorm_scores(
@@ -257,7 +256,14 @@ class ZTNorm(object):
         """
 
         # Dumping all scores
-        score_floats = np.array([s.data for sset in sampleset_for_norm for s in sset])
+        if isinstance(sampleset_for_norm[0][0], DelayedSample):
+            score_floats = np.array(
+                [f.data for sset in sampleset_for_norm for s in sset for f in s.data]
+            )
+        else:
+            score_floats = np.array(
+                [s.data for sset in sampleset_for_norm for s in sset]
+            )
 
         # Reshaping in PROBE vs BIOMETRIC_REFERENCES
         n_probes = len(sampleset_for_norm)
@@ -269,63 +275,81 @@ class ZTNorm(object):
         big_std = np.std(score_floats, axis=axis)
 
         # Creating statistics structure with subject id as the key
-        stats = {}        
-        if axis==0:
-            for mu, std, s in zip(big_mu, big_std, sampleset_for_norm[0]):
-                stats[s.subject] ={"big_mu": mu, "big_std": std}
+        stats = {}
+        if axis == 0:
+            # TODO: NEED TO SOLVE THIS FETCHING.
+            # IT SHOULD BE TRANSPARENT
+            if isinstance(sampleset_for_norm[0][0], DelayedSample):
+                sset = sampleset_for_norm[0].samples[0].data
+            else:
+                sset = sampleset_for_norm[0]
+
+            for mu, std, s in zip(big_mu, big_std, sset):
+                stats[s.subject] = {"big_mu": mu, "big_std": std}
         else:
             for mu, std, sset in zip(big_mu, big_std, sampleset_for_norm):
-                stats[sset.subject] ={"big_mu": mu, "big_std": std}
-        
+                stats[sset.subject] = {"big_mu": mu, "big_std": std}
+
         return stats
 
-    def _apply_znorm(self, probe_scores, stats):
+    def _znorm_samplesets(self, probe_scores, stats):
         # Normalizing
         # TODO: THIS TENDS TO BE EXTREMLY SLOW
 
-        normed_score_samples = []
-        for probe in probe_scores:
-            sampleset = SampleSet([], parent=probe)
-            for biometric_reference_score in probe:
-                
-                mu = stats[biometric_reference_score.subject]["big_mu"]
-                std = stats[biometric_reference_score.subject]["big_std"]
+        z_normed_score_samples = []
+        for probe_score in probe_scores:
+            z_normed_score_samples.append(self._apply_znorm(probe_score, stats))
+        return z_normed_score_samples
 
-                score = self._norm(biometric_reference_score.data, mu, std)
-                new_sample = Sample(score, parent=biometric_reference_score)
-                sampleset.samples.append(new_sample)
-            normed_score_samples.append(sampleset)
+    def _apply_znorm(self, probe_score, stats):
 
-        return normed_score_samples
+        z_normed_score = SampleSet([], parent=probe_score)
+        for biometric_reference_score in probe_score:
 
-    def _apply_tnorm(self, probe_scores, stats):
+            mu = stats[biometric_reference_score.subject]["big_mu"]
+            std = stats[biometric_reference_score.subject]["big_std"]
+
+            score = self._norm(biometric_reference_score.data, mu, std)
+            new_sample = Sample(score, parent=biometric_reference_score)
+            z_normed_score.samples.append(new_sample)
+        return z_normed_score
+
+    def _tnorm_samplesets(self, probe_scores, stats):
         # Normalizing
         # TODO: THIS TENDS TO BE EXTREMLY SLOW
         # MAYBE THIS COULD BE DELAYED OR RUN ON TOP OF
 
-        normed_score_samples = []
-        for probe in probe_scores:
-            sampleset = SampleSet([], parent=probe)
+        t_normed_score_samples = []
+        for probe_score in probe_scores:
+            t_normed_score_samples.append(self._apply_tnorm(probe_score, stats))
 
-            mu = stats[probe.subject]["big_mu"]
-            std = stats[probe.subject]["big_std"]
+        return t_normed_score_samples
 
-            for biometric_reference_score in probe:
-                score = self._norm(biometric_reference_score.data, mu, std)
-                new_sample = Sample(score, parent=biometric_reference_score, xuxa=biometric_reference_score.data)
-                sampleset.samples.append(new_sample)
-            normed_score_samples.append(sampleset)
+    def _apply_tnorm(self, probe_score, stats):
+        # Normalizing
 
-        return normed_score_samples
+        t_normed_scores = SampleSet([], parent=probe_score)
 
-    def compute_znorm_scores(self, probe_scores, sampleset_for_znorm, biometric_references):
+        mu = stats[probe_score.subject]["big_mu"]
+        std = stats[probe_score.subject]["big_std"]
+
+        for biometric_reference_score in probe_score:
+            score = self._norm(biometric_reference_score.data, mu, std)
+            new_sample = Sample(score, parent=biometric_reference_score)
+            t_normed_scores.samples.append(new_sample)
+
+        return t_normed_scores
+
+    def compute_znorm_scores(
+        self, probe_scores, sampleset_for_znorm, biometric_references
+    ):
         """
         Base Z-normalization function
         """
 
         stats = self._compute_stats(sampleset_for_znorm, biometric_references, axis=0)
 
-        return self._apply_znorm(probe_scores, stats)
+        return self._znorm_samplesets(probe_scores, stats)
 
     def compute_tnorm_scores(
         self,
@@ -340,25 +364,21 @@ class ZTNorm(object):
 
         stats = self._compute_stats(sampleset_for_tnorm, t_biometric_references, axis=1)
 
-        return self._apply_tnorm(probe_scores, stats)
+        return self._tnorm_samplesets(probe_scores, stats)
 
 
 class ZTNormDaskWrapper(object):
     """
-    Wrap :any:`ZTNormPipeline` to work with DASK
+    Wrap :any:`ZTNorm` to work with DASK
 
     Parameters
     ----------
 
-        ztnorm_pipeline: :any:`ZTNormPipeline`
+        ztnorm: :any:`ZTNorm`
             ZTNorm Pipeline
     """
 
     def __init__(self, ztnorm):
-
-        if not isinstance(ztnorm, ZTNorm):
-            raise ValueError("This class only wraps `ZTNorm` objects")
-
         self.ztnorm = ztnorm
 
     def compute_znorm_scores(
@@ -368,9 +388,11 @@ class ZTNormDaskWrapper(object):
         # Reducing all the Z-Scores to compute the stats
         all_scores_for_znorm = dask.delayed(list)(sampleset_for_znorm)
 
-        stats = dask.delayed(self.ztnorm._compute_stats)(all_scores_for_znorm, biometric_references, axis=0)
+        stats = dask.delayed(self.ztnorm._compute_stats)(
+            all_scores_for_znorm, biometric_references, axis=0
+        )
 
-        return probe_scores.map_partitions(self.ztnorm._apply_znorm, stats)
+        return probe_scores.map_partitions(self.ztnorm._znorm_samplesets, stats)
 
     def compute_tnorm_scores(
         self, probe_scores, sampleset_for_tnorm, t_biometric_references
@@ -379,6 +401,86 @@ class ZTNormDaskWrapper(object):
         # Reducing all the Z-Scores to compute the stats
         all_scores_for_tnorm = dask.delayed(list)(sampleset_for_tnorm)
 
-        stats = dask.delayed(self.ztnorm._compute_stats)(all_scores_for_tnorm, t_biometric_references, axis=1)
+        stats = dask.delayed(self.ztnorm._compute_stats)(
+            all_scores_for_tnorm, t_biometric_references, axis=1
+        )
 
-        return probe_scores.map_partitions(self.ztnorm._apply_tnorm, stats)
+        return probe_scores.map_partitions(self.ztnorm._tnorm_samplesets, stats)
+
+
+class ZTNormCheckpointWrapper(object):
+    """
+    Wrap :any:`ZTNorm` to work with DASK
+
+    Parameters
+    ----------
+
+        ztnorm: :any:`ZTNorm`
+            ZTNorm Pipeline
+    """
+
+    def __init__(self, ztnorm, base_dir, force=False):
+
+        if not isinstance(ztnorm, ZTNorm):
+            raise ValueError("This class only wraps `ZTNorm` objects")
+
+        self.ztnorm = ztnorm
+        self.znorm_score_path = os.path.join(base_dir, "znorm_scores")
+        self.tnorm_score_path = os.path.join(base_dir, "tnorm_scores")
+        self.force = force
+
+    def _write_scores(self, samples, path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        open(path, "wb").write(pickle.dumps(samples))
+
+    def _load(self, path):
+        return pickle.loads(open(path, "rb").read())
+
+    def _apply_znorm(self, probe_score, stats):
+
+        path = os.path.join(self.znorm_score_path, str(probe_score.key) + ".pkl")
+
+        if self.force or not os.path.exists(path):
+            z_normed_score = self.ztnorm._apply_znorm(probe_score, path)
+
+            self.write_scores(z_normed_score.samples)
+
+            z_normed_score = SampleSet(
+                [
+                    DelayedSample(
+                        functools.partial(self._load, path), parent=probe_score
+                    )
+                ],
+                parent=probe_score,
+            )
+        else:
+            z_normed_score = SampleSet(self._load(path), parent=probe_score)
+
+        return z_normed_score
+
+    def compute_znorm_scores(
+        self, probe_scores, sampleset_for_znorm, biometric_references
+    ):
+
+        return self.ztnorm.compute_znorm_scores(
+            probe_scores, sampleset_for_znorm, biometric_references
+        )
+
+    def compute_tnorm_scores(
+        self, probe_scores, sampleset_for_tnorm, t_biometric_references
+    ):
+
+        return self.ztnorm.compute_tnorm_scores(
+            probe_scores, sampleset_for_tnorm, t_biometric_references
+        )
+
+    def _compute_stats(self, sampleset_for_norm, biometric_references, axis=0):
+        return self.ztnorm._compute_stats(
+            sampleset_for_norm, biometric_references, axis=axis
+        )
+
+    def _znorm_samplesets(self, probe_scores, stats):
+        return self.ztnorm._znorm_samplesets(probe_scores, stats)
+
+    def _tnorm_samplesets(self, probe_scores, stats):
+        return self.ztnorm._tnorm_samplesets(probe_scores, stats)

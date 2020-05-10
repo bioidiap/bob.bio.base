@@ -22,9 +22,11 @@ from bob.bio.base.pipelines.vanilla_biometrics import (
     VanillaBiometricsPipeline,
     ZTNormPipeline,
     ZTNormDaskWrapper,
+    ZTNormCheckpointWrapper,
     BioAlgorithmCheckpointWrapper,
     dask_vanilla_biometrics,
     BioAlgorithmLegacy,
+    FourColumnsScoreWriter,
 )
 
 import bob.pipelines as mario
@@ -108,208 +110,245 @@ def test_norm_mechanics():
     def _dump_scores_from_samples(scores, shape):
         # We have to transpose because the tests are BIOMETRIC_REFERENCES vs PROBES
         # and bob.bio.base is PROBES vs BIOMETRIC_REFERENCES
-        return np.array([s.data for sset in scores for s in sset]).reshape(shape).T
+        if isinstance(scores[0][0], DelayedSample):
+            return np.array([f.data for sset in scores for s in sset for f in s.data]).reshape(shape).T
+        else:
+            return np.array([s.data for sset in scores for s in sset]).reshape(shape).T
 
-    def run(with_dask):
-        ############
-        # Prepating stubs
-        ############
-        n_references = 20
-        n_probes = 30
-        n_t_references = 41
-        n_z_probes = 53
-        dim = 5
+    
+    with tempfile.TemporaryDirectory() as dir_name:
 
-        references = np.arange(n_references * dim).reshape(
-            n_references, dim
-        )  # two references (each row different identity)
-        probes = (
-            np.arange(n_probes * dim).reshape(n_probes, dim) * 10
-        )  # three probes (each row different identity matching with references)
+        def run(with_dask, with_checkpoint=False):
+            ############
+            # Prepating stubs
+            ############
+            n_references = 20
+            n_probes = 30
+            n_t_references = 40
+            n_z_probes = 50
+            dim = 5
 
-        t_references = np.arange(n_t_references * dim).reshape(
-            n_t_references, dim
-        )  # four T-REFERENCES (each row different identity)
-        z_probes = (
-            np.arange(n_z_probes * dim).reshape(n_z_probes, dim) * 10
-        )  # five Z-PROBES (each row different identity matching with t references)
+            references = np.arange(n_references * dim).reshape(
+                n_references, dim
+            )  # two references (each row different identity)
+            probes = (
+                np.arange(n_probes * dim).reshape(n_probes, dim) * 10
+            )  # three probes (each row different identity matching with references)
 
-        (
-            raw_scores_ref,
-            z_normed_scores_ref,
-            t_normed_scores_ref,
-            zt_normed_scores_ref,
-        ) = zt_norm_stubs(references, probes, t_references, z_probes)
+            t_references = np.arange(n_t_references * dim).reshape(
+                n_t_references, dim
+            )  # four T-REFERENCES (each row different identity)
+            z_probes = (
+                np.arange(n_z_probes * dim).reshape(n_z_probes, dim) * 10
+            )  # five Z-PROBES (each row different identity matching with t references)
 
-        ############
-        # Preparing the samples
-        ############
+            (
+                raw_scores_ref,
+                z_normed_scores_ref,
+                t_normed_scores_ref,
+                zt_normed_scores_ref,
+            ) = zt_norm_stubs(references, probes, t_references, z_probes)
 
-        # Creating enrollment samples
-        biometric_reference_sample_sets = _create_sample_sets(references, 0)
-        t_reference_sample_sets = _create_sample_sets(t_references, 20)
+            ############
+            # Preparing the samples
+            ############
 
-        # Fetching ids
-        reference_ids = [r.subject for r in biometric_reference_sample_sets]
-        t_reference_ids = [r.subject for r in t_reference_sample_sets]
-        ids = reference_ids + t_reference_ids
+            # Creating enrollment samples
+            biometric_reference_sample_sets = _create_sample_sets(references, offset=0)
+            t_reference_sample_sets = _create_sample_sets(t_references, offset=100)
 
-        probe_sample_sets = _create_sample_sets(probes, 10, ids)
-        z_probe_sample_sets = _create_sample_sets(z_probes, 30, ids)
+            # Fetching ids
+            reference_ids = [r.subject for r in biometric_reference_sample_sets]
+            t_reference_ids = [r.subject for r in t_reference_sample_sets]
+            ids = reference_ids + t_reference_ids
 
-        ############
-        # TESTING REGULAR SCORING
-        #############
+            probe_sample_sets = _create_sample_sets(probes, offset=200, references=ids)
+            z_probe_sample_sets = _create_sample_sets(z_probes, offset=300, references=ids)
 
-        transformer = make_pipeline(FunctionTransformer(func=_do_nothing_fn))
-        biometric_algorithm = Distance(factor=1)
+            ############
+            # TESTING REGULAR SCORING
+            #############
 
-        vanilla_pipeline = VanillaBiometricsPipeline(
-            transformer, biometric_algorithm, score_writer=None
-        )
-        if with_dask:
-            vanilla_pipeline = dask_vanilla_biometrics(vanilla_pipeline)
+            transformer = make_pipeline(FunctionTransformer(func=_do_nothing_fn))
+            biometric_algorithm = Distance(factor=1)
 
-        score_samples = vanilla_pipeline(
-            [],
-            biometric_reference_sample_sets,
-            probe_sample_sets,
-            allow_scoring_with_all_biometric_references=True,
-        )
+            if with_checkpoint:
+                biometric_algorithm = BioAlgorithmCheckpointWrapper(Distance(factor=1), dir_name)
 
-        if with_dask:
-            score_samples = score_samples.compute(scheduler="single-threaded")
+            vanilla_pipeline = VanillaBiometricsPipeline(
+                transformer, biometric_algorithm, score_writer=None
+            )
+            if with_dask:
+                vanilla_pipeline = dask_vanilla_biometrics(vanilla_pipeline)
 
-        raw_scores = _dump_scores_from_samples(
-            score_samples, shape=(n_probes, n_references)
-        )
-        assert np.allclose(raw_scores, raw_scores_ref)
+            score_samples = vanilla_pipeline(
+                [],
+                biometric_reference_sample_sets,
+                probe_sample_sets,
+                allow_scoring_with_all_biometric_references=True,
+            )
+            
+            if with_dask:
+                score_samples = score_samples.compute(scheduler="single-threaded")
 
-        ############
-        # TESTING Z-NORM
-        #############
+            raw_scores = _dump_scores_from_samples(
+                score_samples, shape=(n_probes, n_references)
+            )
+            assert np.allclose(raw_scores, raw_scores_ref)
 
-        z_vanilla_pipeline = ZTNormPipeline(
-            vanilla_pipeline, z_norm=True, t_norm=False,
-        )
-        if with_dask:
-            z_vanilla_pipeline.ztnorm_solver = ZTNormDaskWrapper(
-                z_vanilla_pipeline.ztnorm_solver
+            ############
+            # TESTING Z-NORM
+            #############
+
+            z_vanilla_pipeline = ZTNormPipeline(
+                vanilla_pipeline, z_norm=True, t_norm=False,
             )
 
-        z_normed_score_samples = z_vanilla_pipeline(
-            [],
-            biometric_reference_sample_sets,
-            copy.deepcopy(probe_sample_sets),
-            z_probe_sample_sets,
-            t_reference_sample_sets,
-        )
+            if with_checkpoint:
+                z_vanilla_pipeline.ztnorm_solver = ZTNormCheckpointWrapper(
+                    z_vanilla_pipeline.ztnorm_solver, dir_name
+                )
 
-        if with_dask:
-            z_normed_score_samples = z_normed_score_samples.compute(
-                scheduler="single-threaded"
+            if with_dask:
+                z_vanilla_pipeline.ztnorm_solver = ZTNormDaskWrapper(
+                    z_vanilla_pipeline.ztnorm_solver
+                )
+
+            z_normed_score_samples = z_vanilla_pipeline(
+                [],
+                biometric_reference_sample_sets,
+                copy.deepcopy(probe_sample_sets),
+                z_probe_sample_sets,
+                t_reference_sample_sets,
             )
 
-        z_normed_scores = _dump_scores_from_samples(
-            z_normed_score_samples, shape=(n_probes, n_references)
-        )
-        assert np.allclose(z_normed_scores, z_normed_scores_ref)
+            if with_dask:
+                z_normed_score_samples = z_normed_score_samples.compute(
+                    scheduler="single-threaded"
+                )
 
-        ############
-        # TESTING T-NORM
-        #############
-
-        t_vanilla_pipeline = ZTNormPipeline(
-            vanilla_pipeline, z_norm=False, t_norm=True,
-        )
-        if with_dask:
-            t_vanilla_pipeline.ztnorm_solver = ZTNormDaskWrapper(
-                t_vanilla_pipeline.ztnorm_solver
+            z_normed_scores = _dump_scores_from_samples(
+                z_normed_score_samples, shape=(n_probes, n_references)
             )
 
-        t_normed_score_samples = t_vanilla_pipeline(
-            [],
-            biometric_reference_sample_sets,
-            copy.deepcopy(probe_sample_sets),
-            z_probe_sample_sets,
-            t_reference_sample_sets,
-        )
+            assert np.allclose(z_normed_scores, z_normed_scores_ref)
 
-        if with_dask:
-            t_normed_score_samples = t_normed_score_samples.compute(
-                scheduler="single-threaded"
+            ############
+            # TESTING T-NORM
+            #############
+
+            t_vanilla_pipeline = ZTNormPipeline(
+                vanilla_pipeline, z_norm=False, t_norm=True,
             )
 
-        t_normed_scores = _dump_scores_from_samples(
-            t_normed_score_samples, shape=(n_probes, n_references)
-        )
-        assert np.allclose(t_normed_scores, t_normed_scores_ref)
+            if with_checkpoint:
+                t_vanilla_pipeline.ztnorm_solver = ZTNormCheckpointWrapper(
+                    t_vanilla_pipeline.ztnorm_solver, dir_name
+                )
 
-        ############
-        # TESTING ZT-NORM
-        #############
-        zt_vanilla_pipeline = ZTNormPipeline(
-            vanilla_pipeline, z_norm=True, t_norm=True,
-        )
+            if with_dask:
+                t_vanilla_pipeline.ztnorm_solver = ZTNormDaskWrapper(
+                    t_vanilla_pipeline.ztnorm_solver
+                )
 
-        if with_dask:
-            zt_vanilla_pipeline.ztnorm_solver = ZTNormDaskWrapper(
-                zt_vanilla_pipeline.ztnorm_solver
+            t_normed_score_samples = t_vanilla_pipeline(
+                [],
+                biometric_reference_sample_sets,
+                copy.deepcopy(probe_sample_sets),
+                z_probe_sample_sets,
+                t_reference_sample_sets,
             )
 
-        (
-            raw_score_samples,
-            z_normed_score_samples,
-            t_normed_score_samples,
-            zt_normed_score_samples,
-        ) = zt_vanilla_pipeline(
-            [],
-            biometric_reference_sample_sets,
-            copy.deepcopy(probe_sample_sets),
-            z_probe_sample_sets,
-            t_reference_sample_sets,
-        )
+            if with_dask:
+                t_normed_score_samples = t_normed_score_samples.compute(
+                    scheduler="single-threaded"
+                )
 
-        if with_dask:
-            raw_score_samples = raw_score_samples.compute(
-                scheduler="single-threaded"
+            t_normed_scores = _dump_scores_from_samples(
+                t_normed_score_samples, shape=(n_probes, n_references)
             )
-            z_normed_score_samples = z_normed_score_samples.compute(
-                scheduler="single-threaded"
-            )
-            t_normed_score_samples = t_normed_score_samples.compute(
-                scheduler="single-threaded"
-            )
-            zt_normed_score_samples = zt_normed_score_samples.compute(
-                scheduler="single-threaded"
+            assert np.allclose(t_normed_scores, t_normed_scores_ref)
+
+            ############
+            # TESTING ZT-NORM
+            #############
+            zt_vanilla_pipeline = ZTNormPipeline(
+                vanilla_pipeline, z_norm=True, t_norm=True,
             )
 
 
-        raw_scores = _dump_scores_from_samples(
-            raw_score_samples, shape=(n_probes, n_references)
-        )
-        assert np.allclose(raw_scores, raw_scores_ref)
+            if with_checkpoint:
+                zt_vanilla_pipeline.ztnorm_solver = ZTNormCheckpointWrapper(
+                    zt_vanilla_pipeline.ztnorm_solver, dir_name
+                )
 
-        z_normed_scores = _dump_scores_from_samples(
-            z_normed_score_samples, shape=(n_probes, n_references)
-        )
-        assert np.allclose(t_normed_scores, t_normed_scores_ref)
+            if with_dask:
+                zt_vanilla_pipeline.ztnorm_solver = ZTNormDaskWrapper(
+                    zt_vanilla_pipeline.ztnorm_solver
+                )
 
-        t_normed_scores = _dump_scores_from_samples(
-            t_normed_score_samples, shape=(n_probes, n_references)
-        )
-        assert np.allclose(t_normed_scores, t_normed_scores_ref)
+            (
+                raw_score_samples,
+                z_normed_score_samples,
+                t_normed_score_samples,
+                zt_normed_score_samples,
+            ) = zt_vanilla_pipeline(
+                [],
+                biometric_reference_sample_sets,
+                copy.deepcopy(probe_sample_sets),
+                z_probe_sample_sets,
+                t_reference_sample_sets,
+            )
 
-        zt_normed_scores = _dump_scores_from_samples(
-            zt_normed_score_samples, shape=(n_probes, n_references)
-        )
-        assert np.allclose(zt_normed_scores, zt_normed_scores_ref)
+            if with_dask:
+                raw_score_samples = raw_score_samples.compute(
+                    scheduler="single-threaded"
+                )
+                z_normed_score_samples = z_normed_score_samples.compute(
+                    scheduler="single-threaded"
+                )
+                t_normed_score_samples = t_normed_score_samples.compute(
+                    scheduler="single-threaded"
+                )
+                zt_normed_score_samples = zt_normed_score_samples.compute(
+                    scheduler="single-threaded"
+                )
 
+
+            raw_scores = _dump_scores_from_samples(
+                raw_score_samples, shape=(n_probes, n_references)
+            )
+            assert np.allclose(raw_scores, raw_scores_ref)
+
+            z_normed_scores = _dump_scores_from_samples(
+                z_normed_score_samples, shape=(n_probes, n_references)
+            )
+            assert np.allclose(t_normed_scores, t_normed_scores_ref)
+
+            t_normed_scores = _dump_scores_from_samples(
+                t_normed_score_samples, shape=(n_probes, n_references)
+            )
+            assert np.allclose(t_normed_scores, t_normed_scores_ref)
+
+            zt_normed_scores = _dump_scores_from_samples(
+                zt_normed_score_samples, shape=(n_probes, n_references)
+            )
+            assert np.allclose(zt_normed_scores, zt_normed_scores_ref)
+    
     # No dask
-    run(False)
+    run(False) # On memory
+
+    # With checkpoing
+    run(False, with_checkpoint=True)
+    run(False, with_checkpoint=True)
+    #shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+    #os.makedirs(dir_name, exist_ok=True)
+
 
     # With dask
-    run(True)
+    run(True) # On memory
+    run(True, with_checkpoint=True)
+    run(True, with_checkpoint=True)
 
 
 def test_znorm_on_memory():

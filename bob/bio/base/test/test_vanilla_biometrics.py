@@ -227,7 +227,7 @@ def test_checkpoint_bioalg_as_transformer():
                 database.references(),
                 database.probes(),
                 allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
-            )
+            )            
 
             if with_dask:
                 scores = scores.compute(scheduler="single-threaded")
