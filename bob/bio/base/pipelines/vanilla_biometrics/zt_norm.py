@@ -57,7 +57,6 @@ class ZTNormPipeline(object):
         score_writer=FourColumnsScoreWriter("./scores.txt"),
     ):
         self.vanilla_biometrics_pipeline = vanilla_biometrics_pipeline
-
         self.ztnorm_solver = ZTNorm()
 
         self.z_norm = z_norm
@@ -128,6 +127,11 @@ class ZTNormPipeline(object):
             t_scores,
             allow_scoring_with_all_biometric_references,
         )
+        
+
+        # TODO: Do the score write
+        #if self.vanilla_biometrics_pipeline.score_writer is not None:
+        #    return self.write_scores(scores)
 
         return raw_scores, z_normed_scores, t_normed_scores, zt_normed_scores
 
@@ -233,6 +237,11 @@ class ZTNormPipeline(object):
 
         return zt_normed_scores
 
+    def write_scores(self, scores):
+        return self.vanilla_biometrics_pipeline.write_scores(scores)
+
+    def post_process(self, score_paths, filename):
+        return self.vanilla_biometrics_pipeline.post_process(score_paths, filename)
 
 class ZTNorm(object):
     """
@@ -428,6 +437,8 @@ class ZTNormCheckpointWrapper(object):
         self.znorm_score_path = os.path.join(base_dir, "znorm_scores")
         self.tnorm_score_path = os.path.join(base_dir, "tnorm_scores")
         self.force = force
+        self.base_dir = base_dir
+
 
     def _write_scores(self, samples, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)

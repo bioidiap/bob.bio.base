@@ -112,9 +112,6 @@ class VanillaBiometricsPipeline(object):
             allow_scoring_with_all_biometric_references,
         )
 
-        if self.score_writer is not None:
-            return self.write_scores(scores)
-
         return scores
 
     def train_background_model(self, background_model_samples):
@@ -162,4 +159,12 @@ class VanillaBiometricsPipeline(object):
         return scores, probe_features
 
     def write_scores(self, scores):
+        if self.score_writer is None:
+            raise ValueError("No score writer defined in the pipeline")
         return self.score_writer.write(scores)
+
+    def post_process(self, score_paths, filename):
+        if self.score_writer is None:
+            raise ValueError("No score writer defined in the pipeline")
+
+        return self.score_writer.post_process(score_paths, filename)

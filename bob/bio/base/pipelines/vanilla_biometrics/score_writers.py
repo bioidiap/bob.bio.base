@@ -8,6 +8,7 @@ from .abstract_classes import ScoreWriter
 import functools
 import csv
 import uuid
+import shutil
 
 class FourColumnsScoreWriter(ScoreWriter):
     """
@@ -20,29 +21,35 @@ class FourColumnsScoreWriter(ScoreWriter):
         Write scores and returns a :any:`bob.pipelines.DelayedSample` containing
         the instruction to open the score file
         """
+        def _write(probe_sampleset):
+            os.makedirs(self.path, exist_ok=True)
+            n_lines = 0
+            filename = os.path.join(self.path, str(uuid.uuid4()) + ".txt")
+            with open(filename, "w") as f:
+                for probe in probe_sampleset:
 
-        os.makedirs(self.path, exist_ok=True)
-        n_lines = 0
-        filename = os.path.join(self.path, str(uuid.uuid4()) + ".txt")
-        with open(filename, "w") as f:
-            for probe in probe_sampleset:
+                    # If it's delayed, load it
+                    if isinstance(probe[0], DelayedSample):
+                        probe.samples = probe.samples[0].data
 
-                # If it's delayed, load it
-                if isinstance(probe[0], DelayedSample):
-                    probe.samples = probe.samples[0].data
+                    lines = [
+                        "{0} {1} {2} {3}\n".format(
+                            biometric_reference.subject,
+                            probe.subject,
+                            probe.key,
+                            biometric_reference.data,
+                        )
+                        for biometric_reference in probe
+                    ]
+                    n_lines += len(probe)
+                    f.writelines(lines)
+            return [filename]
 
-                lines = [
-                    "{0} {1} {2} {3}\n".format(
-                        biometric_reference.subject,
-                        probe.subject,
-                        probe.key,
-                        biometric_reference.data,
-                    )
-                    for biometric_reference in probe
-                ]
-                n_lines += len(probe)
-                f.writelines(lines)
-        return [filename]
+        import dask.bag
+        import dask
+        if isinstance(probe_sampleset, dask.bag.Bag):
+            return probe_sampleset.map_partitions(_write)
+        return _write(probe_sampleset)
 
 
 class CSVScoreWriter(ScoreWriter):
@@ -141,3 +148,25 @@ class CSVScoreWriter(ScoreWriter):
             csv_writer.writerows(rows)
         f.close()
         return filenames
+
+    def post_process(self, score_paths, path):
+        def _post_process(score_paths, path):
+            post_process_scores = []
+            os.makedirs(path, exist_ok=True)
+            for i, score in enumerate(score_paths):
+                fname = os.path.join(path, os.path.basename(score)+"_post_process.csv")
+                post_process_scores.append(fname)
+                if i==0:
+                    shutil.move(score, fname)
+                    continue
+                open(fname, "w").writelines(open(score, "r").readlines()[1:])
+                os.remove(score)
+            return post_process_scores
+
+
+        import dask.bag
+        import dask
+        if isinstance(score_paths, dask.bag.Bag):
+            all_paths = dask.delayed(list)(score_paths)
+            return dask.delayed(_post_process)(all_paths, path)
+        return _post_process(score_paths, path)        

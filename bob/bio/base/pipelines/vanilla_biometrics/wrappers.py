@@ -45,6 +45,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         self.biometric_algorithm = biometric_algorithm
         self.force = force
         self._biometric_reference_extension = ".hdf5"
+        self.base_dir = base_dir
 
     def enroll(self, enroll_features):
         return self.biometric_algorithm.enroll(enroll_features)
@@ -104,7 +105,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
             # The score file name is composed by sampleset key and the
             # first 3 biometric_references
             name = str(sampleset.key)
-            suffix = "_".join([s.key for s in biometric_references[0:3]])
+            suffix = "_".join([str(s.key) for s in biometric_references[0:3]])
             return name + suffix
 
         path = os.path.join(
@@ -197,9 +198,9 @@ def dask_vanilla_biometrics(pipeline, npartitions=None):
     """
 
     if isinstance(pipeline, ZTNormPipeline):
-        # Dasking the first part of the pipelines
-        pipeline = dask_vanilla_biometrics(
-            pipeline.vanila_biometrics_pipeline, npartitions
+        # Dasking the first part of the pipelines        
+        pipeline.vanilla_biometrics_pipeline = dask_vanilla_biometrics(
+            pipeline.vanilla_biometrics_pipeline, npartitions
         )
 
         pipeline.ztnorm_solver = ZTNormDaskWrapper(pipeline.ztnorm_solver)

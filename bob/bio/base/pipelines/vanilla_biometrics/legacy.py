@@ -263,7 +263,16 @@ class BioAlgorithmLegacy(BioAlgorithm):
         def _load(path):
             return pickle.loads(open(path, "rb").read())
 
-        path = os.path.join(self.score_dir, str(sampleset.key) + ".pkl")
+        def _make_name(sampleset, biometric_references):
+            # The score file name is composed by sampleset key and the
+            # first 3 biometric_references
+            name = str(sampleset.key)
+            suffix = "_".join([str(s.key) for s in biometric_references[0:3]])
+            return name + suffix
+
+        path = os.path.join(
+            self.score_dir, _make_name(sampleset, biometric_references) + ".pkl"
+        )
 
         if self.force or not os.path.exists(path):
 

@@ -6,6 +6,7 @@ from abc import ABCMeta, abstractmethod
 from bob.pipelines.sample import Sample, SampleSet, DelayedSample
 import functools
 import numpy as np
+import os
 
 
 def average_scores(scores):
@@ -298,3 +299,18 @@ class ScoreWriter(metaclass=ABCMeta):
     @abstractmethod
     def write(self, sampleset, path):
         pass
+    
+    def post_process(self, score_paths, filename):
+        def _post_process(score_paths, filename):
+            os.makedirs(os.path.dirname(filename), exist_ok=True)
+            f = open(filename, "w")
+            for path in score_paths:
+                f.writelines(open(path).readlines())
+            return filename
+    
+        import dask.bag
+        import dask
+        if isinstance(score_paths, dask.bag.Bag):
+            all_paths = dask.delayed(list)(score_paths)
+            return dask.delayed(_post_process)(all_paths, filename)
+        return _post_process(score_paths, filename)

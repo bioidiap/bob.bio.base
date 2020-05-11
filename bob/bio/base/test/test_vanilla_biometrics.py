@@ -114,7 +114,6 @@ class DummyDatabase:
 
         return zprobes
 
-
     def treferences(self):
         t_sset = self._create_random_sample_set(self.n_references, self.dim, seed=15)
         for t in t_sset:
@@ -202,8 +201,7 @@ def test_checkpoint_bioalg_as_transformer():
     with tempfile.TemporaryDirectory() as dir_name:
 
         def run_pipeline(
-            with_dask,
-            score_writer=FourColumnsScoreWriter(os.path.join(dir_name, "final_scores")),
+            with_dask, score_writer=None,
         ):
             database = DummyDatabase()
 
@@ -214,7 +212,7 @@ def test_checkpoint_bioalg_as_transformer():
             )
 
             vanilla_biometrics_pipeline = VanillaBiometricsPipeline(
-                transformer, biometric_algorithm, score_writer=score_writer
+                transformer, biometric_algorithm, score_writer
             )
 
             if with_dask:
@@ -227,24 +225,51 @@ def test_checkpoint_bioalg_as_transformer():
                 database.references(),
                 database.probes(),
                 allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
-            )            
+            )
 
-            if with_dask:
-                scores = scores.compute(scheduler="single-threaded")
-                total_scores = np.sum([len(open(f).readlines()) for f in scores])
+            if vanilla_biometrics_pipeline.score_writer is None:
+                if with_dask:
+                    scores = scores.compute(scheduler="single-threaded")
+
+                assert len(scores) == 10
+                for sset in scores:
+                    if isinstance(sset[0], DelayedSample):
+                        for s in sset:
+                            assert len(s.data) == 10
+                    else:
+                        assert len(sset) == 10
             else:
-                total_scores = len(open(scores[0]).readlines())
+                writed_scores = vanilla_biometrics_pipeline.write_scores(scores)
+                concatenated_scores = vanilla_biometrics_pipeline.post_process(
+                    writed_scores, os.path.join(dir_name, "scores-dev")
+                )
 
-            if isinstance(score_writer, FourColumnsScoreWriter):
-                assert total_scores == 100  # counting lines
-            elif isinstance(score_writer, CSVScoreWriter):
+                if with_dask:
+                    concatenated_scores = concatenated_scores.compute(
+                        scheduler="single-threaded"
+                    )
 
-                assert (
-                    total_scores == 100 + 2 if with_dask else 100 + 1
-                )  # 100 plus 2 headers
+                if isinstance(vanilla_biometrics_pipeline.score_writer, FourColumnsScoreWriter):
+                    assert (
+                        len(open(concatenated_scores).readlines()) == 100
+                    )
+                else:
+                    n_lines = 0
+                    for s in concatenated_scores:
+                        n_lines+= len(open(s).readlines())
+
+                    assert n_lines == 101
+                    
 
         run_pipeline(False)
         run_pipeline(False)  # Checking if the checkpointng works
+        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        os.makedirs(dir_name, exist_ok=True)
+
+        # Writing scores
+        run_pipeline(
+            False, FourColumnsScoreWriter(os.path.join(dir_name, "final_scores"))
+        )
         shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
@@ -253,10 +278,17 @@ def test_checkpoint_bioalg_as_transformer():
         run_pipeline(True)  # Checking if the checkpointng works
         shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
+        
+        # Writing scores
+        run_pipeline(
+            True, FourColumnsScoreWriter(os.path.join(dir_name, "final_scores"))
+        )
+        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        os.makedirs(dir_name, exist_ok=True)
 
         # CSVWriter
         run_pipeline(
-            False, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
+           False, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
         )
         run_pipeline(
             False, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
@@ -269,7 +301,7 @@ def test_checkpoint_bioalg_as_transformer():
             True, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
         )
         run_pipeline(
-            True, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
+           True, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
         )  # Checking if the checkpointng works
 
 
@@ -306,13 +338,32 @@ def test_checkpoint_bioalg_as_bioalg():
                 allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
             )
 
-            if with_dask:
-                scores = scores.compute(scheduler="single-threaded")
-                total_scores = np.sum([len(open(f).readlines()) for f in scores])
-            else:
-                total_scores = len(open(scores[0]).readlines())
+            if vanilla_biometrics_pipeline.score_writer is None:
+                if with_dask:
+                    scores = scores.compute(scheduler="single-threaded")
 
-            assert total_scores == 100  # counting lines
+                assert len(scores) == 10
+                for sset in scores:
+                    if isinstance(sset[0], DelayedSample):
+                        for s in sset:
+                            assert len(s.data) == 10
+                    else:
+                        assert len(sset) == 10
+            else:
+                writed_scores = vanilla_biometrics_pipeline.write_scores(scores)
+                concatenated_scores = vanilla_biometrics_pipeline.post_process(
+                    writed_scores, os.path.join(dir_name, "scores-dev")
+                )
+
+                if with_dask:
+                    concatenated_scores = concatenated_scores.compute(
+                        scheduler="single-threaded"
+                    )
+
+                assert (
+                    len(open(concatenated_scores).readlines()) == 100
+                )
+
 
         run_pipeline(False)
         run_pipeline(False)  # Checking if the checkpointng works

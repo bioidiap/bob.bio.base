@@ -20,8 +20,12 @@ import dask.bag
 from bob.bio.base.pipelines.vanilla_biometrics import (
     VanillaBiometricsPipeline,
     BioAlgorithmCheckpointWrapper,
+    BioAlgorithmDaskWrapper,
+    ZTNormPipeline,
+    ZTNormDaskWrapper,
+    ZTNormCheckpointWrapper,
 )
-
+from dask.delayed import Delayed
 
 logger = logging.getLogger(__name__)
 
@@ -103,8 +107,11 @@ TODO: Work out this help
     default="results",
     help="Name of output directory",
 )
+@click.option("--ztnorm", is_flag=True, help="If set, run an experiment with ZTNorm")
 @verbosity_option(cls=ResourceOption)
-def vanilla_biometrics(pipeline, database, dask_client, groups, output, **kwargs):
+def vanilla_biometrics(
+    pipeline, database, dask_client, groups, output, ztnorm, **kwargs
+):
     """Runs the simplest biometrics pipeline.
 
     Such pipeline consists into three sub-pipelines.
@@ -149,12 +156,77 @@ def vanilla_biometrics(pipeline, database, dask_client, groups, output, **kwargs
 
     """
 
+    def _compute_scores(result, dask_client):
+        if isinstance(result, Delayed):
+            if dask_client is not None:
+                result = result.compute(scheduler=dask_client)
+            else:
+                logger.warning("`dask_client` not set. Your pipeline will run locally")
+                result = result.compute(scheduler="single-threaded")
+        return result
+
+    def _post_process_scores(pipeline, scores, path):
+        writed_scores = pipeline.write_scores(scores)
+        return pipeline.post_process(writed_scores, path)
+
+    def _merge_references_ztnorm(biometric_references,probes,zprobes,treferences):
+        treferences_sub = [t.subject for t in treferences]
+        biometric_references_sub = [t.subject for t in biometric_references] 
+
+        for i in range(len(zprobes)):
+            probes[i].references += treferences_sub
+
+        for i in range(len(zprobes)):
+            zprobes[i].references = biometric_references_sub + treferences_sub
+
+        return probes, zprobes
+
+    def _is_dask_checkpoint(pipeline):
+        """
+        Check if a VanillaPipeline has daskable and checkpointable algorithms
+        """
+        is_dask = False
+        is_checkpoint = False
+        algorithm = pipeline.biometric_algorithm
+        base_dir = ""
+
+        while True:
+            if isinstance(algorithm, BioAlgorithmDaskWrapper):
+                is_dask = True
+
+            if isinstance(algorithm, BioAlgorithmCheckpointWrapper):
+                is_checkpoint = True
+                base_dir = algorithm.base_dir
+
+            if hasattr(algorithm, "biometric_algorithm"):
+                algorithm = algorithm.biometric_algorithm
+            else:
+                break
+        return is_dask, is_checkpoint, base_dir
+
     if not os.path.exists(output):
         os.makedirs(output, exist_ok=True)
 
+
+    # Patching the pipeline in case of ZNorm
+    if ztnorm:
+        pipeline = ZTNormPipeline(pipeline)
+        is_dask, is_checkpoint, base_dir = _is_dask_checkpoint(
+            pipeline.vanilla_biometrics_pipeline
+        )
+
+        if is_checkpoint:
+            pipeline.ztnorm_solver = ZTNormCheckpointWrapper(
+                pipeline.ztnorm_solver, os.path.join(base_dir, "normed-scores")
+            )
+
+        if is_dask:
+            pipeline.ztnorm_solver = ZTNormDaskWrapper(pipeline.ztnorm_solver)
+
+
     for group in groups:
 
-        score_file_name = os.path.join(output, f"scores-{group}.txt")
+        score_file_name = os.path.join(output, f"scores-{group}")
         biometric_references = database.references(group=group)
 
         logger.info(f"Running vanilla biometrics for group {group}")
@@ -164,32 +236,67 @@ def vanilla_biometrics(pipeline, database, dask_client, groups, output, **kwargs
             else False
         )
 
-        result = pipeline(
-            database.background_model_samples(),
-            biometric_references,
-            database.probes(group=group),
-            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
-        )
+        if ztnorm:
+            zprobes = database.zprobes()
+            probes = database.probes(group=group)
+            treferences = database.treferences()
 
-        if isinstance(result, dask.bag.core.Bag):
-            if dask_client is not None:
-                result = result.compute(scheduler=dask_client)
-            else:
-                logger.warning("`dask_client` not set. Your pipeline will run locally")
-                result = result.compute(scheduler="single-threaded")
-
-        # Check if there's a score writer hooked in        
-        if hasattr(pipeline.biometric_algorithm, "score_writer"):
-            pipeline.biometric_algorithm.score_writer.concatenate_write_scores(
-                result, score_file_name
+            probes, zprobes = _merge_references_ztnorm(biometric_references,probes,zprobes,treferences)
+            raw_scores, z_normed_scores, t_normed_scores, zt_normed_scores = pipeline(
+                database.background_model_samples(),
+                biometric_references,
+                probes,
+                zprobes,
+                treferences,
+                allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
             )
+
+            def _build_filename(score_file_name, suffix):
+                return os.path.join(score_file_name, suffix)
+
+            # Running RAW_SCORES
+            raw_scores = _post_process_scores(
+                pipeline, raw_scores, _build_filename(score_file_name, "raw_scores")
+            )
+            _compute_scores(raw_scores, dask_client)
+
+            # Z-SCORES
+            z_normed_scores = _post_process_scores(
+                pipeline,
+                z_normed_scores,
+                _build_filename(score_file_name, "z_normed_scores"),
+            )
+            _compute_scores(z_normed_scores, dask_client)
+
+            # T-SCORES
+            t_normed_scores = _post_process_scores(
+                pipeline,
+                t_normed_scores,
+                _build_filename(score_file_name, "t_normed_scores"),
+            )
+            _compute_scores(t_normed_scores, dask_client)
+
+            # ZT-SCORES
+            zt_normed_scores = _post_process_scores(
+                pipeline,
+                zt_normed_scores,
+                _build_filename(score_file_name, "zt_normed_scores"),
+            )
+            _compute_scores(zt_normed_scores, dask_client)
+
         else:
-            with open(score_file_name, "w") as f:
-                # Flatting out the list
-                result = itertools.chain(*result)
-                for probe in result:
-                    for sample in probe.samples:
-                        f.writelines(sample.data)
+
+            result = pipeline(
+                database.background_model_samples(),
+                biometric_references,
+                database.probes(group=group),
+                allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+            )
+
+            post_processed_scores = _post_process_scores(
+                pipeline, result, score_file_name
+            )
+            _compute_scores(post_processed_scores, dask_client)
 
     if dask_client is not None:
         dask_client.shutdown()

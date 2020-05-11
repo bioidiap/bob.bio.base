@@ -26,7 +26,7 @@ from bob.bio.base.pipelines.vanilla_biometrics import (
     BioAlgorithmCheckpointWrapper,
     dask_vanilla_biometrics,
     BioAlgorithmLegacy,
-    FourColumnsScoreWriter,
+    CSVScoreWriter,
 )
 
 import bob.pipelines as mario
@@ -111,21 +111,24 @@ def test_norm_mechanics():
         # We have to transpose because the tests are BIOMETRIC_REFERENCES vs PROBES
         # and bob.bio.base is PROBES vs BIOMETRIC_REFERENCES
         if isinstance(scores[0][0], DelayedSample):
-            return np.array([f.data for sset in scores for s in sset for f in s.data]).reshape(shape).T
+            return (
+                np.array([f.data for sset in scores for s in sset for f in s.data])
+                .reshape(shape)
+                .T
+            )
         else:
             return np.array([s.data for sset in scores for s in sset]).reshape(shape).T
 
-    
     with tempfile.TemporaryDirectory() as dir_name:
 
         def run(with_dask, with_checkpoint=False):
             ############
             # Prepating stubs
             ############
-            n_references = 20
-            n_probes = 30
-            n_t_references = 40
-            n_z_probes = 50
+            n_references = 111
+            n_probes = 111
+            n_t_references = 80
+            n_z_probes = 80
             dim = 5
 
             references = np.arange(n_references * dim).reshape(
@@ -155,15 +158,17 @@ def test_norm_mechanics():
 
             # Creating enrollment samples
             biometric_reference_sample_sets = _create_sample_sets(references, offset=0)
-            t_reference_sample_sets = _create_sample_sets(t_references, offset=100)
+            t_reference_sample_sets = _create_sample_sets(t_references, offset=300)
 
             # Fetching ids
             reference_ids = [r.subject for r in biometric_reference_sample_sets]
             t_reference_ids = [r.subject for r in t_reference_sample_sets]
             ids = reference_ids + t_reference_ids
 
-            probe_sample_sets = _create_sample_sets(probes, offset=200, references=ids)
-            z_probe_sample_sets = _create_sample_sets(z_probes, offset=300, references=ids)
+            probe_sample_sets = _create_sample_sets(probes, offset=600, references=ids)
+            z_probe_sample_sets = _create_sample_sets(
+                z_probes, offset=900, references=ids
+            )
 
             ############
             # TESTING REGULAR SCORING
@@ -173,7 +178,9 @@ def test_norm_mechanics():
             biometric_algorithm = Distance(factor=1)
 
             if with_checkpoint:
-                biometric_algorithm = BioAlgorithmCheckpointWrapper(Distance(factor=1), dir_name)
+                biometric_algorithm = BioAlgorithmCheckpointWrapper(
+                    Distance(factor=1), dir_name
+                )
 
             vanilla_pipeline = VanillaBiometricsPipeline(
                 transformer, biometric_algorithm, score_writer=None
@@ -187,7 +194,7 @@ def test_norm_mechanics():
                 probe_sample_sets,
                 allow_scoring_with_all_biometric_references=True,
             )
-            
+
             if with_dask:
                 score_samples = score_samples.compute(scheduler="single-threaded")
 
@@ -276,7 +283,6 @@ def test_norm_mechanics():
                 vanilla_pipeline, z_norm=True, t_norm=True,
             )
 
-
             if with_checkpoint:
                 zt_vanilla_pipeline.ztnorm_solver = ZTNormCheckpointWrapper(
                     zt_vanilla_pipeline.ztnorm_solver, dir_name
@@ -314,7 +320,6 @@ def test_norm_mechanics():
                     scheduler="single-threaded"
                 )
 
-
             raw_scores = _dump_scores_from_samples(
                 raw_score_samples, shape=(n_probes, n_references)
             )
@@ -334,19 +339,18 @@ def test_norm_mechanics():
                 zt_normed_score_samples, shape=(n_probes, n_references)
             )
             assert np.allclose(zt_normed_scores, zt_normed_scores_ref)
-    
+
     # No dask
-    run(False) # On memory
+    run(False)  # On memory
 
     # With checkpoing
     run(False, with_checkpoint=True)
     run(False, with_checkpoint=True)
-    #shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
-    #os.makedirs(dir_name, exist_ok=True)
-
+    # shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+    # os.makedirs(dir_name, exist_ok=True)
 
     # With dask
-    run(True) # On memory
+    run(True)  # On memory
     run(True, with_checkpoint=True)
     run(True, with_checkpoint=True)
 
@@ -355,7 +359,7 @@ def test_znorm_on_memory():
 
     with tempfile.TemporaryDirectory() as dir_name:
 
-        def run_pipeline(with_dask):
+        def run_pipeline(with_dask, score_writer=None):
 
             database = DummyDatabase(one_d=False)
 
@@ -364,7 +368,7 @@ def test_znorm_on_memory():
             biometric_algorithm = Distance()
 
             vanilla_biometrics_pipeline = ZTNormPipeline(
-                VanillaBiometricsPipeline(transformer, biometric_algorithm)
+                VanillaBiometricsPipeline(transformer, biometric_algorithm, score_writer)
             )
 
             if with_dask:
@@ -381,20 +385,60 @@ def test_znorm_on_memory():
                 allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
             )
 
+            # if vanilla_biometrics_pipeline.score_writer is not None:
+            # concatenated_scores
+            # pass
+
+            def _concatenate(pipeline, scores, path):
+                writed_scores = pipeline.write_scores(scores)
+                concatenated_scores = pipeline.post_process(
+                    writed_scores, os.path.join(dir_name, "scores-dev")
+                )
+                return concatenated_scores
+
+            if isinstance(score_writer, CSVScoreWriter):
+                raw_scores = _concatenate(vanilla_biometrics_pipeline, raw_scores, "scores-dev")
+                z_scores = _concatenate(vanilla_biometrics_pipeline, z_scores, "scores-dev_zscores")
+                t_scores = _concatenate(vanilla_biometrics_pipeline, t_scores, "scores-dev_tscores")
+                zt_scores = _concatenate(vanilla_biometrics_pipeline, zt_scores, "scores-dev_ztscores")
+
             if with_dask:
                 raw_scores = raw_scores.compute(scheduler="single-threaded")
                 z_scores = z_scores.compute(scheduler="single-threaded")
                 t_scores = t_scores.compute(scheduler="single-threaded")
                 zt_scores = zt_scores.compute(scheduler="single-threaded")
 
-            assert len(raw_scores) == 10
-            assert len(z_scores) == 10
-            assert len(t_scores) == 10
-            assert len(zt_scores) == 10
+            if isinstance(score_writer, CSVScoreWriter):
+                n_lines = 51 if with_dask else 101
+
+                assert len(open(raw_scores[0], "r").readlines()) == n_lines
+                assert len(open(z_scores[0], "r").readlines()) == n_lines
+                assert len(open(t_scores[0], "r").readlines()) == n_lines
+                assert len(open(zt_scores[0], "r").readlines()) == n_lines
+
+            else:
+                assert len(raw_scores) == 10
+                assert len(z_scores) == 10
+                assert len(t_scores) == 10
+                assert len(zt_scores) == 10
 
         run_pipeline(False)
         run_pipeline(False)  # Testing checkpoint
-        # shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
-        # os.makedirs(dir_name, exist_ok=True)
-        # run_pipeline(True)
-        # run_pipeline(True)  # Testing checkpoint
+        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        os.makedirs(dir_name, exist_ok=True)
+
+        run_pipeline(
+            False, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
+        )
+        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        os.makedirs(dir_name, exist_ok=True)
+
+        # With DASK
+        run_pipeline(True)
+        run_pipeline(True)  # Testing checkpoint
+        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        os.makedirs(dir_name, exist_ok=True)
+
+        run_pipeline(
+            True, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
+        )
