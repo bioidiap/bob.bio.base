@@ -41,12 +41,61 @@ import copy
 def zt_norm_stubs(references, probes, t_references, z_probes):
     def _norm(scores, norm_base_scores, axis=1):
         mu = np.mean(norm_base_scores, axis=axis)
-        std = np.std(norm_base_scores, axis=axis)
+        
+        #old = True
+        #if old:
+        #    std = np.std(norm_base_scores, axis=axis)
+        #    if axis == 1:
+        #        return ((scores.T - mu) / std).T
+        #    else:
+        #        return (scores - mu) / std
 
         if axis == 1:
-            return ((scores.T - mu) / std).T
+            std = np.sqrt(
+                np.sum(
+                    (
+                        norm_base_scores
+                        - np.tile(
+                            mu.reshape(norm_base_scores.shape[0], 1),
+                            (1, norm_base_scores.shape[1]),
+                        )
+                    )
+                    ** 2,
+                    axis=1,
+                )
+                / (norm_base_scores.shape[1] - 1)
+            )
+
+            return (
+                scores
+                - np.tile(
+                    mu.reshape(norm_base_scores.shape[0], 1), (1, scores.shape[1])
+                )
+            ) / np.tile(std.reshape(norm_base_scores.shape[0], 1), (1, scores.shape[1]))
         else:
-            return (scores - mu) / std
+
+            std = np.sqrt(
+                np.sum(
+                    (
+                        norm_base_scores
+                        - np.tile(
+                            mu.reshape(1, norm_base_scores.shape[1]),
+                            (norm_base_scores.shape[0], 1),
+                        )
+                    )
+                    ** 2,
+                    axis=0,
+                )
+                / (norm_base_scores.shape[0] - 1)
+            )
+
+            return (
+                scores
+                - np.tile(
+                    mu.reshape(1, norm_base_scores.shape[1]), (scores.shape[0], 1)
+                )
+            ) / np.tile(std.reshape(1, norm_base_scores.shape[1]), (scores.shape[0], 1))
+
 
     n_reference = references.shape[0]
     n_probes = probes.shape[0]
@@ -125,10 +174,10 @@ def test_norm_mechanics():
             ############
             # Prepating stubs
             ############
-            n_references = 111
-            n_probes = 111
-            n_t_references = 80
-            n_z_probes = 80
+            n_references = 2
+            n_probes = 3
+            n_t_references = 4
+            n_z_probes = 5
             dim = 5
 
             references = np.arange(n_references * dim).reshape(
@@ -237,7 +286,6 @@ def test_norm_mechanics():
             z_normed_scores = _dump_scores_from_samples(
                 z_normed_score_samples, shape=(n_probes, n_references)
             )
-
             assert np.allclose(z_normed_scores, z_normed_scores_ref)
 
             ############
@@ -368,7 +416,9 @@ def test_znorm_on_memory():
             biometric_algorithm = Distance()
 
             vanilla_biometrics_pipeline = ZTNormPipeline(
-                VanillaBiometricsPipeline(transformer, biometric_algorithm, score_writer)
+                VanillaBiometricsPipeline(
+                    transformer, biometric_algorithm, score_writer
+                )
             )
 
             if with_dask:
@@ -397,10 +447,18 @@ def test_znorm_on_memory():
                 return concatenated_scores
 
             if isinstance(score_writer, CSVScoreWriter):
-                raw_scores = _concatenate(vanilla_biometrics_pipeline, raw_scores, "scores-dev")
-                z_scores = _concatenate(vanilla_biometrics_pipeline, z_scores, "scores-dev_zscores")
-                t_scores = _concatenate(vanilla_biometrics_pipeline, t_scores, "scores-dev_tscores")
-                zt_scores = _concatenate(vanilla_biometrics_pipeline, zt_scores, "scores-dev_ztscores")
+                raw_scores = _concatenate(
+                    vanilla_biometrics_pipeline, raw_scores, "scores-dev"
+                )
+                z_scores = _concatenate(
+                    vanilla_biometrics_pipeline, z_scores, "scores-dev_zscores"
+                )
+                t_scores = _concatenate(
+                    vanilla_biometrics_pipeline, t_scores, "scores-dev_tscores"
+                )
+                zt_scores = _concatenate(
+                    vanilla_biometrics_pipeline, zt_scores, "scores-dev_ztscores"
+                )
 
             if with_dask:
                 raw_scores = raw_scores.compute(scheduler="single-threaded")

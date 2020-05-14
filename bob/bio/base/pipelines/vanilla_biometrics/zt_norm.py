@@ -253,7 +253,61 @@ class ZTNorm(object):
     """
 
     def _norm(self, score, mu, std):
+        # Reference: https://gitlab.idiap.ch/bob/bob.learn.em/-/blob/master/bob/learn/em/test/test_ztnorm.py
+        # Axis 0=ZNORM
+        # Axi1 1=TNORM
         return (score - mu) / std
+
+        """
+        if axis == 1:
+            return (
+                score
+                - np.tile(mu.reshape(N, 1), (1, score.shape[1]))
+            ) / np.tile(std.reshape(N, 1), (1, score.shape[1]))
+        else:
+            return (
+                score
+                - np.tile(mu.reshape(1, N), (score.shape[0], 1))
+            ) / np.tile(std.reshape(1, N), (score.shape[0], 1))
+        """
+        
+
+    def _compute_std(self, mu, norm_base_scores, axis=1):
+        # Reference: https://gitlab.idiap.ch/bob/bob.learn.em/-/blob/master/bob/learn/em/test/test_ztnorm.py
+        # Axis 0=ZNORM
+        # Axi1 1=TNORM
+        if axis == 1:
+            return np.sqrt(
+                np.sum(
+                    (
+                        norm_base_scores
+                        - np.tile(
+                            mu.reshape(norm_base_scores.shape[0], 1),
+                            (1, norm_base_scores.shape[1]),
+                        )
+                    )
+                    ** 2,
+                    axis=1,
+                )
+                / (norm_base_scores.shape[1] - 1)
+            )
+
+        else:
+
+            return np.sqrt(
+                np.sum(
+                    (
+                        norm_base_scores
+                        - np.tile(
+                            mu.reshape(1, norm_base_scores.shape[1]),
+                            (norm_base_scores.shape[0], 1),
+                        )
+                    )
+                    ** 2,
+                    axis=0,
+                )
+                / (norm_base_scores.shape[0] - 1)
+            )
 
     def _compute_stats(self, sampleset_for_norm, biometric_references, axis=0):
         """
@@ -281,7 +335,8 @@ class ZTNorm(object):
 
         # AXIS ON THE MODELS
         big_mu = np.mean(score_floats, axis=axis)
-        big_std = np.std(score_floats, axis=axis)
+        #big_std = np.std(score_floats, axis=axis)
+        big_std = self._compute_std(big_mu, score_floats, axis=axis)
 
         # Creating statistics structure with subject id as the key
         stats = {}
