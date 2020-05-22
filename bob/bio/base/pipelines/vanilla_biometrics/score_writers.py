@@ -150,6 +150,11 @@ class CSVScoreWriter(ScoreWriter):
         return filenames
 
     def post_process(self, score_paths, path):
+        """
+        Removing the HEADER of all files
+        but the first
+        """
+
         def _post_process(score_paths, path):
             post_process_scores = []
             os.makedirs(path, exist_ok=True)
@@ -159,6 +164,14 @@ class CSVScoreWriter(ScoreWriter):
                 if i==0:
                     shutil.move(score, fname)
                     continue
+
+                # Not memory intensive score writing
+                with open(score,'r') as f:
+                    with open(fname,'w') as f1:
+                        f.readline() # skip header line
+                        for line in f:
+                            f1.write(line)
+
                 open(fname, "w").writelines(open(score, "r").readlines()[1:])
                 os.remove(score)
             return post_process_scores
