@@ -33,7 +33,7 @@ class FakePreprocesor(Preprocessor):
 
 class FakeExtractor(Extractor):
     def __call__(self, data):
-        return data.flatten()
+        return data.flatten()[0:10] # Selecting the first 10 features
 
 
 class FakeExtractorFittable(Extractor):

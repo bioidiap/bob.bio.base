@@ -10,6 +10,7 @@ for bob.bio experiments
 
 import logging
 import numpy
+from .score_writers import FourColumnsScoreWriter
 
 logger = logging.getLogger(__name__)
 
@@ -61,12 +62,20 @@ class VanillaBiometricsPipeline(object):
       biometric_algorithm: :py:class:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm`
         Biometrics algorithm object that implements the methods `enroll` and `score` methods
 
+      score_writer: :any:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classe.ScoreWriter`
+          Format to write scores. Default to :any:`FourColumnsScoreWriter`
 
     """
 
-    def __init__(self, transformer, biometric_algorithm):
+    def __init__(
+        self,
+        transformer,
+        biometric_algorithm,
+        score_writer=FourColumnsScoreWriter("./scores.txt"),
+    ):
         self.transformer = transformer
         self.biometric_algorithm = biometric_algorithm
+        self.score_writer = score_writer
 
     def __call__(
         self,
@@ -97,11 +106,13 @@ class VanillaBiometricsPipeline(object):
         )
 
         # Scores all probes
-        return self.compute_scores(
+        scores, _ = self.compute_scores(
             probe_samples,
             biometric_references,
             allow_scoring_with_all_biometric_references,
         )
+
+        return scores
 
     def train_background_model(self, background_model_samples):
         # background_model_samples is a list of Samples
@@ -120,7 +131,7 @@ class VanillaBiometricsPipeline(object):
         biometric_reference_features = self.transformer.transform(
             biometric_reference_samples
         )
-        
+
         biometric_references = self.biometric_algorithm.enroll_samples(
             biometric_reference_features
         )
@@ -137,7 +148,7 @@ class VanillaBiometricsPipeline(object):
 
         # probes is a list of SampleSets
         probe_features = self.transformer.transform(probe_samples)
-        
+
         scores = self.biometric_algorithm.score_samples(
             probe_features,
             biometric_references,
@@ -145,4 +156,15 @@ class VanillaBiometricsPipeline(object):
         )
 
         # scores is a list of Samples
-        return scores
+        return scores, probe_features
+
+    def write_scores(self, scores):
+        if self.score_writer is None:
+            raise ValueError("No score writer defined in the pipeline")
+        return self.score_writer.write(scores)
+
+    def post_process(self, score_paths, filename):
+        if self.score_writer is None:
+            raise ValueError("No score writer defined in the pipeline")
+
+        return self.score_writer.post_process(score_paths, filename)
