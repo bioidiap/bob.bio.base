@@ -157,7 +157,7 @@ def vanilla_biometrics(
     """
 
     def _compute_scores(result, dask_client):
-        if isinstance(result, Delayed):
+        if isinstance(result, Delayed) or isinstance(result, dask.bag.Bag):
             if dask_client is not None:
                 result = result.compute(scheduler=dask_client)
             else:
@@ -254,11 +254,12 @@ def vanilla_biometrics(
             def _build_filename(score_file_name, suffix):
                 return os.path.join(score_file_name, suffix)
 
-            # Running RAW_SCORES
+            # Running RAW_SCORES            
             raw_scores = _post_process_scores(
                 pipeline, raw_scores, _build_filename(score_file_name, "raw_scores")
             )
-            _compute_scores(raw_scores, dask_client)
+
+            _ = _compute_scores(raw_scores, dask_client)
 
             # Z-SCORES
             z_normed_scores = _post_process_scores(
@@ -266,7 +267,7 @@ def vanilla_biometrics(
                 z_normed_scores,
                 _build_filename(score_file_name, "z_normed_scores"),
             )
-            _compute_scores(z_normed_scores, dask_client)
+            _ = _compute_scores(z_normed_scores, dask_client)
 
             # T-SCORES
             t_normed_scores = _post_process_scores(
@@ -274,7 +275,7 @@ def vanilla_biometrics(
                 t_normed_scores,
                 _build_filename(score_file_name, "t_normed_scores"),
             )
-            _compute_scores(t_normed_scores, dask_client)
+            _ = _compute_scores(t_normed_scores, dask_client)
 
             # ZT-SCORES
             zt_normed_scores = _post_process_scores(
@@ -282,7 +283,7 @@ def vanilla_biometrics(
                 zt_normed_scores,
                 _build_filename(score_file_name, "zt_normed_scores"),
             )
-            _compute_scores(zt_normed_scores, dask_client)
+            _ = _compute_scores(zt_normed_scores, dask_client)
 
         else:
 
@@ -296,7 +297,7 @@ def vanilla_biometrics(
             post_processed_scores = _post_process_scores(
                 pipeline, result, score_file_name
             )
-            _compute_scores(post_processed_scores, dask_client)
+            _ = _compute_scores(post_processed_scores, dask_client)
 
     if dask_client is not None:
         dask_client.shutdown()

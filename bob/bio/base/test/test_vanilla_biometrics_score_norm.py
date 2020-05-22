@@ -41,9 +41,9 @@ import copy
 def zt_norm_stubs(references, probes, t_references, z_probes):
     def _norm(scores, norm_base_scores, axis=1):
         mu = np.mean(norm_base_scores, axis=axis)
-        
-        #old = True
-        #if old:
+
+        # old = True
+        # if old:
         #    std = np.std(norm_base_scores, axis=axis)
         #    if axis == 1:
         #        return ((scores.T - mu) / std).T
@@ -95,7 +95,6 @@ def zt_norm_stubs(references, probes, t_references, z_probes):
                     mu.reshape(1, norm_base_scores.shape[1]), (scores.shape[0], 1)
                 )
             ) / np.tile(std.reshape(1, norm_base_scores.shape[1]), (scores.shape[0], 1))
-
 
     n_reference = references.shape[0]
     n_probes = probes.shape[0]
@@ -159,14 +158,7 @@ def test_norm_mechanics():
     def _dump_scores_from_samples(scores, shape):
         # We have to transpose because the tests are BIOMETRIC_REFERENCES vs PROBES
         # and bob.bio.base is PROBES vs BIOMETRIC_REFERENCES
-        if isinstance(scores[0][0], DelayedSample):
-            return (
-                np.array([f.data for sset in scores for s in sset for f in s.data])
-                .reshape(shape)
-                .T
-            )
-        else:
-            return np.array([s.data for sset in scores for s in sset]).reshape(shape).T
+        return np.array([s.data for sset in scores for s in sset]).reshape(shape).T
 
     with tempfile.TemporaryDirectory() as dir_name:
 
@@ -394,8 +386,8 @@ def test_norm_mechanics():
     # With checkpoing
     run(False, with_checkpoint=True)
     run(False, with_checkpoint=True)
-    # shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
-    # os.makedirs(dir_name, exist_ok=True)
+    shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+    os.makedirs(dir_name, exist_ok=True)
 
     # With dask
     run(True)  # On memory

@@ -10,7 +10,7 @@ from bob.pipelines import DelayedSample, Sample, SampleSet
 import numpy as np
 import dask
 import functools
-import pickle
+import cloudpickle
 import os
 from .score_writers import FourColumnsScoreWriter
 import logging
@@ -78,6 +78,7 @@ class ZTNormPipeline(object):
         allow_scoring_with_all_biometric_references=False,
     ):
 
+
         self.transformer = self.train_background_model(background_model_samples)
 
         # Create biometric samples
@@ -128,11 +129,6 @@ class ZTNormPipeline(object):
             allow_scoring_with_all_biometric_references,
         )
         
-
-        # TODO: Do the score write
-        #if self.vanilla_biometrics_pipeline.score_writer is not None:
-        #    return self.write_scores(scores)
-
         return raw_scores, z_normed_scores, t_normed_scores, zt_normed_scores
 
     def train_background_model(self, background_model_samples):
@@ -165,8 +161,6 @@ class ZTNormPipeline(object):
         biometric_references,
         allow_scoring_with_all_biometric_references=False,
     ):
-
-        # zprobe_samples = self._inject_references(zprobe_samples, biometric_references)
 
         z_scores, z_probe_features = self.compute_scores(
             zprobe_samples, biometric_references
@@ -214,10 +208,6 @@ class ZTNormPipeline(object):
         allow_scoring_with_all_biometric_references=False,
     ):
 
-        # z_probe_features = self._inject_references(
-        #    z_probe_features, t_biometric_references
-        # )
-
         # Reusing the zprobe_features and t_biometric_references
         zt_scores = self.vanilla_biometrics_pipeline.biometric_algorithm.score_samples(
             z_probe_features,
@@ -257,20 +247,6 @@ class ZTNorm(object):
         # Axis 0=ZNORM
         # Axi1 1=TNORM
         return (score - mu) / std
-
-        """
-        if axis == 1:
-            return (
-                score
-                - np.tile(mu.reshape(N, 1), (1, score.shape[1]))
-            ) / np.tile(std.reshape(N, 1), (1, score.shape[1]))
-        else:
-            return (
-                score
-                - np.tile(mu.reshape(1, N), (score.shape[0], 1))
-            ) / np.tile(std.reshape(1, N), (score.shape[0], 1))
-        """
-        
 
     def _compute_std(self, mu, norm_base_scores, axis=1):
         # Reference: https://gitlab.idiap.ch/bob/bob.learn.em/-/blob/master/bob/learn/em/test/test_ztnorm.py
@@ -317,16 +293,10 @@ class ZTNorm(object):
         axis=0 computes CORRECTLY the statistics for ZNorm
         axis=1 computes CORRECTLY the statistics for TNorm
         """
-
         # Dumping all scores
-        if isinstance(sampleset_for_norm[0][0], DelayedSample):
-            score_floats = np.array(
-                [f.data for sset in sampleset_for_norm for s in sset for f in s.data]
-            )
-        else:
-            score_floats = np.array(
-                [s.data for sset in sampleset_for_norm for s in sset]
-            )
+        score_floats = np.array(
+              [s.data for sset in sampleset_for_norm for s in sset]
+        )
 
         # Reshaping in PROBE vs BIOMETRIC_REFERENCES
         n_probes = len(sampleset_for_norm)
@@ -334,23 +304,18 @@ class ZTNorm(object):
         score_floats = score_floats.reshape((n_probes, n_references))
 
         # AXIS ON THE MODELS
-        big_mu = np.mean(score_floats, axis=axis)
-        #big_std = np.std(score_floats, axis=axis)
+        big_mu = np.mean(score_floats, axis=axis)        
         big_std = self._compute_std(big_mu, score_floats, axis=axis)
 
         # Creating statistics structure with subject id as the key
         stats = {}
         if axis == 0:
-            # TODO: NEED TO SOLVE THIS FETCHING.
-            # IT SHOULD BE TRANSPARENT
-            if isinstance(sampleset_for_norm[0][0], DelayedSample):
-                sset = sampleset_for_norm[0].samples[0].data
-            else:
-                sset = sampleset_for_norm[0]
-
-            for mu, std, s in zip(big_mu, big_std, sset):
-                stats[s.subject] = {"big_mu": mu, "big_std": std}
+            # Z-Norm is one statistic per biometric references
+            biometric_reference_subjects = [br.subject for br in sampleset_for_norm[0]]
+            for mu, std, s in zip(big_mu, big_std, biometric_reference_subjects):
+                stats[s] = {"big_mu": mu, "big_std": std}
         else:
+            # T-Norm is one statistic per probe
             for mu, std, sset in zip(big_mu, big_std, sampleset_for_norm):
                 stats[sset.subject] = {"big_mu": mu, "big_std": std}
 
@@ -359,7 +324,6 @@ class ZTNorm(object):
     def _znorm_samplesets(self, probe_scores, stats):
         # Normalizing
         # TODO: THIS TENDS TO BE EXTREMLY SLOW
-
         z_normed_score_samples = []
         for probe_score in probe_scores:
             z_normed_score_samples.append(self._apply_znorm(probe_score, stats))
@@ -497,10 +461,10 @@ class ZTNormCheckpointWrapper(object):
 
     def _write_scores(self, samples, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        open(path, "wb").write(pickle.dumps(samples))
+        open(path, "wb").write(cloudpickle.dumps(samples))
 
     def _load(self, path):
-        return pickle.loads(open(path, "rb").read())
+        return cloudpickle.loads(open(path, "rb").read())
 
     def _apply_znorm(self, probe_score, stats):
 
