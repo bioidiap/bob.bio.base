@@ -127,7 +127,11 @@ def zt_norm_stubs(references, probes, t_references, z_probes):
     zt_normed_scores = _norm(z_normed_scores, z_t_scores, axis=0)
     assert zt_normed_scores.shape == (n_reference, n_probes)
 
-    return raw_scores, z_normed_scores, t_normed_scores, zt_normed_scores
+    s_normed_scores = (z_normed_scores+t_normed_scores)*0.5
+    assert s_normed_scores.shape == (n_reference, n_probes)
+
+
+    return raw_scores, z_normed_scores, t_normed_scores, zt_normed_scores, s_normed_scores
 
 
 def test_norm_mechanics():
@@ -191,6 +195,7 @@ def test_norm_mechanics():
                 z_normed_scores_ref,
                 t_normed_scores_ref,
                 zt_normed_scores_ref,
+                s_normed_scores_ref,
             ) = zt_norm_stubs(references, probes, t_references, z_probes)
 
             ############
@@ -338,6 +343,7 @@ def test_norm_mechanics():
                 z_normed_score_samples,
                 t_normed_score_samples,
                 zt_normed_score_samples,
+                s_normed_score_samples,
             ) = zt_vanilla_pipeline(
                 [],
                 biometric_reference_sample_sets,
@@ -360,6 +366,11 @@ def test_norm_mechanics():
                     scheduler="single-threaded"
                 )
 
+                s_normed_score_samples = s_normed_score_samples.compute(
+                    scheduler="single-threaded"
+                )
+
+
             raw_scores = _dump_scores_from_samples(
                 raw_score_samples, shape=(n_probes, n_references)
             )
@@ -379,6 +390,14 @@ def test_norm_mechanics():
                 zt_normed_score_samples, shape=(n_probes, n_references)
             )
             assert np.allclose(zt_normed_scores, zt_normed_scores_ref)
+
+            s_normed_scores = _dump_scores_from_samples(
+                s_normed_score_samples, shape=(n_probes, n_references)
+            )
+            assert np.allclose(s_normed_scores, s_normed_scores_ref)
+
+
+
 
     # No dask
     run(False)  # On memory
@@ -418,7 +437,7 @@ def test_znorm_on_memory():
                     vanilla_biometrics_pipeline, npartitions=2
                 )
 
-            raw_scores, z_scores, t_scores, zt_scores = vanilla_biometrics_pipeline(
+            raw_scores, z_scores, t_scores, zt_scores, s_scores = vanilla_biometrics_pipeline(
                 database.background_model_samples(),
                 database.references(),
                 database.probes(),
@@ -448,8 +467,13 @@ def test_znorm_on_memory():
                 t_scores = _concatenate(
                     vanilla_biometrics_pipeline, t_scores, "scores-dev_tscores"
                 )
+
                 zt_scores = _concatenate(
                     vanilla_biometrics_pipeline, zt_scores, "scores-dev_ztscores"
+                )
+
+                s_scores = _concatenate(
+                    vanilla_biometrics_pipeline, s_scores, "scores-dev_sscores"
                 )
 
             if with_dask:
@@ -457,6 +481,8 @@ def test_znorm_on_memory():
                 z_scores = z_scores.compute(scheduler="single-threaded")
                 t_scores = t_scores.compute(scheduler="single-threaded")
                 zt_scores = zt_scores.compute(scheduler="single-threaded")
+                s_scores = s_scores.compute(scheduler="single-threaded")
+
 
             if isinstance(score_writer, CSVScoreWriter):
                 n_lines = 51 if with_dask else 101
@@ -465,12 +491,14 @@ def test_znorm_on_memory():
                 assert len(open(z_scores[0], "r").readlines()) == n_lines
                 assert len(open(t_scores[0], "r").readlines()) == n_lines
                 assert len(open(zt_scores[0], "r").readlines()) == n_lines
+                assert len(open(s_scores[0], "r").readlines()) == n_lines
 
             else:
                 assert len(raw_scores) == 10
                 assert len(z_scores) == 10
                 assert len(t_scores) == 10
                 assert len(zt_scores) == 10
+                assert len(s_scores) == 10
 
         run_pipeline(False)
         run_pipeline(False)  # Testing checkpoint
