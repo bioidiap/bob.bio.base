@@ -254,7 +254,7 @@ def test_norm_mechanics():
             #############
 
             z_vanilla_pipeline = ZTNormPipeline(
-                vanilla_pipeline, z_norm=True, t_norm=False,
+                vanilla_pipeline, z_norm=True, t_norm=False
             )
 
             if with_checkpoint:
@@ -284,6 +284,7 @@ def test_norm_mechanics():
                 z_normed_score_samples, shape=(n_probes, n_references)
             )
             assert np.allclose(z_normed_scores, z_normed_scores_ref)
+
 
             ############
             # TESTING T-NORM
@@ -318,7 +319,7 @@ def test_norm_mechanics():
 
             t_normed_scores = _dump_scores_from_samples(
                 t_normed_score_samples, shape=(n_probes, n_references)
-            )
+            )            
             assert np.allclose(t_normed_scores, t_normed_scores_ref)
 
             ############
