@@ -826,13 +826,13 @@ class FileListBioDatabase(ZTBioDatabase):
         if isinstance(self.original_extension, six.string_types):
             # extract file name
             file_name = file.make_path(self.original_directory, self.original_extension)
-            if check_existence and os.path.exists(file_name):
+            if not check_existence or os.path.exists(file_name):
                 return file_name
 
         # check all registered extensions
         for extension in self.original_extension:
             file_name = file.make_path(self.original_directory, extension)
-            if check_existence and os.path.exists(file_name):
+            if os.path.exists(file_name):
                 return file_name
 
         # None of the extensions matched
