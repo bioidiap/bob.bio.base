@@ -47,6 +47,17 @@ class ZTNormPipeline(object):
           If True, applies TScore normalization on top of raw scores.
           If both, z_norm and t_norm are true, it applies score normalization
 
+        score_writer: 
+
+        adaptive_score_fraction: float
+           Set the proportion of the impostor scores used to compute :math:`\mu` and :math:`\std` for the T normalization
+           This is also called as adaptative T-Norm (https://ieeexplore.ieee.org/document/1415220) or 
+           Top-Norm (https://ieeexplore.ieee.org/document/4013533)
+
+        adaptive_score_descending_sort bool
+            It true, during the Top-norm statistics computations, sort the scores in descending order
+
+
     """
 
     def __init__(
@@ -55,9 +66,13 @@ class ZTNormPipeline(object):
         z_norm=True,
         t_norm=True,
         score_writer=FourColumnsScoreWriter("./scores.txt"),
+        adaptive_score_fraction=1.0,
+        adaptive_score_descending_sort=True,
     ):
         self.vanilla_biometrics_pipeline = vanilla_biometrics_pipeline
-        self.ztnorm_solver = ZTNorm()
+        self.ztnorm_solver = ZTNorm(
+            adaptive_score_fraction, adaptive_score_descending_sort
+        )
 
         self.z_norm = z_norm
         self.t_norm = t_norm
@@ -77,7 +92,6 @@ class ZTNormPipeline(object):
         t_biometric_reference_samples=None,
         allow_scoring_with_all_biometric_references=False,
     ):
-
 
         self.transformer = self.train_background_model(background_model_samples)
 
@@ -110,6 +124,7 @@ class ZTNormPipeline(object):
             return z_normed_scores
 
         # T NORM
+
         t_normed_scores, t_scores, t_biometric_references = self.compute_tnorm_scores(
             t_biometric_reference_samples,
             probe_features,
@@ -128,8 +143,17 @@ class ZTNormPipeline(object):
             t_scores,
             allow_scoring_with_all_biometric_references,
         )
-        
-        return raw_scores, z_normed_scores, t_normed_scores, zt_normed_scores
+
+        # S-norm
+        s_normed_scores = self.compute_snorm_scores(z_normed_scores, t_normed_scores)
+
+        return (
+            raw_scores,
+            z_normed_scores,
+            t_normed_scores,
+            zt_normed_scores,
+            s_normed_scores,
+        )
 
     def train_background_model(self, background_model_samples):
         return self.vanilla_biometrics_pipeline.train_background_model(
@@ -194,7 +218,7 @@ class ZTNormPipeline(object):
         )
 
         t_normed_scores = self.ztnorm_solver.compute_tnorm_scores(
-            probe_scores, t_scores, t_biometric_references
+            probe_scores, t_scores, t_biometric_references,
         )
 
         return t_normed_scores, t_scores, t_biometric_references
@@ -217,21 +241,30 @@ class ZTNormPipeline(object):
 
         # Z Normalizing the T-normed scores
         z_normed_t_normed = self.ztnorm_solver.compute_znorm_scores(
-            t_scores, zt_scores, t_biometric_references
+            t_scores, zt_scores, t_biometric_references,
         )
 
         # (Z Normalizing the T-normed scores) the Z normed scores
         zt_normed_scores = self.ztnorm_solver.compute_tnorm_scores(
-            z_normed_scores, z_normed_t_normed, t_biometric_references
+            z_normed_scores, z_normed_t_normed, t_biometric_references,
         )
 
         return zt_normed_scores
+
+    def compute_snorm_scores(self, znormed_scores, tnormed_scores):
+
+        s_normed_scores = self.ztnorm_solver.compute_snorm_scores(
+            znormed_scores, tnormed_scores
+        )
+
+        return s_normed_scores
 
     def write_scores(self, scores):
         return self.vanilla_biometrics_pipeline.write_scores(scores)
 
     def post_process(self, score_paths, filename):
         return self.vanilla_biometrics_pipeline.post_process(score_paths, filename)
+
 
 class ZTNorm(object):
     """
@@ -240,7 +273,23 @@ class ZTNorm(object):
     Reference bibliography from: A Generative Model for Score Normalization in Speaker Recognition
     https://arxiv.org/pdf/1709.09868.pdf
 
+
+    Parameters
+    ----------
+
+        adaptive_score_fraction: float
+           Set the proportion of the impostor scores used to compute :math:`\mu` and :math:`\std` for the T normalization
+           This is also called as adaptative T-Norm (https://ieeexplore.ieee.org/document/1415220) or 
+           Top-Norm (https://ieeexplore.ieee.org/document/4013533)
+
+        adaptive_score_descending_sort bool
+            It true, during the Top-norm statistics computations, sort the scores in descending order
+
     """
+
+    def __init__(self, adaptive_score_fraction, adaptive_score_descending_sort):
+        self.adaptive_score_fraction = adaptive_score_fraction
+        self.adaptive_score_descending_sort = adaptive_score_descending_sort
 
     def _norm(self, score, mu, std):
         # Reference: https://gitlab.idiap.ch/bob/bob.learn.em/-/blob/master/bob/learn/em/test/test_ztnorm.py
@@ -294,9 +343,7 @@ class ZTNorm(object):
         axis=1 computes CORRECTLY the statistics for TNorm
         """
         # Dumping all scores
-        score_floats = np.array(
-              [s.data for sset in sampleset_for_norm for s in sset]
-        )
+        score_floats = np.array([s.data for sset in sampleset_for_norm for s in sset])
 
         # Reshaping in PROBE vs BIOMETRIC_REFERENCES
         n_probes = len(sampleset_for_norm)
@@ -304,8 +351,25 @@ class ZTNorm(object):
         score_floats = score_floats.reshape((n_probes, n_references))
 
         # AXIS ON THE MODELS
-        big_mu = np.mean(score_floats, axis=axis)        
-        big_std = self._compute_std(big_mu, score_floats, axis=axis)
+
+        proportion = int(
+            np.floor(score_floats.shape[axis] * self.adaptive_score_fraction)
+        )
+
+
+        sorted_scores = (
+            -np.sort(-score_floats, axis=axis)
+            if self.adaptive_score_descending_sort
+            else np.sort(score_floats, axis=axis)
+        )
+
+        if axis == 0:
+            top_scores = sorted_scores[0:proportion, :]
+        else:
+            top_scores = sorted_scores[:, 0:proportion]
+
+        big_mu = np.mean(top_scores, axis=axis)
+        big_std = self._compute_std(big_mu, top_scores, axis=axis)
 
         # Creating statistics structure with subject id as the key
         stats = {}
@@ -390,9 +454,32 @@ class ZTNorm(object):
         Base T-normalization function
         """
 
-        stats = self._compute_stats(sampleset_for_tnorm, t_biometric_references, axis=1)
+        stats = self._compute_stats(
+            sampleset_for_tnorm, t_biometric_references, axis=1,
+        )
 
         return self._tnorm_samplesets(probe_scores, stats)
+
+    def _snorm(self, z_score, t_score):
+        return 0.5 * (z_score + t_score)
+
+    def _snorm_samplesets(self, znormed_scores, tnormed_scores):
+
+        s_normed_samplesets = []
+        for z, t in zip(znormed_scores, tnormed_scores):
+            s_normed_scores = SampleSet([], parent=z)
+            for b_z, b_t in zip(z, t):
+                score = self._snorm(b_z.data, b_t.data)
+
+                new_sample = Sample(score, parent=b_z)
+                s_normed_scores.samples.append(new_sample)
+            s_normed_samplesets.append(s_normed_scores)
+
+        return s_normed_samplesets
+
+    def compute_snorm_scores(self, znormed_scores, tnormed_scores):
+
+        return self._snorm_samplesets(znormed_scores, tnormed_scores)
 
 
 class ZTNormDaskWrapper(object):
@@ -435,6 +522,11 @@ class ZTNormDaskWrapper(object):
 
         return probe_scores.map_partitions(self.ztnorm._tnorm_samplesets, stats)
 
+    def compute_snorm_scores(self, znormed_scores, tnormed_scores):
+        return znormed_scores.map_partitions(
+            self.ztnorm._snorm_samplesets, tnormed_scores
+        )
+
 
 class ZTNormCheckpointWrapper(object):
     """
@@ -457,7 +549,6 @@ class ZTNormCheckpointWrapper(object):
         self.tnorm_score_path = os.path.join(base_dir, "tnorm_scores")
         self.force = force
         self.base_dir = base_dir
-
 
     def _write_scores(self, samples, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -488,6 +579,28 @@ class ZTNormCheckpointWrapper(object):
 
         return z_normed_score
 
+    def _apply_tnorm(self, probe_score, stats):
+
+        path = os.path.join(self.tnorm_score_path, str(probe_score.key) + ".pkl")
+
+        if self.force or not os.path.exists(path):
+            t_normed_score = self.ztnorm._apply_tnorm(probe_score, path)
+
+            self.write_scores(t_normed_score.samples)
+
+            t_normed_score = SampleSet(
+                [
+                    DelayedSample(
+                        functools.partial(self._load, path), parent=probe_score
+                    )
+                ],
+                parent=probe_score,
+            )
+        else:
+            t_normed_score = SampleSet(self._load(path), parent=probe_score)
+
+        return t_normed_score
+
     def compute_znorm_scores(
         self, probe_scores, sampleset_for_znorm, biometric_references
     ):
@@ -499,10 +612,12 @@ class ZTNormCheckpointWrapper(object):
     def compute_tnorm_scores(
         self, probe_scores, sampleset_for_tnorm, t_biometric_references
     ):
-
         return self.ztnorm.compute_tnorm_scores(
             probe_scores, sampleset_for_tnorm, t_biometric_references
         )
+
+    def compute_snorm_scores(self, znormed_scores, tnormed_scores):
+        return self.ztnorm.compute_snorm_scores(znormed_scores, tnormed_scores)
 
     def _compute_stats(self, sampleset_for_norm, biometric_references, axis=0):
         return self.ztnorm._compute_stats(
@@ -514,3 +629,6 @@ class ZTNormCheckpointWrapper(object):
 
     def _tnorm_samplesets(self, probe_scores, stats):
         return self.ztnorm._tnorm_samplesets(probe_scores, stats)
+
+    def _snorm_samplesets(self, probe_scores, stats):
+        return self.ztnorm._snorm_samplesets(probe_scores, stats)
