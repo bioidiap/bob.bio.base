@@ -4,6 +4,7 @@
 from sklearn.base import TransformerMixin, BaseEstimator
 from bob.bio.base.preprocessor import Preprocessor
 
+
 class PreprocessorTransformer(TransformerMixin, BaseEstimator):
     """
     Scikit learn transformer for :any:`bob.bio.base.preprocessor.Preprocessor`.
@@ -18,13 +19,13 @@ class PreprocessorTransformer(TransformerMixin, BaseEstimator):
     """
 
     def __init__(
-        self,
-        instance,
-        **kwargs,
+        self, instance, **kwargs,
     ):
 
         if not isinstance(instance, Preprocessor):
-            raise ValueError("`instance` should be an instance of `bob.bio.base.preprocessor.Preprocessor`")
+            raise ValueError(
+                "`instance` should be an instance of `bob.bio.base.preprocessor.Preprocessor`"
+            )
 
         self.instance = instance
         super().__init__(**kwargs)
