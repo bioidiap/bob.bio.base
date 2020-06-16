@@ -225,6 +225,17 @@ class BioAlgorithmLegacy(BioAlgorithm):
         self._biometric_reference_extension = ".hdf5"
         self.score_dir = os.path.join(base_dir, "scores")
         self.force = force
+        self._base_dir = base_dir
+
+    @property
+    def base_dir(self):
+        return self._base_dir
+
+    @base_dir.setter
+    def base_dir(self, v):
+        self._base_dir = v
+        self.biometric_reference_dir = os.path.join(self._base_dir, "biometric_references")
+        self.score_dir = os.path.join(self._base_dir, "scores")
 
     def load_legacy_background_model(self):
         # Loading background model
@@ -308,7 +319,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
 
             self.write_scores(scored_sample_set.samples, path)
             scored_sample_set = SampleSet(
-                [DelayedSample(functools.partial(_load, path), parent=sampleset)],
+                DelayedSample(functools.partial(_load, path), parent=sampleset),
                 parent=sampleset,
             )
         else:
