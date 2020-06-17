@@ -11,8 +11,14 @@ import h5py
 import cloudpickle
 from .zt_norm import ZTNormPipeline, ZTNormDaskWrapper
 from .legacy import BioAlgorithmLegacy
-from bob.bio.base.transformers import PreprocessorTransformer, ExtractorTransformer, AlgorithmTransformer
+from bob.bio.base.transformers import (
+    PreprocessorTransformer,
+    ExtractorTransformer,
+    AlgorithmTransformer,
+)
 from bob.pipelines.wrappers import SampleWrapper
+from bob.pipelines.distributed.sge import SGEMultipleQueuesCluster
+
 
 class BioAlgorithmCheckpointWrapper(BioAlgorithm):
     """Wrapper used to checkpoint enrolled and Scoring samples.
@@ -259,6 +265,28 @@ def dask_vanilla_biometrics(pipeline, npartitions=None, partition_size=None):
 
     return pipeline
 
+def dask_get_partition_size(cluster, n_objects):
+    """
+    Heuristics that gives you a number for dask.partition_size.
+    The heuristics is pretty simple, given the max number of possible workers to be run
+    in a queue (not the number of current workers running) and a total number objects to be processed do n_objects/n_max_workers:
+
+    Parameters:
+    -----------
+
+        cluster:  :any:`bob.pipelines.distributed.SGEMultipleQueuesCluster`
+            Cluster of the type :any:`bob.pipelines.distributed.SGEMultipleQueuesCluster`
+
+        n_objects: int
+            Number of objects to be processed
+
+    """
+    if not isinstance(cluster, SGEMultipleQueuesCluster):
+        return None
+
+    max_jobs = cluster.sge_job_spec["default"]["max_jobs"]
+    return n_objects//max_jobs if n_objects>max_jobs else 1
+
 
 def checkpoint_vanilla_biometrics(pipeline, base_dir):
     """
@@ -269,7 +297,7 @@ def checkpoint_vanilla_biometrics(pipeline, base_dir):
     ----------
 
     pipeline: :any:`VanillaBiometrics`
-       Vanilla Biometrics based pipeline to be dasked
+       Vanilla Biometrics based pipeline to be checkpointed
 
     base_dir: str
        Path to store biometric references and scores
@@ -280,29 +308,37 @@ def checkpoint_vanilla_biometrics(pipeline, base_dir):
     for i, name, estimator in sk_pipeline._iter():
 
         # If they are legacy objects, we need to hook their load/save functions
-        save_func=None
-        load_func=None
+        save_func = None
+        load_func = None
 
         if not isinstance(estimator, SampleWrapper):
-            raise ValueError(f"{estimator} needs to be the type `SampleWrapper` to be checkpointed")
+            raise ValueError(
+                f"{estimator} needs to be the type `SampleWrapper` to be checkpointed"
+            )
 
         if isinstance(estimator.estimator, PreprocessorTransformer):
             save_func = estimator.estimator.instance.write_data
             load_func = estimator.estimator.instance.read_data
-        elif any([isinstance(estimator.estimator, ExtractorTransformer),
-                  isinstance(estimator.estimator, AlgorithmTransformer)]):
+        elif any(
+            [
+                isinstance(estimator.estimator, ExtractorTransformer),
+                isinstance(estimator.estimator, AlgorithmTransformer),
+            ]
+        ):
             save_func = estimator.estimator.instance.write_feature
             load_func = estimator.estimator.instance.read_feature
 
         wraped_estimator = bob.pipelines.wrap(
-            ["checkpoint"], estimator, features_dir=os.path.join(base_dir, name),
+            ["checkpoint"],
+            estimator,
+            features_dir=os.path.join(base_dir, name),
             load_func=load_func,
-            save_func=save_func
+            save_func=save_func,
         )
 
         sk_pipeline.steps[i] = (name, wraped_estimator)
 
-    if isinstance(pipeline.biometric_algorithm, BioAlgorithmLegacy):        
+    if isinstance(pipeline.biometric_algorithm, BioAlgorithmLegacy):
         pipeline.biometric_algorithm.base_dir = base_dir
     else:
         pipeline.biometric_algorithm = BioAlgorithmCheckpointWrapper(

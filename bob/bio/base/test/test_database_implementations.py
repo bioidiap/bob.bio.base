@@ -13,39 +13,41 @@ from bob.bio.base.database import BioDatabase, ZTBioDatabase
 
 
 def check_database(database, groups=('dev',), protocol=None, training_depends=False, models_depend=False, skip_train=False, check_zt=False):
-    assert isinstance(database, BioDatabase)
+    database_legacy = database.database
+    assert isinstance(database_legacy, BioDatabase)
 
     # load the directories
     if 'HOME' in os.environ:
-        database.replace_directories(os.path.join(os.environ['HOME'], '.bob_bio_databases.txt'))
+        database_legacy.replace_directories(os.path.join(os.environ['HOME'], '.bob_bio_databases.txt'))
 
     if protocol:
-        database.protocol = protocol
+        database_legacy.protocol = protocol
     if protocol is None:
-        protocol = database.protocol
+        protocol = database_legacy.protocol
 
-    assert len(database.all_files(add_zt_files=check_zt)) > 0
+    assert len(database_legacy.all_files(add_zt_files=check_zt)) > 0
     if not skip_train:
-        assert len(database.training_files('train_extractor')) > 0
-        assert len(database.arrange_by_client(database.training_files('train_enroller'))) > 0
+        assert len(database_legacy.training_files('train_extractor')) > 0
+        assert len(database_legacy.arrange_by_client(database_legacy.training_files('train_enroller'))) > 0
 
     for group in groups:
-        model_ids = database.model_ids_with_protocol(group, protocol=protocol)
+        model_ids = database_legacy.model_ids_with_protocol(group, protocol=protocol)
         assert len(model_ids) > 0
-        assert database.client_id_from_model_id(model_ids[0], group) is not None
-        assert len(database.enroll_files(model_ids[0], group)) > 0
-        assert len(database.probe_files(model_ids[0], group)) > 0
+        assert database_legacy.client_id_from_model_id(model_ids[0], group) is not None
+        assert len(database_legacy.enroll_files(model_ids[0], group)) > 0
+        assert len(database_legacy.probe_files(model_ids[0], group)) > 0
 
-    assert database.training_depends_on_protocol == training_depends
-    assert database.models_depend_on_protocol == models_depend
+    assert database_legacy.training_depends_on_protocol == training_depends
+    assert database_legacy.models_depend_on_protocol == models_depend
 
 
 def check_database_zt(database, groups=('dev', 'eval'), protocol=None, training_depends=False, models_depend=False):
+    database_legacy = database.database
     check_database(database, groups, protocol, training_depends, models_depend, check_zt=True)
-    assert isinstance(database, ZTBioDatabase)
+    assert isinstance(database_legacy, ZTBioDatabase)
     for group in groups:
-        t_model_ids = database.t_model_ids(group)
+        t_model_ids = database_legacy.t_model_ids(group)
         assert len(t_model_ids) > 0
-        assert database.client_id_from_model_id(t_model_ids[0], group) is not None
-        assert len(database.t_enroll_files(t_model_ids[0], group)) > 0
-        assert len(database.z_probe_files(group)) > 0
+        assert database_legacy.client_id_from_model_id(t_model_ids[0], group) is not None
+        assert len(database_legacy.t_enroll_files(t_model_ids[0], group)) > 0
+        assert len(database_legacy.z_probe_files(group)) > 0

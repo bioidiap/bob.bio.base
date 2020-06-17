@@ -132,6 +132,7 @@ setup(
         'evaluate          = bob.bio.base.script.commands:evaluate',
         'baseline          = bob.bio.base.script.baseline:baseline',
         'sort              = bob.bio.base.script.sort:sort',
+        'pipelines         = bob.bio.base.script.pipelines:pipelines',
       ],
 
       # annotators
@@ -140,9 +141,8 @@ setup(
       ],
 
        # run pipelines
-      'bob.pipelines.cli':[
+      'bob.bio.pipelines.cli':[
         'vanilla-biometrics = bob.bio.base.script.vanilla_biometrics:vanilla_biometrics',
-        'vanilla-biometrics-template = bob.bio.base.script.vanilla_biometrics:vanilla_biometrics_template'
      ],
 
      
