@@ -143,6 +143,7 @@ setup(
        # run pipelines
       'bob.bio.pipelines.cli':[
         'vanilla-biometrics = bob.bio.base.script.vanilla_biometrics:vanilla_biometrics',
+        'vanilla-biometrics-ztnorm = bob.bio.base.script.vanilla_biometrics_ztnorm:vanilla_biometrics_ztnorm'
      ],
 
      

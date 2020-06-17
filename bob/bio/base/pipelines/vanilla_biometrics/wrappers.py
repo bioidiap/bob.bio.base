@@ -240,6 +240,8 @@ def dask_vanilla_biometrics(pipeline, npartitions=None, partition_size=None):
         pipeline.vanilla_biometrics_pipeline = dask_vanilla_biometrics(
             pipeline.vanilla_biometrics_pipeline, npartitions
         )
+        pipeline.biometric_algorithm = pipeline.vanilla_biometrics_pipeline.biometric_algorithm
+        pipeline.transformer = pipeline.vanilla_biometrics_pipeline.transformer
 
         pipeline.ztnorm_solver = ZTNormDaskWrapper(pipeline.ztnorm_solver)
 

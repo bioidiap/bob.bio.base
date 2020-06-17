@@ -70,6 +70,9 @@ class ZTNormPipeline(object):
         adaptive_score_descending_sort=True,
     ):
         self.vanilla_biometrics_pipeline = vanilla_biometrics_pipeline
+        self.biometric_algorithm = self.vanilla_biometrics_pipeline.biometric_algorithm
+        self.transformer = self.vanilla_biometrics_pipeline.transformer
+
         self.ztnorm_solver = ZTNorm(
             adaptive_score_fraction, adaptive_score_descending_sort
         )
