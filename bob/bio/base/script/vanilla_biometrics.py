@@ -25,7 +25,7 @@ from bob.bio.base.pipelines.vanilla_biometrics import (
     dask_vanilla_biometrics,
     dask_get_partition_size,
     FourColumnsScoreWriter,
-    CSVScoreWriter
+    CSVScoreWriter,
 )
 from dask.delayed import Delayed
 import pkg_resources
@@ -44,30 +44,17 @@ EPILOG = """\b
  -----------------------
 
 
- $ bob pipelines vanilla-biometrics my_experiment.py -vv
+ $ bob pipelines vanilla-biometrics -p my_experiment.py -vv
 
 
  my_experiment.py must contain the following elements:
 
- >>> preprocessor = my_preprocessor() \n
- >>> extractor = my_extractor() \n
- >>> algorithm = my_algorithm() \n
- >>> checkpoints = EXPLAIN CHECKPOINTING \n
+   >>> transformer = ... # A scikit-learn pipeline
+   >>> algorithm   = ... # `An BioAlgorithm`
+   >>> pipeline = VanillaBiometricsPipeline(transformer,algorithm)
+   >>> database = .... # Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)" 
 
 \b
-
-
-Look at the following example
-
- $ bob pipelines vanilla-biometrics ./bob/pipelines/config/distributed/sge_iobig_16cores.py \
-                                    ./bob/pipelines/config/database/mobio_male.py \
-                                    ./bob/pipelines/config/baselines/facecrop_pca.py
-
-\b
-
-
-
-TODO: Work out this help
 
 """
 
@@ -122,24 +109,49 @@ def post_process_scores(pipeline, scores, path):
     help="Name of output directory",
 )
 @click.option(
-    "--write-metadata-scores", "-m",
+    "--write-metadata-scores",
+    "-m",
     is_flag=True,
-    help="If set, all the scores will be written with all its metadata",
+    help="If set, all the scores will be written with all its metadata using the `CSVScoreWriter`",
+)
+@click.option(
+    "--checkpoint",
+    "-c",
+    is_flag=True,
+    help="If set, it will checkpoint all steps of the pipeline",
 )
 @verbosity_option(cls=ResourceOption)
-def vanilla_biometrics(pipeline, database, dask_client, groups, output, write_metadata_scores, **kwargs):
+def vanilla_biometrics(
+    pipeline,
+    database,
+    dask_client,
+    groups,
+    output,
+    write_metadata_scores,
+    checkpoint,
+    **kwargs,
+):
     """Runs the simplest biometrics pipeline.
 
-    Such pipeline consists into three sub-pipelines.
-    In all of them, given raw data as input it does the following steps:
+    Such pipeline consists into two major components.
+    The first component consists of a scikit-learn `Pipeline`,
+    where a sequence of transformations of the input data
+    is defined.
+    The second component is a `BioAlgorithm` that defines the primitives
+    `enroll` and `score`
+
+    With those two components any Biometric Experiment can be done.
+    A Biometric experiment consists of three sub-pipelines and 
+    they are defined below:
 
     Sub-pipeline 1:\n
     ---------------
 
-    Training background model. Some biometric algorithms demands the training of background model, for instance, PCA/LDA matrix or a Neural networks. This sub-pipeline handles that and it consists of 3 steps:
-
+    Training background model.
+    Some biometric algorithms demands the training of background model, for instance, PCA/LDA matrix or a Neural networks. 
+    
     \b
-    raw_data --> preprocessing >> feature extraction >> train background model --> background_model
+    This pipeline runs: `Pipeline.fit(DATA_FOR_FIT)`
 
 
 
@@ -149,26 +161,24 @@ def vanilla_biometrics(pipeline, database, dask_client, groups, output, write_me
     ---------------
 
     Creation of biometric references: This is a standard step in a biometric pipelines.
-    Given a set of samples of one identity, create a biometric reference (a.k.a template) for sub identity. This sub-pipeline handles that in 3 steps and they are the following:
+    Given a set of samples of one identity, create a biometric reference (a.k.a template) for sub identity. 
+
 
     \b
     raw_data --> preprocessing >> feature extraction >> enroll(background_model) --> biometric_reference
 
-    Note that this sub-pipeline depends on the previous one
-
+    This pipeline runs: `BioAlgorithm.enroll(Pipeline.transform(DATA_ENROLL))` >> biometric_references
 
 
     Sub-pipeline 3:\n
     ---------------
 
+    Probing: This is another standard step in biometric pipelines. 
+    Given one sample and one biometric reference, computes a score.
+    Such score has different meanings depending on the scoring method your biometric algorithm uses. 
+    It's out of scope to explain in a help message to explain what scoring is for different biometric algorithms.
 
-    Probing: This is another standard step in biometric pipelines. Given one sample and one biometric reference, computes a score. Such score has different meanings depending on the scoring method your biometric algorithm uses. It's out of scope to explain in a help message to explain what scoring is for different biometric algorithms.
-
-
-    raw_data --> preprocessing >> feature extraction >> probe(biometric_reference, background_model) --> score
-
-    Note that this sub-pipeline depends on the two previous ones
-
+    This pipeline runs: `BioAlgorithm.score(Pipeline.transform(DATA_SCORE, biometric_references))` >> biometric_references
 
     """
 
@@ -185,12 +195,12 @@ def vanilla_biometrics(pipeline, database, dask_client, groups, output, write_me
     database = vanilla_pipeline.database
     pipeline = vanilla_pipeline.pipeline
     if write_metadata_scores:
-        pipeline.score_writer = CSVScoreWriter(os.path.join(output,"./tmp"))
+        pipeline.score_writer = CSVScoreWriter(os.path.join(output, "./tmp"))
     else:
-        pipeline.score_writer = FourColumnsScoreWriter(os.path.join(output,"./tmp"))
+        pipeline.score_writer = FourColumnsScoreWriter(os.path.join(output, "./tmp"))
 
     # Check if it's already checkpointed
-    if not isinstance_nested(
+    if checkpoint and not isinstance_nested(
         pipeline.biometric_algorithm,
         "biometric_algorithm",
         BioAlgorithmCheckpointWrapper,
@@ -206,7 +216,7 @@ def vanilla_biometrics(pipeline, database, dask_client, groups, output, write_me
 
         if dask_client is not None and not isinstance_nested(
             pipeline.biometric_algorithm, "biometric_algorithm", BioAlgorithmDaskWrapper
-        ):            
+        ):
             n_objects = (
                 len(background_model_samples) + len(biometric_references) + len(probes)
             )
