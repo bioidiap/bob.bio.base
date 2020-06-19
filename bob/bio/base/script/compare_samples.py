@@ -13,33 +13,9 @@ from bob.extension.scripts.click_helper import (
     ConfigCommand,
 )
 import bob.io.base
-import bob.io.image
-
-import logging
-import os
-import itertools
-import dask.bag
-
-# from bob.bio.base.pipelines.vanilla_biometrics import (
-#    VanillaBiometricsPipeline,
-#    BioAlgorithmCheckpointWrapper,
-#    BioAlgorithmDaskWrapper,
-#    checkpoint_vanilla_biometrics,
-#    dask_vanilla_biometrics,
-#    dask_get_partition_size,
-#    FourColumnsScoreWriter,
-#    CSVScoreWriter,
-# )
-# from dask.delayed import Delayed
-# import pkg_resources
-from bob.extension.config import load as chain_load
-from bob.pipelines.utils import isinstance_nested
-from bob.bio.base.utils import get_resource_filename
-from .vanilla_biometrics import compute_scores, load_database_pipeline
+from tabulate import tabulate
+from bob.bio.base.pipelines.vanilla_biometrics import dask_vanilla_biometrics
 from bob.pipelines import Sample, SampleSet
-
-
-logger = logging.getLogger(__name__)
 
 
 EPILOG = """\b
@@ -48,6 +24,16 @@ EPILOG = """\b
  Command line examples\n
  -----------------------
 
+    >>> bob bio compare-samples ./imgs/1.png ./imgs/2.png -p inception_resnetv2_msceleb \b
+    \b
+    \b
+
+    All vs All comparison \b
+    -------------------  ------------------- \b
+    ./imgs/1.png         ./imgs/2.png         \b
+    0.0                  -0.5430189337666903  \b
+    -0.5430189337666903  0.0                  \b
+    -------------------  -------------------  \b
 
 """
 
@@ -67,34 +53,37 @@ EPILOG = """\b
     "-l",
     required=False,
     cls=ResourceOption,
+    entry_point_group="bob.pipeline.dask_client",
     help="Dask client for the execution of the pipeline.",
 )
-@verbosity_option(cls=ResourceOption)
 def compare_samples(
-    samples, pipeline, dask_client, **kwargs,
+    samples, pipeline, dask_client
 ):
-    """Compare several samples all vs all using one vanilla biometrics pipeline
-
+    """Compare several samples in a All vs All fashion.
     """
-
     if len(samples) == 1:
         raise ValueError(
             "It's necessary to have at least two samples for the comparison"
         )
 
     sample_sets = [
-        SampleSet([Sample(bob.io.base.load(s), key=str(i))], key=str(i))
+        SampleSet([Sample(bob.io.base.load(s), key=str(i))], key=str(i), subject=str(i))
         for i, s in enumerate(samples)
     ]
 
-    import ipdb; ipdb.set_trace()
-    for e in sample_sets:
-        biometric_references = pipeline.create_biometric_reference([e])
-        scores = pipeline.compute_scores(biometric_references, sample_sets)
-        pass
+    if dask_client is not None:
+        pipeline = dask_vanilla_biometrics (pipeline)
 
-    #    B = bob.io.base.load(p)
-    #    pipeline.biometric_algorithm
+    table = [[s for s in samples]]
+    biometric_references = pipeline.create_biometric_reference(sample_sets)
+    scores, _ = pipeline.compute_scores(sample_sets, biometric_references)
+    if dask_client is not None:
+        scores = scores.compute(scheduler=dask_client)
+    for sset in scores:
+        table.append([str(s.data) for s in sset])
+
+    print(f"All vs All comparison")
+    print(tabulate(table))
 
     if dask_client is not None:
         dask_client.shutdown()
