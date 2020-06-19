@@ -34,7 +34,7 @@ from dask.delayed import Delayed
 from bob.bio.base.utils import get_resource_filename
 from bob.extension.config import load as chain_load
 from bob.pipelines.utils import isinstance_nested
-from .vanilla_biometrics import compute_scores, post_process_scores
+from .vanilla_biometrics import compute_scores, post_process_scores, load_database_pipeline
 import copy
 
 logger = logging.getLogger(__name__)
@@ -67,7 +67,7 @@ EPILOG = """\b
     entry_point_group="bob.pipelines.config", cls=ConfigCommand, epilog=EPILOG,
 )
 @click.option(
-    "--pipeline", "-p", required=True, help="An entry point or a configuration file containing a `VanillaBiometricsPipeline`.",
+    "--pipeline", "-p", required=True, help="Vanilla biometrics pipeline composed of a scikit-learn Pipeline and a BioAlgorithm",
 )
 @click.option(
     "--database",
@@ -199,15 +199,11 @@ def vanilla_biometrics_ztnorm(
         os.makedirs(output, exist_ok=True)
 
     # It's necessary to chain load 2 resources together
-    pipeline_config = get_resource_filename(pipeline, "bob.bio.pipeline")
-    database_config = get_resource_filename(database, "bob.bio.database")
-    vanilla_pipeline = chain_load([database_config, pipeline_config])
+    # Picking the resources
+    database, pipeline = load_database_pipeline(database, pipeline)
+
     if dask_client is not None:
         dask_client = chain_load([dask_client]).dask_client
-
-    # Picking the resources
-    database = vanilla_pipeline.database
-    pipeline = vanilla_pipeline.pipeline
 
     if write_metadata_scores:
         pipeline.score_writer = CSVScoreWriter(os.path.join(output, "./tmp"))
