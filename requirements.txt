@@ -11,6 +11,7 @@ bob.measure
 bob.pipelines
 bob.sp
 bob.pipelines
+tabulate
 click
 click-plugins
 numpy
