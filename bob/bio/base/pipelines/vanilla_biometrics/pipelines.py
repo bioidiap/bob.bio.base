@@ -13,6 +13,8 @@ import numpy
 from .score_writers import FourColumnsScoreWriter
 
 logger = logging.getLogger(__name__)
+import tempfile
+import os
 
 
 class VanillaBiometricsPipeline(object):
@@ -71,18 +73,21 @@ class VanillaBiometricsPipeline(object):
         self,
         transformer,
         biometric_algorithm,
-        score_writer=FourColumnsScoreWriter("./scores.txt"),
+        score_writer=None,
     ):
         self.transformer = transformer
         self.biometric_algorithm = biometric_algorithm
         self.score_writer = score_writer
+        if self.score_writer is None:
+            tempdir = tempfile.TemporaryDirectory()
+            self.score_writer = FourColumnsScoreWriter(tempdir.name)
 
     def __call__(
         self,
         background_model_samples,
         biometric_reference_samples,
         probe_samples,
-        allow_scoring_with_all_biometric_references=False,
+        allow_scoring_with_all_biometric_references=True,
     ):
         logger.info(
             f" >> Vanilla Biometrics: Training background model with pipeline {self.transformer}"
@@ -143,7 +148,7 @@ class VanillaBiometricsPipeline(object):
         self,
         probe_samples,
         biometric_references,
-        allow_scoring_with_all_biometric_references=False,
+        allow_scoring_with_all_biometric_references=True,
     ):
 
         # probes is a list of SampleSets

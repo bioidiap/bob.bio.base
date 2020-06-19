@@ -54,10 +54,34 @@ class DatabaseConnector(Database):
         The name of the protocol to generate samples from.
         To be plugged at :py:method:`bob.db.base.Database.objects`.
 
+    allow_scoring_with_all_biometric_references: bool
+        If True will allow the scoring function to be performed in one shot with multiple probes.
+        This optimization is useful when all probes needs to be compared with all biometric references AND
+        your scoring function allows this broadcast computation.
+
+    annotation_type: str
+        Type of the annotations that the database provide.
+        Allowed types are: `eyes-center` and `bounding-box`
+
+    fixed_positions: dict
+        In case database contains one single annotation for all samples.
+        This is useful for registered databases.
     """
 
-    def __init__(self, database, **kwargs):
+    def __init__(
+        self,
+        database,
+        allow_scoring_with_all_biometric_references=True,
+        annotation_type="eyes-center",
+        fixed_positions=None,
+        **kwargs,
+    ):
         self.database = database
+        self.allow_scoring_with_all_biometric_references = (
+            allow_scoring_with_all_biometric_references
+        )
+        self.annotation_type = annotation_type
+        self.fixed_positions = fixed_positions
 
     def background_model_samples(self):
         """Returns :py:class:`Sample`'s to train a background model (group
@@ -202,6 +226,23 @@ class BioAlgorithmLegacy(BioAlgorithm):
         self._biometric_reference_extension = ".hdf5"
         self.score_dir = os.path.join(base_dir, "scores")
         self.force = force
+        self._base_dir = base_dir
+
+    @property
+    def base_dir(self):
+        return self._base_dir
+
+    @base_dir.setter
+    def base_dir(self, v):
+        self._base_dir = v
+        self.biometric_reference_dir = os.path.join(
+            self._base_dir, "biometric_references"
+        )
+        self.score_dir = os.path.join(self._base_dir, "scores")
+        if self.projector_file is not None:
+            self.projector_file = os.path.join(
+                self._base_dir, os.path.basename(self.projector_file)
+            )
 
     def load_legacy_background_model(self):
         # Loading background model
@@ -285,7 +326,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
 
             self.write_scores(scored_sample_set.samples, path)
             scored_sample_set = SampleSet(
-                [DelayedSample(functools.partial(_load, path), parent=sampleset)],
+                DelayedSample(functools.partial(_load, path), parent=sampleset),
                 parent=sampleset,
             )
         else:

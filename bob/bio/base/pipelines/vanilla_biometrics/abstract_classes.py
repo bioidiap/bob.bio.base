@@ -81,7 +81,7 @@ class BioAlgorithm(metaclass=ABCMeta):
         self,
         probe_features,
         biometric_references,
-        allow_scoring_with_all_biometric_references=False,
+        allow_scoring_with_all_biometric_references=True,
     ):
         """Scores a new sample against multiple (potential) references
 
