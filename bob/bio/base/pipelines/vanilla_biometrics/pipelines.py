@@ -87,7 +87,7 @@ class VanillaBiometricsPipeline(object):
         background_model_samples,
         biometric_reference_samples,
         probe_samples,
-        allow_scoring_with_all_biometric_references=False,
+        allow_scoring_with_all_biometric_references=True,
     ):
         logger.info(
             f" >> Vanilla Biometrics: Training background model with pipeline {self.transformer}"
@@ -148,7 +148,7 @@ class VanillaBiometricsPipeline(object):
         self,
         probe_samples,
         biometric_references,
-        allow_scoring_with_all_biometric_references=False,
+        allow_scoring_with_all_biometric_references=True,
     ):
 
         # probes is a list of SampleSets
