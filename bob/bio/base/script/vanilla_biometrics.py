@@ -26,6 +26,7 @@ from bob.bio.base.pipelines.vanilla_biometrics import (
     dask_get_partition_size,
     FourColumnsScoreWriter,
     CSVScoreWriter,
+    BioAlgorithmLegacy    
 )
 from dask.delayed import Delayed
 import pkg_resources
@@ -213,10 +214,15 @@ def vanilla_biometrics(
         pipeline.score_writer = FourColumnsScoreWriter(os.path.join(output, "./tmp"))
 
     # Check if it's already checkpointed
-    if checkpoint and not isinstance_nested(
-        pipeline.biometric_algorithm,
-        "biometric_algorithm",
-        BioAlgorithmCheckpointWrapper,
+    if checkpoint and (
+        not isinstance_nested(
+            pipeline,
+            "biometric_algorithm",
+            BioAlgorithmCheckpointWrapper,
+        )
+        or not isinstance_nested(
+            pipeline, "biometric_algorithm", BioAlgorithmLegacy
+        )
     ):
         pipeline = checkpoint_vanilla_biometrics(pipeline, output)
 
