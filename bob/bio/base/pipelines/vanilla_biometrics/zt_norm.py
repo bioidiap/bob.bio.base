@@ -235,6 +235,7 @@ class ZTNormPipeline(object):
         allow_scoring_with_all_biometric_references=False,
     ):
 
+
         # Reusing the zprobe_features and t_biometric_references
         zt_scores = self.vanilla_biometrics_pipeline.biometric_algorithm.score_samples(
             z_probe_features,
@@ -242,17 +243,7 @@ class ZTNormPipeline(object):
             allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
         )
 
-        # Z Normalizing the T-normed scores
-        z_normed_t_normed = self.ztnorm_solver.compute_znorm_scores(
-            t_scores, zt_scores, t_biometric_references,
-        )
-
-        # (Z Normalizing the T-normed scores) the Z normed scores
-        zt_normed_scores = self.ztnorm_solver.compute_tnorm_scores(
-            z_normed_scores, z_normed_t_normed, t_biometric_references,
-        )
-
-        return zt_normed_scores
+        return self.ztnorm_solver.compute_ztnorm_score(t_scores, zt_scores, t_biometric_references,z_normed_scores)
 
     def compute_snorm_scores(self, znormed_scores, tnormed_scores):
 
@@ -388,7 +379,7 @@ class ZTNorm(object):
 
         return stats
 
-    def _znorm_samplesets(self, probe_scores, stats):
+    def _znorm_samplesets(self, probe_scores, stats, for_zt=False):
         # Normalizing
         # TODO: THIS TENDS TO BE EXTREMLY SLOW
         z_normed_score_samples = []
@@ -409,7 +400,7 @@ class ZTNorm(object):
             z_normed_score.samples.append(new_sample)
         return z_normed_score
 
-    def _tnorm_samplesets(self, probe_scores, stats):
+    def _tnorm_samplesets(self, probe_scores, stats, for_zt=False):
         # Normalizing
         # TODO: THIS TENDS TO BE EXTREMLY SLOW
         # MAYBE THIS COULD BE DELAYED OR RUN ON TOP OF
@@ -463,6 +454,22 @@ class ZTNorm(object):
 
         return self._tnorm_samplesets(probe_scores, stats)
 
+
+    def compute_ztnorm_score(self,t_scores, zt_scores, t_biometric_references,z_normed_scores):
+
+        # Z Normalizing the T-normed scores
+        z_normed_t_normed = self.compute_znorm_scores(
+            t_scores, zt_scores, t_biometric_references,
+        )
+
+        # (Z Normalizing the T-normed scores) the Z normed scores
+        zt_normed_scores = self.compute_tnorm_scores(
+            z_normed_scores, z_normed_t_normed, t_biometric_references,
+        )
+
+        return zt_normed_scores
+
+
     def _snorm(self, z_score, t_score):
         return 0.5 * (z_score + t_score)
 
@@ -500,7 +507,7 @@ class ZTNormDaskWrapper(object):
         self.ztnorm = ztnorm
 
     def compute_znorm_scores(
-        self, probe_scores, sampleset_for_znorm, biometric_references
+        self, probe_scores, sampleset_for_znorm, biometric_references, for_zt=False
     ):
 
         # Reducing all the Z-Scores to compute the stats
@@ -510,10 +517,10 @@ class ZTNormDaskWrapper(object):
             all_scores_for_znorm, biometric_references, axis=0
         )
 
-        return probe_scores.map_partitions(self.ztnorm._znorm_samplesets, stats)
+        return probe_scores.map_partitions(self.ztnorm._znorm_samplesets, stats, for_zt)
 
     def compute_tnorm_scores(
-        self, probe_scores, sampleset_for_tnorm, t_biometric_references
+        self, probe_scores, sampleset_for_tnorm, t_biometric_references, for_zt=False
     ):
 
         # Reducing all the Z-Scores to compute the stats
@@ -523,7 +530,23 @@ class ZTNormDaskWrapper(object):
             all_scores_for_tnorm, t_biometric_references, axis=1
         )
 
-        return probe_scores.map_partitions(self.ztnorm._tnorm_samplesets, stats)
+        return probe_scores.map_partitions(self.ztnorm._tnorm_samplesets, stats,for_zt)
+
+
+    def compute_ztnorm_score(self,t_scores, zt_scores, t_biometric_references,z_normed_scores):
+
+        # Z Normalizing the T-normed scores
+        z_normed_t_normed = self.compute_znorm_scores(
+            t_scores, zt_scores, t_biometric_references, for_zt=True
+        )
+
+        # (Z Normalizing the T-normed scores) the Z normed scores
+        zt_normed_scores = self.compute_tnorm_scores(
+            z_normed_scores, z_normed_t_normed, t_biometric_references, for_zt=True
+        )
+
+        return zt_normed_scores
+
 
     def compute_snorm_scores(self, znormed_scores, tnormed_scores):
         return znormed_scores.map_partitions(
@@ -550,31 +573,39 @@ class ZTNormCheckpointWrapper(object):
         self.ztnorm = ztnorm
         self.znorm_score_path = os.path.join(base_dir, "znorm_scores")
         self.tnorm_score_path = os.path.join(base_dir, "tnorm_scores")
+        self.ztnorm_score_path = os.path.join(base_dir, "ztnorm_scores")
+        self.snorm_score_path = os.path.join(base_dir, "snorm_scores")
+
         self.force = force
         self.base_dir = base_dir
 
-    def _write_scores(self, samples, path):
+    def write_scores(self, samples, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         open(path, "wb").write(cloudpickle.dumps(samples))
 
     def _load(self, path):
         return cloudpickle.loads(open(path, "rb").read())
 
-    def _apply_znorm(self, probe_score, stats):
+    def _make_name(self, sampleset, biometric_references, for_zt=False):
+        # The score file name is composed by sampleset key and the
+        # first 3 biometric_references
+        subject = str(sampleset.subject)
+        name = str(sampleset.key)
+        suffix = "_".join([s for s in biometric_references[0:5]])
+        suffix += "_zt_norm" if for_zt else "" 
+        return os.path.join(subject, name + suffix)        
 
-        path = os.path.join(self.znorm_score_path, str(probe_score.key) + ".pkl")
-
+    def _apply_znorm(self, probe_score, stats, for_zt=False):
+        path = os.path.join(self.znorm_score_path, self._make_name(probe_score, probe_score.references, for_zt) + ".pkl")
         if self.force or not os.path.exists(path):
-            z_normed_score = self.ztnorm._apply_znorm(probe_score, path)
+            z_normed_score = self.ztnorm._apply_znorm(probe_score, stats)
 
-            self.write_scores(z_normed_score.samples)
+            self.write_scores(z_normed_score.samples, path)
 
             z_normed_score = SampleSet(
-                [
                     DelayedSample(
                         functools.partial(self._load, path), parent=probe_score
-                    )
-                ],
+                    ),
                 parent=probe_score,
             )
         else:
@@ -582,21 +613,18 @@ class ZTNormCheckpointWrapper(object):
 
         return z_normed_score
 
-    def _apply_tnorm(self, probe_score, stats):
-
-        path = os.path.join(self.tnorm_score_path, str(probe_score.key) + ".pkl")
+    def _apply_tnorm(self, probe_score, stats, for_zt=False):
+        path = os.path.join(self.tnorm_score_path, self._make_name(probe_score, probe_score.references, for_zt) + ".pkl")
 
         if self.force or not os.path.exists(path):
-            t_normed_score = self.ztnorm._apply_tnorm(probe_score, path)
+            t_normed_score = self.ztnorm._apply_tnorm(probe_score, stats)
 
-            self.write_scores(t_normed_score.samples)
+            self.write_scores(t_normed_score.samples, path)
 
             t_normed_score = SampleSet(
-                [
                     DelayedSample(
                         functools.partial(self._load, path), parent=probe_score
-                    )
-                ],
+                    ),
                 parent=probe_score,
             )
         else:
@@ -605,19 +633,37 @@ class ZTNormCheckpointWrapper(object):
         return t_normed_score
 
     def compute_znorm_scores(
-        self, probe_scores, sampleset_for_znorm, biometric_references
+        self, probe_scores, sampleset_for_znorm, biometric_references,for_zt = False
     ):
+        
+        #return self.ztnorm.compute_znorm_scores(probe_scores, sampleset_for_znorm, biometric_references)
+        stats = self._compute_stats(sampleset_for_znorm, biometric_references, axis=0)
+        return self._znorm_samplesets(probe_scores, stats, for_zt)
 
-        return self.ztnorm.compute_znorm_scores(
-            probe_scores, sampleset_for_znorm, biometric_references
-        )
 
     def compute_tnorm_scores(
-        self, probe_scores, sampleset_for_tnorm, t_biometric_references
+        self, probe_scores, sampleset_for_tnorm, t_biometric_references, for_zt = False
     ):
-        return self.ztnorm.compute_tnorm_scores(
-            probe_scores, sampleset_for_tnorm, t_biometric_references
+        #return self.ztnorm.compute_tnorm_scores(probe_scores, sampleset_for_tnorm, t_biometric_references)
+        stats = self._compute_stats(sampleset_for_tnorm, t_biometric_references, axis=1)
+        return self._tnorm_samplesets(probe_scores, stats, for_zt)
+
+
+    def compute_ztnorm_score(self,t_scores, zt_scores, t_biometric_references,z_normed_scores):
+        # Z Normalizing the T-normed scores
+        z_normed_t_normed = self.compute_znorm_scores(
+            t_scores, zt_scores, t_biometric_references,
+            for_zt = True
         )
+
+        # (Z Normalizing the T-normed scores) the Z normed scores
+        zt_normed_scores = self.compute_tnorm_scores(
+            z_normed_scores, z_normed_t_normed, t_biometric_references,
+            for_zt = True
+        )
+
+        return zt_normed_scores
+
 
     def compute_snorm_scores(self, znormed_scores, tnormed_scores):
         return self.ztnorm.compute_snorm_scores(znormed_scores, tnormed_scores)
@@ -627,11 +673,23 @@ class ZTNormCheckpointWrapper(object):
             sampleset_for_norm, biometric_references, axis=axis
         )
 
-    def _znorm_samplesets(self, probe_scores, stats):
-        return self.ztnorm._znorm_samplesets(probe_scores, stats)
+    def _znorm_samplesets(self, probe_scores, stats, for_zt=False):
 
-    def _tnorm_samplesets(self, probe_scores, stats):
-        return self.ztnorm._tnorm_samplesets(probe_scores, stats)
+        z_normed_score_samples = []
+        for probe_score in probe_scores:
+            z_normed_score_samples.append(self._apply_znorm(probe_score, stats, for_zt=for_zt))
+        return z_normed_score_samples
+
+        #return self.ztnorm._znorm_samplesets(probe_scores, stats)
+
+    def _tnorm_samplesets(self, probe_scores, stats, for_zt=False):
+        t_normed_score_samples = []
+        for probe_score in probe_scores:
+            t_normed_score_samples.append(self._apply_tnorm(probe_score, stats, for_zt=for_zt))
+
+        return t_normed_score_samples
+
+        #return self.ztnorm._tnorm_samplesets(probe_scores, stats)
 
     def _snorm_samplesets(self, probe_scores, stats):
         return self.ztnorm._snorm_samplesets(probe_scores, stats)
