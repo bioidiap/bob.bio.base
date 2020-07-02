@@ -229,9 +229,10 @@ def vanilla_biometrics_ztnorm(
 
     # Patching the pipeline in case of ZNorm and checkpointing it
     pipeline = ZTNormPipeline(pipeline)
-    pipeline.ztnorm_solver = ZTNormCheckpointWrapper(
-        pipeline.ztnorm_solver, os.path.join(output, "normed-scores")
-    )
+    if checkpoint:
+        pipeline.ztnorm_solver = ZTNormCheckpointWrapper(
+            pipeline.ztnorm_solver, os.path.join(output, "normed-scores")
+        )
 
     background_model_samples = database.background_model_samples()
     zprobes = database.zprobes(proportion=ztnorm_cohort_proportion)
@@ -246,8 +247,8 @@ def vanilla_biometrics_ztnorm(
         if dask_client is not None and not isinstance_nested(
             pipeline.biometric_algorithm, "biometric_algorithm", BioAlgorithmDaskWrapper
         ):
-            n_objects = (
-                len(background_model_samples) + len(biometric_references) + len(probes)
+            n_objects = max(
+                len(background_model_samples), len(biometric_references), len(probes)
             )
             pipeline = dask_vanilla_biometrics(
                 pipeline,

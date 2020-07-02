@@ -220,7 +220,7 @@ def vanilla_biometrics(
             "biometric_algorithm",
             BioAlgorithmCheckpointWrapper,
         )
-        or not isinstance_nested(
+        and not isinstance_nested(
             pipeline, "biometric_algorithm", BioAlgorithmLegacy
         )
     ):
@@ -236,8 +236,8 @@ def vanilla_biometrics(
         if dask_client is not None and not isinstance_nested(
             pipeline.biometric_algorithm, "biometric_algorithm", BioAlgorithmDaskWrapper
         ):
-            n_objects = (
-                len(background_model_samples) + len(biometric_references) + len(probes)
+            n_objects = max(
+                len(background_model_samples), len(biometric_references), len(probes)
             )
             pipeline = dask_vanilla_biometrics(
                 pipeline,
