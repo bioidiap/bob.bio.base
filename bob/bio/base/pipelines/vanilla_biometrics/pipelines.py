@@ -70,10 +70,7 @@ class VanillaBiometricsPipeline(object):
     """
 
     def __init__(
-        self,
-        transformer,
-        biometric_algorithm,
-        score_writer=None,
+        self, transformer, biometric_algorithm, score_writer=None,
     ):
         self.transformer = transformer
         self.biometric_algorithm = biometric_algorithm
@@ -153,7 +150,6 @@ class VanillaBiometricsPipeline(object):
 
         # probes is a list of SampleSets
         probe_features = self.transformer.transform(probe_samples)
-
         scores = self.biometric_algorithm.score_samples(
             probe_features,
             biometric_references,
