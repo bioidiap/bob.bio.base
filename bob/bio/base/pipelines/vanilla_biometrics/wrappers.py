@@ -18,7 +18,9 @@ from bob.bio.base.transformers import (
 )
 from bob.pipelines.wrappers import SampleWrapper
 from bob.pipelines.distributed.sge import SGEMultipleQueuesCluster
-
+import joblib
+import logging
+logger = logging.getLogger(__name__)
 
 class BioAlgorithmCheckpointWrapper(BioAlgorithm):
     """Wrapper used to checkpoint enrolled and Scoring samples.
@@ -57,7 +59,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         self.biometric_algorithm = biometric_algorithm
         self.force = force
         self._biometric_reference_extension = ".hdf5"
-        self._score_extension = ".pkl"
+        self._score_extension = ".joblib"
 
     def set_score_references_path(self, group):
         if group is None:
@@ -87,9 +89,17 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
 
     def write_scores(self, samples, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
+
+        joblib.dump(samples, path, compress=3)
+
         # cleaning parent
-        with open(path, "wb") as f:
-            f.write(cloudpickle.dumps(samples))
+        #with open(path, "wb") as f:
+        #    f.write(cloudpickle.dumps(samples))
+        #    f.flush()
+
+        #from bob.pipelines.sample import sample_to_hdf5
+        #with h5py.File(path, "w") as hdf5:
+        #    sample_to_hdf5(samples, hdf5)
 
     def _enroll_sample_set(self, sampleset):
         """
@@ -125,9 +135,13 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         """
 
         def _load(path):
-            return cloudpickle.loads(open(path, "rb").read())
 
-            # with h5py.File(path) as hdf5:
+            return joblib.load(path)
+
+            #return cloudpickle.loads(open(path, "rb").read())
+            
+            #from bob.pipelines.sample import hdf5_to_sample
+            #with h5py.File(path) as hdf5:
             #    return hdf5_to_sample(hdf5)
 
         def _make_name(sampleset, biometric_references):
@@ -193,8 +207,7 @@ class BioAlgorithmDaskWrapper(BioAlgorithm):
         # the disk, directly.  A second option would be to generate named delays
         # for each model and then associate them here.
 
-        all_references = dask.delayed(list)(biometric_references)
-
+        all_references = dask.delayed(list)(biometric_references)        
         scores = probe_features.map_partitions(
             self.biometric_algorithm.score_samples,
             all_references,
@@ -238,7 +251,7 @@ def dask_vanilla_biometrics(pipeline, npartitions=None, partition_size=None):
     if isinstance(pipeline, ZTNormPipeline):
         # Dasking the first part of the pipelines
         pipeline.vanilla_biometrics_pipeline = dask_vanilla_biometrics(
-            pipeline.vanilla_biometrics_pipeline, npartitions
+            pipeline.vanilla_biometrics_pipeline, npartitions=npartitions, partition_size=partition_size
         )
         pipeline.biometric_algorithm = (
             pipeline.vanilla_biometrics_pipeline.biometric_algorithm
@@ -290,7 +303,7 @@ def dask_get_partition_size(cluster, n_objects):
         return None
 
     max_jobs = cluster.sge_job_spec["default"]["max_jobs"]
-    return n_objects // max_jobs if n_objects > max_jobs else 1
+    return n_objects // (max_jobs*2) if n_objects > max_jobs else 1
 
 
 def checkpoint_vanilla_biometrics(pipeline, base_dir, biometric_algorithm_dir=None):
