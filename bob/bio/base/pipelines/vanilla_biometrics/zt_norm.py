@@ -583,7 +583,7 @@ class ZTNormCheckpointWrapper(object):
     def write_scores(self, samples, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         #open(path, "wb").write(cloudpickle.dumps(samples))
-        joblib.dump(samples, path, compress=3)
+        joblib.dump(samples, path, compress=4)
 
     def _load(self, path):
         #return cloudpickle.loads(open(path, "rb").read())

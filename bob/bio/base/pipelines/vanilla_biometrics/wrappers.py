@@ -90,7 +90,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
     def write_scores(self, samples, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
-        joblib.dump(samples, path, compress=3)
+        joblib.dump(samples, path, compress=4)
 
         # cleaning parent
         #with open(path, "wb") as f:

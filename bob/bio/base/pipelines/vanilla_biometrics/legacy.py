@@ -16,7 +16,7 @@ from bob.io.base import HDF5File
 from bob.pipelines import DelayedSample, SampleSet, Sample
 import logging
 import copy
-import pickle
+import joblib
 from .score_writers import FourColumnsScoreWriter
 
 from bob.bio.base.algorithm import Algorithm
@@ -227,6 +227,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
         self.score_dir = os.path.join(base_dir, "scores")
         self.force = force
         self._base_dir = base_dir
+        self._score_extension = ".joblib"
 
     @property
     def base_dir(self):
@@ -293,7 +294,8 @@ class BioAlgorithmLegacy(BioAlgorithm):
 
     def write_scores(self, samples, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        open(path, "wb").write(pickle.dumps(samples))
+        #open(path, "wb").write(pickle.dumps(samples))
+        joblib.dump(samples, path, compress=4)
 
     def _score_sample_set(
         self,
@@ -302,7 +304,8 @@ class BioAlgorithmLegacy(BioAlgorithm):
         allow_scoring_with_all_biometric_references=False,
     ):
         def _load(path):
-            return pickle.loads(open(path, "rb").read())
+            #return pickle.loads(open(path, "rb").read())
+            return joblib.load(path)
 
         def _make_name(sampleset, biometric_references):
             # The score file name is composed by sampleset key and the
@@ -312,7 +315,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
             return name + suffix
 
         path = os.path.join(
-            self.score_dir, _make_name(sampleset, biometric_references) + ".pkl"
+            self.score_dir, _make_name(sampleset, biometric_references) + self._score_extension
         )
 
         if self.force or not os.path.exists(path):
