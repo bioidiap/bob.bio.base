@@ -70,6 +70,7 @@ setup(
 
       # scripts should be declared using this entry:
       'console_scripts' : [
+          'resources.py      = bob.bio.base.script.resources:resources',
       ],
 
       'bob.bio.config': [
