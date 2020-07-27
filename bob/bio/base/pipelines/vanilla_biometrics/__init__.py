@@ -8,6 +8,7 @@ from .wrappers import (
     dask_vanilla_biometrics,
     checkpoint_vanilla_biometrics,
     dask_get_partition_size,
+    is_checkpointed
 )
 
 from .zt_norm import ZTNormPipeline, ZTNormDaskWrapper, ZTNormCheckpointWrapper

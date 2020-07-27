@@ -30,6 +30,7 @@ from bob.bio.base.pipelines.vanilla_biometrics import (
     FourColumnsScoreWriter,
     CSVScoreWriter,
     BioAlgorithmLegacy,
+    is_checkpointed    
 )
 from dask.delayed import Delayed
 from bob.bio.base.utils import get_resource_filename
@@ -219,12 +220,7 @@ def vanilla_biometrics_ztnorm(
         pipeline.score_writer = FourColumnsScoreWriter(os.path.join(output, "./tmp"))
 
     # Check if it's already checkpointed
-    if checkpoint and (
-        not isinstance_nested(
-            pipeline, "biometric_algorithm", BioAlgorithmCheckpointWrapper,
-        )
-        and not isinstance_nested(pipeline, "biometric_algorithm", BioAlgorithmLegacy)
-    ):
+    if checkpoint and not is_checkpointed(pipeline):
         pipeline = checkpoint_vanilla_biometrics(pipeline, output)
 
     # Patching the pipeline in case of ZNorm and checkpointing it

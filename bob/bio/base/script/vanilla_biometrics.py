@@ -26,7 +26,8 @@ from bob.bio.base.pipelines.vanilla_biometrics import (
     dask_get_partition_size,
     FourColumnsScoreWriter,
     CSVScoreWriter,
-    BioAlgorithmLegacy    
+    BioAlgorithmLegacy,
+    is_checkpointed
 )
 from dask.delayed import Delayed
 import pkg_resources
@@ -214,19 +215,11 @@ def vanilla_biometrics(
         pipeline.score_writer = FourColumnsScoreWriter(os.path.join(output, "./tmp"))
 
     # Check if it's already checkpointed
-    if checkpoint and (
-        not isinstance_nested(
-            pipeline,
-            "biometric_algorithm",
-            BioAlgorithmCheckpointWrapper,
-        )
-        and not isinstance_nested(
-            pipeline, "biometric_algorithm", BioAlgorithmLegacy
-        )
-    ):
+    if checkpoint and not is_checkpointed(pipeline):
         pipeline = checkpoint_vanilla_biometrics(pipeline, output)
 
     background_model_samples = database.background_model_samples()
+
     for group in groups:
 
         score_file_name = os.path.join(output, f"scores-{group}")
@@ -236,6 +229,7 @@ def vanilla_biometrics(
         if dask_client is not None and not isinstance_nested(
             pipeline.biometric_algorithm, "biometric_algorithm", BioAlgorithmDaskWrapper
         ):
+
             n_objects = max(
                 len(background_model_samples), len(biometric_references), len(probes)
             )
@@ -257,6 +251,7 @@ def vanilla_biometrics(
             probes,
             allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
         )
+
 
         post_processed_scores = post_process_scores(pipeline, result, score_file_name)
         _ = compute_scores(post_processed_scores, dask_client)
