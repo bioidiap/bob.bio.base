@@ -13,7 +13,7 @@ from .abstract_classes import (
     Database,
 )
 from bob.io.base import HDF5File
-from bob.pipelines import DelayedSample, SampleSet, Sample
+from bob.pipelines import DelayedSample, SampleSet, Sample, DelayedSampleSet
 import logging
 import copy
 import joblib
@@ -328,10 +328,10 @@ class BioAlgorithmLegacy(BioAlgorithm):
             )
 
             self.write_scores(scored_sample_set.samples, path)
-            scored_sample_set = SampleSet(
-                DelayedSample(functools.partial(_load, path), parent=sampleset),
-                parent=sampleset,
-            )
+
+            scored_sample_set = DelayedSampleSet(functools.partial(_load, path),
+                                                 parent=scored_sample_set)
+
         else:
             scored_sample_set = SampleSet(_load(path), parent=sampleset)
 
