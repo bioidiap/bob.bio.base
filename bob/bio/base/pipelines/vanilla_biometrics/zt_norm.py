@@ -6,7 +6,7 @@ Implementation of a pipeline and an algorithm that
 computes Z, T and ZT Score Normalization of a :any:`BioAlgorithm`
 """
 
-from bob.pipelines import DelayedSample, Sample, SampleSet
+from bob.pipelines import DelayedSample, Sample, SampleSet, DelayedSampleSet
 import numpy as np
 import dask
 import functools
@@ -610,12 +610,9 @@ class ZTNormCheckpointWrapper(object):
 
             self.write_scores(z_normed_score.samples, path)
 
-            z_normed_score = SampleSet(
-                DelayedSample(functools.partial(self._load, path), parent=probe_score),
-                parent=probe_score,
-            )
-        else:
-            z_normed_score = SampleSet(self._load(path), parent=probe_score)
+        z_normed_score = DelayedSampleSet(
+                functools.partial(self._load, path),
+                parent=probe_score)
 
         return z_normed_score
 
@@ -631,13 +628,8 @@ class ZTNormCheckpointWrapper(object):
 
             self.write_scores(t_normed_score.samples, path)
 
-            t_normed_score = SampleSet(
-                DelayedSample(functools.partial(self._load, path), parent=probe_score),
-                parent=probe_score,
-            )
-        else:
-            t_normed_score = SampleSet(self._load(path), parent=probe_score)
-
+        t_normed_score = DelayedSampleSet(functools.partial(self._load, path),
+                                          parent=probe_score)
         return t_normed_score
 
     def compute_znorm_scores(
