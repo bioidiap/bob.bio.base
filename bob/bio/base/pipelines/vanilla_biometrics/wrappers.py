@@ -161,6 +161,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
             _make_name(sampleset, biometric_references) + self._score_extension,
         )
 
+        parent = sampleset
         if self.force or not os.path.exists(path):
 
             # Computing score
@@ -170,14 +171,11 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
                 allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
             )
             self.write_scores(scored_sample_set.samples, path)
+            parent = scored_sample_set
 
-            scored_sample_set = DelayedSampleSet(
-                functools.partial(_load, path), parent=scored_sample_set
-            )
-
-        else:
-            samples = _load(path)
-            scored_sample_set = SampleSet(samples, parent=sampleset)
+        scored_sample_set = DelayedSampleSet(
+            functools.partial(_load, path), parent=parent
+        )
 
         return scored_sample_set
 
