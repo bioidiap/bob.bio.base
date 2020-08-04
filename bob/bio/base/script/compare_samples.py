@@ -56,8 +56,9 @@ EPILOG = """\b
     entry_point_group="bob.pipeline.dask_client",
     help="Dask client for the execution of the pipeline.",
 )
+@verbosity_option()
 def compare_samples(
-    samples, pipeline, dask_client
+    samples, pipeline, dask_client, verbose
 ):
     """Compare several samples in a All vs All fashion.
     """
