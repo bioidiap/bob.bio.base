@@ -169,7 +169,7 @@ class DatabaseConnector(Database):
                 if o.id not in probes:
                     probes[o.id] = SampleSet(
                         [_biofile_to_delayed_sample(o, self.database)],
-                        key=str(o.client_id),
+                        key=str(o.path),
                         path=o.path,
                         subject=str(o.client_id),
                         references=[str(m)],
