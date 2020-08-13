@@ -51,9 +51,9 @@ EPILOG = """\b
 
  my_experiment.py must contain the following elements:
 
-   >>> transformer = ... # A scikit-learn pipeline
-   >>> algorithm   = ... # `An BioAlgorithm`
-   >>> pipeline = VanillaBiometricsPipeline(transformer,algorithm)
+   >>> transformer = ... # A scikit-learn pipeline\n
+   >>> algorithm   = ... # `An BioAlgorithm`\n
+   >>> pipeline = VanillaBiometricsPipeline(transformer,algorithm)\n
    >>> database = .... # Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)" 
 
 \b
@@ -138,6 +138,15 @@ def load_database_pipeline(database, pipeline):
     is_flag=True,
     help="If set, it will checkpoint all steps of the pipeline",
 )
+@click.option(
+    "--temp-directory",
+    "-T",
+    "temp_dir",
+    help=(
+        "Location of the temporary directory where models and probes"
+        "features, as well as other checkpoint files will be stored"
+    ),
+)
 @verbosity_option(cls=ResourceOption)
 def vanilla_biometrics(
     pipeline,
@@ -147,6 +156,7 @@ def vanilla_biometrics(
     output,
     write_metadata_scores,
     checkpoint,
+    temp_dir,
     **kwargs,
 ):
     """Runs the simplest biometrics pipeline.
@@ -202,6 +212,10 @@ def vanilla_biometrics(
 
     if not os.path.exists(output):
         os.makedirs(output, exist_ok=True)
+
+    # TODO find a better way to do this... (setting temp_directory in pipeline)
+    import bob.bio.base.pipelines.vanilla_biometrics
+    bob.bio.base.pipelines.vanilla_biometrics.temp_directory = temp_dir
 
     # Picking the resources
     database, pipeline = load_database_pipeline(database, pipeline)
