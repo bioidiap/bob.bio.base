@@ -335,6 +335,11 @@ def checkpoint_vanilla_biometrics(pipeline, base_dir, biometric_algorithm_dir=No
     """
 
     sk_pipeline = pipeline.transformer
+
+    bio_ref_scores_dir = (
+        base_dir if biometric_algorithm_dir is None else biometric_algorithm_dir
+    )
+
     for i, name, estimator in sk_pipeline._iter():
 
         # If they are legacy objects, we need to hook their load/save functions
@@ -357,6 +362,7 @@ def checkpoint_vanilla_biometrics(pipeline, base_dir, biometric_algorithm_dir=No
         ):
             save_func = estimator.estimator.instance.write_feature
             load_func = estimator.estimator.instance.read_feature
+            estimator.estimator.projector_file = os.path.join(bio_ref_scores_dir,"Projector.hdf5")
 
         wraped_estimator = bob.pipelines.wrap(
             ["checkpoint"],
@@ -368,9 +374,6 @@ def checkpoint_vanilla_biometrics(pipeline, base_dir, biometric_algorithm_dir=No
 
         sk_pipeline.steps[i] = (name, wraped_estimator)
 
-    bio_ref_scores_dir = (
-        base_dir if biometric_algorithm_dir is None else biometric_algorithm_dir
-    )
 
     if isinstance(pipeline.biometric_algorithm, BioAlgorithmLegacy):
         pipeline.biometric_algorithm.base_dir = bio_ref_scores_dir
