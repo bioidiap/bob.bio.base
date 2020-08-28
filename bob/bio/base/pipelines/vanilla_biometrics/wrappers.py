@@ -16,7 +16,7 @@ from bob.bio.base.transformers import (
     ExtractorTransformer,
     AlgorithmTransformer,
 )
-from bob.pipelines.wrappers import SampleWrapper
+from bob.pipelines.wrappers import SampleWrapper, CheckpointWrapper
 from bob.pipelines.distributed.sge import SGEMultipleQueuesCluster
 import joblib
 import logging
@@ -395,6 +395,11 @@ def is_checkpointed(pipeline):
 
     """
 
+    # We have to check if is BioAlgorithmCheckpointWrapper OR
+    # If it BioAlgorithmLegacy and the transformer of BioAlgorithmLegacy is also checkpointable
     return isinstance_nested(
         pipeline, "biometric_algorithm", BioAlgorithmCheckpointWrapper
-    ) or isinstance_nested(pipeline, "biometric_algorithm", BioAlgorithmLegacy)
+    ) or \
+    (   isinstance_nested(pipeline, "biometric_algorithm", BioAlgorithmLegacy) and \
+        isinstance_nested(pipeline, "transformer", CheckpointWrapper)
+    )

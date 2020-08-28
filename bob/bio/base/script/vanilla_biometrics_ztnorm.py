@@ -103,7 +103,7 @@ EPILOG = """\b
     "--output",
     show_default=True,
     default="results",
-    help="Name of output directory",
+    help="Name of output directory where output scores will be saved. In case --checkpoint is set, checkpoints will be saved in this directory.",
 )
 @click.option(
     "--consider-genuines",
@@ -126,7 +126,7 @@ EPILOG = """\b
     "--checkpoint",
     "-c",
     is_flag=True,
-    help="If set, it will checkpoint all steps of the pipeline",
+    help="If set, it will checkpoint all steps of the pipeline. Checkpoints will be saved in `--output`.",
 )
 @verbosity_option(cls=ResourceOption)
 def vanilla_biometrics_ztnorm(
