@@ -127,7 +127,26 @@ class VanillaBiometricsPipeline(object):
             )
             return self.transformer
 
-        return self.transformer.fit(background_model_samples)
+        def samples_to_labels(background_model_samples):
+            """
+            Maps samples.subject to labels, so we can do estimator.fit
+            """
+            y = [x.subject for x in background_model_samples]
+            map_y = dict()
+            new_y = []
+
+            offset = 0
+            for l in y:
+                if l not in map_y:
+                    map_y[l] = offset
+                    offset += 1
+                new_y.append(map_y[l])
+
+            return new_y
+
+        y = samples_to_labels(background_model_samples)
+
+        return self.transformer.fit(background_model_samples, y=y)
 
     def create_biometric_reference(self, biometric_reference_samples):
         biometric_reference_features = self.transformer.transform(
