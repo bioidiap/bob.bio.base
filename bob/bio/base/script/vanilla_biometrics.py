@@ -124,7 +124,7 @@ def load_database_pipeline(database, pipeline):
     "--output",
     show_default=True,
     default="results",
-    help="Name of output directory",
+    help="Name of output directory where output scores will be saved. In case --checkpoint is set, checkpoints will be saved in this directory.",
 )
 @click.option(
     "--write-metadata-scores",
@@ -136,16 +136,7 @@ def load_database_pipeline(database, pipeline):
     "--checkpoint",
     "-c",
     is_flag=True,
-    help="If set, it will checkpoint all steps of the pipeline",
-)
-@click.option(
-    "--temp-directory",
-    "-T",
-    "temp_dir",
-    help=(
-        "Location of the temporary directory where models and probes"
-        "features, as well as other checkpoint files will be stored"
-    ),
+    help="If set, it will checkpoint all steps of the pipeline. Checkpoints will be saved in `--output`.",
 )
 @verbosity_option(cls=ResourceOption)
 def vanilla_biometrics(
@@ -155,8 +146,7 @@ def vanilla_biometrics(
     groups,
     output,
     write_metadata_scores,
-    checkpoint,
-    temp_dir,
+    checkpoint,    
     **kwargs,
 ):
     """Runs the simplest biometrics pipeline.
@@ -212,10 +202,6 @@ def vanilla_biometrics(
 
     if not os.path.exists(output):
         os.makedirs(output, exist_ok=True)
-
-    # TODO find a better way to do this... (setting temp_directory in pipeline)
-    import bob.bio.base.pipelines.vanilla_biometrics
-    bob.bio.base.pipelines.vanilla_biometrics.temp_directory = temp_dir
 
     # Picking the resources
     database, pipeline = load_database_pipeline(database, pipeline)
