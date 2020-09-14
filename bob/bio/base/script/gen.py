@@ -100,7 +100,7 @@ def write_scores_to_file(neg, pos, filename, n_subjects=5, n_probes_per_subject=
               help="Mean for the positive scores distribution")
 @click.option('-mnm', '--mean-non-match', default=-10, type=FLOAT, show_default=True,\
              help="Mean for the negative scores distribution")
-@click.option('-p', '--n-probes-per-subjects', default=5, type=click.INT, show_default=True,\
+@click.option('--n-probes-per-subjects', default=5, type=click.INT, show_default=True,\
               help="Number of probes per subject")
 @click.option('-s', '--n-subjects', default=5, type=click.INT, show_default=True,\
               help="Number of subjects")
