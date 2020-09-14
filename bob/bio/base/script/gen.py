@@ -44,7 +44,7 @@ def gen_score_distr(mean_neg, mean_pos, sigma_neg=10, sigma_pos=10):
     pos_generator = bob.core.random.normal(numpy.float32, mean_pos, sigma_pos)
 
     neg_scores = [neg_generator(mt) for _ in range(NUM_NEG)]
-    pos_scores = [pos_generator(mt) for _ in range(NUM_NEG)]
+    pos_scores = [pos_generator(mt) for _ in range(NUM_POS)]
 
     return neg_scores, pos_scores
 
