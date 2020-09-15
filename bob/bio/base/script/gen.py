@@ -17,7 +17,7 @@ NUM_NEG = 5000
 NUM_POS = 5000
 
 
-def gen_score_distr(mean_neg, mean_pos, sigma_neg=10, sigma_pos=10, n_neg=NUM_NEG, n_pos=NUM_POS):
+def gen_score_distr(mean_neg, mean_pos, sigma_neg=10, sigma_pos=10, n_neg=NUM_NEG, n_pos=NUM_POS, seed=0):
     """Generate scores from normal distributions
 
     Parameters
@@ -34,6 +34,10 @@ def gen_score_distr(mean_neg, mean_pos, sigma_neg=10, sigma_pos=10, n_neg=NUM_NE
         The number of positive scores generated
     n_neg: int
         The number of negative scores generated
+    seed: int
+        A value to initialize the Random Number generator. Giving the same
+        value (or not specifying 'seed') on two different calls will generate
+        the same lists of scores.
 
     Returns
     -------
@@ -44,7 +48,7 @@ def gen_score_distr(mean_neg, mean_pos, sigma_neg=10, sigma_pos=10, n_neg=NUM_NE
     """
 
     logger.debug("Initializing RNG.")
-    mt = bob.core.random.mt19937()  # initialise the random number generator
+    mt = bob.core.random.mt19937(seed=seed)
 
     neg_generator = bob.core.random.normal(numpy.float32, mean_neg, sigma_neg)
     pos_generator = bob.core.random.normal(numpy.float32, mean_pos, sigma_pos)
@@ -170,18 +174,21 @@ def gen(outdir, mean_match, mean_non_match, n_probes_per_subject, n_subjects,
     logger.info("Generating dev scores.")
     neg_dev, pos_dev = gen_score_distr(mean_non_match, mean_match,
                                        sigma_negative, sigma_positive,
-                                       n_neg=neg_count, n_pos=pos_count)
+                                       n_neg=neg_count, n_pos=pos_count,
+                                       seed = 0)
     logger.info("Generating eval scores.")
     neg_eval, pos_eval = gen_score_distr(mean_non_match, mean_match,
                                          sigma_negative, sigma_positive,
-                                         n_neg=neg_count, n_pos=pos_count)
+                                         n_neg=neg_count, n_pos=pos_count,
+                                         seed = 1)
 
     # For simplicity I will use the same distribution for dev-eval
     if n_unknown_subjects:
         logger.info("Generating unknown scores.")
         neg_unknown,_ = gen_score_distr(mean_non_match, mean_match,
                                         sigma_negative, sigma_positive,
-                                        n_neg=unknown_count, n_pos=0)
+                                        n_neg=unknown_count, n_pos=0,
+                                        seed = 2)
     else:
         neg_unknown = None
 
