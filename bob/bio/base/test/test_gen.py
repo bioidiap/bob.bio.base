@@ -12,15 +12,23 @@ demonstration and test purpose.
 import os
 import numpy
 
+
+from click.testing import CliRunner
+from bob.extension.scripts.click_helper import assert_click_runner_result
+
 from bob.bio.base.script.gen import gen, gen_score_distr
 
 import logging
 logger = logging.getLogger(__name__)
+logger.setLevel("DEBUG") # If NOTSET (default), will be changed to ERROR at CliRunner.invoke
 
 def test_gen():
     """
-    Tests that the main gen function works as expected
+    Tests that the main gen command works as expected
     """
+    # Define a click runner to invoke click commands
+    runner = CliRunner()
+
     temp_path = "./gen_test_temp_dir/"
     n_subjects = 5
     n_probes_per_subject = 5
@@ -30,13 +38,14 @@ def test_gen():
     n_unk = 20
 
     logger.info("Calling 'gen' with a specific amount of scores.")
-    gen.callback(outdir=temp_path, mean_match=10, mean_non_match=-10,
-        n_probes_per_subject=n_probes_per_subject, n_subjects=n_subjects,
-        sigma_positive=1, sigma_negative=1,
-        n_unknown_subjects=n_unknown_subjects,
-        five_col=False,
-        force_count=True, n_pos=n_pos, n_neg=n_neg, n_unk=n_unk,
-    )
+    result = runner.invoke(gen, args=["-mm", "10", "-mnm", "-10",
+                                      "-sp", "1", "-sn", "1", 
+                                      "-p", f"{n_probes_per_subject}",
+                                      "-s", f"{n_subjects}",
+                                      "-u", f"{n_unknown_subjects}",
+                                      "-f", "--n-pos", f"{n_pos}", "--n-neg", f"{n_neg}", "--n-unk", f"{n_unk}",
+                                      f"{temp_path}"])
+    assert_click_runner_result(result)
     assert os.path.exists(os.path.join(temp_path,"scores-dev")), "dev scores file not created."
     line_count=0
     with open(os.path.join(temp_path,"scores-dev")) as f:
@@ -57,13 +66,13 @@ def test_gen():
     n_unk = n_unknown_subjects*n_subjects*n_probes_per_subject
 
     logger.info("Calling 'gen' without a specific amount.")
-    gen.callback(outdir=temp_path, mean_match=10, mean_non_match=-10,
-        n_probes_per_subject=n_probes_per_subject, n_subjects=n_subjects,
-        sigma_positive=1, sigma_negative=1,
-        n_unknown_subjects=n_unknown_subjects,
-        five_col=False,
-        force_count=False, n_pos=0, n_neg=0, n_unk=0,
-    )
+    result = runner.invoke(gen, args=["-mm", "10", "-mnm", "-10",
+                                      "-sp", "1", "-sn", "1", 
+                                      "-p", f"{n_probes_per_subject}",
+                                      "-s", f"{n_subjects}",
+                                      "-u", f"{n_unknown_subjects}",
+                                      f"{temp_path}"])
+    assert_click_runner_result(result)
     assert os.path.exists(os.path.join(temp_path,"scores-dev")), "dev scores file not created."
     line_count=0
     with open(os.path.join(temp_path,"scores-dev")) as f:
@@ -84,13 +93,13 @@ def test_gen():
     n_unk = n_unknown_subjects*n_subjects*n_probes_per_subject
 
     logger.info("Calling 'gen' without unknown subjects.")
-    gen.callback(outdir=temp_path, mean_match=10, mean_non_match=-10,
-        n_probes_per_subject=n_probes_per_subject, n_subjects=n_subjects,
-        sigma_positive=1, sigma_negative=1,
-        n_unknown_subjects=n_unknown_subjects,
-        five_col=False,
-        force_count=False, n_pos=0, n_neg=0, n_unk=0,
-    )
+    result = runner.invoke(gen, args=["-mm", "10", "-mnm", "-10",
+                                      "-sp", "1", "-sn", "1", 
+                                      "-p", f"{n_probes_per_subject}",
+                                      "-s", f"{n_subjects}", "-u",
+                                      f"{n_unknown_subjects}",
+                                      f"{temp_path}"])
+    assert_click_runner_result(result)
     assert os.path.exists(os.path.join(temp_path,"scores-dev")), "dev scores file not created."
     line_count=0
     with open(os.path.join(temp_path,"scores-dev")) as f:
@@ -111,13 +120,13 @@ def test_gen():
     n_unk = n_unknown_subjects*n_subjects*n_probes_per_subject
 
     logger.info("Calling 'gen' with no subjects.")
-    gen.callback(outdir=temp_path, mean_match=10, mean_non_match=-10,
-        n_probes_per_subject=n_probes_per_subject, n_subjects=n_subjects,
-        sigma_positive=1, sigma_negative=1,
-        n_unknown_subjects=n_unknown_subjects,
-        five_col=False,
-        force_count=False, n_pos=0, n_neg=0, n_unk=0,
-    )
+    result = runner.invoke(gen, args=["-mm", "10", "-mnm", "-10",
+                                      "-sp", "1", "-sn", "1", 
+                                      "-p", f"{n_probes_per_subject}",
+                                      "-s", f"{n_subjects}",
+                                      "-u", f"{n_unknown_subjects}",
+                                      f"{temp_path}"])
+    assert_click_runner_result(result)
     assert os.path.exists(os.path.join(temp_path,"scores-dev")), "dev scores file not created."
     line_count=0
     with open(os.path.join(temp_path,"scores-dev")) as f:
@@ -128,6 +137,62 @@ def test_gen():
     with open(os.path.join(temp_path,"scores-eval")) as f:
         for l in f: line_count += 1
     assert line_count == n_pos + n_neg + n_unk
+
+
+    n_subjects = 5
+    n_probes_per_subject = 0
+    n_unknown_subjects = 2
+    n_pos = n_subjects*n_probes_per_subject
+    n_neg = n_subjects*(n_subjects-1)*n_probes_per_subject
+    n_unk = n_unknown_subjects*n_subjects*n_probes_per_subject
+
+    logger.info("Calling 'gen' with no probes.")
+    result = runner.invoke(gen, args=["-mm", "10", "-mnm", "-10",
+                                      "-sp", "1", "-sn", "1", 
+                                      "-p", f"{n_probes_per_subject}",
+                                      "-s", f"{n_subjects}",
+                                      "-u", f"{n_unknown_subjects}",
+                                      f"{temp_path}"])
+    assert_click_runner_result(result)
+    assert os.path.exists(os.path.join(temp_path,"scores-dev")), "dev scores file not created."
+    line_count=0
+    with open(os.path.join(temp_path,"scores-dev")) as f:
+        for l in f: line_count += 1
+    assert line_count == n_pos + n_neg + n_unk
+    assert os.path.exists(os.path.join(temp_path,"scores-eval")), "eval scores file not created."
+    line_count=0
+    with open(os.path.join(temp_path,"scores-eval")) as f:
+        for l in f: line_count += 1
+    assert line_count == n_pos + n_neg + n_unk
+
+
+    n_subjects = 5
+    n_probes_per_subject = 0
+    n_unknown_subjects = 2
+    n_pos = n_subjects*n_probes_per_subject
+    n_neg = n_subjects*(n_subjects-1)*n_probes_per_subject
+    n_unk = n_unknown_subjects*n_subjects*n_probes_per_subject
+
+    logger.info("Calling 'gen' with only unknowns.")
+    result = runner.invoke(gen, args=["-mm", "10", "-mnm", "-10",
+                                      "-sp", "1", "-sn", "1", 
+                                      "-p", f"{n_probes_per_subject}",
+                                      "-s", f"{n_subjects}",
+                                      "-u", f"{n_unknown_subjects}",
+                                      f"{temp_path}"])
+    assert_click_runner_result(result)
+    assert os.path.exists(os.path.join(temp_path,"scores-dev")), "dev scores file not created."
+    line_count=0
+    with open(os.path.join(temp_path,"scores-dev")) as f:
+        for l in f: line_count += 1
+    assert line_count == n_pos + n_neg + n_unk
+    assert os.path.exists(os.path.join(temp_path,"scores-eval")), "eval scores file not created."
+    line_count=0
+    with open(os.path.join(temp_path,"scores-eval")) as f:
+        for l in f: line_count += 1
+    assert line_count == n_pos + n_neg + n_unk
+
+
 
     # Cleanup
     os.remove(os.path.join(temp_path, "scores-dev"))
