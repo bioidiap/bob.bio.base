@@ -3,21 +3,15 @@
 import os
 import logging
 import numpy
-import random
 import click
-from click.types import FLOAT
 from bob.extension.scripts.click_helper import verbosity_option
-import bob.core
 from bob.io.base import create_directories_safe
 from bob.measure.script import common_options
 
 logger = logging.getLogger(__name__)
 
-NUM_NEG = 5000
-NUM_POS = 5000
 
-
-def gen_score_distr(mean_neg, mean_pos, sigma_neg=10, sigma_pos=10, n_neg=NUM_NEG, n_pos=NUM_POS, seed=0):
+def gen_score_distr(mean_neg, mean_pos, sigma_neg=10, sigma_pos=10, n_neg=5000, n_pos=5000, seed=0):
     """Generate scores from normal distributions
 
     Parameters
@@ -48,15 +42,12 @@ def gen_score_distr(mean_neg, mean_pos, sigma_neg=10, sigma_pos=10, n_neg=NUM_NE
     """
 
     logger.debug("Initializing RNG.")
-    mt = bob.core.random.mt19937(seed=seed)
-
-    neg_generator = bob.core.random.normal(numpy.float32, mean_neg, sigma_neg)
-    pos_generator = bob.core.random.normal(numpy.float32, mean_pos, sigma_pos)
+    numpy.random.seed(seed)
 
     logger.info(f"Generating {n_neg} negative and {n_pos} positive scores.")
 
-    neg_scores = [neg_generator(mt) for _ in range(n_neg)]
-    pos_scores = [pos_generator(mt) for _ in range(n_pos)]
+    neg_scores = numpy.random.normal(loc=mean_neg, scale=sigma_neg, size=n_neg)
+    pos_scores = numpy.random.normal(loc=mean_pos, scale=sigma_pos, size=n_pos)
 
     return neg_scores, pos_scores
 
@@ -123,9 +114,9 @@ def write_scores_to_file(neg, pos, filename, n_subjects=5, n_probes_per_subject=
 
 @click.command()
 @click.argument('outdir')
-@click.option('-mm', '--mean-match', default=10, type=FLOAT, show_default=True,\
+@click.option('-mm', '--mean-match', default=10, type=click.FLOAT, show_default=True,\
               help="Mean for the positive scores distribution")
-@click.option('-mnm', '--mean-non-match', default=-10, type=FLOAT, show_default=True,\
+@click.option('-mnm', '--mean-non-match', default=-10, type=click.FLOAT, show_default=True,\
              help="Mean for the negative scores distribution")
 @click.option('-p', '--n-probes-per-subject', default=5, type=click.INT, show_default=True,\
               help="Number of probes per subject")

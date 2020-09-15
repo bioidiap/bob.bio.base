@@ -144,9 +144,7 @@ def test_gen_score_dist():
     assert len(pos) == 20, f"Incorrect number of positive scores generated ({len(pos)})"
     assert all([isinstance(s, (numpy.floating, float)) for s in neg]), "A score was not a float"
     assert all([isinstance(s, (numpy.floating, float)) for s in pos]), "A score was not a float"
-    print("expected_neg =",neg)
-    print("expected_pos =",pos)
-    expected_neg = numpy.array([-10.678141, -8.689173, -8.84452, -10.922123, -8.790776, -9.634045, -8.546636, -8.738061, -9.4082985, -8.313588, -10.227924, -11.022893, -9.453528, -11.756885, -10.05081, -11.754785, -10.395921, -10.7985, -9.478285, -10.597143])
-    expected_pos = numpy.array([11.876446, 10.971403, 9.413583, 8.965617, 10.740386, 11.194529, 12.115288, 10.136266, 9.341219, 10.259532, 9.0935755, 10.0329485, 9.644332, 10.493712, 11.016409, 9.788092, 11.062946, 9.049674, 8.171294, 10.826373])
+    expected_neg = numpy.array([ -8.23594765,  -9.59984279,  -9.02126202,  -7.7591068 ,  -8.13244201, -10.97727788,  -9.04991158, -10.15135721, -10.10321885,  -9.5894015 ,  -9.85595643,  -8.54572649,  -9.23896227,  -9.87832498,  -9.55613677,  -9.66632567,  -8.50592093, -10.20515826,  -9.6869323 , -10.85409574])
+    expected_pos = numpy.array([  7.44701018,  10.6536186,   10.8644362,    9.25783498,  12.26975462,   8.54563433,  10.04575852,   9.81281615,  11.53277921,  11.46935877,  10.15494743,  10.37816252,   9.11221425,   8.01920353,   9.65208785,  10.15634897,  11.23029068,  11.20237985,   9.61267318,   9.69769725])
     assert numpy.allclose(neg, expected_neg), "Unexpected score generated"
     assert numpy.allclose(pos, expected_pos), "Unexpected score generated"
