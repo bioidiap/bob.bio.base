@@ -112,7 +112,34 @@ def write_scores_to_file(neg, pos, filename, n_subjects=5, n_probes_per_subject=
                 f.write('%s%s%s %s %f\n' % (ref, s_five, probe, probe_id, score))
 
 
-@click.command()
+@click.command(
+    epilog="""
+Scores generation examples:
+
+Output 'scores-dev' and 'scores-eval' in a new folder 'generated_scores/':
+
+  $ bob bio gen ./generated_scores
+
+Output scores similar to a system evaluated on the AT&T dataset dev group:
+
+  $ bob bio gen -s 20 -p 5 ./generated_scores
+
+Output a given number of scores in each file:
+
+  $ bob bio gen -f --n-neg 500 --n-pos 100 ./generated_scores
+
+Include unknown subjects scores:
+
+  $ bob bio gen -s 5 -u 2 ./generated_scores
+
+Change the mean and standard deviation of the scores distributions:
+
+  $ bob bio gen -mm 1 -sp 0.3 -mnm -1 -sn 0.5 ./generated_scores
+
+You can observe the distributions histograms in a pdf file with:
+
+  $ bob bio hist -e ./generated_scores/scores-{dev,eval} -o hist_gen.pdf
+""")
 @click.argument('outdir')
 @click.option('-mm', '--mean-match', default=10, type=click.FLOAT, show_default=True,\
               help="Mean for the positive scores distribution")
@@ -120,7 +147,7 @@ def write_scores_to_file(neg, pos, filename, n_subjects=5, n_probes_per_subject=
              help="Mean for the negative scores distribution")
 @click.option('-p', '--n-probes-per-subject', default=5, type=click.INT, show_default=True,\
               help="Number of probes per subject")
-@click.option('-s', '--n-subjects', default=5, type=click.INT, show_default=True,\
+@click.option('-s', '--n-subjects', default=50, type=click.INT, show_default=True,\
               help="Number of subjects")
 @click.option('-sp', '--sigma-positive', default=10, type=click.FLOAT, show_default=True,\
               help="Variance for the positive score distributions")
@@ -144,12 +171,13 @@ def gen(outdir, mean_match, mean_non_match, n_probes_per_subject, n_subjects,
     """Generate random scores.
 
     Generates random scores in 4col or 5col format. The scores are generated
-    using Gaussian distribution whose mean and variance are an input parameter.
-    The generated scores can be used as hypothetical datasets.
+    using Gaussian distribution whose mean and variance are an input
+    parameter. The generated scores can be used as hypothetical datasets.
 
     This command generates scores relative to the number of subjects and
-    samples per subjects, unless the -f flag is set. In that case, the --n-pos
-    and --n-neg options are used as number of genuine and impostor comparisons.
+    probes per subjects, unless the -f flag is set. In that case, the --n-pos
+    and --n-neg options are used as number of genuine and impostor
+    comparisons.
     """
 
     # Compute the number of verifications needed
