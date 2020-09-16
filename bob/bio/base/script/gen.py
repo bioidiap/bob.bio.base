@@ -11,7 +11,9 @@ from bob.measure.script import common_options
 logger = logging.getLogger(__name__)
 
 
-def gen_score_distr(mean_neg, mean_pos, sigma_neg=10, sigma_pos=10, n_neg=5000, n_pos=5000, seed=0):
+def gen_score_distr(
+    mean_neg, mean_pos, sigma_neg=10, sigma_pos=10, n_neg=5000, n_pos=5000, seed=0
+):
     """Generate scores from normal distributions
 
     Parameters
@@ -52,8 +54,16 @@ def gen_score_distr(mean_neg, mean_pos, sigma_neg=10, sigma_pos=10, n_neg=5000, 
     return neg_scores, pos_scores
 
 
-def write_scores_to_file(neg, pos, filename, n_subjects=5, n_probes_per_subject=5,
-                         n_unknown_subjects=0, neg_unknown=None, five_col=False):
+def write_scores_to_file(
+    neg,
+    pos,
+    filename,
+    n_subjects=5,
+    n_probes_per_subject=5,
+    n_unknown_subjects=0,
+    neg_unknown=None,
+    five_col=False,
+):
     """ Writes score distributions
 
     Parameters
@@ -77,39 +87,43 @@ def write_scores_to_file(neg, pos, filename, n_subjects=5, n_probes_per_subject=
     """
     logger.debug(f"Creating result directories ('{filename}').")
     create_directories_safe(os.path.dirname(filename))
-    s_subjects = ['x%d' % i for i in range(n_subjects)]
+    s_subjects = ["x%d" % i for i in range(n_subjects)]
 
     logger.debug("Writing scores to files.")
 
-    with open(filename, 'wt') as f:
+    with open(filename, "wt") as f:
         # Generate one line per probe (unless "--force-count" specified)
         logger.debug("Writing positive scores.")
-        for i,score in enumerate(pos):
-            s_name = s_subjects[int(i/n_probes_per_subject) % n_subjects]
-            s_five = ' ' if not five_col else ' d' + s_name + ' '
-            probe_id = "%s_%d" %(s_name, i%n_probes_per_subject)
-            f.write('%s%s%s %s %f\n' % (s_name, s_five, s_name, probe_id, score))
+        for i, score in enumerate(pos):
+            s_name = s_subjects[int(i / n_probes_per_subject) % n_subjects]
+            s_five = " " if not five_col else " d" + s_name + " "
+            probe_id = "%s_%d" % (s_name, i % n_probes_per_subject)
+            f.write("%s%s%s %s %f\n" % (s_name, s_five, s_name, probe_id, score))
 
         # Generate one line per probe against each ref (unless "--force-count" specified)
         logger.debug("Writing negative scores.")
-        for i,score in enumerate(neg):
+        for i, score in enumerate(neg):
             n_impostors = n_subjects - 1
-            ref = s_subjects[int(i/n_probes_per_subject/n_impostors) % n_subjects]
-            impostors = [s for s in s_subjects if s!=ref] # ignore pos
-            probe = impostors[int(i/n_probes_per_subject) % n_impostors]
-            s_five = ' ' if not five_col else ' d' + ref
-            probe_id = "%s_%d" %(probe, i%n_probes_per_subject)
-            f.write('%s%s%s %s %f\n' % (ref, s_five, probe, probe_id, score))
+            ref = s_subjects[int(i / n_probes_per_subject / n_impostors) % n_subjects]
+            impostors = [s for s in s_subjects if s != ref]  # ignore pos
+            probe = impostors[int(i / n_probes_per_subject) % n_impostors]
+            s_five = " " if not five_col else " d" + ref
+            probe_id = "%s_%d" % (probe, i % n_probes_per_subject)
+            f.write("%s%s%s %s %f\n" % (ref, s_five, probe, probe_id, score))
 
         logger.debug("Writing unknown scores.")
         if neg_unknown is not None:
-            s_unknown_subjects = ['u%d' % i for i in range(n_unknown_subjects)]
-            for i,score in enumerate(neg_unknown):
-                ref = s_subjects[int(i/n_probes_per_subject/n_unknown_subjects)%n_subjects]
-                probe = s_unknown_subjects[int(i/n_probes_per_subject) % n_unknown_subjects]
-                s_five = ' ' if not five_col else ' d' + ref + ' '
-                probe_id = "%s_%d" %(probe, i%n_probes_per_subject)
-                f.write('%s%s%s %s %f\n' % (ref, s_five, probe, probe_id, score))
+            s_unknown_subjects = ["u%d" % i for i in range(n_unknown_subjects)]
+            for i, score in enumerate(neg_unknown):
+                ref = s_subjects[
+                    int(i / n_probes_per_subject / n_unknown_subjects) % n_subjects
+                ]
+                probe = s_unknown_subjects[
+                    int(i / n_probes_per_subject) % n_unknown_subjects
+                ]
+                s_five = " " if not five_col else " d" + ref + " "
+                probe_id = "%s_%d" % (probe, i % n_probes_per_subject)
+                f.write("%s%s%s %s %f\n" % (ref, s_five, probe, probe_id, score))
 
 
 @click.command(
@@ -139,35 +153,114 @@ Change the mean and standard deviation of the scores distributions:
 You can observe the distributions histograms in a pdf file with:
 
   $ bob bio hist -e ./generated_scores/scores-{dev,eval} -o hist_gen.pdf
-""")
-@click.argument('outdir')
-@click.option('-mm', '--mean-match', default=10, type=click.FLOAT, show_default=True,\
-              help="Mean for the positive scores distribution")
-@click.option('-mnm', '--mean-non-match', default=-10, type=click.FLOAT, show_default=True,\
-             help="Mean for the negative scores distribution")
-@click.option('-p', '--n-probes-per-subject', default=5, type=click.INT, show_default=True,\
-              help="Number of probes per subject")
-@click.option('-s', '--n-subjects', default=50, type=click.INT, show_default=True,\
-              help="Number of subjects")
-@click.option('-sp', '--sigma-positive', default=10, type=click.FLOAT, show_default=True,\
-              help="Variance for the positive score distributions")
-@click.option('-sn', '--sigma-negative', default=10, type=click.FLOAT, show_default=True,\
-              help="Variance for the negative score distributions")
-@click.option('-u', '--n-unknown-subjects', default=0, type=click.INT, show_default=True,\
-              help="Number of unknown subjects (useful for openset plots)")
-@click.option("-f", "--force-count", "force_count", is_flag=True,
-              help="Use --n-pos and --n-neg amounts instead of the subject and sample counts")
-@click.option("--n-pos", "n_pos", default=5000, type=click.INT, show_default=True,\
-              help="Number of Positive verifications (number of lines in the file)")
-@click.option("--n-neg", "n_neg", default=5000, type=click.INT, show_default=True,\
-              help="Number of Negative verifications (number of lines in the file)")
-@click.option("--n-unk", "n_unk", default=5000, type=click.INT, show_default=True,\
-              help="Number of Unknown verifications (number of lines in the file)")
-@click.option('--five-col/--four-col', default=False, show_default=True)
+"""
+)
+@click.argument("outdir")
+@click.option(
+    "-mm",
+    "--mean-match",
+    default=10,
+    type=click.FLOAT,
+    show_default=True,
+    help="Mean for the positive scores distribution",
+)
+@click.option(
+    "-mnm",
+    "--mean-non-match",
+    default=-10,
+    type=click.FLOAT,
+    show_default=True,
+    help="Mean for the negative scores distribution",
+)
+@click.option(
+    "-p",
+    "--n-probes-per-subject",
+    default=5,
+    type=click.INT,
+    show_default=True,
+    help="Number of probes per subject",
+)
+@click.option(
+    "-s",
+    "--n-subjects",
+    default=50,
+    type=click.INT,
+    show_default=True,
+    help="Number of subjects",
+)
+@click.option(
+    "-sp",
+    "--sigma-positive",
+    default=10,
+    type=click.FLOAT,
+    show_default=True,
+    help="Variance for the positive score distributions",
+)
+@click.option(
+    "-sn",
+    "--sigma-negative",
+    default=10,
+    type=click.FLOAT,
+    show_default=True,
+    help="Variance for the negative score distributions",
+)
+@click.option(
+    "-u",
+    "--n-unknown-subjects",
+    default=0,
+    type=click.INT,
+    show_default=True,
+    help="Number of unknown subjects (useful for openset plots)",
+)
+@click.option(
+    "-f",
+    "--force-count",
+    "force_count",
+    is_flag=True,
+    help="Use --n-pos and --n-neg amounts instead of the subject and sample counts",
+)
+@click.option(
+    "--n-pos",
+    "n_pos",
+    default=5000,
+    type=click.INT,
+    show_default=True,
+    help="Number of Positive verifications (number of lines in the file)",
+)
+@click.option(
+    "--n-neg",
+    "n_neg",
+    default=5000,
+    type=click.INT,
+    show_default=True,
+    help="Number of Negative verifications (number of lines in the file)",
+)
+@click.option(
+    "--n-unk",
+    "n_unk",
+    default=5000,
+    type=click.INT,
+    show_default=True,
+    help="Number of Unknown verifications (number of lines in the file)",
+)
+@click.option("--five-col/--four-col", default=False, show_default=True)
 @verbosity_option()
-def gen(outdir, mean_match, mean_non_match, n_probes_per_subject, n_subjects,
-        sigma_positive, sigma_negative, n_unknown_subjects, five_col,
-        force_count, n_pos, n_neg, n_unk, **kwargs):
+def gen(
+    outdir,
+    mean_match,
+    mean_non_match,
+    n_probes_per_subject,
+    n_subjects,
+    sigma_positive,
+    sigma_negative,
+    n_unknown_subjects,
+    five_col,
+    force_count,
+    n_pos,
+    n_neg,
+    n_unk,
+    **kwargs,
+):
     """Generate random scores.
 
     Generates random scores in 4col or 5col format. The scores are generated
@@ -185,41 +278,67 @@ def gen(outdir, mean_match, mean_non_match, n_probes_per_subject, n_subjects,
         neg_count, pos_count, unknown_count = n_neg, n_pos, n_unk
     else:
         # One reference (model), and `n_probes_per_subject` probes per subject
-        neg_count = n_subjects * n_probes_per_subject * (n_subjects-1)
+        neg_count = n_subjects * n_probes_per_subject * (n_subjects - 1)
         pos_count = n_probes_per_subject * n_subjects
-        unknown_count = n_unknown_subjects*n_subjects*n_probes_per_subject
+        unknown_count = n_unknown_subjects * n_subjects * n_probes_per_subject
 
     # Generate the data
     logger.info("Generating dev scores.")
-    neg_dev, pos_dev = gen_score_distr(mean_non_match, mean_match,
-                                       sigma_negative, sigma_positive,
-                                       n_neg=neg_count, n_pos=pos_count,
-                                       seed = 0)
+    neg_dev, pos_dev = gen_score_distr(
+        mean_non_match,
+        mean_match,
+        sigma_negative,
+        sigma_positive,
+        n_neg=neg_count,
+        n_pos=pos_count,
+        seed=0,
+    )
     logger.info("Generating eval scores.")
-    neg_eval, pos_eval = gen_score_distr(mean_non_match, mean_match,
-                                         sigma_negative, sigma_positive,
-                                         n_neg=neg_count, n_pos=pos_count,
-                                         seed = 1)
+    neg_eval, pos_eval = gen_score_distr(
+        mean_non_match,
+        mean_match,
+        sigma_negative,
+        sigma_positive,
+        n_neg=neg_count,
+        n_pos=pos_count,
+        seed=1,
+    )
 
     # For simplicity I will use the same distribution for dev-eval
     if n_unknown_subjects:
         logger.info("Generating unknown scores.")
-        neg_unknown,_ = gen_score_distr(mean_non_match, mean_match,
-                                        sigma_negative, sigma_positive,
-                                        n_neg=unknown_count, n_pos=0,
-                                        seed = 2)
+        neg_unknown, _ = gen_score_distr(
+            mean_non_match,
+            mean_match,
+            sigma_negative,
+            sigma_positive,
+            n_neg=unknown_count,
+            n_pos=0,
+            seed=2,
+        )
     else:
         neg_unknown = None
 
     # Write the data into files
     logger.info("Saving results.")
-    write_scores_to_file(neg_dev, pos_dev,
-                         os.path.join(outdir, 'scores-dev'),
-                         n_subjects, n_probes_per_subject,
-                         n_unknown_subjects, neg_unknown, five_col)
+    write_scores_to_file(
+        neg_dev,
+        pos_dev,
+        os.path.join(outdir, "scores-dev"),
+        n_subjects,
+        n_probes_per_subject,
+        n_unknown_subjects,
+        neg_unknown,
+        five_col,
+    )
 
-    write_scores_to_file(neg_eval, pos_eval,
-                         os.path.join(outdir, 'scores-eval'),
-                         n_subjects, n_probes_per_subject,
-                         n_unknown_subjects, neg_unknown, five_col)
-
+    write_scores_to_file(
+        neg_eval,
+        pos_eval,
+        os.path.join(outdir, "scores-eval"),
+        n_subjects,
+        n_probes_per_subject,
+        n_unknown_subjects,
+        neg_unknown,
+        five_col,
+    )
