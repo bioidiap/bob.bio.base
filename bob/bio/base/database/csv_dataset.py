@@ -8,6 +8,8 @@ import csv
 import bob.io.base
 import functools
 from abc import ABCMeta, abstractmethod
+import numpy as np
+import itertools
 
 
 class CSVBaseSampleLoader(metaclass=ABCMeta):
@@ -91,7 +93,10 @@ class CSVToSampleLoader(CSVBaseSampleLoader):
         subject = row[1]
         kwargs = dict([[h, r] for h, r in zip(header[2:], row[2:])])
         return DelayedSample(
-            functools.partial(self.data_loader, os.path.join(self.dataset_original_directory, path+self.extension)),
+            functools.partial(
+                self.data_loader,
+                os.path.join(self.dataset_original_directory, path + self.extension),
+            ),
             key=path,
             subject=subject,
             **kwargs,
@@ -118,11 +123,15 @@ class CSVToSampleLoader(CSVBaseSampleLoader):
                     sample_sets[s.subject] = SampleSet(
                         [s], **get_attribute_from_sample(s)
                     )
-                sample_sets[s.subject].append(s)
+                else:
+                    sample_sets[s.subject].append(s)
             return list(sample_sets.values())
 
         else:
-            return [SampleSet([s], **get_attribute_from_sample(s), references=references) for s in samples]
+            return [
+                SampleSet([s], **get_attribute_from_sample(s), references=references)
+                for s in samples
+            ]
 
 
 class CSVDatasetDevEval:
@@ -194,8 +203,9 @@ class CSVDatasetDevEval:
         protocol_na,e: str
           The name of the protocol
 
-        csv_to_sample_loader:
-
+        csv_to_sample_loader: :any:`CSVBaseSampleLoader`
+            Base class that whose objective is to generate :any:`bob.pipelines.Samples`
+            and/or :any:`bob.pipelines.SampleSet` from csv rows
 
     """
 
@@ -281,9 +291,6 @@ class CSVDatasetDevEval:
 
         return self.cache["train"]
 
-    def _get_subjects_from_samplesets(self, sample_sets):
-        return list(set([s.subject for s in sample_sets]))
-
     def _get_samplesets(self, group="dev", purpose="enroll", group_by_subject=False):
 
         fetching_probes = False
@@ -298,9 +305,7 @@ class CSVDatasetDevEval:
 
         references = None
         if fetching_probes:
-            references = self._get_subjects_from_samplesets(
-                self.references(group=group)
-            )
+            references = list(set([s.subject for s in self.references(group=group)]))
 
         samples = self.csv_to_sample_loader(self.__dict__[cache_label])
 
@@ -321,3 +326,144 @@ class CSVDatasetDevEval:
         return self._get_samplesets(
             group=group, purpose="probe", group_by_subject=False
         )
+
+
+class CSVDatasetCrossValidation:
+    """
+    Generic filelist dataset for :any:`bob.bio.base.pipelines.VanillaBiometrics` pipeline that 
+    handles **CROSS VALIDATION**.
+
+    Check :ref:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
+    interface.
+
+
+    This interface will take one `csv_file` as input and split into i-) data for training and
+    ii-) data for testing.
+    The data for testing will be further split in data for enrollment and data for probing.
+    The input CSV file should be casted in the following format:
+
+    .. code-block:: text
+
+       PATH,SUBJECT
+       path_1,subject_1
+       path_2,subject_2
+       path_i,subject_j
+       ...
+
+    Parameters
+    ----------
+
+    csv_file_name: str
+      CSV file containing all the samples from your database
+
+    random_state: int
+      Pseudo-random number generator seed
+
+    test_size: float
+      Percentage of the subjects used for testing
+
+    samples_for_enrollment: float
+      Number of samples used for enrollment
+
+    csv_to_sample_loader: :any:`CSVBaseSampleLoader`
+        Base class that whose objective is to generate :any:`bob.pipelines.Samples`
+        and/or :any:`bob.pipelines.SampleSet` from csv rows
+
+    """
+
+    def __init__(
+        self,
+        csv_file_name="metadata.csv",
+        random_state=0,
+        test_size=0.8,
+        samples_for_enrollment=1,
+        csv_to_sample_loader=CSVToSampleLoader(
+            data_loader=bob.io.base.load, dataset_original_directory="", extension=""
+        ),
+    ):
+        def get_dict_cache():
+            cache = dict()
+            cache["train"] = None
+            cache["dev_enroll_csv"] = None
+            cache["dev_probe_csv"] = None
+            return cache
+
+        self.random_state = random_state
+        self.cache = get_dict_cache()
+        self.csv_to_sample_loader = csv_to_sample_loader
+        self.csv_file_name = csv_file_name
+        self.samples_for_enrollment = samples_for_enrollment
+        self.test_size = test_size
+
+        if self.test_size < 0 and self.test_size > 1:
+            raise ValueError(
+                f"`test_size` should be between 0 and 1. {test_size} is provided"
+            )
+
+    def _do_cross_validation(self):
+
+        # Shuffling samples by subject
+        samples_by_subject = group_samples_by_subject(
+            self.csv_to_sample_loader(self.csv_file_name)
+        )
+        subjects = list(samples_by_subject.keys())
+        np.random.seed(self.random_state)
+        np.random.shuffle(subjects)
+
+        # Getting the training data
+        n_samples_for_training = len(subjects) - int(self.test_size * len(subjects))
+        self.cache["train"] = list(
+            itertools.chain(
+                *[samples_by_subject[s] for s in subjects[0:n_samples_for_training]]
+            )
+        )
+
+        # Splitting enroll and probe
+        self.cache["dev_enroll_csv"] = []
+        self.cache["dev_probe_csv"] = []
+        for s in subjects[n_samples_for_training:]:
+            samples = samples_by_subject[s]
+            if len(samples) < self.samples_for_enrollment:
+                raise ValueError(
+                    f"Not enough samples ({len(samples)}) for enrollment for the subject {s}"
+                )
+
+            # Enrollment samples
+            self.cache["dev_enroll_csv"].append(
+                self.csv_to_sample_loader.convert_samples_to_samplesets(
+                    samples[0 : self.samples_for_enrollment]
+                )[0]
+            )
+
+            self.cache[
+                "dev_probe_csv"
+            ] += self.csv_to_sample_loader.convert_samples_to_samplesets(
+                samples[self.samples_for_enrollment :],
+                group_by_subject=False,
+                references=subjects[n_samples_for_training:],
+            )
+
+    def _load_from_cache(self, cache_key):
+        if self.cache[cache_key] is None:
+            self._do_cross_validation()
+        return self.cache[cache_key]
+
+    def background_model_samples(self):
+        return self._load_from_cache("train")
+
+    def references(self, group="dev"):
+        return self._load_from_cache("dev_enroll_csv")
+
+    def probes(self, group="dev"):
+        return self._load_from_cache("dev_probe_csv")
+
+
+def group_samples_by_subject(samples):
+
+    # Grouping sample sets
+    samples_by_subject = dict()
+    for s in samples:
+        if s.subject not in samples_by_subject:
+            samples_by_subject[s.subject] = []
+        samples_by_subject[s.subject].append(s)
+    return samples_by_subject

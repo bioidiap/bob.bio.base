@@ -1,4 +1,4 @@
-from .csv_dataset import CSVDatasetDevEval, CSVToSampleLoader
+from .csv_dataset import CSVDatasetDevEval, CSVToSampleLoader, CSVDatasetCrossValidation
 from .file import BioFile
 from .file import BioFileSet
 from .database import BioDatabase
