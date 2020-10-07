@@ -1,4 +1,4 @@
-from .csv_dataset import CSVDatasetDevEval
+from .csv_dataset import CSVDatasetDevEval, CSVToSampleLoader
 from .file import BioFile
 from .file import BioFileSet
 from .database import BioDatabase
@@ -27,5 +27,6 @@ __appropriate__(
     BioDatabase,
     ZTBioDatabase,	
 	CSVDatasetDevEval,
+  CSVToSampleLoader
 )
 __all__ = [_ for _ in dir() if not _.startswith('_')]
