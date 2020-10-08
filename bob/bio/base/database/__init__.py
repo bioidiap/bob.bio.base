@@ -1,9 +1,11 @@
+from .csv_dataset import CSVDatasetDevEval, CSVToSampleLoader, CSVDatasetCrossValidation
 from .file import BioFile
 from .file import BioFileSet
 from .database import BioDatabase
 from .database import ZTBioDatabase
 from .filelist import FileListBioDatabase
 from . import filelist
+
 
 # gets sphinx autodoc done right - don't remove it
 def __appropriate__(*args):
@@ -25,7 +27,9 @@ __appropriate__(
     BioFile,
     BioFileSet,
     BioDatabase,
-    ZTBioDatabase,
-    FileListBioDatabase
+    ZTBioDatabase,	
+	  CSVDatasetDevEval,
+    CSVToSampleLoader,
+    CSVDatasetCrossValidation
 )
 __all__ = [_ for _ in dir() if not _.startswith('_')]

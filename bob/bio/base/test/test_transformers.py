@@ -10,7 +10,8 @@ from bob.bio.base.transformers import (
     ExtractorTransformer,
     AlgorithmTransformer,
 )
-import bob.pipelines as mario
+from bob.pipelines import SampleWrapper, CheckpointWrapper, Sample, wrap
+
 import numpy as np
 import tempfile
 import os
@@ -86,7 +87,7 @@ def generate_samples(n_subjects, n_samples_per_subject, shape=(2, 2), annotation
         data = np.zeros(shape) + i
         for j in range(n_samples_per_subject):
             samples += [
-                mario.Sample(
+                Sample(
                     data,
                     subject=str(i),
                     key=str(i * n_subjects + j),
@@ -118,21 +119,21 @@ def test_preprocessor():
 
     # Testing sample
     transform_extra_arguments = [("annotations", "annotations")]
-    sample_transformer = mario.SampleWrapper(
+    sample_transformer = SampleWrapper(
         preprocessor_transformer, transform_extra_arguments
     )
 
     data = np.zeros((2, 2))
     oracle = [np.ones((2, 2))]
     annotations = 1
-    sample = [mario.Sample(data, key="1", annotations=annotations)]
+    sample = [Sample(data, key="1", annotations=annotations)]
     transformed_sample = sample_transformer.transform(sample)
 
     assert assert_sample(transformed_sample, oracle)
 
     # Testing checkpoint
     with tempfile.TemporaryDirectory() as dir_name:
-        checkpointing_transformer = mario.CheckpointWrapper(
+        checkpointing_transformer = CheckpointWrapper(
             sample_transformer,
             features_dir=dir_name,
             load_func=preprocessor.read_data,
@@ -150,18 +151,18 @@ def test_extractor():
     extractor_transformer = ExtractorTransformer(extractor)
 
     # Testing sample
-    sample_transformer = mario.SampleWrapper(extractor_transformer)
+    sample_transformer = SampleWrapper(extractor_transformer)
 
     data = np.zeros((2, 2))
     oracle = [np.zeros((1, 4))]
-    sample = [mario.Sample(data, key="1")]
+    sample = [Sample(data, key="1")]
     transformed_sample = sample_transformer.transform(sample)
 
     assert assert_sample(transformed_sample, oracle)
 
     # Testing checkpoint
     with tempfile.TemporaryDirectory() as dir_name:
-        checkpointing_transformer = mario.CheckpointWrapper(
+        checkpointing_transformer = CheckpointWrapper(
             sample_transformer,
             features_dir=dir_name,
             load_func=extractor.read_feature,
@@ -184,21 +185,21 @@ def test_extractor_fittable():
         )
 
         # Testing sample
-        sample_transformer = mario.SampleWrapper(extractor_transformer)
+        sample_transformer = SampleWrapper(extractor_transformer)
         # Fitting
         training_data = np.arange(4).reshape(2, 2)
-        training_samples = [mario.Sample(training_data, key="1")]
+        training_samples = [Sample(training_data, key="1")]
         sample_transformer = sample_transformer.fit(training_samples)
 
         test_data = [np.zeros((2, 2)), np.ones((2, 2))]
         oracle = [np.zeros((2, 2)), np.ones((2, 2)) @ training_data]
-        test_sample = [mario.Sample(d, key=str(i)) for i, d in enumerate(test_data)]
+        test_sample = [Sample(d, key=str(i)) for i, d in enumerate(test_data)]
 
         transformed_sample = sample_transformer.transform(test_sample)
         assert assert_sample(transformed_sample, oracle)
 
         # Testing checkpoint
-        checkpointing_transformer = mario.CheckpointWrapper(
+        checkpointing_transformer = CheckpointWrapper(
             sample_transformer,
             features_dir=dir_name,
             load_func=extractor.read_feature,
@@ -223,7 +224,7 @@ def test_algorithm():
 
         # Testing sample
         fit_extra_arguments = [("y", "subject")]
-        sample_transformer = mario.SampleWrapper(
+        sample_transformer = SampleWrapper(
             algorithm_transformer, fit_extra_arguments=fit_extra_arguments
         )
 
@@ -242,7 +243,7 @@ def test_algorithm():
         assert os.path.exists(projector_file)
 
         # Testing checkpoint
-        checkpointing_transformer = mario.CheckpointWrapper(
+        checkpointing_transformer = CheckpointWrapper(
             sample_transformer,
             features_dir=dir_name,
             load_func=algorithm.read_feature,
@@ -262,25 +263,26 @@ def test_algorithm():
 
 def test_wrap_bob_pipeline():
     def run_pipeline(with_dask, with_checkpoint):
+        fit_extra_arguments = (("y","subject"),)
         with tempfile.TemporaryDirectory() as dir_name:
-            if with_checkpoint:
+            if with_checkpoint:                
                 pipeline = make_pipeline(
                     wrap_checkpoint_preprocessor(FakePreprocesor(), dir_name,),
                     wrap_checkpoint_extractor(FakeExtractor(), dir_name,),
-                    wrap_checkpoint_algorithm(FakeAlgorithm(), dir_name),
+                    wrap_checkpoint_algorithm(FakeAlgorithm(), dir_name, fit_extra_arguments=fit_extra_arguments),
                 )
             else:
                 pipeline = make_pipeline(
                     wrap_sample_preprocessor(FakePreprocesor()),
                     wrap_sample_extractor(FakeExtractor(), dir_name,),
-                    wrap_sample_algorithm(FakeAlgorithm(), dir_name),
+                    wrap_sample_algorithm(FakeAlgorithm(), dir_name, fit_extra_arguments=fit_extra_arguments),
                 )
 
             oracle = [7.0, 7.0, 7.0, 7.0]
             training_samples = generate_samples(n_subjects=2, n_samples_per_subject=2)
             test_samples = generate_samples(n_subjects=1, n_samples_per_subject=1)
             if with_dask:
-                pipeline = mario.wrap(["dask"], pipeline)
+                pipeline = wrap(["dask"], pipeline)
                 transformed_samples = (
                     pipeline.fit(training_samples)
                     .transform(test_samples)

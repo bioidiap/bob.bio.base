@@ -146,7 +146,7 @@ def _make_transformer_with_algorithm(dir_name):
             transform_extra_arguments=(("annotations", "annotations"),),
         ),
         wrap_bob_legacy(FakeExtractor(), dir_name),
-        wrap_bob_legacy(FakeAlgorithm(), dir_name),
+        wrap_bob_legacy(FakeAlgorithm(), dir_name, fit_extra_arguments = [("y", "subject")]),
     )
 
     return pipeline
