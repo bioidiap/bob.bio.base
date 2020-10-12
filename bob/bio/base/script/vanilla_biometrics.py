@@ -95,18 +95,20 @@ def load_database_pipeline(database, pipeline):
 
 
 @click.command(
-    entry_point_group="bob.bio.pipeline.config", cls=ConfigCommand, epilog=EPILOG,
+    entry_point_group="bob.bio.config", cls=ConfigCommand, epilog=EPILOG,
 )
 @click.option(
     "--pipeline",
     "-p",
     required=True,
+    entry_point_group="bob.bio.pipeline"
     help="Vanilla biometrics pipeline composed of a scikit-learn Pipeline and a BioAlgorithm",
     cls=ResourceOption,
 )
 @click.option(
     "--database",
     "-d",
+    entry_point_group="bob.bio.database"
     required=False,
     help="Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)",
     cls=ResourceOption,
@@ -115,6 +117,7 @@ def load_database_pipeline(database, pipeline):
     "--dask-client",
     "-l",
     required=False,
+    entry_point_group="dask.client",
     help="Dask client for the execution of the pipeline.",
     cls=ResourceOption,
 )
