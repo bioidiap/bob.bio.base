@@ -15,25 +15,18 @@ from bob.extension.scripts.click_helper import (
 
 import logging
 import os
-import itertools
 import dask.bag
 from bob.bio.base.pipelines.vanilla_biometrics import (
-    VanillaBiometricsPipeline,
-    BioAlgorithmCheckpointWrapper,
     BioAlgorithmDaskWrapper,
     checkpoint_vanilla_biometrics,
     dask_vanilla_biometrics,
     dask_get_partition_size,
     FourColumnsScoreWriter,
     CSVScoreWriter,
-    BioAlgorithmLegacy,
     is_checkpointed,
 )
 from dask.delayed import Delayed
-import pkg_resources
-from bob.extension.config import load as chain_load
 from bob.pipelines.utils import isinstance_nested
-from bob.bio.base.utils import get_resource_filename
 
 
 logger = logging.getLogger(__name__)
@@ -76,24 +69,6 @@ def post_process_scores(pipeline, scores, path):
     return pipeline.post_process(writed_scores, path)
 
 
-def load_database_pipeline(database, pipeline):
-    # It's necessary to chain load 2 resources together
-    pipeline_config = get_resource_filename(pipeline, "bob.bio.pipeline")
-
-    if database is None:
-        vanilla_pipeline = chain_load([pipeline_config])
-        if hasattr(vanilla_pipeline, "database"):
-            return vanilla_pipeline.database, vanilla_pipeline.pipeline
-        else:
-            raise ValueError(
-                "Database was not set. Please look in `bob bio pipelines vanilla-biometrics --help` for more information"
-            )
-    else:
-        database_config = get_resource_filename(database, "bob.bio.database")
-        vanilla_pipeline = chain_load([database_config, pipeline_config])
-        return vanilla_pipeline.database, vanilla_pipeline.pipeline
-
-
 @click.command(
     entry_point_group="bob.bio.config", cls=ConfigCommand, epilog=EPILOG,
 )
@@ -101,22 +76,21 @@ def load_database_pipeline(database, pipeline):
     "--pipeline",
     "-p",
     required=True,
-    entry_point_group="bob.bio.pipeline"
+    entry_point_group="bob.bio.pipeline",
     help="Vanilla biometrics pipeline composed of a scikit-learn Pipeline and a BioAlgorithm",
     cls=ResourceOption,
 )
 @click.option(
     "--database",
     "-d",
-    entry_point_group="bob.bio.database"
-    required=False,
+    entry_point_group="bob.bio.database",
+    required=True,
     help="Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)",
     cls=ResourceOption,
 )
 @click.option(
     "--dask-client",
     "-l",
-    required=False,
     entry_point_group="dask.client",
     help="Dask client for the execution of the pipeline.",
     cls=ResourceOption,
@@ -217,12 +191,6 @@ def vanilla_biometrics(
 
     if not os.path.exists(output):
         os.makedirs(output, exist_ok=True)
-
-    # Picking the resources
-    # database, pipeline = load_database_pipeline(database, pipeline)
-
-    # if dask_client is not None:
-    #     dask_client = chain_load([dask_client]).dask_client
 
     if write_metadata_scores:
         pipeline.score_writer = CSVScoreWriter(os.path.join(output, "./tmp"))

@@ -15,31 +15,21 @@ from bob.extension.scripts.click_helper import (
 
 import logging
 import os
-import itertools
-import dask.bag
 from bob.bio.base.pipelines.vanilla_biometrics import (
-    VanillaBiometricsPipeline,
-    BioAlgorithmCheckpointWrapper,
     BioAlgorithmDaskWrapper,
     ZTNormPipeline,
-    ZTNormDaskWrapper,
     ZTNormCheckpointWrapper,
     checkpoint_vanilla_biometrics,
     dask_vanilla_biometrics,
     dask_get_partition_size,
     FourColumnsScoreWriter,
     CSVScoreWriter,
-    BioAlgorithmLegacy,
-    is_checkpointed    
+    is_checkpointed
 )
-from dask.delayed import Delayed
-from bob.bio.base.utils import get_resource_filename
-from bob.extension.config import load as chain_load
 from bob.pipelines.utils import isinstance_nested
 from .vanilla_biometrics import (
     compute_scores,
     post_process_scores,
-    load_database_pipeline,
 )
 import copy
 
@@ -61,7 +51,7 @@ EPILOG = """\b
    >>> transformer = ... # A scikit-learn pipeline
    >>> algorithm   = ... # `An BioAlgorithm`
    >>> pipeline = VanillaBiometricsPipeline(transformer,algorithm)
-   >>> database = .... # Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)" 
+   >>> database = .... # Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)"
 
 \b
 
@@ -70,24 +60,30 @@ EPILOG = """\b
 
 
 @click.command(
-    entry_point_group="bob.pipelines.config", cls=ConfigCommand, epilog=EPILOG,
+    entry_point_group="bob.bio.config", cls=ConfigCommand, epilog=EPILOG,
 )
 @click.option(
     "--pipeline",
     "-p",
+    entry_point_group="bob.bio.pipeline",
     required=True,
     help="Vanilla biometrics pipeline composed of a scikit-learn Pipeline and a BioAlgorithm",
+    cls=ResourceOption,
 )
 @click.option(
     "--database",
     "-d",
+    entry_point_group="bob.bio.database",
+    required=True,
     help="Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)",
+    cls=ResourceOption,
 )
 @click.option(
     "--dask-client",
     "-l",
-    required=False,
+    entry_point_group="dask.client",
     help="Dask client for the execution of the pipeline.",
+    cls=ResourceOption,
 )
 @click.option(
     "--group",
@@ -97,6 +93,7 @@ EPILOG = """\b
     multiple=True,
     default=("dev",),
     help="If given, this value will limit the experiments belonging to a particular protocolar group",
+    cls=ResourceOption,
 )
 @click.option(
     "-o",
@@ -104,29 +101,34 @@ EPILOG = """\b
     show_default=True,
     default="results",
     help="Name of output directory where output scores will be saved. In case --checkpoint is set, checkpoints will be saved in this directory.",
+    cls=ResourceOption,
 )
 @click.option(
     "--consider-genuines",
     is_flag=True,
     help="If set, will consider genuine scores in the ZT score normalization",
+    cls=ResourceOption,
 )
 @click.option(
     "--write-metadata-scores",
     "-m",
     is_flag=True,
     help="If set, all the scores will be written with all its metadata",
+    cls=ResourceOption,
 )
 @click.option(
     "--ztnorm-cohort-proportion",
     default=1.0,
     type=float,
     help="Sets the percentage of samples used for t-norm and z-norm. Sometimes you don't want to use all the t/z samples for normalization",
+    cls=ResourceOption,
 )
 @click.option(
     "--checkpoint",
     "-c",
     is_flag=True,
     help="If set, it will checkpoint all steps of the pipeline. Checkpoints will be saved in `--output`.",
+    cls=ResourceOption,
 )
 @verbosity_option(cls=ResourceOption)
 def vanilla_biometrics_ztnorm(
@@ -151,15 +153,15 @@ def vanilla_biometrics_ztnorm(
     `enroll` and `score`
 
     With those two components any Biometric Experiment can be done.
-    A Biometric experiment consists of three sub-pipelines and 
+    A Biometric experiment consists of three sub-pipelines and
     they are defined below:
 
     Sub-pipeline 1:\n
     ---------------
 
     Training background model.
-    Some biometric algorithms demands the training of background model, for instance, PCA/LDA matrix or a Neural networks. 
-    
+    Some biometric algorithms demands the training of background model, for instance, PCA/LDA matrix or a Neural networks.
+
     \b
     This pipeline runs: `Pipeline.fit(DATA_FOR_FIT)`
 
@@ -171,7 +173,7 @@ def vanilla_biometrics_ztnorm(
     ---------------
 
     Creation of biometric references: This is a standard step in a biometric pipelines.
-    Given a set of samples of one identity, create a biometric reference (a.k.a template) for sub identity. 
+    Given a set of samples of one identity, create a biometric reference (a.k.a template) for sub identity.
 
 
     \b
@@ -183,9 +185,9 @@ def vanilla_biometrics_ztnorm(
     Sub-pipeline 3:\n
     ---------------
 
-    Probing: This is another standard step in biometric pipelines. 
+    Probing: This is another standard step in biometric pipelines.
     Given one sample and one biometric reference, computes a score.
-    Such score has different meanings depending on the scoring method your biometric algorithm uses. 
+    Such score has different meanings depending on the scoring method your biometric algorithm uses.
     It's out of scope to explain in a help message to explain what scoring is for different biometric algorithms.
 
     This pipeline runs: `BioAlgorithm.score(Pipeline.transform(DATA_SCORE, biometric_references))` >> biometric_references
@@ -206,13 +208,6 @@ def vanilla_biometrics_ztnorm(
 
     if not os.path.exists(output):
         os.makedirs(output, exist_ok=True)
-
-    # It's necessary to chain load 2 resources together
-    # Picking the resources
-    database, pipeline = load_database_pipeline(database, pipeline)
-
-    if dask_client is not None:
-        dask_client = chain_load([dask_client]).dask_client
 
     if write_metadata_scores:
         pipeline.score_writer = CSVScoreWriter(os.path.join(output, "./tmp"))
