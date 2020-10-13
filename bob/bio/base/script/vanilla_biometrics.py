@@ -38,6 +38,18 @@ EPILOG = """\b
  Command line examples\n
  -----------------------
 
+$ bob pipelines vanilla-biometrics DATABASE PIPELINE -vv
+
+ Check out all PIPELINE available by running:
+  `resource.py --types pipeline`
+\b
+
+  and all available databases by running:
+  `resource.py --types database`
+
+\b
+
+It is possible to do it via configuration file
 
  $ bob pipelines vanilla-biometrics -p my_experiment.py -vv
 
@@ -50,6 +62,7 @@ EPILOG = """\b
    >>> database = .... # Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)"
 
 \b
+  
 
 """
 
@@ -238,5 +251,9 @@ def vanilla_biometrics(
         post_processed_scores = post_process_scores(pipeline, result, score_file_name)
         _ = compute_scores(post_processed_scores, dask_client)
 
+    logger.info("Experiment finished !!!!!")
     if dask_client is not None:
+        logger.info("Shutdown workers !!!!!")
         dask_client.shutdown()
+        logger.info("Done !!!!!")
+    

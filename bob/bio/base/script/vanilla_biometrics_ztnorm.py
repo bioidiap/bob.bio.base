@@ -42,19 +42,31 @@ EPILOG = """\b
  Command line examples\n
  -----------------------
 
+$ bob pipelines vanilla-biometrics DATABASE PIPELINE -vv
+
+ Check out all PIPELINE available by running:
+  `resource.py --types pipeline`
+\b
+  
+  and all available databases by running:
+  `resource.py --types database`
+
+\b
+
+It is possible to do it via configuration file
 
  $ bob pipelines vanilla-biometrics -p my_experiment.py -vv
 
 
  my_experiment.py must contain the following elements:
 
-   >>> transformer = ... # A scikit-learn pipeline
-   >>> algorithm   = ... # `An BioAlgorithm`
-   >>> pipeline = VanillaBiometricsPipeline(transformer,algorithm)
+   >>> transformer = ... # A scikit-learn pipeline\n
+   >>> algorithm   = ... # `An BioAlgorithm`\n
+   >>> pipeline = VanillaBiometricsPipeline(transformer,algorithm)\n
    >>> database = .... # Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)"
 
 \b
-
+  
 
 """
 
@@ -280,11 +292,10 @@ def vanilla_biometrics_ztnorm(
         def _build_filename(score_file_name, suffix):
             return os.path.join(score_file_name, suffix)
 
-        # Running RAW_SCORES
+        # Running RAW_SCORES        
         raw_scores = post_process_scores(
             pipeline, raw_scores, _build_filename(score_file_name, "raw_scores")
         )
-
         _ = compute_scores(raw_scores, dask_client)
 
         # Z-SCORES
@@ -319,5 +330,8 @@ def vanilla_biometrics_ztnorm(
         )
         _ = compute_scores(zt_normed_scores, dask_client)
 
+    logger.info("Experiment finished !!!!!")
     if dask_client is not None:
+        logger.info("Shutdown workers !!!!!")
         dask_client.shutdown()
+        logger.info("Done !!!!!")
