@@ -15,25 +15,18 @@ from bob.extension.scripts.click_helper import (
 
 import logging
 import os
-import itertools
 import dask.bag
 from bob.bio.base.pipelines.vanilla_biometrics import (
-    VanillaBiometricsPipeline,
-    BioAlgorithmCheckpointWrapper,
     BioAlgorithmDaskWrapper,
     checkpoint_vanilla_biometrics,
     dask_vanilla_biometrics,
     dask_get_partition_size,
     FourColumnsScoreWriter,
     CSVScoreWriter,
-    BioAlgorithmLegacy,
-    is_checkpointed
+    is_checkpointed,
 )
 from dask.delayed import Delayed
-import pkg_resources
-from bob.extension.config import load as chain_load
 from bob.pipelines.utils import isinstance_nested
-from bob.bio.base.utils import get_resource_filename
 
 
 logger = logging.getLogger(__name__)
@@ -45,6 +38,18 @@ EPILOG = """\b
  Command line examples\n
  -----------------------
 
+$ bob pipelines vanilla-biometrics DATABASE PIPELINE -vv
+
+ Check out all PIPELINE available by running:
+  `resource.py --types pipeline`
+\b
+
+  and all available databases by running:
+  `resource.py --types database`
+
+\b
+
+It is possible to do it via configuration file
 
  $ bob pipelines vanilla-biometrics -p my_experiment.py -vv
 
@@ -54,9 +59,10 @@ EPILOG = """\b
    >>> transformer = ... # A scikit-learn pipeline\n
    >>> algorithm   = ... # `An BioAlgorithm`\n
    >>> pipeline = VanillaBiometricsPipeline(transformer,algorithm)\n
-   >>> database = .... # Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)" 
+   >>> database = .... # Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)"
 
 \b
+  
 
 """
 
@@ -76,39 +82,31 @@ def post_process_scores(pipeline, scores, path):
     return pipeline.post_process(writed_scores, path)
 
 
-def load_database_pipeline(database, pipeline):
-    # It's necessary to chain load 2 resources together
-    pipeline_config = get_resource_filename(pipeline, "bob.bio.pipeline")
-
-    if database is None:
-        vanilla_pipeline = chain_load([pipeline_config])
-        if hasattr(vanilla_pipeline, "database"):
-            return vanilla_pipeline.database, vanilla_pipeline.pipeline
-        else:
-            raise ValueError("Database was not set. Please look in `bob bio pipelines vanilla-biometrics --help` for more information")
-    else:
-        database_config = get_resource_filename(database, "bob.bio.database")
-        vanilla_pipeline = chain_load([database_config, pipeline_config])
-        return vanilla_pipeline.database, vanilla_pipeline.pipeline
-
-
 @click.command(
-    entry_point_group="bob.bio.pipeline.config", cls=ConfigCommand, epilog=EPILOG,
+    entry_point_group="bob.bio.config", cls=ConfigCommand, epilog=EPILOG,
 )
 @click.option(
-    "--pipeline", "-p", required=True, help="Vanilla biometrics pipeline composed of a scikit-learn Pipeline and a BioAlgorithm",
+    "--pipeline",
+    "-p",
+    required=True,
+    entry_point_group="bob.bio.pipeline",
+    help="Vanilla biometrics pipeline composed of a scikit-learn Pipeline and a BioAlgorithm",
+    cls=ResourceOption,
 )
 @click.option(
     "--database",
     "-d",
-    required=False,
+    entry_point_group="bob.bio.database",
+    required=True,
     help="Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)",
+    cls=ResourceOption,
 )
 @click.option(
     "--dask-client",
     "-l",
-    required=False,
+    entry_point_group="dask.client",
     help="Dask client for the execution of the pipeline.",
+    cls=ResourceOption,
 )
 @click.option(
     "--group",
@@ -118,6 +116,7 @@ def load_database_pipeline(database, pipeline):
     multiple=True,
     default=("dev",),
     help="If given, this value will limit the experiments belonging to a particular protocolar group",
+    cls=ResourceOption,
 )
 @click.option(
     "-o",
@@ -125,18 +124,21 @@ def load_database_pipeline(database, pipeline):
     show_default=True,
     default="results",
     help="Name of output directory where output scores will be saved. In case --checkpoint is set, checkpoints will be saved in this directory.",
+    cls=ResourceOption,
 )
 @click.option(
     "--write-metadata-scores",
     "-m",
     is_flag=True,
     help="If set, all the scores will be written with all its metadata using the `CSVScoreWriter`",
+    cls=ResourceOption,
 )
 @click.option(
     "--checkpoint",
     "-c",
     is_flag=True,
     help="If set, it will checkpoint all steps of the pipeline. Checkpoints will be saved in `--output`.",
+    cls=ResourceOption,
 )
 @verbosity_option(cls=ResourceOption)
 def vanilla_biometrics(
@@ -146,7 +148,7 @@ def vanilla_biometrics(
     groups,
     output,
     write_metadata_scores,
-    checkpoint,    
+    checkpoint,
     **kwargs,
 ):
     """Runs the simplest biometrics pipeline.
@@ -159,15 +161,15 @@ def vanilla_biometrics(
     `enroll` and `score`
 
     With those two components any Biometric Experiment can be done.
-    A Biometric experiment consists of three sub-pipelines and 
+    A Biometric experiment consists of three sub-pipelines and
     they are defined below:
 
     Sub-pipeline 1:\n
     ---------------
 
     Training background model.
-    Some biometric algorithms demands the training of background model, for instance, PCA/LDA matrix or a Neural networks. 
-    
+    Some biometric algorithms demands the training of background model, for instance, PCA/LDA matrix or a Neural networks.
+
     \b
     This pipeline runs: `Pipeline.fit(DATA_FOR_FIT)`
 
@@ -179,7 +181,7 @@ def vanilla_biometrics(
     ---------------
 
     Creation of biometric references: This is a standard step in a biometric pipelines.
-    Given a set of samples of one identity, create a biometric reference (a.k.a template) for sub identity. 
+    Given a set of samples of one identity, create a biometric reference (a.k.a template) for sub identity.
 
 
     \b
@@ -191,9 +193,9 @@ def vanilla_biometrics(
     Sub-pipeline 3:\n
     ---------------
 
-    Probing: This is another standard step in biometric pipelines. 
+    Probing: This is another standard step in biometric pipelines.
     Given one sample and one biometric reference, computes a score.
-    Such score has different meanings depending on the scoring method your biometric algorithm uses. 
+    Such score has different meanings depending on the scoring method your biometric algorithm uses.
     It's out of scope to explain in a help message to explain what scoring is for different biometric algorithms.
 
     This pipeline runs: `BioAlgorithm.score(Pipeline.transform(DATA_SCORE, biometric_references))` >> biometric_references
@@ -202,12 +204,6 @@ def vanilla_biometrics(
 
     if not os.path.exists(output):
         os.makedirs(output, exist_ok=True)
-
-    # Picking the resources
-    database, pipeline = load_database_pipeline(database, pipeline)
-
-    if dask_client is not None:
-        dask_client = chain_load([dask_client]).dask_client
 
     if write_metadata_scores:
         pipeline.score_writer = CSVScoreWriter(os.path.join(output, "./tmp"))
@@ -252,9 +248,12 @@ def vanilla_biometrics(
             allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
         )
 
-
         post_processed_scores = post_process_scores(pipeline, result, score_file_name)
         _ = compute_scores(post_processed_scores, dask_client)
 
+    logger.info("Experiment finished !!!!!")
     if dask_client is not None:
+        logger.info("Shutdown workers !!!!!")
         dask_client.shutdown()
+        logger.info("Done !!!!!")
+    

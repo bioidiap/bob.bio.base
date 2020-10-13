@@ -16,6 +16,7 @@ from .score_writers import FourColumnsScoreWriter
 import copy
 import joblib
 import logging
+from .pipelines import check_valid_pipeline
 logger = logging.getLogger(__name__)
 
 
@@ -86,6 +87,7 @@ class ZTNormPipeline(object):
             raise ValueError(
                 "Both z_norm and t_norm are False. No normalization will be applied"
             )
+        check_valid_pipeline(self)
 
     def __call__(
         self,

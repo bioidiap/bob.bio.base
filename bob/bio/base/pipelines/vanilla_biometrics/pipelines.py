@@ -11,6 +11,11 @@ for bob.bio experiments
 import logging
 import numpy
 from .score_writers import FourColumnsScoreWriter
+from bob.pipelines.utils import isinstance_nested
+from sklearn.pipeline import Pipeline
+from sklearn.base import BaseEstimator
+from bob.pipelines import SampleWrapper, wrap
+from bob.bio.base.pipelines.vanilla_biometrics.abstract_classes import BioAlgorithm
 
 logger = logging.getLogger(__name__)
 import tempfile
@@ -78,6 +83,8 @@ class VanillaBiometricsPipeline(object):
         if self.score_writer is None:
             tempdir = tempfile.TemporaryDirectory()
             self.score_writer = FourColumnsScoreWriter(tempdir.name)
+
+        check_valid_pipeline(self)
 
     def __call__(
         self,
@@ -169,3 +176,39 @@ class VanillaBiometricsPipeline(object):
             raise ValueError("No score writer defined in the pipeline")
 
         return self.score_writer.post_process(score_paths, filename)
+
+
+def check_valid_pipeline(vanilla_pipeline):
+    """
+    Applying some checks in the vanilla biometrics pipeline
+    """
+
+    ## CHECKING THE TRANSFORMER
+    # Checking if it's a Scikit Pipeline or a estimator
+    if isinstance(vanilla_pipeline.transformer, Pipeline):
+
+        # Checking if all steps are wrapped as samples, if not, we should wrap them
+        for p in vanilla_pipeline.transformer:
+            if not isinstance_nested(p, "estimator", SampleWrapper):
+                wrap(["sample"], p)
+
+    # In this case it can be a simple estimator. AND
+    # Checking if it's sample wrapper, if not, do it
+    elif isinstance_nested(
+        vanilla_pipeline.transformer, "estimator", BaseEstimator
+    ) and isinstance_nested(vanilla_pipeline.transformer, "estimator", BaseEstimator):
+        wrap(["sample"], vanilla_pipeline.transformer)
+    else:
+        raise ValueError(
+            f"VanillaBiometricsPipeline.transformer should be instance of either `sklearn.pipeline.Pipeline` or"
+            "sklearn.base.BaseEstimator, not {vanilla_pipeline.transformer}"
+        )
+
+    ## Checking the Biometric algorithm
+    if not isinstance(vanilla_pipeline.biometric_algorithm, BioAlgorithm):
+        raise ValueError(
+            f"VanillaBiometricsPipeline.biometric_algorithm should be instance of `BioAlgorithm`"
+            "not {vanilla_pipeline.biometric_algorithm}"
+        )
+
+    return True
