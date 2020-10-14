@@ -9,16 +9,16 @@ import os
 
 
 class AlgorithmTransformer(TransformerMixin, BaseEstimator):
-    """Class that wraps :any:`bob.bio.base.algorithm.Algoritm`
+    """Class that wraps :py:class:`bob.bio.base.algorithm.Algorithm`
 
-    :any:`LegacyAlgorithmrMixin.fit` maps to :any:`bob.bio.base.algorithm.Algoritm.train_projector`
+    :any:`LegacyAlgorithmMixin.fit` maps to :py:meth:`bob.bio.base.algorithm.Algorithm.train_projector`
 
-    :any:`LegacyAlgorithmrMixin.transform` maps :any:`bob.bio.base.algorithm.Algoritm.project`
+    :any:`LegacyAlgorithmMixin.transform` maps :py:meth:`bob.bio.base.algorithm.Algorithm.project`
 
     Example
     -------
 
-        Wrapping LDA algorithm with functtools
+        Wrapping LDA algorithm with functools
         >>> from bob.bio.base.pipelines.vanilla_biometrics import AlgorithmTransformer
         >>> from bob.bio.base.algorithm import LDA
         >>> transformer = AlgorithmTransformer(LDA(use_pinv=True, pca_subspace_dimension=0.90)

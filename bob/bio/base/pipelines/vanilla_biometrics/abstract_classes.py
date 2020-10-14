@@ -11,16 +11,16 @@ import os
 
 def average_scores(scores):
     """
-    Given a :any:`numpy.ndarray` coming from multiple probes, 
+    Given a :any:`numpy.ndarray` coming from multiple probes,
     average them
     """
     return np.mean(scores, axis=0)
 
 
 class BioAlgorithm(metaclass=ABCMeta):
-    """Describes a base biometric comparator for the Vanilla Biometrics Pipeline :ref:`_bob.bio.base.struct_bio_rec_sys`_.
+    """Describes a base biometric comparator for the Vanilla Biometrics Pipeline :ref:`bob.bio.base.biometric_algorithm`.
 
-    biometric model enrollement, via ``enroll()`` and scoring, with
+    biometric model enrollment, via ``enroll()`` and scoring, with
     ``score()``.
 
     Parameters
@@ -36,7 +36,7 @@ class BioAlgorithm(metaclass=ABCMeta):
         self.score_reduction_operation = average_scores
 
     def enroll_samples(self, biometric_references):
-        """This method should implement the sub-pipeline 1 of the Vanilla Biometrics Pipeline :ref:`_vanilla-pipeline-1`.
+        """This method should implement the enrollment sub-pipeline of the Vanilla Biometrics Pipeline. TODO REF
 
         It handles the creation of biometric references
 
@@ -66,7 +66,7 @@ class BioAlgorithm(metaclass=ABCMeta):
     @abstractmethod
     def enroll(self, data):
         """
-        It handles the creation of ONE biometric reference for the vanilla ppipeline
+        It handles the creation of ONE biometric reference for the vanilla pipeline
 
         Parameters
         ----------
@@ -212,11 +212,10 @@ class BioAlgorithm(metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod
     def score_multiple_biometric_references(self, biometric_references, data):
         """
         It handles the score computation of one probe against multiple biometric references
-        This method is called is called if `allow_scoring_multiple_references` is set to true
+        This method is called if `allow_scoring_multiple_references` is set to true
 
         Parameters
         ----------
@@ -227,7 +226,7 @@ class BioAlgorithm(metaclass=ABCMeta):
                 Data used for the creation of ONE BIOMETRIC REFERENCE
 
         """
-        pass
+        raise NotImplementedError("Your BioAlgorithm implementation should implement score_multiple_biometric_references.")
 
 
 class Database(metaclass=ABCMeta):
@@ -289,7 +288,7 @@ class Database(metaclass=ABCMeta):
 class ScoreWriter(metaclass=ABCMeta):
     """
     Defines base methods to read, write scores and concatenate scores
-    for :any:`BioAlgorithm`
+    for :py:class:`BioAlgorithm`
     """
 
     def __init__(self, path, extension=".txt"):
