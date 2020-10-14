@@ -13,13 +13,13 @@ import shutil
 class FourColumnsScoreWriter(ScoreWriter):
     """
     Read and write scores using the four columns format
-    :any:`bob.bio.base.score.load.four_column`
+    :py:func:`bob.bio.base.score.load.four_column`
     """
 
     def write(self, probe_sampleset):
         """
-        Write scores and returns a :any:`bob.pipelines.DelayedSample` containing
-        the instruction to open the score file
+        Write scores and returns a :py:class:`bob.pipelines.DelayedSample`
+        containing the instruction to open the score file
         """
         def _write(probe_sampleset):
             os.makedirs(self.path, exist_ok=True)
@@ -54,7 +54,7 @@ class FourColumnsScoreWriter(ScoreWriter):
 
 class CSVScoreWriter(ScoreWriter):
     """
-    Read and write scores in CSV format, shipping all metadata with the scores    
+    Read and write scores in CSV format, shipping all metadata with the scores
 
     Parameters
     ----------
@@ -82,7 +82,7 @@ class CSVScoreWriter(ScoreWriter):
 
     def write(self, probe_sampleset):
         """
-        Write scores and returns a :any:`bob.pipelines.DelayedSample` containing
+        Write scores and returns a :py:class:`bob.pipelines.DelayedSample` containing
         the instruction to open the score file
         """
 

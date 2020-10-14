@@ -18,22 +18,22 @@ from bob.bio.base.pipelines.vanilla_biometrics import dask_vanilla_biometrics
 from bob.pipelines import Sample, SampleSet
 
 
-EPILOG = """\b
+EPILOG = """\n
 
 
  Command line examples\n
  -----------------------
 
-    >>> bob bio compare-samples ./imgs/1.png ./imgs/2.png -p inception_resnetv2_msceleb \b
-    \b
-    \b
+    >>> bob bio compare-samples ./imgs/1.png ./imgs/2.png -p inception_resnetv2_msceleb \n
+    \n
+    \n
 
-    All vs All comparison \b
-    -------------------  ------------------- \b
-    ./imgs/1.png         ./imgs/2.png         \b
-    0.0                  -0.5430189337666903  \b
-    -0.5430189337666903  0.0                  \b
-    -------------------  -------------------  \b
+    All vs All comparison \n
+    -------------------  ------------------- \n
+    ./imgs/1.png         ./imgs/2.png         \n
+    0.0                  -0.5430189337666903  \n
+    -0.5430189337666903  0.0                  \n
+    -------------------  -------------------  \n
 
 """
 

@@ -37,7 +37,7 @@ def _biofile_to_delayed_sample(biofile, database):
 
 
 class DatabaseConnector(Database):
-    """Wraps a bob.bio.base database and generates conforming samples
+    """Wraps a legacy bob.bio.base database and generates conforming samples
 
     This connector allows wrapping generic bob.bio.base datasets and generate
     samples that conform to the specifications of biometric pipelines defined
@@ -181,19 +181,19 @@ class DatabaseConnector(Database):
 
 
 class BioAlgorithmLegacy(BioAlgorithm):
-    """Biometric Algorithm that handlesy :any:`bob.bio.base.algorithm.Algorithm`
+    """Biometric Algorithm that handles :py:class:`bob.bio.base.algorithm.Algorithm`
 
-    In this design, :any:`BioAlgorithm.enroll` maps to :any:`bob.bio.base.algorithm.Algorithm.enroll` and 
-    :any:`BioAlgorithm.score` maps :any:`bob.bio.base.algorithm.Algorithm.score`
-    
+    In this design, :any:`BioAlgorithm.enroll` maps to :py:meth:`bob.bio.base.algorithm.Algorithm.enroll`
+    and :any:`BioAlgorithm.score` maps to :py:meth:`bob.bio.base.algorithm.Algorithm.score`
+
     .. note::
-        Legacy algorithms are always checkpointable     
+        Legacy algorithms are always checkpointable
 
 
     Parameters
     ----------
       instance: object
-         An instance of :any:`bob.bio.base.algorithm.Algorithm`
+         An instance of :py:class:`bob.bio.base.algorithm.Algorithm`
 
 
     Example
