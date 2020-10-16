@@ -4,12 +4,6 @@ from sklearn.base import TransformerMixin, BaseEstimator
 class Annotator(TransformerMixin, BaseEstimator):
     """Annotator class for all annotators. This class is meant to be used in
     conjunction with the bob bio annotate script or to be used in pipelines.
-
-    Attributes
-    ----------
-    read_original_data : callable
-        A function that loads the samples. The syntax is like
-        `bob.bio.base.read_original_data`.
     """
 
     def transform(self, samples, **kwargs):
@@ -31,6 +25,6 @@ class Annotator(TransformerMixin, BaseEstimator):
         """
         raise NotImplementedError
 
-    # Alias call to annotate
+    # Alias call to transform
     def __call__(self, samples, **kwargs):
         return self.transform(samples, **kwargs)
