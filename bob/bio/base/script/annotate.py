@@ -5,37 +5,15 @@ import json
 import click
 import functools
 from os.path import dirname, isfile, expanduser
+from os import makedirs
 from bob.extension.scripts.click_helper import (
     verbosity_option,
     ConfigCommand,
     ResourceOption,
     log_parameters,
 )
-from bob.io.base import create_directories_safe
 
 logger = logging.getLogger(__name__)
-
-
-def indices(list_to_split, number_of_parallel_jobs, task_id=None):
-  """This function returns the first and last index for the files for the current job ID.
-     If no job id is set (e.g., because a sub-job is executed locally), it simply returns all indices."""
-
-  if number_of_parallel_jobs is None or number_of_parallel_jobs == 1:
-    return None
-
-  # test if the 'SEG_TASK_ID' environment is set
-  sge_task_id = os.getenv('SGE_TASK_ID') if task_id is None else task_id
-  if sge_task_id is None:
-    # task id is not set, so this function is not called from a grid job
-    # hence, we process the whole list
-    return (0,len(list_to_split))
-  else:
-    job_id = int(sge_task_id) - 1
-    # compute number of files to be executed
-    number_of_objects_per_job = int(math.ceil(float(len(list_to_split) / float(number_of_parallel_jobs))))
-    start = job_id * number_of_objects_per_job
-    end = min((job_id + 1) * number_of_objects_per_job, len(list_to_split))
-    return (start, end)
 
 
 def annotate_common_options(func):
@@ -62,13 +40,6 @@ def annotate_common_options(func):
         cls=ResourceOption,
         help="Whether to overwrite existing annotations.",
     )
-    @click.option(
-        "--array",
-        type=click.INT,
-        default=1,
-        cls=ResourceOption,
-        help="Use this option alongside gridtk to submit this script as an array job.",
-    )
     @functools.wraps(func)
     def wrapper(*args, **kwds):
         return func(*args, **kwds)
@@ -83,7 +54,6 @@ def annotate_common_options(func):
 Examples:
 
   $ bob bio annotate -vvv -d <database> -a <annotator> -o /tmp/annotations
-  $ jman submit --array 64 -- bob bio annotate ... --array 64
 """,
 )
 @click.option(
@@ -103,7 +73,7 @@ Examples:
 )
 @verbosity_option(cls=ResourceOption)
 def annotate(
-    database, annotator, output_dir, force, array, database_directories_file, **kwargs
+    database, annotator, output_dir, force, database_directories_file, **kwargs
 ):
     """Annotates a database.
 
@@ -126,9 +96,7 @@ def annotate(
     def make_path(biofile, output_dir):
         return biofile.make_path(output_dir, ".json")
 
-    return annotate_generic(
-        samples, reader, make_path, annotator, output_dir, force, array
-    )
+    return annotate_generic(samples, reader, make_path, annotator, output_dir, force)
 
 
 @click.command(
@@ -138,7 +106,6 @@ def annotate(
 Examples:
 
   $ bob bio annotate-samples -vvv config.py -a <annotator> -o /tmp/annotations
-  $ jman submit --array 64 -- bob bio annotate-samples ... --array 64
 
 You have to define samples, reader, and make_path in a python file (config.py) as in
 examples.
@@ -170,7 +137,7 @@ examples.
 @annotate_common_options
 @verbosity_option(cls=ResourceOption)
 def annotate_samples(
-    samples, reader, make_path, annotator, output_dir, force, array, **kwargs
+    samples, reader, make_path, annotator, output_dir, force, **kwargs
 ):
     """Annotates a list of samples.
 
@@ -194,16 +161,10 @@ def annotate_samples(
     """
     log_parameters(logger, ignore=("samples",))
     logger.debug("len(samples): %d", len(samples))
-    return annotate_generic(
-        samples, reader, make_path, annotator, output_dir, force, array
-    )
+    return annotate_generic(samples, reader, make_path, annotator, output_dir, force)
 
 
-def annotate_generic(samples, reader, make_path, annotator, output_dir, force, array):
-    if array > 1:
-        start, end = indices(samples, array)
-        samples = samples[start:end]
-
+def annotate_generic(samples, reader, make_path, annotator, output_dir, force):
     total = len(samples)
     logger.info("Saving annotations in %s", output_dir)
     logger.info("Annotating %d samples ...", total)
@@ -226,6 +187,6 @@ def annotate_generic(samples, reader, make_path, annotator, output_dir, force, a
         data = reader(sample)
         annot = annotator(data)
 
-        create_directories_safe(dirname(outpath))
+        makedirs(dirname(outpath), exist_ok=True)
         with open(outpath, "w") as f:
             json.dump(annot, f, indent=1, allow_nan=False)
