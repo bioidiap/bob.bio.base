@@ -298,15 +298,16 @@ class ScoreWriter(metaclass=ABCMeta):
     @abstractmethod
     def write(self, sampleset, path):
         pass
-    
+
     def post_process(self, score_paths, filename):
         def _post_process(score_paths, filename):
             os.makedirs(os.path.dirname(filename), exist_ok=True)
-            f = open(filename, "w")
-            for path in score_paths:
-                f.writelines(open(path).readlines())
+            with open(filename, "w") as f:
+                for path in score_paths:
+                    with open(path) as f2:
+                        f.writelines(f2.readlines())
             return filename
-    
+
         import dask.bag
         import dask
         if isinstance(score_paths, dask.bag.Bag):
