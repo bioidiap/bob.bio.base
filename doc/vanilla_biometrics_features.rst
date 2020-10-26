@@ -189,7 +189,7 @@ The format of the CSV file is the same as in :py:class:`~bob.bio.base.database.C
   path/to/sample1_subj1,1
   path/to/sample2_subj1,1
 
-Two set are created: a *train* set and a *test* set. By default, the ratio between these two sets is defined at 0.2 *train* subjects and 0.8 *test* subjects.
+Two sets are created: a *train* set and a *test* set. By default, the ratio between these two sets is defined at 0.2 *train* subjects and 0.8 *test* subjects.
 
 By default, one sample of each subject of the *test* set will be used for enrollment. The rest of the samples will be used as probes against the models created by the enrolled samples.
 
@@ -217,14 +217,40 @@ Although most of the experiments will be satisfied with the CSV or cross-validat
 
 When a vanilla-biometrics pipeline requests data from that class, it will call the following methods, which need to be implemented for each dataset:
 
-  - :py:meth:`~bob.db.base.Database.background_model_samples`: Provides a list of :py:class:`~bob.pipelines.Sample` objects that are used for training of the :py:class:`Transformers`.
-    Each :py:class:`~bob.pipelines.Sample` must contains at least the attributes :py:attr:`~bob.pipelines.Sample.key` and :py:attr:`~bob.pipelines.Sample.subject`, as well as the :py:attr:`~bob.pipelines.Sample.data` of the sample.
-  - :py:meth:`~bob.db.base.Database.references`: Provides a list of :py:class:`~bob.pipelines.SampleSet` that are used for enrollment of the models.
-    The group (*dev* or *eval*) can be given as parameter to specify which set must be used.
-    Each :py:class:`~bob.pipelines.SampleSet` must contain a :py:attr:`~bob.pipelines.SampleSet.subject` attribute and a list of :py:attr:`~bob.pipelines.Sample` containing at least the :py:attr:`~bob.pipelines.Sample.key` attribute as well as the :py:attr:`~bob.pipelines.Sample.data` of the sample.
-  - :py:meth:`~bob.db.base.Database.probes`: Returns a list of :py:class:`~bob.pipelines.SampleSet` that are used for scoring against a previously enrolled model.
-    The group parameter (*dev* or *eval*) can be given to specify from which set of individuals the data comes.
-    Each :py:class:`~bob.pipelines.SampleSet` must contain a :py:attr:`~bob.pipelines.SampleSet.subject`, a :py:attr:`~bob.pipelines.SampleSet.references` list, and a list of :py:attr:`~bob.pipelines.Sample` containing at least the :py:attr:`~bob.pipelines.Sample.key` attribute as well as the :py:attr:`~bob.pipelines.Sample.data` of the sample.
+:py:meth:`~bob.db.base.Database.background_model_samples`:
+  Provides a **list of** :py:class:`~bob.pipelines.Sample` **objects** that are used for training of the :py:class:`Transformers <Transformer>`.
+  This method can return an empty list. If so, the pipeline will assume that no training is needed for any :py:class:`Transformer`, and skip the *fitting* sub-pipeline.
+
+  Each :py:class:`~bob.pipelines.Sample` object must contains at least the following attributes:
+
+    - :py:attr:`~bob.pipelines.Sample.key`,
+    - :py:attr:`~bob.pipelines.Sample.subject`,
+    - :py:attr:`~bob.pipelines.Sample.data`: the data of the sample.
+
+:py:meth:`~bob.db.base.Database.references`:
+  Provides a **list of** :py:class:`~bob.pipelines.SampleSet` **objects** that are used for enrollment of the models.
+  The ``group`` parameter (``"dev"`` or ``"eval"``) can be given to specify which set must be used.
+
+  Each :py:class:`~bob.pipelines.SampleSet` must contain the following attributes:
+
+    - :py:attr:`~bob.pipelines.SampleSet.subject`: an identifier of the individual represented by the samples,
+    - :py:attr:`~bob.pipelines.Sample.key`: an integer identifier,
+    - :py:attr:`~bob.pipelines.SampleSet.samples`: a list of :py:class:`~bob.pipelines.Sample` objects, each containing:
+
+      - :py:attr:`~bob.pipelines.Sample.data`: the data of the sample.
+
+:py:meth:`~bob.db.base.Database.probes`:
+  Returns a **list of** :py:class:`~bob.pipelines.SampleSet` **objects** that are used for scoring against a previously enrolled model.
+  The group parameter (*dev* or *eval*) can be given to specify from which set of individuals the data comes.
+
+  Each :py:class:`~bob.pipelines.SampleSet` must contain the following attributes:
+
+    - :py:attr:`~bob.pipelines.SampleSet.subject`: The ``subject_id`` of this probe;,
+    - :py:attr:`~bob.pipelines.SampleSet.references`: a list of ``subject_id``,
+    - :py:attr:`~bob.pipelines.SampleSet.key`: a unique identifier for probes with the same ``subject_id``,
+    - :py:attr:`~bob.pipelines.SampleSet.samples`: a list of :py:attr:`~bob.pipelines.Sample` objects, each containing:
+
+      - the :py:attr:`~bob.pipelines.Sample.data` of the sample.
 
 
 Here is a code snippet of a simple database interface:
@@ -252,13 +278,13 @@ Here is a code snippet of a simple database interface:
         def probes(self, group="dev"):
             all_probes = []
             for a_subject in dataset_dev_subjects:
-                current_sampleset = SampleSet(samples=[], subject=a_subject.id, references=list_of_references_id)
                 for a_sample in a_subject:
+                    current_sampleset = SampleSet(samples=[], subject=a_subject.id, references=list_of_references_id)
                     current_sampleset.insert(-1, Sample(data=a_sample.data, key=a_sample.sample_id))
-                all_probes.append(current_sampleset)
+                    all_probes.append(current_sampleset)
             return all_probes
 
-        allow_scoring_with_all_biometric_references = True
+        allow_scoring_with_all_biometric_references = False
 
     database = CustomDatabase()
 
@@ -267,7 +293,7 @@ Here is a code snippet of a simple database interface:
   For optimization reasons, an ``allow_scoring_with_all_biometric_references`` flag can be set in the database interface to allow scoring with all biometric references.
   This will be much faster when your algorithm allows vectorization of operations, but not all protocols allow such feature.
 
-  - When this flag is ``True``, the algorithm will compare a probe sample and generate the scores against **every** model of the set returned by the :py:meth:`references` method.
+  - When this flag is ``True``, the algorithm will compare a probe sample and generate the scores against **every** model of the set returned by the :py:meth:`references` method (ignoring the :py:attr:`~bob.pipelines.SampleSet.references` attribute).
   - Otherwise (flag is ``False``), the scoring algorithm will only compare a probe to the given :py:attr:`~bob.pipelines.SampleSet.references` attribute of its :py:class:`~bob.pipelines.SampleSet`.
 
 

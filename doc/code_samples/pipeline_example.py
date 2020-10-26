@@ -10,6 +10,7 @@ class CustomTransformer(TransformerMixin, BaseEstimator):
         return transformed_X
 
     def fit(self, X, y=None):
+        import ipdb; ipdb.set_trace()
         return self
 
 
@@ -19,6 +20,7 @@ from bob.bio.base.pipelines.vanilla_biometrics.abstract_classes import BioAlgori
 
 class CustomDistance(BioAlgorithm):
     def enroll(self, enroll_features):
+        # import ipdb; ipdb.set_trace()
         model = numpy.mean(enroll_features, axis=0)
         return model
 
@@ -47,9 +49,6 @@ bio_algorithm = CustomDistance()
 
 # Assemble the Vanilla Biometric pipeline and execute
 pipeline = VanillaBiometricsPipeline(transformer, bio_algorithm)
-
-# Prevent the need to implement a `score_multiple_biometric_references` method
-database.allow_scoring_with_all_biometric_references = False
 
 
 # `pipeline` will be used by the `bob bio pipelines` command
