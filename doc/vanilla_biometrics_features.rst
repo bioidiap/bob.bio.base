@@ -306,6 +306,27 @@ The functionality is the same as a :py:class:`~bob.pipelines.Sample`, but instea
 When data is needed, the load function is called and the sample data is returned.
 
 
+Annotators
+==========
+
+In order to label a dataset automatically, a special set of transformers are defined: the annotators.
+
+Instead of modifying the :py:attr:`~bob.pipelines.Sample.data` attribute of a :py:class:`~bob.pipelines.Sample` given as input, the annotator adds an :py:attr:`~bob.pipelines.Sample.annotations` field to that sample.
+The annotations type and format can vary depending on the data that is being processed.
+For face recognition, an annotator can consist of a face detection system that locates the eyes of the subject and gives their position in the image, for example.
+
+
+Executing an annotator pipeline on a dataset
+--------------------------------------------
+
+A utility is available to annotate a full dataset in one command. To use it, run::
+
+$ bob bio annotate -d <database> -a <annotator> -o <output_dir>
+
+Where ``<database>`` is a database resource or a python file defining a ``database`` object, ``<annotator>`` is an annotator resource defined by a *bob.bio* package, or a python file defining an ``annotator`` object.
+An annotation file will be saved in the output folder and can be loaded with a Database interface.
+
+
 Checkpointing experiments
 =========================
 
