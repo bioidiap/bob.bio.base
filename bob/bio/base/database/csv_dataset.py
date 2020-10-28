@@ -136,7 +136,7 @@ class CSVToSampleLoader(CSVBaseSampleLoader):
 
 class CSVDatasetDevEval:
     """
-    Generic filelist dataset for :any:`bob.bio.base.pipelines.VanillaBiometrics` pipeline.
+    Generic filelist dataset for Vanilla Biometrics pipeline.
     Check :ref:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
     interface.
 
@@ -330,7 +330,7 @@ class CSVDatasetDevEval:
 
 class CSVDatasetCrossValidation:
     """
-    Generic filelist dataset for :any:`bob.bio.base.pipelines.VanillaBiometrics` pipeline that 
+    Generic filelist dataset for Vanilla Biometrics pipeline that
     handles **CROSS VALIDATION**.
 
     Check :ref:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
