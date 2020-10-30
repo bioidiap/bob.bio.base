@@ -1,27 +1,33 @@
 from random import random
-from bob.bio.base.annotator import FailSafe, Callable
+from bob.bio.base.annotator import FailSafe, Annotator
 
 
-def simple_annotator(image, **kwargs):
-    return {
-        'topleft': (0, 0),
-        'bottomright': image.shape,
-    }
+class SimpleAnnotator(Annotator):
+    def transform(self, samples, **kwargs):
+        for sample in samples:
+            sample.annotations = {
+                'topleft': (0, 0),
+                'bottomright': sample.data.shape,
+            }
+        return samples
 
 
-def moody_annotator(image, **kwargs):
-    annot = simple_annotator(image, **kwargs)
-    if random() < 0.5:
-        del annot['bottomright']
-    return annot
+class MoodyAnnotator(Annotator):
+    def transform(self, samples, **kwargs):
+        for sample in samples:
+            sample.annotations = {'topleft': (0,0)}
+            if random() > 0.5:
+                sample.annotations['bottomright'] = sample.data.shape
+        return samples
 
 
-def fail_annotator(image, **kwargs):
-    return {}
+class FailAnnotator(Annotator):
+    def transform(self, samples, **kwargs):
+        return {}
 
 
 annotator = FailSafe(
-    [Callable(fail_annotator),
-     Callable(simple_annotator)],
+    [FailAnnotator(),
+     SimpleAnnotator()],
     required_keys=['topleft', 'bottomright'],
 )

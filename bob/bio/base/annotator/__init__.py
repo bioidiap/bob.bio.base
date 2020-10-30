@@ -1,6 +1,7 @@
 from .Annotator import Annotator
 from .FailSafe import FailSafe
 from .Callable import Callable
+from .SaveAnnotationsWrapper import SaveAnnotationsWrapper
 
 
 # gets sphinx autodoc done right - don't remove it
@@ -26,6 +27,7 @@ __appropriate__(
     Annotator,
     FailSafe,
     Callable,
+    SaveAnnotationsWrapper,
 )
 
 __all__ = [_ for _ in dir() if not _.startswith('_')]

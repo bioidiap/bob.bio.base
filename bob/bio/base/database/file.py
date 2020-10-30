@@ -56,18 +56,34 @@ class BioFile(bob.db.base.File, _ReprMixin):
         self.annotation_extension = annotation_extension or ".json"
         self.annotation_type = annotation_type or "json"
 
-    def load(self):
+    def load(self, original_directory=None, original_extension=None):
         """Loads the data at the specified location and using the given extension.
         Override it if you need to load differently.
+
+        Parameters
+        ----------
+
+        original_directory: str (optional)
+            The path to the root of the dataset structure.
+            If `None`, will try to use `self.original_directory`.
+
+        original_extension: str (optional)
+            The filename extension of every files in the dataset.
+            If `None`, will try to use `self.original_extension`.
 
         Returns
         -------
         object
             The loaded data (normally :py:class:`numpy.ndarray`).
         """
+
+        if original_directory is None:
+            original_directory = self.original_directory
+        if original_extension is None:
+            original_extension = self.original_extension
         # get the path
         path = self.make_path(
-            self.original_directory or "", self.original_extension or ""
+            original_directory or "", original_extension or ""
         )
         return bob.io.base.load(path)
 

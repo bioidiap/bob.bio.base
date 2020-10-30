@@ -1,7 +1,7 @@
 from bob.bio.base.database import ZTBioDatabase
 from bob.bio.base.database.file import BioFile
 from bob.bio.base.test.utils import atnt_database_directory
-
+from bob.bio.base.pipelines.vanilla_biometrics import DatabaseConnector
 
 class DummyDatabase(ZTBioDatabase):
 
@@ -46,4 +46,4 @@ class DummyDatabase(ZTBioDatabase):
         return None
 
 
-database = DummyDatabase()
+database = DatabaseConnector(DummyDatabase())

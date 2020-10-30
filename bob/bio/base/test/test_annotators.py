@@ -3,8 +3,9 @@ import os
 import shutil
 from click.testing import CliRunner
 from bob.bio.base.script.annotate import annotate
-from bob.bio.base.annotator import Callable, FailSafe
+from bob.bio.base.annotator import Annotator, FailSafe
 from bob.db.base import read_annotation_file
+from bob.pipelines import Sample
 
 
 def test_annotate():
@@ -13,7 +14,7 @@ def test_annotate():
         tmp_dir = tempfile.mkdtemp(prefix="bobtest_")
         runner = CliRunner()
         result = runner.invoke(annotate, args=(
-            '-d', 'dummy', '-a', 'dummy', '-o', tmp_dir))
+            '-d', 'dummy', '-a', 'dummy', '-g', 'dev', '-o', tmp_dir))
         assertion_error_message = (
             'Command exited with this output: `{}\' \n'
             'If the output is empty, you can run this script locally to see '
@@ -34,16 +35,23 @@ def test_annotate():
         shutil.rmtree(tmp_dir)
 
 
-def dummy_extra_key_annotator(data, **kwargs):
-    return {'leye': 0, 'reye': 0, 'topleft': 0}
+class dummy_extra_key_annotator(Annotator):
+    def transform(self, samples, **kwargs):
+        for s in samples:
+            s.annotations = {'leye': 0, 'reye': 0, 'topleft': 0}
+        return samples
 
 
 def test_failsafe():
-    annotator = FailSafe([Callable(dummy_extra_key_annotator)],
-                         ['leye', 'reye'])
-    assert all(key in annotator(1) for key in ['leye', 'reye', 'topleft'])
+    annotator = FailSafe([dummy_extra_key_annotator()], ['leye', 'reye'])
+    samples = [Sample(data=1, key="dummy_sample")]
+    annotated = annotator(samples)[0]
+    assert all(key in annotated.annotations for key in ['leye', 'reye', 'topleft'])
 
-    annotator = FailSafe([Callable(dummy_extra_key_annotator)],
-                         ['leye', 'reye'], True)
-    assert all(key in annotator(1) for key in ['leye', 'reye'])
-    assert all(key not in annotator(1) for key in ['topleft'])
+    annotator = FailSafe([dummy_extra_key_annotator()], ['leye', 'reye'], True)
+    samples = [Sample(data=1, key="dummy_sample")]
+    annotated = annotator(samples)[0]
+    assert all(key in annotated.annotations for key in ['leye', 'reye'])
+    samples = [Sample(data=1, key="dummy_sample")]
+    annotated = annotator(samples)[0]
+    assert all(key not in annotated.annotations for key in ['topleft'])

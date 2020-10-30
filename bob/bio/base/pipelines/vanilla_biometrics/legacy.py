@@ -136,7 +136,7 @@ class DatabaseConnector(Database):
 
         return retval
 
-    def probes(self, group):
+    def probes(self, group="dev"):
         """Returns :py:class:`Probe`'s to score biometric references
 
 

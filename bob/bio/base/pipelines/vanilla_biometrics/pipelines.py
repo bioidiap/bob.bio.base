@@ -201,14 +201,14 @@ def check_valid_pipeline(vanilla_pipeline):
     else:
         raise ValueError(
             f"VanillaBiometricsPipeline.transformer should be instance of either `sklearn.pipeline.Pipeline` or"
-            "sklearn.base.BaseEstimator, not {vanilla_pipeline.transformer}"
+            f"sklearn.base.BaseEstimator, not {vanilla_pipeline.transformer}"
         )
 
     ## Checking the Biometric algorithm
     if not isinstance(vanilla_pipeline.biometric_algorithm, BioAlgorithm):
         raise ValueError(
             f"VanillaBiometricsPipeline.biometric_algorithm should be instance of `BioAlgorithm`"
-            "not {vanilla_pipeline.biometric_algorithm}"
+            f"not {vanilla_pipeline.biometric_algorithm}"
         )
 
     return True
