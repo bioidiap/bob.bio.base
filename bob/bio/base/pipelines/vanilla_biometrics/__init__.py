@@ -14,3 +14,5 @@ from .wrappers import (
 from .zt_norm import ZTNormPipeline, ZTNormDaskWrapper, ZTNormCheckpointWrapper
 
 from .legacy import BioAlgorithmLegacy, DatabaseConnector
+
+from .vanilla_biometrics import execute_vanilla_biometrics
