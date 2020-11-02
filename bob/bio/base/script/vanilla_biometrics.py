@@ -180,7 +180,7 @@ def vanilla_biometrics(
         instead.
 
     """
-    print("hello")
+    logger.debug("Executing Vanilla-biometrics")
     execute_vanilla_biometrics(
         pipeline,
         database,
