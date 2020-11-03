@@ -18,5 +18,5 @@ class Callable(Annotator):
         super(Callable, self).__init__(**kwargs)
         self.callable = callable
 
-    def annotate(self, sample, **kwargs):
+    def transform(self, sample, **kwargs):
         return self.callable(sample, **kwargs)

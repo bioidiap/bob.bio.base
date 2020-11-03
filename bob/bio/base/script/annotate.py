@@ -2,6 +2,7 @@
 """
 import logging
 import click
+import json
 import functools
 from bob.extension.scripts.click_helper import (
     verbosity_option,
@@ -10,9 +11,11 @@ from bob.extension.scripts.click_helper import (
     log_parameters,
 )
 from bob.pipelines import wrap, ToDaskBag
-from bob.bio.base.annotator import SaveAnnotationsWrapper
 logger = logging.getLogger(__name__)
 
+def save_annotations_to_json(data, path):
+    with open(path, "w") as f:
+        json.dump(data, f)
 
 def annotate_common_options(func):
     @click.option(
@@ -92,11 +95,16 @@ def annotate(
     """
     log_parameters(logger)
 
-    # Wrapping that will save each sample at {output_dir}/{sample.key}.json
-    annotator = SaveAnnotationsWrapper(
-        annotator,
-        annotations_dir=output_dir,
-        overwrite=force,
+    # Allows passing of Sample objects as parameters
+    annotator = wrap(["sample"], annotator)
+
+    # Will save the annotations in the `data` fields to a json file
+    annotator = wrap(
+        bases=["checkpoint"],
+        estimator=annotator,
+        features_dir=output_dir,
+        save_func=save_annotations_to_json,
+        extension=".json",
     )
 
     # Allows reception of Dask Bags

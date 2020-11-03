@@ -34,33 +34,35 @@ class FailSafe(Annotator):
         self.required_keys = list(required_keys)
         self.only_required_keys = only_required_keys
 
-    def transform(self, samples, **kwargs):
-        for sample in samples:
-            if 'annotations' not in kwargs or kwargs['annotations'] is None:
-                kwargs['annotations'] = {}
+    def transform(self, sample_batch, **kwargs):
+        if 'annotations' not in kwargs or kwargs['annotations'] is None:
+            kwargs['annotations'] = {}
+        all_annotations = []
+        for sample in sample_batch:
+            annotations = kwargs['annotations'].copy()
             for annotator in self.annotators:
                 try:
-                    sample = annotator([sample], **kwargs)[0]
+                    annot = annotator([sample], **kwargs)[0]
                 except Exception:
                     logger.debug(
                         "The annotator `%s' failed to annotate!", annotator,
                         exc_info=True)
-                    sample.annotations = None
-                if not sample.annotations:
+                    annot = None
+                if not annot:
                     logger.debug(
                         "Annotator `%s' returned empty annotations.", annotator)
                 else:
                     logger.debug("Annotator `%s' succeeded!", annotator)
-                kwargs['annotations'].update(sample.annotations or {})
+                annotations.update(annot or {})
                 # check if we have all the required annotations
-                if all(key in kwargs['annotations'] for key in self.required_keys):
+                if all(key in annotations for key in self.required_keys):
                     break
             else:  # this else is for the for loop
                 # we don't want to return half of the annotations
-                kwargs['annotations'] = None
+                annotations = None
             if self.only_required_keys:
-                for key in list(kwargs['annotations'].keys()):
+                for key in list(annotations.keys()):
                     if key not in self.required_keys:
-                        del kwargs['annotations'][key]
-            sample.annotations = kwargs['annotations']
-        return samples
+                        del annotations[key]
+            all_annotations.append(annotations)
+        return all_annotations
