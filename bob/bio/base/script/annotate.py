@@ -175,11 +175,16 @@ def annotate_samples(
     """
     log_parameters(logger, ignore=("samples",))
 
-    # Wrapping that will save each sample at {output_dir}/{sample.key}.json
-    annotator = SaveAnnotationsWrapper(
-        annotator,
-        annotations_dir=output_dir,
-        overwrite=force,
+    # Allows passing of Sample objects as parameters
+    annotator = wrap(["sample"], annotator)
+
+    # Will save the annotations in the `data` fields to a json file
+    annotator = wrap(
+        bases=["checkpoint"],
+        estimator=annotator,
+        features_dir=output_dir,
+        save_func=save_annotations_to_json,
+        extension=".json",
     )
 
     # Allows reception of Dask Bags
