@@ -51,7 +51,7 @@ It is possible to do it via configuration file
    >>> database = .... # Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)"
 
 \b
-  
+
 
 """
 
@@ -193,8 +193,3 @@ def vanilla_biometrics(
     )
 
     logger.info("Experiment finished !!!!!")
-    if dask_client is not None:
-        logger.info("Shutdown workers !!!!!")
-        dask_client.shutdown()
-        logger.info("Done !!!!!")
-
