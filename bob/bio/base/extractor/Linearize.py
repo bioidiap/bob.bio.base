@@ -32,7 +32,7 @@ class Linearize(Extractor):
 
         data : 1D :py:class:`numpy.ndarray`
           The extracted feature vector, of the desired ``dtype`` (if specified).
-        """
+        """        
         assert isinstance(data, numpy.ndarray)
 
         linear = numpy.reshape(data, data.size)

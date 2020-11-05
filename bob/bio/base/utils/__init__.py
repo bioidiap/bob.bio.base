@@ -5,7 +5,6 @@
 
 from .resources import *
 from .io import *
-from .singleton import *
 import six
 import inspect
 import numpy

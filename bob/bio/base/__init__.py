@@ -3,10 +3,7 @@ from . import database
 from . import preprocessor
 from . import extractor
 from . import algorithm
-from . import tools
-from . import grid # only one file, not complete directory
 from . import annotator
-from . import baseline
 
 from . import script
 from . import test

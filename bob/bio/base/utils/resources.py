@@ -20,7 +20,7 @@ logger = logging.getLogger("bob.bio.base")
 
 
 #: Keywords for which resources are defined.
-valid_keywords = ('database', 'preprocessor', 'extractor', 'algorithm', 'grid', 'config', 'annotator', 'baseline')
+valid_keywords = ('database', 'preprocessor', 'extractor', 'algorithm', 'grid', 'config', 'annotator', 'baseline', 'pipeline')
 
 
 def _collect_config(paths):
@@ -252,3 +252,50 @@ def database_directories(strip=['dummy'], replacements = None, package_prefix='b
       pass
 
   return dirs
+
+
+def get_resource_filename(resource_name, group):
+    """
+    Get the file name of a resource.
+
+
+    Parameters
+    ----------
+        resource_name: str
+            Name of the resource to be searched
+        
+        group: str
+            Entry point group
+
+    Return
+    ------
+        filename: str
+            The entrypoint file name
+
+    """
+
+    # Check if it's already a path
+    if os.path.exists(resource_name):
+        return resource_name
+
+    # If it's a resource get the path of this resource
+    resources = [r for r in pkg_resources.iter_entry_points(group)]
+
+    # if resource_name not in [r.name for r in resources]:
+    #    raise ValueError(f"Resource not found: `{resource_name}`")
+
+    for r in resources:
+        if r.name == resource_name:
+            resource = r
+            break
+    else:
+        raise ValueError(f"Resource not found: `{resource_name}`")
+
+    # TODO: This get the root path only
+    #        I don't know how to get the filename
+    return (
+        pkg_resources.resource_filename(
+            resource.module_name, resource.module_name.split(".")[-1]
+        )
+        + ".py"
+    )

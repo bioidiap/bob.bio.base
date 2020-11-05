@@ -8,7 +8,10 @@ bob.learn.em
 bob.learn.linear
 bob.math
 bob.measure
+bob.pipelines
 bob.sp
+bob.pipelines
+tabulate
 click
 click-plugins
 numpy

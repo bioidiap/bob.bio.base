@@ -1,5 +1,7 @@
 .. vim: set fileencoding=utf-8 :
 .. author: Manuel Günther <manuel.guenther@idiap.ch>
+.. author: Tiago de Freitas Pereira <tiago.pereira@idiap.ch>
+.. author: Yannick Dayer <yannick.dayer@idiap.ch>
 .. date: Thu Sep 20 11:58:57 CEST 2012
 
 .. _bob.bio.base.installation:
@@ -8,148 +10,71 @@
 Installation Instructions
 =========================
 
-As noted before, this package is part of the ``bob.bio`` packages, which in
-turn are part of the signal-processing and machine learning toolbox Bob_. To
-install Bob_, please read the `Installation Instructions <bobinstall_>`_.
+In order to run experiments with the ``bob.bio`` packages, you have to configure
 
-Then, to install the ``bob.bio`` packages and in turn maybe the database
-packages that you want to use, use conda_ to install them:
+The recommended way to install a bob_ package is by using :py:mod:`bob.devtools` (bdt).
+In this section, everything you need to install will be layed out, but for more details, you should follow the instructions in the :py:mod:`bob.devtools` documentation `here <https://www.idiap.ch/software/bob/docs/bob/bob.devtools/master/install.html>`__.
 
-.. code-block:: sh
+conda_ (or miniconda) and `git <https://git-scm.com/>`__ need to be installed.
 
-    $ conda search "bob.bio.*"  # searching
-    $ conda search "bob.db.*"  # searching
-    $ conda install bob.bio.base bob.bio.<bioname> bob.db.<dbname>
+Prerequisite: Create a bdt environment
+--------------------------------------
 
-where you would replace ``<bioname>`` and ``<dbname>`` with the name of
-packages that you want to use.
+If you don't have an environment containing the :py:mod:`bob.devtools` utility, you should create a ``bdt`` environment::
 
-An example installation
------------------------
-
-For example, you might want to run a video face recognition experiments using
-the :py:class:`bob.bio.face.preprocessor.FaceDetect` and the
-:py:class:`bob.bio.face.extractor.DCTBlocks` feature extractor defined in
-:ref:`bob.bio.face <bob.bio.face>`, the
-:py:class:`bob.bio.gmm.algorithm.IVector` algorithm defined in
-:ref:`bob.bio.gmm <bob.bio.gmm>` and the video extensions defined in
-:ref:`bob.bio.video <bob.bio.video>`, using the YouTube faces database
-interface defined in :ref:`bob.db.youtube <bob.db.youtube>`. Running the
-command line below will install all the required packages:
-
-.. code-block:: sh
-
-    $ source activate <bob_conda_environment>
-    $ conda install bob.bio.base \
-                    bob.bio.face \
-                    bob.bio.gmm \
-                    bob.bio.video \
-                    bob.db.youtube \
-                    gridtk
+$ conda create -n bdt -c https://www.idiap.ch/software/bob/conda bob bob.devtools
 
 
-Databases
----------
+Then before creating the development environment, you must activate the ``bdt`` environment::
 
-With ``bob.bio`` you will run biometric recognition experiments using biometric
-recognition databases. Though the verification protocols are implemented in
-``bob.bio``, the raw data are **not included**. To download the raw
-data of the databases, please refer to the according Web-pages. For a list of
-supported databases including their download URLs, please refer to the
-`biometric recognition databases`_.
+$ conda activate bdt
 
-After downloading the raw data for the databases, you will need to tell
-``bob.bio``, where these databases can be found. There are two methods for
-this purpose. The older method is deprecated but some old databases may still
-be using it.
-
-Old Databases
-~~~~~~~~~~~~~
-A special file, where you can set your directories, is used. By
-default, this file is located in ``~/.bob_bio_databases.txt``, and it contains
-several lines, each line looking somewhat like:
-
-.. code-block:: text
-
-   [YOUR_ATNT_DIRECTORY] = /path/to/atnt/directory
-
-.. note::
-
-   If this file does not exist, feel free to create and populate it yourself.
+After this, you can proceed to the installation of the environment specific to developing a package.
 
 
-Please use ``databases.py`` for a list of known databases, where you can see
-the raw ``[YOUR_DATABASE_PATH]`` entries for all databases that you haven't
-updated, and the corrected paths for those you have.
+Create your development environment
+-----------------------------------
 
-.. note::
+You must first have the source of :py:mod:`bob.bio.base`. You can fetch it as a git repository::
 
-   If you have installed only ``bob.bio.base``, there is no database listed --
-   as all databases are included in other packages, such as
-   :ref:`bob.bio.face <bob.bio.face>` or :ref:`bob.bio.spear <bob.bio.spear>`.
-   Also, please don't forget that you need to install the corresponding
-   ``bob.db.<name>`` package as well.
+$ git clone https://gitlab.idiap.ch/bob/bob.bio.base
+$ cd bob.bio.base
 
+To work on :py:mod:`bob.bio.base` it is recommended to have a dedicated environment, preventing conflicts of version with different packages, and ensuring that needed dependencies are installed.
+To create this conda_ environment, ensure that your ``bdt`` conda environment is activated, and run::
 
-New Databases
-~~~~~~~~~~~~~
+$ bdt create -vv dev
 
-Most new databses in bob use the :ref:`bob.extension.rc` to find the location
-of the raw data. Please refer to the documentation of the database package to
-find out if they use this feature or not. If they do, the location can be
-configured using the ``bob config`` command. For example:
+This will create a ``dev`` conda environment. You can proceed to activate this environment, but should first deactivate the ``bdt`` environment::
 
-.. code-block:: sh
-
-   $ bob config set bob.db.atnt.directory /path/to/atnt/directory
+$ conda deactivate
+$ conda activate dev
 
 
-Test your Installation
-----------------------
+Build the executables
+---------------------
 
-You can install the ``nose`` package to test your installation and use that to
-verify your installation:
+This step will finally create the commands and executables that you need to run anything in bob.bio.base. For that, we use buildout_. (Make sure that you are still in the bob.bio.base directory you checked out earlier, and your conda development environment is active)::
 
-.. code-block:: sh
+$ buildout
 
-  $ conda install nose  # install nose
-  $ nosetests -vs bob.bio.base
-  $ nosetests -vs bob.bio.gmm
-  ...
+This will create a ``bin`` folder containing the executables, all linked correctly to the development environment. This folder contains notably:
 
-You should run the script running the nose tests for each of the ``bob.bio``
-packages separately.
+- **The bob executable**: This is the main entry point of your *bob* commands::
 
-.. code-block:: sh
+  $ bin/bob bio --help
 
-  $ nosetests -vs bob.bio.base
-  $ nosetests -vs bob.bio.gmm
-  ...
+- **A python executable**: Use it to run quick experiments in command line or to execute scripts::
 
-Some of the tests that are run require the images of the `AT&T database`_
-database. If the database is not found on your system, it will automatically
-download and extract the `AT&T database`_ a temporary directory, **which will
-not be erased**.
+  $ bin/python
 
-To avoid the download to happen each time you call the nose tests, please:
+- **Nosetests**: This is a test utility that certifies that everything is installed correctly::
 
-1. Download the `AT&T database`_ database and extract it to the directory of
-   your choice.
-2. Set an environment variable ``ATNT_DATABASE_DIRECTORY`` to the directory,
-   where you extracted the database to. For example, in a ``bash`` you can
-   call:
+  $ bin/nosetests bob.bio.base
 
-.. code-block:: sh
+- **Sphinx utilities**: Used to build the documentation::
 
-  $ export ATNT_DATABASE_DIRECTORY=/path/to/your/copy/of/atnt
-
-
-In case any of the tests fail for unexplainable reasons, please send a report
-through our `mailing list`_.
-
-.. note::
-  Usually, all tests should pass with the latest stable versions of Bob_
-  packages. In other versions, some of the tests may fail.
+  $ bin/sphinx-build doc doc/build/html
 
 
 .. include:: links.rst

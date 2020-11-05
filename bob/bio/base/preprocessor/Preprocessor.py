@@ -5,6 +5,7 @@
 
 from .. import utils
 
+import warnings
 
 class Preprocessor (object):
     """This is the base class for all preprocessors.
@@ -39,7 +40,11 @@ class Preprocessor (object):
         self.read_original_data = read_original_data
         self.min_preprocessed_file_size = min_preprocessed_file_size
         self._kwargs = kwargs
-        pass
+
+        warnings.warn("`bob.bio.base.preprocessor.Preprocessor` will be deprecated in 01/01/2021. "\
+                      "Please, implement your biometric algorithm using `bob.pipelines` (https://gitlab.idiap.ch/bob/bob.pipelines).", DeprecationWarning)
+
+
 
     # The call function (i.e. the operator() in C++ terms)
     def __call__(self, data, annotations):

@@ -70,16 +70,7 @@ setup(
 
       # scripts should be declared using this entry:
       'console_scripts' : [
-        'verify.py         = bob.bio.base.script.verify:main',
-        'resources.py      = bob.bio.base.script.resources:resources',
-        'databases.py      = bob.bio.base.script.resources:databases',
-        'collect_results.py = bob.bio.base.script.collect_results:main',
-        'grid_search.py    = bob.bio.base.script.grid_search:main',
-        'preprocess.py     = bob.bio.base.script.preprocess:main',
-        'extract.py        = bob.bio.base.script.extract:main',
-        'enroll.py         = bob.bio.base.script.enroll:main',
-        'score.py          = bob.bio.base.script.score:main',
-        'fuse_scores.py    = bob.bio.base.script.fuse_scores:main',
+          'resources.py      = bob.bio.base.script.resources:resources',
       ],
 
       'bob.bio.config': [
@@ -117,15 +108,6 @@ setup(
         'bic               = bob.bio.base.config.algorithm.bic:algorithm',
       ],
 
-      'bob.bio.grid': [
-        'local-p4          = bob.bio.base.config.grid.local:grid',
-        'local-p8          = bob.bio.base.config.grid.local:grid_p8',
-        'local-p16         = bob.bio.base.config.grid.local:grid_p16',
-        'grid              = bob.bio.base.config.grid.grid:grid',
-        'demanding         = bob.bio.base.config.grid.demanding:grid',
-        'gpu               = bob.bio.base.config.grid.gpu:grid',
-      ],
-
       # declare database to bob
       'bob.db': [
         'bio_filelist      = bob.bio.base.database.filelist.driver:Interface',
@@ -151,6 +133,8 @@ setup(
         'evaluate          = bob.bio.base.script.commands:evaluate',
         'baseline          = bob.bio.base.script.baseline:baseline',
         'sort              = bob.bio.base.script.sort:sort',
+        'pipelines         = bob.bio.base.script.pipelines:pipelines',
+        'compare-samples   = bob.bio.base.script.compare_samples:compare_samples',
       ],
 
       # annotators
@@ -158,10 +142,13 @@ setup(
         'dummy             = bob.bio.base.test.dummy.annotator:annotator',
       ],
 
-      #baselines
-      'bob.bio.baseline':[
-        'dummy = bob.bio.base.test.dummy.baseline:baseline',
-      ],
+       # run pipelines
+      'bob.bio.pipelines.cli':[
+        'vanilla-biometrics = bob.bio.base.script.vanilla_biometrics:vanilla_biometrics',
+        'vanilla-biometrics-ztnorm = bob.bio.base.script.vanilla_biometrics_ztnorm:vanilla_biometrics_ztnorm'
+     ],
+
+     
 
    },
 

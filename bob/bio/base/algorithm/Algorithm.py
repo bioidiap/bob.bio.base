@@ -6,6 +6,8 @@
 import numpy
 import os
 from .. import utils
+import warnings
+
 
 class Algorithm (object):
   """This is the base class for all biometric recognition algorithms.
@@ -87,6 +89,13 @@ class Algorithm (object):
       min_t_model_file_size=1000,
       **kwargs                            # parameters from the derived class that should be reported in the __str__() function
   ):
+
+    
+    warnings.warn("`bob.bio.base.algorithm.Algorithm` will be deprecated in 01/01/2021. "\
+                  "Please, implement your biometric algorithm using `bob.pipelines` (https://gitlab.idiap.ch/bob/bob.pipelines).", DeprecationWarning)
+
+
+
     self.performs_projection = performs_projection
     self.requires_projector_training = performs_projection and requires_projector_training
     self.split_training_features_by_client = split_training_features_by_client
@@ -205,10 +214,11 @@ class Algorithm (object):
     score : float
       The fused similarity between the given ``models`` and the ``probe``.
     """
+
     if isinstance(models, list):
-      return self.model_fusion_function([self.score(model, probe) for model in models])
+      return [self.probe_fusion_function(self.score(model, probe)) for model in models]
     elif isinstance(models, numpy.ndarray):
-      return self.model_fusion_function([self.score(models[i,:], probe) for i in range(models.shape[0])])
+      return [self.probe_fusion_function(self.score(models[i,:], probe)) for i in range(models.shape[0])]
     else:
       raise ValueError("The model does not have the desired format (list, array, ...)")
 

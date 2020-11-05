@@ -3,7 +3,6 @@ import bob.learn.linear
 import pkg_resources
 import os
 import numpy
-import nose
 import bob.io.base.test_utils
 
 from . import utils
@@ -25,24 +24,6 @@ def test_resources():
   extensions = bob.bio.base.extensions()
   assert isinstance(extensions, list)
   assert 'bob.bio.base' in extensions
-
-
-def test_grid():
-  # try to load the grid configurations
-  g = bob.bio.base.load_resource("grid", "grid")
-  assert not g.is_local()
-  g = bob.bio.base.load_resource("demanding", "grid")
-  assert not g.is_local()
-
-  g = bob.bio.base.load_resource("local-p4", "grid")
-  assert g.is_local()
-  assert g.number_of_parallel_processes == 4
-  g = bob.bio.base.load_resource("local-p8", "grid")
-  assert g.is_local()
-  assert g.number_of_parallel_processes == 8
-  g = bob.bio.base.load_resource("local-p16", "grid")
-  assert g.is_local()
-  assert g.number_of_parallel_processes == 16
 
 
 def test_io():
@@ -83,118 +64,6 @@ def test_io():
     # cleanup
     if os.path.exists(filename):
       os.remove(filename)
-
-
-def test_io_vstack():
-
-  paths = [1, 2, 3, 4, 5]
-
-  def oracle(reader, paths):
-    return numpy.vstack([reader(p) for p in paths])
-
-  def reader_same_size_C(path):
-    return numpy.arange(10).reshape(5, 2)
-
-  def reader_different_size_C(path):
-    return numpy.arange(2 * path).reshape(path, 2)
-
-  def reader_same_size_F(path):
-    return numpy.asfortranarray(numpy.arange(10).reshape(5, 2))
-
-  def reader_different_size_F(path):
-    return numpy.asfortranarray(numpy.arange(2 * path).reshape(path, 2))
-
-  def reader_same_size_C2(path):
-    return numpy.arange(30).reshape(5, 2, 3)
-
-  def reader_different_size_C2(path):
-    return numpy.arange(6 * path).reshape(path, 2, 3)
-
-  def reader_same_size_F2(path):
-    return numpy.asfortranarray(numpy.arange(30).reshape(5, 2, 3))
-
-  def reader_different_size_F2(path):
-    return numpy.asfortranarray(numpy.arange(6 * path).reshape(path, 2, 3))
-
-  def reader_wrong_size(path):
-    return numpy.arange(2 * path).reshape(2, path)
-
-  # when same_size is False
-  for reader in [
-      reader_different_size_C,
-      reader_different_size_F,
-      reader_same_size_C,
-      reader_same_size_F,
-      reader_different_size_C2,
-      reader_different_size_F2,
-      reader_same_size_C2,
-      reader_same_size_F2,
-  ]:
-    numpy.all(bob.bio.base.vstack_features(reader, paths) ==
-              oracle(reader, paths))
-
-  # when same_size is True
-  for reader in [
-      reader_same_size_C,
-      reader_same_size_F,
-      reader_same_size_C2,
-      reader_same_size_F2,
-  ]:
-    numpy.all(bob.bio.base.vstack_features(reader, paths, True) ==
-              oracle(reader, paths))
-
-  with nose.tools.assert_raises(AssertionError):
-    bob.bio.base.vstack_features(reader_wrong_size, paths)
-
-  # test actual files
-  paths = [bob.io.base.test_utils.temporary_filename(),
-           bob.io.base.test_utils.temporary_filename(),
-           bob.io.base.test_utils.temporary_filename()]
-  try:
-    # try different readers:
-    for reader in [
-        reader_different_size_C,
-        reader_different_size_F,
-        reader_same_size_C,
-        reader_same_size_F,
-        reader_different_size_C2,
-        reader_different_size_F2,
-        reader_same_size_C2,
-        reader_same_size_F2,
-    ]:
-      # save some data in files
-      for i, path in enumerate(paths):
-        bob.bio.base.save(reader(i + 1), path)
-      # test when all data is present
-      reference = oracle(bob.bio.base.load, paths)
-      numpy.all(bob.bio.base.vstack_features(bob.bio.base.load, paths) ==
-                reference)
-      # delete the first one
-      os.remove(paths[0])
-      reference = oracle(bob.bio.base.load, paths[1:])
-      target = bob.bio.base.vstack_features(bob.bio.base.load, paths, False,
-                                            True)
-      numpy.all(target == reference)
-      # save back first one and delete second one
-      bob.bio.base.save(reader(1), paths[0])
-      os.remove(paths[1])
-      reference = oracle(bob.bio.base.load, paths[:1] + paths[2:])
-      target = bob.bio.base.vstack_features(bob.bio.base.load, paths, False,
-                                            True)
-      numpy.all(target == reference)
-      # Check if RuntimeError is raised when one of the files is missing and
-      # allow_missing_files if False
-      with nose.tools.assert_raises(RuntimeError):
-        bob.bio.base.vstack_features(bob.bio.base.load, paths)
-      # Check if ValueError is raised.
-      with nose.tools.assert_raises(ValueError):
-        bob.bio.base.vstack_features(bob.bio.base.load, paths, True, True)
-  finally:
-    try:
-      for path in paths:
-        os.remove(path)
-    except Exception:
-      pass
 
 
 def test_sampling():
