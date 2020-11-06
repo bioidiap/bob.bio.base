@@ -2,6 +2,7 @@
 """
 import logging
 import click
+import json
 import functools
 from bob.extension.scripts.click_helper import (
     verbosity_option,
@@ -11,6 +12,20 @@ from bob.extension.scripts.click_helper import (
 )
 from bob.pipelines import wrap, ToDaskBag
 logger = logging.getLogger(__name__)
+
+def save_json(data, path):
+    """
+    Saves a dictionnary ``data`` in a json file at ``path``.
+    """
+    with open(path, "w") as f:
+        json.dump(data, f)
+
+def load_json(path):
+    """
+    Returns a dictionnary from a json file at ``path``.
+    """
+    with open(path, "r") as f:
+        return json.load(f)
 
 def annotate_common_options(func):
     @click.option(
@@ -91,14 +106,17 @@ def annotate(
     log_parameters(logger)
 
     # Allows passing of Sample objects as parameters
-    annotator = wrap(["annotated_sample"], annotator)
+    annotator = wrap(["sample"], annotator, output_attribute="annotations")
 
     # Will save the annotations in the `data` fields to a json file
     annotator = wrap(
-        bases=["checkpoint_annotations"],
-        annotator=annotator,
-        annotations_dir=output_dir,
-        force=force,
+        bases=["checkpoint"],
+        estimator=annotator,
+        features_dir=output_dir,
+        extension=".json",
+        save_func=save_json,
+        load_func=load_json,
+        sample_attribute="annotations",
     )
 
     # Allows reception of Dask Bags
@@ -171,14 +189,17 @@ def annotate_samples(
     log_parameters(logger, ignore=("samples",))
 
     # Allows passing of Sample objects as parameters
-    annotator = wrap(["annotated_sample"], annotator)
+    annotator = wrap(["sample"], annotator, output_attribute="annotations")
 
     # Will save the annotations in the `data` fields to a json file
     annotator = wrap(
-        bases=["checkpoint_annotations"],
-        annotator=annotator,
-        annotations_dir=output_dir,
-        force=force,
+        bases=["checkpoint"],
+        estimator=annotator,
+        features_dir=output_dir,
+        extension=".json",
+        save_func=save_json,
+        load_func=load_json,
+        sample_attribute="annotations",
     )
 
     # Allows reception of Dask Bags
