@@ -2,7 +2,6 @@
 """
 import logging
 import click
-import json
 import functools
 from bob.extension.scripts.click_helper import (
     verbosity_option,
@@ -12,10 +11,6 @@ from bob.extension.scripts.click_helper import (
 )
 from bob.pipelines import wrap, ToDaskBag
 logger = logging.getLogger(__name__)
-
-def save_annotations_to_json(data, path):
-    with open(path, "w") as f:
-        json.dump(data, f)
 
 def annotate_common_options(func):
     @click.option(
@@ -96,15 +91,14 @@ def annotate(
     log_parameters(logger)
 
     # Allows passing of Sample objects as parameters
-    annotator = wrap(["sample"], annotator)
+    annotator = wrap(["annotated_sample"], annotator)
 
     # Will save the annotations in the `data` fields to a json file
     annotator = wrap(
-        bases=["checkpoint"],
-        estimator=annotator,
-        features_dir=output_dir,
-        save_func=save_annotations_to_json,
-        extension=".json",
+        bases=["checkpoint_annotations"],
+        annotator=annotator,
+        annotations_dir=output_dir,
+        force=force,
     )
 
     # Allows reception of Dask Bags
@@ -159,6 +153,7 @@ You have to define ``samples`` in a python file (config.py) as in examples.
 )
 @click.option(
     "--samples",
+    entry_point_group="bob.bio.config",
     required=True,
     cls=ResourceOption,
     help="A list of all samples that you want to annotate.",
@@ -166,7 +161,7 @@ You have to define ``samples`` in a python file (config.py) as in examples.
 @annotate_common_options
 @verbosity_option(cls=ResourceOption)
 def annotate_samples(
-    samples, make_path, annotator, output_dir, force, dask_client, **kwargs
+    samples, annotator, output_dir, force, dask_client, **kwargs
 ):
     """Annotates a list of samples.
 
@@ -176,15 +171,14 @@ def annotate_samples(
     log_parameters(logger, ignore=("samples",))
 
     # Allows passing of Sample objects as parameters
-    annotator = wrap(["sample"], annotator)
+    annotator = wrap(["annotated_sample"], annotator)
 
     # Will save the annotations in the `data` fields to a json file
     annotator = wrap(
-        bases=["checkpoint"],
-        estimator=annotator,
-        features_dir=output_dir,
-        save_func=save_annotations_to_json,
-        extension=".json",
+        bases=["checkpoint_annotations"],
+        annotator=annotator,
+        annotations_dir=output_dir,
+        force=force,
     )
 
     # Allows reception of Dask Bags
