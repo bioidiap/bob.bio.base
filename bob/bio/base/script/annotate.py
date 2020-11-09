@@ -10,7 +10,7 @@ from bob.extension.scripts.click_helper import (
     ResourceOption,
     log_parameters,
 )
-from bob.pipelines import wrap, ToDaskBag
+from bob.pipelines import wrap, ToDaskBag, DelayedSample
 logger = logging.getLogger(__name__)
 
 def save_json(data, path):
@@ -43,13 +43,6 @@ def annotate_common_options(func):
         required=True,
         cls=ResourceOption,
         help="The directory to save the annotations.",
-    )
-    @click.option(
-        "--force",
-        "-f",
-        is_flag=True,
-        cls=ResourceOption,
-        help="Whether to overwrite existing annotations.",
     )
     @click.option(
         "--dask-client",
@@ -96,7 +89,7 @@ Examples:
 @annotate_common_options
 @verbosity_option(cls=ResourceOption)
 def annotate(
-    database, groups, annotator, output_dir, force, dask_client, **kwargs
+    database, groups, annotator, output_dir, dask_client, **kwargs
 ):
     """Annotates a database.
 
@@ -123,7 +116,7 @@ def annotate(
     annotator = wrap(["dask"], annotator)
 
     # Transformer that splits the samples into several Dask Bags
-    to_dask_bags = ToDaskBag()
+    to_dask_bags = ToDaskBag(npartitions=50)
 
 
     logger.debug("Retrieving background model samples from database.")
@@ -138,8 +131,16 @@ def annotate(
 
     # Unravels all samples in one list (no SampleSets)
     samples = background_model_samples
-    samples.extend([sample for r in references_samplesets for sample in r.samples])
-    samples.extend([sample for p in probes_samplesets for sample in p.samples])
+    samples.extend([
+        sample
+        for r in references_samplesets
+        for sample in r.samples
+    ])
+    samples.extend([
+        sample
+        for p in probes_samplesets
+        for sample in p.samples
+    ])
 
     # Sets the scheduler to local if no dask_client is specified
     if dask_client is not None:
@@ -166,7 +167,8 @@ Examples:
 
   $ bob bio annotate-samples -vvv config.py -a <annotator> -o /tmp/annotations
 
-You have to define ``samples`` in a python file (config.py) as in examples.
+You have to define ``samples``, ``reader``, and ``make_key`` in python files
+(config.py) as in examples.
 """,
 )
 @click.option(
@@ -174,17 +176,48 @@ You have to define ``samples`` in a python file (config.py) as in examples.
     entry_point_group="bob.bio.config",
     required=True,
     cls=ResourceOption,
-    help="A list of all samples that you want to annotate.",
+    help="A list of all samples that you want to annotate. They will be passed "
+    "as is to the ``reader`` and ``make-key`` functions.",
+)
+@click.option(
+    "--reader",
+    required=True,
+    cls=ResourceOption,
+    help="A function with the signature of ``data = reader(sample)`` which "
+    "takes a sample and returns the loaded data. The returned data is given to "
+    "the annotator.",
+)
+@click.option(
+    "--make-key",
+    required=True,
+    cls=ResourceOption,
+    help="A function with the signature of ``key = make_key(sample)`` which "
+    "takes a sample and returns a unique str identifier for that sample that "
+    "will be use to save it in output_dir. ``key`` generally is the relative "
+    "path to a sample's file from the dataset's root directory.",
 )
 @annotate_common_options
 @verbosity_option(cls=ResourceOption)
 def annotate_samples(
-    samples, annotator, output_dir, force, dask_client, **kwargs
+    samples, reader, make_key, annotator, output_dir, dask_client, **kwargs
 ):
     """Annotates a list of samples.
 
     This command is very similar to ``bob bio annotate`` except that it works
-    without a database interface.
+    without a database interface. You must provide a list of samples as well as
+    two functions:
+
+        def reader(sample):
+            # Loads data from a sample.
+            # for example:
+            data = bob.io.base.load(sample)
+            # data will be given to the annotator
+            return data
+
+        def make_key(sample):
+            # Creates a unique str identifier for this sample.
+            # for example:
+            return str(sample)
     """
     log_parameters(logger, ignore=("samples",))
 
@@ -206,16 +239,26 @@ def annotate_samples(
     annotator = wrap(["dask"], annotator)
 
     # Transformer that splits the samples into several Dask Bags
-    to_dask_bags = ToDaskBag()
+    to_dask_bags = ToDaskBag(npartitions=50)
 
     if dask_client is not None:
         scheduler=dask_client
     else:
         scheduler="single-threaded"
 
+    # Converts samples into a list of DelayedSample objects
+    samples_obj = [
+        DelayedSample(
+            load=functools.partial(reader,s),
+            key=make_key(s),
+        )
+        for s in samples
+    ]
+    # Splits the samples list into bags
+    dask_bags = to_dask_bags.transform(samples_obj)
+
     logger.info(f"Saving annotations in {output_dir}")
-    logger.info(f"Annotating {len(samples)} samples...")
-    dask_bags = to_dask_bags.transform(samples)
+    logger.info(f"Annotating {len(samples_obj)} samples...")
     annotator.transform(dask_bags).compute(scheduler=scheduler)
 
     if dask_client is not None:
