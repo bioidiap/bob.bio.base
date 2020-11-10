@@ -1,42 +1,31 @@
 """A script to help annotate databases.
 """
 import logging
-import json
 import click
+import json
 import functools
-from os.path import dirname, isfile, expanduser
 from bob.extension.scripts.click_helper import (
     verbosity_option,
     ConfigCommand,
     ResourceOption,
     log_parameters,
 )
-from bob.io.base import create_directories_safe
-
+from bob.pipelines import wrap, ToDaskBag, DelayedSample
 logger = logging.getLogger(__name__)
 
+def save_json(data, path):
+    """
+    Saves a dictionnary ``data`` in a json file at ``path``.
+    """
+    with open(path, "w") as f:
+        json.dump(data, f)
 
-def indices(list_to_split, number_of_parallel_jobs, task_id=None):
-  """This function returns the first and last index for the files for the current job ID.
-     If no job id is set (e.g., because a sub-job is executed locally), it simply returns all indices."""
-
-  if number_of_parallel_jobs is None or number_of_parallel_jobs == 1:
-    return None
-
-  # test if the 'SEG_TASK_ID' environment is set
-  sge_task_id = os.getenv('SGE_TASK_ID') if task_id is None else task_id
-  if sge_task_id is None:
-    # task id is not set, so this function is not called from a grid job
-    # hence, we process the whole list
-    return (0,len(list_to_split))
-  else:
-    job_id = int(sge_task_id) - 1
-    # compute number of files to be executed
-    number_of_objects_per_job = int(math.ceil(float(len(list_to_split) / float(number_of_parallel_jobs))))
-    start = job_id * number_of_objects_per_job
-    end = min((job_id + 1) * number_of_objects_per_job, len(list_to_split))
-    return (start, end)
-
+def load_json(path):
+    """
+    Returns a dictionnary from a json file at ``path``.
+    """
+    with open(path, "r") as f:
+        return json.load(f)
 
 def annotate_common_options(func):
     @click.option(
@@ -45,8 +34,8 @@ def annotate_common_options(func):
         required=True,
         cls=ResourceOption,
         entry_point_group="bob.bio.annotator",
-        help="A callable that takes the database and a sample (biofile) "
-        "of the database and returns the annotations in a dictionary.",
+        help="A Transformer instance that takes a series of sample and returns "
+        "the modified samples with annotations as a dictionary.",
     )
     @click.option(
         "--output-dir",
@@ -56,18 +45,13 @@ def annotate_common_options(func):
         help="The directory to save the annotations.",
     )
     @click.option(
-        "--force",
-        "-f",
-        is_flag=True,
+        "--dask-client",
+        "-l",
+        "dask_client",
+        entry_point_group="dask.client",
+        help="Dask client for the execution of the pipeline. If not specified, "
+            "uses a single threaded, local Dask Client.",
         cls=ResourceOption,
-        help="Whether to overwrite existing annotations.",
-    )
-    @click.option(
-        "--array",
-        type=click.INT,
-        default=1,
-        cls=ResourceOption,
-        help="Use this option alongside gridtk to submit this script as an array job.",
     )
     @functools.wraps(func)
     def wrapper(*args, **kwds):
@@ -83,7 +67,6 @@ def annotate_common_options(func):
 Examples:
 
   $ bob bio annotate -vvv -d <database> -a <annotator> -o /tmp/annotations
-  $ jman submit --array 64 -- bob bio annotate ... --array 64
 """,
 )
 @click.option(
@@ -92,18 +75,21 @@ Examples:
     required=True,
     cls=ResourceOption,
     entry_point_group="bob.bio.database",
-    help="""The database that you want to annotate.""",
+    help="Biometric Database (class that implements the methods: "
+        "`background_model_samples`, `references` and `probes`).",
+)
+@click.option(
+    "--groups",
+    "-g",
+    multiple=True,
+    default=["dev", "eval"],
+    show_default=True,
+    help="Biometric Database group that will be annotated.",
 )
 @annotate_common_options
-@click.option(
-    "--database-directories-file",
-    cls=ResourceOption,
-    default=expanduser("~/.bob_bio_databases.txt"),
-    help="(Deprecated) To support loading of old databases.",
-)
 @verbosity_option(cls=ResourceOption)
 def annotate(
-    database, annotator, output_dir, force, array, database_directories_file, **kwargs
+    database, groups, annotator, output_dir, dask_client, **kwargs
 ):
     """Annotates a database.
 
@@ -112,23 +98,65 @@ def annotate(
     """
     log_parameters(logger)
 
-    # Some databases need their original_directory to be replaced
-    database.replace_directories(database_directories_file)
+    # Allows passing of Sample objects as parameters
+    annotator = wrap(["sample"], annotator, output_attribute="annotations")
 
-    biofiles = database.objects(groups=None, protocol=database.protocol)
-    samples = sorted(biofiles)
-
-    def reader(biofile):
-        return annotator.read_original_data(
-            biofile, database.original_directory, database.original_extension
-        )
-
-    def make_path(biofile, output_dir):
-        return biofile.make_path(output_dir, ".json")
-
-    return annotate_generic(
-        samples, reader, make_path, annotator, output_dir, force, array
+    # Will save the annotations in the `data` fields to a json file
+    annotator = wrap(
+        bases=["checkpoint"],
+        estimator=annotator,
+        features_dir=output_dir,
+        extension=".json",
+        save_func=save_json,
+        load_func=load_json,
+        sample_attribute="annotations",
     )
+
+    # Allows reception of Dask Bags
+    annotator = wrap(["dask"], annotator)
+
+    # Transformer that splits the samples into several Dask Bags
+    to_dask_bags = ToDaskBag(npartitions=50)
+
+
+    logger.debug("Retrieving background model samples from database.")
+    background_model_samples = database.background_model_samples()
+
+    logger.debug("Retrieving references and probes samples from database.")
+    references_samplesets = []
+    probes_samplesets = []
+    for group in groups:
+        references_samplesets.extend(database.references(group=group))
+        probes_samplesets.extend(database.probes(group=group))
+
+    # Unravels all samples in one list (no SampleSets)
+    samples = background_model_samples
+    samples.extend([
+        sample
+        for r in references_samplesets
+        for sample in r.samples
+    ])
+    samples.extend([
+        sample
+        for p in probes_samplesets
+        for sample in p.samples
+    ])
+
+    # Sets the scheduler to local if no dask_client is specified
+    if dask_client is not None:
+        scheduler=dask_client
+    else:
+        scheduler="single-threaded"
+
+    logger.info(f"Saving annotations in {output_dir}.")
+    logger.info(f"Annotating {len(samples)} samples...")
+    dask_bags = to_dask_bags.transform(samples)
+    annotator.transform(dask_bags).compute(scheduler=scheduler)
+
+    if dask_client is not None:
+        logger.info("Shutdown workers...")
+        dask_client.shutdown()
+    logger.info("Done.")
 
 
 @click.command(
@@ -138,94 +166,102 @@ def annotate(
 Examples:
 
   $ bob bio annotate-samples -vvv config.py -a <annotator> -o /tmp/annotations
-  $ jman submit --array 64 -- bob bio annotate-samples ... --array 64
 
-You have to define samples, reader, and make_path in a python file (config.py) as in
-examples.
+You have to define ``samples``, ``reader``, and ``make_key`` in python files
+(config.py) as in examples.
 """,
 )
 @click.option(
     "--samples",
+    entry_point_group="bob.bio.config",
     required=True,
     cls=ResourceOption,
-    help="A list of all samples that you want to annotate. The list must be sorted or "
-    "deterministic in consequent calls. This is needed so that this script works "
-    "correctly on the grid.",
+    help="A list of all samples that you want to annotate. They will be passed "
+    "as is to the ``reader`` and ``make-key`` functions.",
 )
 @click.option(
     "--reader",
     required=True,
     cls=ResourceOption,
-    help="A function with the signature of ``data = reader(sample)`` which takes a "
-    "sample and returns the loaded data. The data is given to the annotator.",
+    help="A function with the signature of ``data = reader(sample)`` which "
+    "takes a sample and returns the loaded data. The returned data is given to "
+    "the annotator.",
 )
 @click.option(
-    "--make-path",
+    "--make-key",
     required=True,
     cls=ResourceOption,
-    help="A function with the signature of ``path = make_path(sample, output_dir)`` "
-    "which takes a sample and output_dir and returns the unique path for that sample "
-    "to be saved in output_dir. The extension of the path must be '.json'.",
+    help="A function with the signature of ``key = make_key(sample)`` which "
+    "takes a sample and returns a unique str identifier for that sample that "
+    "will be use to save it in output_dir. ``key`` generally is the relative "
+    "path to a sample's file from the dataset's root directory.",
 )
 @annotate_common_options
 @verbosity_option(cls=ResourceOption)
 def annotate_samples(
-    samples, reader, make_path, annotator, output_dir, force, array, **kwargs
+    samples, reader, make_key, annotator, output_dir, dask_client, **kwargs
 ):
     """Annotates a list of samples.
 
-    This command is very similar to ``bob bio annotate`` except that it works without a
-    database interface. You only need to provide a list of **sorted** samples to be
-    annotated and two functions::
+    This command is very similar to ``bob bio annotate`` except that it works
+    without a database interface. You must provide a list of samples as well as
+    two functions:
 
         def reader(sample):
-            # load data from sample here
+            # Loads data from a sample.
             # for example:
             data = bob.io.base.load(sample)
             # data will be given to the annotator
             return data
 
-        def make_path(sample, output_dir):
-            # create a unique path for this sample in the output_dir
+        def make_key(sample):
+            # Creates a unique str identifier for this sample.
             # for example:
-            return os.path.join(output_dir, str(sample) + ".json")
-
-    Please note that your samples must be a list and must be sorted!
+            return str(sample)
     """
     log_parameters(logger, ignore=("samples",))
-    logger.debug("len(samples): %d", len(samples))
-    return annotate_generic(
-        samples, reader, make_path, annotator, output_dir, force, array
+
+    # Allows passing of Sample objects as parameters
+    annotator = wrap(["sample"], annotator, output_attribute="annotations")
+
+    # Will save the annotations in the `data` fields to a json file
+    annotator = wrap(
+        bases=["checkpoint"],
+        estimator=annotator,
+        features_dir=output_dir,
+        extension=".json",
+        save_func=save_json,
+        load_func=load_json,
+        sample_attribute="annotations",
     )
 
+    # Allows reception of Dask Bags
+    annotator = wrap(["dask"], annotator)
 
-def annotate_generic(samples, reader, make_path, annotator, output_dir, force, array):
-    if array > 1:
-        start, end = indices(samples, array)
-        samples = samples[start:end]
+    # Transformer that splits the samples into several Dask Bags
+    to_dask_bags = ToDaskBag(npartitions=50)
 
-    total = len(samples)
-    logger.info("Saving annotations in %s", output_dir)
-    logger.info("Annotating %d samples ...", total)
+    if dask_client is not None:
+        scheduler=dask_client
+    else:
+        scheduler="single-threaded"
 
-    for i, sample in enumerate(samples):
-        outpath = make_path(sample, output_dir)
-        if not outpath.endswith(".json"):
-            outpath += ".json"
-
-        if isfile(outpath):
-            if force:
-                logger.info("Overwriting the annotations file `%s'", outpath)
-            else:
-                logger.info("The annotation `%s' already exists", outpath)
-                continue
-
-        logger.info(
-            "Extracting annotations for sample %d out of %d: %s", i + 1, total, outpath
+    # Converts samples into a list of DelayedSample objects
+    samples_obj = [
+        DelayedSample(
+            load=functools.partial(reader,s),
+            key=make_key(s),
         )
-        data = reader(sample)
-        annot = annotator(data)
+        for s in samples
+    ]
+    # Splits the samples list into bags
+    dask_bags = to_dask_bags.transform(samples_obj)
 
-        create_directories_safe(dirname(outpath))
-        with open(outpath, "w") as f:
-            json.dump(annot, f, indent=1, allow_nan=False)
+    logger.info(f"Saving annotations in {output_dir}")
+    logger.info(f"Annotating {len(samples_obj)} samples...")
+    annotator.transform(dask_bags).compute(scheduler=scheduler)
+
+    if dask_client is not None:
+        logger.info("Shutdown workers...")
+        dask_client.shutdown()
+    logger.info("Done.")
