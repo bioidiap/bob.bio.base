@@ -1,7 +1,5 @@
 from .Extractor import Extractor
 from .Linearize import Linearize
-from .stacks import (SequentialExtractor, ParallelExtractor,
-                     CallableExtractor, MultipleExtractor)
 
 
 # gets sphinx autodoc done right - don't remove it
@@ -23,9 +21,5 @@ def __appropriate__(*args):
 __appropriate__(
     Extractor,
     Linearize,
-    SequentialExtractor,
-    ParallelExtractor,
-    CallableExtractor,
-    MultipleExtractor,
 )
 __all__ = [_ for _ in dir() if not _.startswith('_')]
