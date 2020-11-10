@@ -1,7 +1,5 @@
 from .Preprocessor import Preprocessor
 from .Filename import Filename
-from .stacks import (SequentialPreprocessor,
-                     ParallelPreprocessor, CallablePreprocessor)
 
 
 # gets sphinx autodoc done right - don't remove it
@@ -23,8 +21,5 @@ def __appropriate__(*args):
 __appropriate__(
     Preprocessor,
     Filename,
-    SequentialPreprocessor,
-    ParallelPreprocessor,
-    CallablePreprocessor,
 )
 __all__ = [_ for _ in dir() if not _.startswith('_')]
