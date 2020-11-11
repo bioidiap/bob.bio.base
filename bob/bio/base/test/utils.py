@@ -146,7 +146,9 @@ def is_library_available(library):
 
                 return function(*args, **kwargs)
             except ImportError as e:
-                raise SkipTest("Skipping test since `mxnet` is not available: %s" % e)
+                raise SkipTest(
+                    f"Skipping test since `{library}` is not available: %s" % e
+                )
 
         return wrapper
 
