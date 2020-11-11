@@ -9,6 +9,7 @@ import sys
 import functools
 from nose.plugins.skip import SkipTest
 from bob.extension.download import download_and_unzip
+import importlib
 
 # based on: http://stackoverflow.com/questions/6796492/temporarily-redirect-stdout-stderr
 class Quiet(object):
@@ -64,21 +65,6 @@ def random_training_set_by_id(shape, count=50, minimum=0, maximum=1, seed=42):
             ]
         )
     return train_set
-
-
-def grid_available(test):
-    """Decorator to check if the gridtk is present, before running the test"""
-
-    @functools.wraps(test)
-    def wrapper(*args, **kwargs):
-        try:
-            import gridtk
-
-            return test(*args, **kwargs)
-        except ImportError as e:
-            raise SkipTest("Skipping test since gridtk is not available: %s" % e)
-
-    return wrapper
 
 
 def db_available(dbname):
@@ -149,31 +135,19 @@ def atnt_database_directory():
     return atnt_downloaded_directory
 
 
-def mxnet_available(test):
+def is_library_available(library):
     """Decorator to check if the mxnet is present, before running the test"""
 
-    @functools.wraps(test)
-    def wrapper(*args, **kwargs):
-        try:
-            import mxnet
+    def _is_library_available(function):
+        @functools.wraps(function)
+        def wrapper(*args, **kwargs):
+            try:
+                importlib.import_module(library)
 
-            return test(*args, **kwargs)
-        except ImportError as e:
-            raise SkipTest("Skipping test since `mxnet` is not available: %s" % e)
+                return function(*args, **kwargs)
+            except ImportError as e:
+                raise SkipTest("Skipping test since `mxnet` is not available: %s" % e)
 
-    return wrapper
+        return wrapper
 
-
-def tensorflow_available(test):
-    """Decorator to check if the mxnet is present, before running the test"""
-
-    @functools.wraps(test)
-    def wrapper(*args, **kwargs):
-        try:
-            import tensorflow
-
-            return test(*args, **kwargs)
-        except ImportError as e:
-            raise SkipTest("Skipping test since `mxnet` is not available: %s" % e)
-
-    return wrapper
+    return _is_library_available
