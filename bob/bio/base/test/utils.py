@@ -148,3 +148,32 @@ def atnt_database_directory():
 
     return atnt_downloaded_directory
 
+
+def mxnet_available(test):
+    """Decorator to check if the mxnet is present, before running the test"""
+
+    @functools.wraps(test)
+    def wrapper(*args, **kwargs):
+        try:
+            import mxnet
+
+            return test(*args, **kwargs)
+        except ImportError as e:
+            raise SkipTest("Skipping test since `mxnet` is not available: %s" % e)
+
+    return wrapper
+
+
+def tensorflow_available(test):
+    """Decorator to check if the mxnet is present, before running the test"""
+
+    @functools.wraps(test)
+    def wrapper(*args, **kwargs):
+        try:
+            import tensorflow
+
+            return test(*args, **kwargs)
+        except ImportError as e:
+            raise SkipTest("Skipping test since `mxnet` is not available: %s" % e)
+
+    return wrapper
