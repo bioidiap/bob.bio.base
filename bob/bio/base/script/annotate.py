@@ -34,8 +34,8 @@ def annotate_common_options(func):
         required=True,
         cls=ResourceOption,
         entry_point_group="bob.bio.annotator",
-        help="A Transformer instance that takes a series of sample and returns "
-        "the modified samples with annotations as a dictionary.",
+        help="An annotator (instance of class inheriting from "
+            "bob.bio.base.Annotator) or an annotator resource name.",
     )
     @click.option(
         "--output-dir",
