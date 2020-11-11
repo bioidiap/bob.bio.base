@@ -34,8 +34,8 @@ def annotate_common_options(func):
         required=True,
         cls=ResourceOption,
         entry_point_group="bob.bio.annotator",
-        help="A Transformer instance that takes a series of sample and returns "
-        "the modified samples with annotations as a dictionary.",
+        help="An annotator (instance of class inheriting from "
+            "bob.bio.base.Annotator) or an annotator resource name.",
     )
     @click.option(
         "--output-dir",
@@ -148,15 +148,14 @@ def annotate(
     else:
         scheduler="single-threaded"
 
+    # Splits the samples list into bags
+    dask_bags = to_dask_bags.transform(samples)
+
     logger.info(f"Saving annotations in {output_dir}.")
     logger.info(f"Annotating {len(samples)} samples...")
-    dask_bags = to_dask_bags.transform(samples)
     annotator.transform(dask_bags).compute(scheduler=scheduler)
 
-    if dask_client is not None:
-        logger.info("Shutdown workers...")
-        dask_client.shutdown()
-    logger.info("Done.")
+    logger.info("All annotations written.")
 
 
 @click.command(
@@ -254,6 +253,7 @@ def annotate_samples(
         )
         for s in samples
     ]
+
     # Splits the samples list into bags
     dask_bags = to_dask_bags.transform(samples_obj)
 
@@ -261,7 +261,4 @@ def annotate_samples(
     logger.info(f"Annotating {len(samples_obj)} samples...")
     annotator.transform(dask_bags).compute(scheduler=scheduler)
 
-    if dask_client is not None:
-        logger.info("Shutdown workers...")
-        dask_client.shutdown()
-    logger.info("Done.")
+    logger.info("All annotations written.")
