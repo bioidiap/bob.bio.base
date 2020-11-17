@@ -9,3 +9,4 @@ bob.learn.linear
 gridtk
 bob.db.youtube
 bob.pipelines
+dask

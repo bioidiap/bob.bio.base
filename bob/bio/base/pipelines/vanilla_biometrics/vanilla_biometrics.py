@@ -17,7 +17,6 @@ from bob.pipelines.utils import isinstance_nested
 logger = logging.getLogger(__name__)
 
 
-
 def compute_scores(result, dask_client):
     if isinstance(result, Delayed) or isinstance(result, dask.bag.Bag):
         if dask_client is not None:
@@ -31,7 +30,6 @@ def compute_scores(result, dask_client):
 def post_process_scores(pipeline, scores, path):
     written_scores = pipeline.write_scores(scores)
     return pipeline.post_process(written_scores, path)
-
 
 
 def execute_vanilla_biometrics(

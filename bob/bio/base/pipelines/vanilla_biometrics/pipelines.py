@@ -60,8 +60,8 @@ class VanillaBiometricsPipeline(object):
       >>> pipeline(samples_for_training_back_ground_model, samplesets_for_enroll, samplesets_for_scoring).compute()
 
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
 
       transformer: :py:class`sklearn.pipeline.Pipeline` or a `sklearn.base.BaseEstimator`
         Transformer that will preprocess your data
@@ -69,8 +69,8 @@ class VanillaBiometricsPipeline(object):
       biometric_algorithm: :py:class:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm`
         Biometrics algorithm object that implements the methods `enroll` and `score` methods
 
-      score_writer: :any:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classe.ScoreWriter`
-          Format to write scores. Default to :any:`FourColumnsScoreWriter`
+      score_writer: :any:`bob.bio.base.pipelines.vanilla_biometrics.ScoreWriter`
+          Format to write scores. Default to :any:`bob.bio.base.pipelines.vanilla_biometrics.FourColumnsScoreWriter`
 
     """
 

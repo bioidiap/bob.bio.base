@@ -181,6 +181,14 @@ Details
 
 .. automodule:: bob.bio.base
 
+.. automodule:: bob.bio.base.annotator
+.. automodule:: bob.bio.base.pipelines
+.. automodule:: bob.bio.base.pipelines.vanilla_biometrics
+.. automodule:: bob.bio.base.database
+.. automodule:: bob.bio.base.preprocessor
+.. automodule:: bob.bio.base.extractor
+.. automodule:: bob.bio.base.transformers
+.. automodule:: bob.bio.base.algorithm
 .. automodule:: bob.bio.base.score.load
 .. automodule:: bob.bio.base.script.figure
 .. automodule:: bob.bio.base.script.commands

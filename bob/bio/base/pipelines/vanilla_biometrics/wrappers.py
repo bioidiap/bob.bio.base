@@ -31,8 +31,8 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
 
     Parameters
     ----------
-        biometric_algorithm: :any:`BioAlgorithm`
-           An implemented :any:`BioAlgorithm`
+        biometric_algorithm: :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`
+           An implemented :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`
     
         base_dir: str
            Path to store biometric references and scores
@@ -182,7 +182,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
 
 class BioAlgorithmDaskWrapper(BioAlgorithm):
     """
-    Wrap :any:`BioAlgorithm` to work with DASK
+    Wrap :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm` to work with DASK
     """
 
     def __init__(self, biometric_algorithm, **kwargs):
@@ -235,20 +235,20 @@ class BioAlgorithmDaskWrapper(BioAlgorithm):
 
 def dask_vanilla_biometrics(pipeline, npartitions=None, partition_size=None):
     """
-    Given a :any:`VanillaBiometrics`, wraps :any:`VanillaBiometrics.transformer` and
-    :any:`VanillaBiometrics.biometric_algorithm` to be executed with dask
+    Given a :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`, wraps :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` and
+    :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm` to be executed with dask
 
     Parameters
     ----------
 
-    pipeline: :any:`VanillaBiometrics`
+    pipeline: :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`
        Vanilla Biometrics based pipeline to be dasked
 
     npartitions: int
-       Number of partitions for the initial :any:`dask.bag`
+       Number of partitions for the initial `dask.bag`
 
     partition_size: int
-       Size of the partition for the initial :any:`dask.bag`
+       Size of the partition for the initial `dask.bag`
     """
 
     if isinstance(pipeline, ZTNormPipeline):
@@ -294,11 +294,11 @@ def dask_get_partition_size(cluster, n_objects):
     The heuristics is pretty simple, given the max number of possible workers to be run
     in a queue (not the number of current workers running) and a total number objects to be processed do n_objects/n_max_workers:
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
 
-        cluster:  :any:`bob.pipelines.distributed.SGEMultipleQueuesCluster`
-            Cluster of the type :any:`bob.pipelines.distributed.SGEMultipleQueuesCluster`
+        cluster:  :any:`bob.pipelines.distributed.sge.SGEMultipleQueuesCluster`
+            Cluster of the type :any:`bob.pipelines.distributed.sge.SGEMultipleQueuesCluster`
 
         n_objects: int
             Number of objects to be processed
@@ -313,13 +313,13 @@ def dask_get_partition_size(cluster, n_objects):
 
 def checkpoint_vanilla_biometrics(pipeline, base_dir, biometric_algorithm_dir=None):
     """
-    Given a :any:`VanillaBiometrics`, wraps :any:`VanillaBiometrics.transformer` and
-    :any:`VanillaBiometrics.biometric_algorithm` to be checkpointed
+    Given a :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`, wraps :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` and
+    :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm` to be checkpointed
 
     Parameters
     ----------
 
-    pipeline: :any:`VanillaBiometrics`
+    pipeline: :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`
        Vanilla Biometrics based pipeline to be checkpointed
 
     base_dir: str
@@ -362,7 +362,9 @@ def checkpoint_vanilla_biometrics(pipeline, base_dir, biometric_algorithm_dir=No
         ):
             save_func = estimator.estimator.instance.write_feature
             load_func = estimator.estimator.instance.read_feature
-            estimator.estimator.projector_file = os.path.join(bio_ref_scores_dir,"Projector.hdf5")
+            estimator.estimator.projector_file = os.path.join(
+                bio_ref_scores_dir, "Projector.hdf5"
+            )
 
         wraped_estimator = bob.pipelines.wrap(
             ["checkpoint"],
@@ -373,7 +375,6 @@ def checkpoint_vanilla_biometrics(pipeline, base_dir, biometric_algorithm_dir=No
         )
 
         sk_pipeline.steps[i] = (name, wraped_estimator)
-
 
     if isinstance(pipeline.biometric_algorithm, BioAlgorithmLegacy):
         pipeline.biometric_algorithm.base_dir = bio_ref_scores_dir
@@ -387,13 +388,13 @@ def checkpoint_vanilla_biometrics(pipeline, base_dir, biometric_algorithm_dir=No
 
 def is_checkpointed(pipeline):
     """
-    Check if :any:`VanillaBiometrics` is checkpointed
+    Check if :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` is checkpointed
 
 
     Parameters
     ----------
 
-    pipeline: :any:`VanillaBiometrics`
+    pipeline: :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`
        Vanilla Biometrics based pipeline to be checkpointed
 
     """
@@ -402,7 +403,7 @@ def is_checkpointed(pipeline):
     # If it BioAlgorithmLegacy and the transformer of BioAlgorithmLegacy is also checkpointable
     return isinstance_nested(
         pipeline, "biometric_algorithm", BioAlgorithmCheckpointWrapper
-    ) or \
-    (   isinstance_nested(pipeline, "biometric_algorithm", BioAlgorithmLegacy) and \
-        isinstance_nested(pipeline, "transformer", CheckpointWrapper)
+    ) or (
+        isinstance_nested(pipeline, "biometric_algorithm", BioAlgorithmLegacy)
+        and isinstance_nested(pipeline, "transformer", CheckpointWrapper)
     )

@@ -21,14 +21,14 @@ class Distance(BioAlgorithm):
 
         Enrolls the model by storing all given input vectors.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
 
         ``enroll_features`` : [:py:class:`numpy.ndarray`]
           The list of projected features to enroll the model from.
 
-        Returns:
-        --------
+        Returns
+        -------
 
         ``model`` : 2D :py:class:`numpy.ndarray`
           The enrolled model.
@@ -43,8 +43,8 @@ class Distance(BioAlgorithm):
 
         Computes the distance of the model to the probe using the distance function specified in the constructor.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
 
         ``model`` : 2D :py:class:`numpy.ndarray`
           The model storing all enrollment features
@@ -52,8 +52,8 @@ class Distance(BioAlgorithm):
         ``probe`` : :py:class:`numpy.ndarray`
           The probe feature vector
 
-        Returns:
-        --------
+        Returns
+        -------
 
         ``score`` : float
           A similarity value between ``model`` and ``probe``

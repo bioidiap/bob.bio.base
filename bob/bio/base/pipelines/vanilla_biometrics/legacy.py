@@ -52,7 +52,7 @@ class DatabaseConnector(Database):
 
     protocol : str
         The name of the protocol to generate samples from.
-        To be plugged at :py:method:`bob.db.base.Database.objects`.
+        To be plugged at `bob.db.base.Database.objects`.
 
     allow_scoring_with_all_biometric_references: bool
         If True will allow the scoring function to be performed in one shot with multiple probes.
@@ -294,7 +294,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
 
     def write_scores(self, samples, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        #open(path, "wb").write(pickle.dumps(samples))
+        # open(path, "wb").write(pickle.dumps(samples))
         joblib.dump(samples, path, compress=4)
 
     def _score_sample_set(
@@ -304,7 +304,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
         allow_scoring_with_all_biometric_references=False,
     ):
         def _load(path):
-            #return pickle.loads(open(path, "rb").read())
+            # return pickle.loads(open(path, "rb").read())
             return joblib.load(path)
 
         def _make_name(sampleset, biometric_references):
@@ -315,7 +315,8 @@ class BioAlgorithmLegacy(BioAlgorithm):
             return name + suffix
 
         path = os.path.join(
-            self.score_dir, _make_name(sampleset, biometric_references) + self._score_extension
+            self.score_dir,
+            _make_name(sampleset, biometric_references) + self._score_extension,
         )
 
         if self.force or not os.path.exists(path):
@@ -329,8 +330,9 @@ class BioAlgorithmLegacy(BioAlgorithm):
 
             self.write_scores(scored_sample_set.samples, path)
 
-            scored_sample_set = DelayedSampleSet(functools.partial(_load, path),
-                                                 parent=scored_sample_set)
+            scored_sample_set = DelayedSampleSet(
+                functools.partial(_load, path), parent=scored_sample_set
+            )
 
         else:
             scored_sample_set = SampleSet(_load(path), parent=sampleset)
