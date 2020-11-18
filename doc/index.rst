@@ -84,6 +84,7 @@ Users Guide
    vanilla_biometrics_intro
    vanilla_biometrics_features
    vanilla_biometrics_score_normalization
+   annotators
    legacy
 
 
