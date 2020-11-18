@@ -46,9 +46,9 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
     Examples
     --------
 
-    >>> from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import BioAlgCheckpointWrapper, Distance    
-    >>> biometric_algorithm = BioAlgCheckpointWrapper(Distance(), base_dir="./")
-    >>> biometric_algorithm.enroll(sample)
+    >>> from bob.bio.base.pipelines.vanilla_biometrics import BioAlgorithmCheckpointWrapper, Distance    
+    >>> biometric_algorithm = BioAlgorithmCheckpointWrapper(Distance(), base_dir="./")
+    >>> biometric_algorithm.enroll(sample) # doctest: +SKIP
 
     """
 

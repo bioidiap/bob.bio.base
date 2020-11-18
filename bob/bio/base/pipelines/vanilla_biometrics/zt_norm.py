@@ -31,11 +31,15 @@ class ZTNormPipeline(object):
 
     Example
     -------
-       >>> transformer = make_pipeline([])
+       >>> from bob.pipelines.transformers import Linearize
+       >>> from sklearn.pipeline import make_pipeline
+       >>> from bob.bio.base.pipelines.vanilla_biometrics import Distance, VanillaBiometricsPipeline, ZTNormPipeline
+       >>> estimator_1 = Linearize()
+       >>> transformer = make_pipeline(estimator_1)
        >>> biometric_algorithm = Distance()
        >>> vanilla_biometrics_pipeline = VanillaBiometricsPipeline(transformer, biometric_algorithm)
-       >>> zt_pipeline = ZTNormVanillaBiometricsPipeline(vanilla_biometrics_pipeline)
-       >>> zt_pipeline(...)
+       >>> zt_pipeline = ZTNormPipeline(vanilla_biometrics_pipeline)
+       >>> zt_pipeline(...) #doctest: +SKIP
 
     Parameters
     ----------
