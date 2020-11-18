@@ -2,6 +2,7 @@ import bob.db.base
 from bob.db.base.annotations import read_annotation_file
 from bob.pipelines.sample import _ReprMixin
 
+
 class BioFile(bob.db.base.File, _ReprMixin):
     """
     A simple base class that defines basic properties of File object for the use
@@ -29,7 +30,7 @@ class BioFile(bob.db.base.File, _ReprMixin):
         The extension of annotation files. Default is ``.json``
     annotation_type : str or None
         The type of the annotation file, see
-        :any:`bob.db.base.annotations.read_annotation_file`. Default is
+        :`bob.db.base.annotations.read_annotation_file`. Default is
         ``json``.
     """
 
@@ -82,14 +83,14 @@ class BioFile(bob.db.base.File, _ReprMixin):
         if original_extension is None:
             original_extension = self.original_extension
         # get the path
-        path = self.make_path(
-            original_directory or "", original_extension or ""
-        )
+        path = self.make_path(original_directory or "", original_extension or "")
         return bob.io.base.load(path)
 
     @property
     def annotations(self):
-        path = self.make_path(self.annotation_directory or "", self.annotation_extension or "")
+        path = self.make_path(
+            self.annotation_directory or "", self.annotation_extension or ""
+        )
         return read_annotation_file(path, annotation_type=self.annotation_type)
 
 

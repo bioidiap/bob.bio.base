@@ -3,7 +3,7 @@
 # vim: set fileencoding=utf-8 :
 
 Implementation of a pipeline and an algorithm that 
-computes Z, T and ZT Score Normalization of a :any:`BioAlgorithm`
+computes Z, T and ZT Score Normalization of a :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`
 """
 
 from bob.pipelines import DelayedSample, Sample, SampleSet, DelayedSampleSet
@@ -17,6 +17,7 @@ import copy
 import joblib
 import logging
 from .pipelines import check_valid_pipeline
+
 logger = logging.getLogger(__name__)
 
 
@@ -30,11 +31,15 @@ class ZTNormPipeline(object):
 
     Example
     -------
-       >>> transformer = make_pipeline([])
+       >>> from bob.pipelines.transformers import Linearize
+       >>> from sklearn.pipeline import make_pipeline
+       >>> from bob.bio.base.pipelines.vanilla_biometrics import Distance, VanillaBiometricsPipeline, ZTNormPipeline
+       >>> estimator_1 = Linearize()
+       >>> transformer = make_pipeline(estimator_1)
        >>> biometric_algorithm = Distance()
        >>> vanilla_biometrics_pipeline = VanillaBiometricsPipeline(transformer, biometric_algorithm)
-       >>> zt_pipeline = ZTNormVanillaBiometricsPipeline(vanilla_biometrics_pipeline)
-       >>> zt_pipeline(...)
+       >>> zt_pipeline = ZTNormPipeline(vanilla_biometrics_pipeline)
+       >>> zt_pipeline(...) #doctest: +SKIP
 
     Parameters
     ----------
@@ -265,7 +270,7 @@ class ZTNormPipeline(object):
 
 class ZTNorm(object):
     """
-    Computes Z, T and ZT Score Normalization of a :any:`BioAlgorithm`
+    Computes Z, T and ZT Score Normalization of a `:any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`
 
     Reference bibliography from: A Generative Model for Score Normalization in Speaker Recognition
     https://arxiv.org/pdf/1709.09868.pdf
@@ -496,12 +501,12 @@ class ZTNorm(object):
 
 class ZTNormDaskWrapper(object):
     """
-    Wrap :any:`ZTNorm` to work with DASK
+    Wrap `:any:`bob.bio.base.pipelines.vanilla_biometrics.ZTNorm` to work with DASK
 
     Parameters
     ----------
 
-        ztnorm: :any:`ZTNorm`
+        ztnorm: :any:`bob.bio.base.pipelines.vanilla_biometrics.ZTNormPipeline`
             ZTNorm Pipeline
     """
 
@@ -558,12 +563,12 @@ class ZTNormDaskWrapper(object):
 
 class ZTNormCheckpointWrapper(object):
     """
-    Wrap :any:`ZTNorm` to work with DASK
+    Wrap :any:`bob.bio.base.pipelines.vanilla_biometrics.ZTNormPipeline` to work with DASK
 
     Parameters
     ----------
 
-        ztnorm: :any:`ZTNorm`
+        ztnorm: :any:`bob.bio.base.pipelines.vanilla_biometrics.ZTNorm`
             ZTNorm Pipeline
     """
 
@@ -584,11 +589,11 @@ class ZTNormCheckpointWrapper(object):
 
     def write_scores(self, samples, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        #open(path, "wb").write(cloudpickle.dumps(samples))
+        # open(path, "wb").write(cloudpickle.dumps(samples))
         joblib.dump(samples, path, compress=4)
 
     def _load(self, path):
-        #return cloudpickle.loads(open(path, "rb").read())
+        # return cloudpickle.loads(open(path, "rb").read())
         return joblib.load(path)
 
     def _make_name(self, sampleset, biometric_references, for_zt=False):
@@ -613,8 +618,8 @@ class ZTNormCheckpointWrapper(object):
             self.write_scores(z_normed_score.samples, path)
 
         z_normed_score = DelayedSampleSet(
-                functools.partial(self._load, path),
-                parent=probe_score)
+            functools.partial(self._load, path), parent=probe_score
+        )
 
         return z_normed_score
 
@@ -630,8 +635,9 @@ class ZTNormCheckpointWrapper(object):
 
             self.write_scores(t_normed_score.samples, path)
 
-        t_normed_score = DelayedSampleSet(functools.partial(self._load, path),
-                                          parent=probe_score)
+        t_normed_score = DelayedSampleSet(
+            functools.partial(self._load, path), parent=probe_score
+        )
         return t_normed_score
 
     def compute_znorm_scores(

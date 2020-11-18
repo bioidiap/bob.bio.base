@@ -67,25 +67,24 @@ class CSVToSampleLoader(CSVBaseSampleLoader):
     :any:`bob.pipelines.DelayedSample` or :any:`bob.pipelines.SampleSet`
     """
 
-    def __call__(self, filename):
-        def check_header(header):
-            """
-            A header should have at least "SUBJECT" AND "PATH"
-            """
-            header = [h.lower() for h in header]
-            if not "subject" in header:
-                raise ValueError(
-                    "The field `subject` is not available in your dataset."
-                )
+    def check_header(self, header):
+        """
+        A header should have at least "SUBJECT" AND "PATH"
+        """
+        header = [h.lower() for h in header]
+        if not "subject" in header:
+            raise ValueError("The field `subject` is not available in your dataset.")
 
-            if not "path" in header:
-                raise ValueError("The field `path` is not available in your dataset.")
+        if not "path" in header:
+            raise ValueError("The field `path` is not available in your dataset.")
+
+    def __call__(self, filename):
 
         with open(filename) as cf:
             reader = csv.reader(cf)
             header = next(reader)
 
-            check_header(header)
+            self.check_header(header)
             return [self.convert_row_to_sample(row, header) for row in reader]
 
     def convert_row_to_sample(self, row, header):
@@ -136,8 +135,8 @@ class CSVToSampleLoader(CSVBaseSampleLoader):
 
 class CSVDatasetDevEval:
     """
-    Generic filelist dataset for :any:`bob.bio.base.pipelines.VanillaBiometrics` pipeline.
-    Check :ref:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
+    Generic filelist dataset for :any:` bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` pipeline.
+    Check :any:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
     interface.
 
     To create a new dataset, you need to provide a directory structure similar to the one below:
@@ -163,8 +162,8 @@ class CSVDatasetDevEval:
 
 
     Those csv files should contain in each row i-) the path to raw data and ii-) the subject label
-    for enrollment (:ref:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.Database.references`) and
-    probing (:ref:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.Database.probes`).
+    for enrollment (:any:`bob.bio.base.pipelines.vanilla_biometrics.Database.references`) and
+    probing (:any:`bob.bio.base.pipelines.vanilla_biometrics.Database.probes`).
     The structure of each CSV file should be as below:
 
     .. code-block:: text
@@ -192,7 +191,7 @@ class CSVDatasetDevEval:
     are optional and it is used in case a protocol contains data for evaluation.
     
     Finally, the content of the file `my_dataset/my_protocol/train.csv` is used in the case a protocol
-    contains data for training (:ref:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.Database.background_model_samples`)
+    contains data for training (`bob.bio.base.pipelines.vanilla_biometrics.Database.background_model_samples`)
 
     Parameters
     ----------
@@ -203,8 +202,8 @@ class CSVDatasetDevEval:
         protocol_na,e: str
           The name of the protocol
 
-        csv_to_sample_loader: :any:`CSVBaseSampleLoader`
-            Base class that whose objective is to generate :any:`bob.pipelines.Samples`
+        csv_to_sample_loader: :any:`bob.bio.base.database.CSVBaseSampleLoader`
+            Base class that whose objective is to generate :any:`bob.pipelines.Sample`
             and/or :any:`bob.pipelines.SampleSet` from csv rows
 
     """
@@ -330,10 +329,10 @@ class CSVDatasetDevEval:
 
 class CSVDatasetCrossValidation:
     """
-    Generic filelist dataset for :any:`bob.bio.base.pipelines.VanillaBiometrics` pipeline that 
+    Generic filelist dataset for :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` pipeline that 
     handles **CROSS VALIDATION**.
 
-    Check :ref:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
+    Check :any:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
     interface.
 
 
@@ -365,8 +364,8 @@ class CSVDatasetCrossValidation:
     samples_for_enrollment: float
       Number of samples used for enrollment
 
-    csv_to_sample_loader: :any:`CSVBaseSampleLoader`
-        Base class that whose objective is to generate :any:`bob.pipelines.Samples`
+    csv_to_sample_loader: :any:`bob.bio.base.database.CSVBaseSampleLoader`
+        Base class that whose objective is to generate :any:`bob.pipelines.Sample`
         and/or :any:`bob.pipelines.SampleSet` from csv rows
 
     """

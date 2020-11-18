@@ -97,6 +97,16 @@ Reference Manual
    py_api
 
 
+References
+==========
+
+.. [TP91]    *M. Turk and A. Pentland*. **Eigenfaces for recognition**. Journal of Cognitive Neuroscience, 3(1):71-86, 1991.
+.. [ZKC+98]  *W. Zhao, A. Krishnaswamy, R. Chellappa, D. Swets and J. Weng*. **Discriminant analysis of principal components for face recognition**, pages 73-85. Springer Verlag Berlin, 1998.
+.. [MWP98]   *B. Moghaddam, W. Wahid and A. Pentland*. **Beyond eigenfaces: probabilistic matching for face recognition**. IEEE International Conference on Automatic Face and Gesture Recognition, pages 30-35. 1998.
+.. [GW09]    *M. Günther and R.P. Würtz*. **Face detection and recognition using maximum likelihood classifiers on Gabor graphs**. International Journal of Pattern Recognition and Artificial Intelligence, 23(3):433-461, 2009.
+
+
+
 
 Indices and tables
 ==================

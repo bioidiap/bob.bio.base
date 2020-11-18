@@ -43,25 +43,28 @@ class VanillaBiometricsPipeline(object):
 
     Example
     -------
+       >>> from bob.pipelines.transformers import Linearize
        >>> from sklearn.pipeline import make_pipeline
-       >>> from bob.bio.base.pipelines.vanilla_biometrics.implemented import Distance
-       >>> transformer = make_pipeline(estimator_1, estimator_2)
+       >>> from bob.bio.base.pipelines.vanilla_biometrics import Distance, VanillaBiometricsPipeline
+       >>> estimator_1 = Linearize()
+       >>> transformer = make_pipeline(estimator_1)
        >>> biometric_algoritm = Distance()
-       >>> pipeline = VanillaBiometrics(transformer, biometric_algoritm)
-       >>> pipeline(samples_for_training_back_ground_model, samplesets_for_enroll, samplesets_for_scoring)
+       >>> pipeline = VanillaBiometricsPipeline(transformer, biometric_algoritm)
+       >>> pipeline(samples_for_training_back_ground_model, samplesets_for_enroll, samplesets_for_scoring)  # doctest: +SKIP
 
 
     To run this pipeline using Dask, used the function :py:func:`dask_vanilla_biometrics`.
 
     Example
     -------
-      >>> pipeline = VanillaBiometrics(transformer, biometric_algoritm)
+      >>> from bob.bio.base.pipelines.vanilla_biometrics import dask_vanilla_biometrics
+      >>> pipeline = VanillaBiometricsPipeline(transformer, biometric_algoritm)
       >>> pipeline = dask_vanilla_biometrics(pipeline)
-      >>> pipeline(samples_for_training_back_ground_model, samplesets_for_enroll, samplesets_for_scoring).compute()
+      >>> pipeline(samples_for_training_back_ground_model, samplesets_for_enroll, samplesets_for_scoring).compute()  # doctest: +SKIP
 
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
 
       transformer: :py:class`sklearn.pipeline.Pipeline` or a `sklearn.base.BaseEstimator`
         Transformer that will preprocess your data
@@ -69,8 +72,8 @@ class VanillaBiometricsPipeline(object):
       biometric_algorithm: :py:class:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm`
         Biometrics algorithm object that implements the methods `enroll` and `score` methods
 
-      score_writer: :any:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classe.ScoreWriter`
-          Format to write scores. Default to :any:`FourColumnsScoreWriter`
+      score_writer: :any:`bob.bio.base.pipelines.vanilla_biometrics.ScoreWriter`
+          Format to write scores. Default to :any:`bob.bio.base.pipelines.vanilla_biometrics.FourColumnsScoreWriter`
 
     """
 
