@@ -3,23 +3,18 @@
 
 """Re-usable blocks for legacy bob.bio.base algorithms"""
 
-import os
 import functools
-from collections import defaultdict
-
-from bob.bio.base import utils
-from .abstract_classes import (
-    BioAlgorithm,
-    Database,
-)
-from bob.io.base import HDF5File
-from bob.pipelines import DelayedSample, SampleSet, Sample, DelayedSampleSet
 import logging
-import copy
-import joblib
-from .score_writers import FourColumnsScoreWriter
+import os
 
+import joblib
 from bob.bio.base.algorithm import Algorithm
+from bob.pipelines import DelayedSample
+from bob.pipelines import DelayedSampleSet
+from bob.pipelines import SampleSet
+
+from .abstract_classes import BioAlgorithm
+from .abstract_classes import Database
 
 logger = logging.getLogger("bob.bio.base")
 
@@ -27,12 +22,16 @@ logger = logging.getLogger("bob.bio.base")
 def _biofile_to_delayed_sample(biofile, database):
     return DelayedSample(
         load=functools.partial(
-            biofile.load, database.original_directory, database.original_extension,
+            biofile.load,
+            database.original_directory,
+            database.original_extension,
         ),
         subject=str(biofile.client_id),
         key=biofile.path,
         path=biofile.path,
-        annotations=database.annotations(biofile),
+        delayed_attributes=dict(
+            annotations=functools.partial(database.annotations, biofile)
+        ),
     )
 
 
@@ -205,7 +204,12 @@ class BioAlgorithmLegacy(BioAlgorithm):
     """
 
     def __init__(
-        self, instance, base_dir, force=False, projector_file=None, **kwargs,
+        self,
+        instance,
+        base_dir,
+        force=False,
+        projector_file=None,
+        **kwargs,
     ):
         super().__init__(**kwargs)
 
