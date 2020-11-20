@@ -17,7 +17,10 @@ from .zt_norm import ZTNormPipeline, ZTNormDaskWrapper, ZTNormCheckpointWrapper,
 
 from .legacy import BioAlgorithmLegacy, DatabaseConnector
 
-from .vanilla_biometrics import execute_vanilla_biometrics
+from .vanilla_biometrics import (
+    execute_vanilla_biometrics,
+    execute_vanilla_biometrics_ztnorm,
+)
 
 
 # gets sphinx autodoc done right - don't remove it

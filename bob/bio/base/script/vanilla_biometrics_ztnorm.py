@@ -14,28 +14,8 @@ from bob.extension.scripts.click_helper import (
 )
 
 import logging
-<<<<<<< HEAD
-import os
-from bob.bio.base.pipelines.vanilla_biometrics import (
-    BioAlgorithmDaskWrapper,
-    ZTNormPipeline,
-    ZTNormCheckpointWrapper,
-    checkpoint_vanilla_biometrics,
-    dask_vanilla_biometrics,
-    dask_get_partition_size,
-    FourColumnsScoreWriter,
-    CSVScoreWriter,
-    is_checkpointed,
-)
-from bob.pipelines.utils import isinstance_nested
-from .vanilla_biometrics import (
-    compute_scores,
-    post_process_scores,
-)
-import copy
-=======
+
 from bob.bio.base.pipelines.vanilla_biometrics import execute_vanilla_biometrics_ztnorm
->>>>>>> Moved the ZTNorm code from the CLI command to the API
 
 logger = logging.getLogger(__name__)
 
