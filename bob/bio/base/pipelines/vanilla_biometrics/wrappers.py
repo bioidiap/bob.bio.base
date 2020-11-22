@@ -311,7 +311,9 @@ def dask_get_partition_size(cluster, n_objects):
     return n_objects // (max_jobs * 2) if n_objects > max_jobs else 1
 
 
-def checkpoint_vanilla_biometrics(pipeline, base_dir, biometric_algorithm_dir=None):
+def checkpoint_vanilla_biometrics(
+    pipeline, base_dir, biometric_algorithm_dir=None, hash_fn=None
+):
     """
     Given a :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`, wraps :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` and
     :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm` to be checkpointed
@@ -331,7 +333,12 @@ def checkpoint_vanilla_biometrics(pipeline, base_dir, biometric_algorithm_dir=No
        This is useful when it's suitable to have the transformed data path, and biometric references and scores
        in different paths.
 
-
+    hash_fn
+       Pointer to a hash function. This hash function will map
+       `sample.key` to a hash code and this hash code will be the
+       relative directory where a single `sample` will be checkpointed.
+       This is useful when is desireable file directories with more than
+       a certain number of files.
     """
 
     sk_pipeline = pipeline.transformer
@@ -372,6 +379,7 @@ def checkpoint_vanilla_biometrics(pipeline, base_dir, biometric_algorithm_dir=No
             features_dir=os.path.join(base_dir, name),
             load_func=load_func,
             save_func=save_func,
+            hash_fn=hash_fn,
         )
 
         sk_pipeline.steps[i] = (name, wraped_estimator)

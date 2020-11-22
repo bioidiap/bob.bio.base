@@ -88,7 +88,8 @@ def execute_vanilla_biometrics(
 
     # Check if it's already checkpointed
     if checkpoint and not is_checkpointed(pipeline):
-        pipeline = checkpoint_vanilla_biometrics(pipeline, output)
+        hash_fn = database.hash_fn if hasattr(database, "hash_fn") else None
+        pipeline = checkpoint_vanilla_biometrics(pipeline, output, hash_fn=hash_fn)
 
     background_model_samples = database.background_model_samples()
 
@@ -105,10 +106,8 @@ def execute_vanilla_biometrics(
             n_objects = max(
                 len(background_model_samples), len(biometric_references), len(probes)
             )
-            pipeline = dask_vanilla_biometrics(
-                pipeline,
-                partition_size=dask_get_partition_size(dask_client.cluster, n_objects),
-            )
+            partition_size = dask_get_partition_size(dask_client.cluster, n_objects)
+            pipeline = dask_vanilla_biometrics(pipeline, partition_size=partition_size,)
 
         logger.info(f"Running vanilla biometrics for group {group}")
         allow_scoring_with_all_biometric_references = (

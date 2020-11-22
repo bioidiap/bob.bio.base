@@ -24,7 +24,7 @@ from bob.bio.base.pipelines.vanilla_biometrics import (
     dask_get_partition_size,
     FourColumnsScoreWriter,
     CSVScoreWriter,
-    is_checkpointed
+    is_checkpointed,
 )
 from bob.pipelines.utils import isinstance_nested
 from .vanilla_biometrics import (
@@ -228,7 +228,8 @@ def vanilla_biometrics_ztnorm(
 
     # Check if it's already checkpointed
     if checkpoint and not is_checkpointed(pipeline):
-        pipeline = checkpoint_vanilla_biometrics(pipeline, output)
+        hash_fn = database.hash_fn if hasattr(database, "hash_fn") else None
+        pipeline = checkpoint_vanilla_biometrics(pipeline, output, hash_fn=hash_fn)
 
     # Patching the pipeline in case of ZNorm and checkpointing it
     pipeline = ZTNormPipeline(pipeline)
