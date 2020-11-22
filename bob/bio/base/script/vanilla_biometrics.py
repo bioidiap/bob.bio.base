@@ -114,6 +114,24 @@ It is possible to do it via configuration file
     help="If set, it will checkpoint all steps of the pipeline. Checkpoints will be saved in `--output`.",
     cls=ResourceOption,
 )
+@click.option(
+    "--dask-partition-size",
+    "-s",
+    help="If using Dask, this option defines the size of each dask.bag.partition."
+    "Use this option if the current heuristic that sets this value doesn't suit your experiment."
+    "(https://docs.dask.org/en/latest/bag-api.html?highlight=partition_size#dask.bag.from_sequence).",
+    default=None,
+    type=int,
+)
+@click.option(
+    "--dask-n-workers",
+    "-n",
+    help="If using Dask, this option defines the number of workers to start your experiment."
+    "Dask automatically scales up/down the number of workers due to the current load of tasks to be solved."
+    "Use this option if the current amount of workers set to start an experiment doesn't suit you.",
+    default=None,
+    type=int,
+)
 @verbosity_option(cls=ResourceOption)
 def vanilla_biometrics(
     pipeline,
@@ -123,6 +141,8 @@ def vanilla_biometrics(
     output,
     write_metadata_scores,
     checkpoint,
+    dask_partition_size,
+    dask_n_workers,
     **kwargs,
 ):
     """Runs the simplest biometrics pipeline.
@@ -189,7 +209,9 @@ def vanilla_biometrics(
         output,
         write_metadata_scores,
         checkpoint,
+        dask_partition_size,
+        dask_n_workers,
         **kwargs,
     )
 
-    logger.info("Experiment finished !!!!!")
+    logger.info("Experiment finished !")
