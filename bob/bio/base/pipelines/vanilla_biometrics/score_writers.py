@@ -93,13 +93,13 @@ class CSVScoreWriter(ScoreWriter):
             probe_dict = dict(
                 (k, f"probe_{k}")
                 for k in probe_sampleset.__dict__.keys()
-                if not (k in self.exclude_list or k.startswith("__"))
+                if not (k in self.exclude_list or k.startswith("_"))
             )
 
             bioref_dict = dict(
                 (k, f"bio_ref_{k}")
                 for k in first_biometric_reference.__dict__.keys()
-                if not (k in self.exclude_list or k.startswith("__"))
+                if not (k in self.exclude_list or k.startswith("_"))
             )
 
             header = (
