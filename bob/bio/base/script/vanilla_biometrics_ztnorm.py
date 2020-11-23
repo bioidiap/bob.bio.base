@@ -133,7 +133,8 @@ It is possible to do it via configuration file
     "Use this option if the current heuristic that sets this value doesn't suit your experiment."
     "(https://docs.dask.org/en/latest/bag-api.html?highlight=partition_size#dask.bag.from_sequence).",
     default=None,
-    type=int,
+    type=click.INT,
+    cls=ResourceOption,
 )
 @click.option(
     "--dask-n-workers",
@@ -142,7 +143,8 @@ It is possible to do it via configuration file
     "Dask automatically scales up/down the number of workers due to the current load of tasks to be solved."
     "Use this option if the current amount of workers set to start an experiment doesn't suit you.",
     default=None,
-    type=int,
+    type=click.INT,
+    cls=ResourceOption,
 )
 @verbosity_option(cls=ResourceOption)
 def vanilla_biometrics_ztnorm(
