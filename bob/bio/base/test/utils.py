@@ -8,8 +8,8 @@ import os
 import sys
 import functools
 from nose.plugins.skip import SkipTest
-from bob.extension.download import download_and_unzip
 import importlib
+from bob.db.atnt.models import DEFAULT_DATADIR as ATNT_DEFAULT_DIR
 
 # based on: http://stackoverflow.com/questions/6796492/temporarily-redirect-stdout-stderr
 class Quiet(object):
@@ -91,7 +91,7 @@ def db_available(dbname):
 atnt_default_directory = (
     os.environ["ATNT_DATABASE_DIRECTORY"]
     if "ATNT_DATABASE_DIRECTORY" in os.environ
-    else "/idiap/group/biometric/databases/orl/"
+    else ATNT_DEFAULT_DIR
 )
 global atnt_downloaded_directory
 atnt_downloaded_directory = None
@@ -102,35 +102,25 @@ def atnt_database_directory():
     if atnt_downloaded_directory:
         return atnt_downloaded_directory
 
-    if os.path.exists(atnt_default_directory):
+    if os.path.isdir(atnt_default_directory):
         return atnt_default_directory
 
-    # TODO: THIS SHOULD BE A CLASS METHOD OF bob.db.atnt database
-    source_url = [
-        "http://bobconda.lab.idiap.ch/public/data/bob/att_faces.zip",
-        "http://www.idiap.ch/software/bob/data/bob/att_faces.zip",
-    ]
-
+    from bob.db.atnt.driver import download
+    from argparse import Namespace
     import tempfile
 
     atnt_downloaded_directory = tempfile.mkdtemp(prefix="atnt_db_")
     logger.warn(
-        "Downloading the AT&T database from '%s' to '%s' ...",
-        source_url,
+        "Downloading the AT&T database to '%s' ...",
         atnt_downloaded_directory,
     )
     logger.warn(
-        "To avoid this, please download the database manually, extract the data and set the ATNT_DATABASE_DIRECTORY environment variable to this directory."
+        "To avoid this, please run bob_dbmanage.py atnt download."
     )
+    download(Namespace(output_dir=atnt_downloaded_directory))
 
     # to avoid re-downloading in parallel test execution
     os.environ["ATNT_DATABASE_DIRECTORY"] = atnt_downloaded_directory
-
-    if not os.path.exists(atnt_downloaded_directory):
-        os.mkdir(atnt_downloaded_directory)
-    download_and_unzip(
-        source_url, os.path.join(atnt_downloaded_directory, "att_faces.zip")
-    )
 
     return atnt_downloaded_directory
 
