@@ -127,11 +127,16 @@ def zt_norm_stubs(references, probes, t_references, z_probes):
     zt_normed_scores = _norm(z_normed_scores, z_t_scores, axis=0)
     assert zt_normed_scores.shape == (n_reference, n_probes)
 
-    s_normed_scores = (z_normed_scores+t_normed_scores)*0.5
+    s_normed_scores = (z_normed_scores + t_normed_scores) * 0.5
     assert s_normed_scores.shape == (n_reference, n_probes)
 
-
-    return raw_scores, z_normed_scores, t_normed_scores, zt_normed_scores, s_normed_scores
+    return (
+        raw_scores,
+        z_normed_scores,
+        t_normed_scores,
+        zt_normed_scores,
+        s_normed_scores,
+    )
 
 
 def test_norm_mechanics():
@@ -285,7 +290,6 @@ def test_norm_mechanics():
             )
             assert np.allclose(z_normed_scores, z_normed_scores_ref)
 
-
             ############
             # TESTING T-NORM
             #############
@@ -319,7 +323,7 @@ def test_norm_mechanics():
 
             t_normed_scores = _dump_scores_from_samples(
                 t_normed_score_samples, shape=(n_probes, n_references)
-            )            
+            )
             assert np.allclose(t_normed_scores, t_normed_scores_ref)
 
             ############
@@ -371,7 +375,6 @@ def test_norm_mechanics():
                     scheduler="single-threaded"
                 )
 
-
             raw_scores = _dump_scores_from_samples(
                 raw_score_samples, shape=(n_probes, n_references)
             )
@@ -396,9 +399,6 @@ def test_norm_mechanics():
                 s_normed_score_samples, shape=(n_probes, n_references)
             )
             assert np.allclose(s_normed_scores, s_normed_scores_ref)
-
-
-
 
     # No dask
     run(False)  # On memory
@@ -438,7 +438,13 @@ def test_znorm_on_memory():
                     vanilla_biometrics_pipeline, npartitions=2
                 )
 
-            raw_scores, z_scores, t_scores, zt_scores, s_scores = vanilla_biometrics_pipeline(
+            (
+                raw_scores,
+                z_scores,
+                t_scores,
+                zt_scores,
+                s_scores,
+            ) = vanilla_biometrics_pipeline(
                 database.background_model_samples(),
                 database.references(),
                 database.probes(),
@@ -446,10 +452,6 @@ def test_znorm_on_memory():
                 database.treferences(),
                 allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
             )
-
-            # if vanilla_biometrics_pipeline.score_writer is not None:
-            # concatenated_scores
-            # pass
 
             def _concatenate(pipeline, scores, path):
                 writed_scores = pipeline.write_scores(scores)
@@ -483,7 +485,6 @@ def test_znorm_on_memory():
                 t_scores = t_scores.compute(scheduler="single-threaded")
                 zt_scores = zt_scores.compute(scheduler="single-threaded")
                 s_scores = s_scores.compute(scheduler="single-threaded")
-
 
             if isinstance(score_writer, CSVScoreWriter):
                 n_lines = 51 if with_dask else 101

@@ -35,6 +35,12 @@ class BioAlgorithm(metaclass=ABCMeta):
         self.stacked_biometric_references = None
         self.score_reduction_operation = average_scores
 
+    def clear_caches(self):
+        """
+        Clean all cached objects from BioAlgorithm
+        """
+        self.stacked_biometric_references = None
+
     def enroll_samples(self, biometric_references):
         """This method should implement the enrollment sub-pipeline of the Vanilla Biometrics Pipeline. TODO REF
 
@@ -122,7 +128,7 @@ class BioAlgorithm(metaclass=ABCMeta):
                     allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
                 )
             )
-
+        self.clear_caches()
         return retval
 
     def _score_sample_set(
