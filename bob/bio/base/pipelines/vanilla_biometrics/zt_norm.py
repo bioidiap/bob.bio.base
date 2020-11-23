@@ -127,6 +127,7 @@ class ZTNormPipeline(object):
                 biometric_references,
                 allow_scoring_with_all_biometric_references,
             )
+
         if self.t_norm:
             if t_biometric_reference_samples is None:
                 raise ValueError("No samples for `t_norm` was provided")
@@ -141,6 +142,7 @@ class ZTNormPipeline(object):
             raw_scores,
             allow_scoring_with_all_biometric_references,
         )
+
         if not self.z_norm:
             # In case z_norm=False and t_norm=True
             return t_normed_scores

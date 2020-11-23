@@ -65,6 +65,9 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         self._biometric_reference_extension = ".hdf5"
         self._score_extension = ".joblib"
 
+    def clear_caches(self):
+        self.biometric_algorithm.clear_caches()
+
     def set_score_references_path(self, group):
         if group is None:
             self.biometric_reference_dir = os.path.join(
@@ -187,6 +190,9 @@ class BioAlgorithmDaskWrapper(BioAlgorithm):
 
     def __init__(self, biometric_algorithm, **kwargs):
         self.biometric_algorithm = biometric_algorithm
+
+    def clear_caches(self):
+        self.biometric_algorithm.clear_caches()
 
     def enroll_samples(self, biometric_reference_features):
 
