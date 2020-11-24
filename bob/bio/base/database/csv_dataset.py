@@ -10,7 +10,9 @@ import functools
 from abc import ABCMeta, abstractmethod
 import numpy as np
 import itertools
+import logging
 
+logger = logging.getLogger(__name__)
 
 class CSVBaseSampleLoader(metaclass=ABCMeta):
     """
@@ -340,10 +342,13 @@ class CSVDatasetDevEval:
 
         # Get enroll and probe samples
         groups = ["dev", "eval"] if not groups else groups
+        if "eval" in groups and (not self.eval_enroll_csv or not self.eval_probe_csv):
+            logger.info("'eval' requested, but dataset has no 'eval' group.")
+            groups.remove("eval")
         for group in groups:
             for purpose in ("enroll", "probe"):
                 label = f"{group}_{purpose}_csv"
-                samples.append(self.csv_to_sample_loader(self.__dict__[label]))
+                samples = samples + self.csv_to_sample_loader(self.__dict__[label])
         return samples
 
 
@@ -489,11 +494,13 @@ class CSVDatasetCrossValidation:
         samples = self.background_model_samples()
 
         # Get enroll and probe samples
-        groups = ["dev", "eval"] if not groups else groups
+        groups = ["dev"] if not groups else groups
+        if "eval" in groups:
+            logger.info("'eval' requested but there is no 'eval' group defined.")
+            groups.remove("eval")
         for group in groups:
-            for purpose in ("enroll", "probe"):
-                label = f"{group}_{purpose}_csv"
-                samples.append(self.csv_to_sample_loader(self.__dict__[label]))
+            samples = samples+ [s for s_set in self.references(group) for s in s_set]
+            samples = samples+ [s for s_set in self.probes(group) for s in s_set]
         return samples
 
 
