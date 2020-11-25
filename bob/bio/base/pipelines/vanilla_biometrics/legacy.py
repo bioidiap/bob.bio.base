@@ -22,9 +22,7 @@ logger = logging.getLogger("bob.bio.base")
 def _biofile_to_delayed_sample(biofile, database):
     return DelayedSample(
         load=functools.partial(
-            biofile.load,
-            database.original_directory,
-            database.original_extension,
+            biofile.load, database.original_directory, database.original_extension,
         ),
         subject=str(biofile.client_id),
         key=biofile.path,
@@ -65,6 +63,10 @@ class DatabaseConnector(Database):
     fixed_positions: dict
         In case database contains one single annotation for all samples.
         This is useful for registered databases.
+
+    memory_demanding: bool
+        Sinalizes that a database has some memory demanding components.
+        It might be useful for future processing
     """
 
     def __init__(
@@ -73,6 +75,7 @@ class DatabaseConnector(Database):
         allow_scoring_with_all_biometric_references=True,
         annotation_type="eyes-center",
         fixed_positions=None,
+        memory_demanding=False,
         **kwargs,
     ):
         self.database = database
@@ -81,6 +84,7 @@ class DatabaseConnector(Database):
         )
         self.annotation_type = annotation_type
         self.fixed_positions = fixed_positions
+        self.memory_demanding = memory_demanding
 
     def background_model_samples(self):
         """Returns :py:class:`Sample`'s to train a background model (group
@@ -222,12 +226,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
     """
 
     def __init__(
-        self,
-        instance,
-        base_dir,
-        force=False,
-        projector_file=None,
-        **kwargs,
+        self, instance, base_dir, force=False, projector_file=None, **kwargs,
     ):
         super().__init__(**kwargs)
 
