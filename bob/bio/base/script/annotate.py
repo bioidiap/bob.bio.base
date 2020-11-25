@@ -120,20 +120,9 @@ def annotate(database, groups, annotator, output_dir, dask_client, **kwargs):
     # Transformer that splits the samples into several Dask Bags
     to_dask_bags = ToDaskBag(npartitions=50)
 
-    logger.debug("Retrieving background model samples from database.")
-    background_model_samples = database.background_model_samples()
 
-    logger.debug("Retrieving references and probes samples from database.")
-    references_samplesets = []
-    probes_samplesets = []
-    for group in groups:
-        references_samplesets.extend(database.references(group=group))
-        probes_samplesets.extend(database.probes(group=group))
-
-    # Unravels all samples in one list (no SampleSets)
-    samples = background_model_samples
-    samples.extend([sample for r in references_samplesets for sample in r.samples])
-    samples.extend([sample for p in probes_samplesets for sample in p.samples])
+    logger.debug("Retrieving samples from database.")
+    samples = database.all_samples(groups)
 
     # Sets the scheduler to local if no dask_client is specified
     if dask_client is not None:

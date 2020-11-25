@@ -311,6 +311,23 @@ class Database(metaclass=ABCMeta):
         """
         pass
 
+    @abstractmethod
+    def all_samples(self, groups=None):
+        """Returns all the samples of the dataset
+
+        Parameters
+        ----------
+        groups: list or `None`
+            List of groups to consider (like 'dev' or 'eval'). If `None`, will
+            return samples from all the groups.
+
+        Returns
+        -------
+        samples: list
+            List of all the samples of the dataset.
+        """
+        pass
+
 
 class ScoreWriter(metaclass=ABCMeta):
     """

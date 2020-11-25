@@ -10,7 +10,9 @@ import functools
 from abc import ABCMeta, abstractmethod
 import numpy as np
 import itertools
+import logging
 
+logger = logging.getLogger(__name__)
 
 class CSVBaseSampleLoader(metaclass=ABCMeta):
     """
@@ -316,6 +318,29 @@ class CSVDatasetDevEval:
             group=group, purpose="probe", group_by_subject=False
         )
 
+    def all_samples(self, groups=None):
+        """
+        Reads and returns all the samples in `groups`.
+
+        Parameters
+        ----------
+        groups: list or None
+            Groups to consider, or all groups if `None` is given.
+        """
+        # Get train samples (background_model_samples returns a list of samples)
+        samples = self.background_model_samples()
+
+        # Get enroll and probe samples
+        groups = ["dev", "eval"] if not groups else groups
+        if "eval" in groups and (not self.eval_enroll_csv or not self.eval_probe_csv):
+            logger.warning("'eval' requested, but dataset has no 'eval' group.")
+            groups.remove("eval")
+        for group in groups:
+            for purpose in ("enroll", "probe"):
+                label = f"{group}_{purpose}_csv"
+                samples = samples + self.csv_to_sample_loader(self.__dict__[label])
+        return samples
+
 
 class CSVDatasetCrossValidation:
     """
@@ -445,6 +470,28 @@ class CSVDatasetCrossValidation:
 
     def probes(self, group="dev"):
         return self._load_from_cache("dev_probe_csv")
+
+    def all_samples(self, groups=None):
+        """
+        Reads and returns all the samples in `groups`.
+
+        Parameters
+        ----------
+        groups: list or None
+            Groups to consider, or all groups if `None` is given.
+        """
+        # Get train samples (background_model_samples returns a list of samples)
+        samples = self.background_model_samples()
+
+        # Get enroll and probe samples
+        groups = ["dev"] if not groups else groups
+        if "eval" in groups:
+            logger.info("'eval' requested but there is no 'eval' group defined.")
+            groups.remove("eval")
+        for group in groups:
+            samples = samples+ [s for s_set in self.references(group) for s in s_set]
+            samples = samples+ [s for s_set in self.probes(group) for s in s_set]
+        return samples
 
 
 def group_samples_by_subject(samples):

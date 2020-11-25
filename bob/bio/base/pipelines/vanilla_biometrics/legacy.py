@@ -178,6 +178,24 @@ class DatabaseConnector(Database):
 
         return list(probes.values())
 
+    def all_samples(self, groups=None):
+        """Returns all the legacy database files in Sample format
+
+        Parameters
+        ----------
+        groups: list or `None`
+            List of groups to consider (like 'dev' or 'eval'). If `None`, will
+            return samples from all the groups.
+
+        Returns
+        -------
+        samples: list
+            List of all the samples of a database, conforming to the pipeline
+            API.  See, e.g., :py:func:`bob.pipelines.first`.
+        """
+        objects = self.database.all_files(groups=groups)
+        return [_biofile_to_delayed_sample(k, self.database) for k in objects]
+
 
 class BioAlgorithmLegacy(BioAlgorithm):
     """Biometric Algorithm that handles :py:class:`bob.bio.base.algorithm.Algorithm`

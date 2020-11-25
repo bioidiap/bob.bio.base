@@ -167,8 +167,9 @@ This will create a database interface with:
 
 - The elements in ``train.csv`` returned by :py:meth:`~bob.db.base.Database.background_model_samples`,
 - The elements in ``*_enroll.csv`` returned by :py:meth:`~bob.db.base.Database.references`,
-- The elements in ``*_probe.csv`` returned by :py:meth:`~bob.db.base.Database.probes`,
+- The elements in ``*_probe.csv`` returned by :py:meth:`~bob.db.base.Database.probes`.
 
+An aggregation of all of the above is available with the :py:meth:`~bob.db.base.Database.all_samples` method, which returns all the samples of the protocol.
 
 .. _bob.bio.base.database.csv_cross_validation:
 
@@ -226,6 +227,7 @@ When a vanilla-biometrics pipeline requests data from that class, it will call t
     The group parameter (*dev* or *eval*) can be given to specify from which set of individuals the data comes.
     Each :py:class:`~bob.pipelines.SampleSet` must contain a :py:attr:`~bob.pipelines.SampleSet.subject`, a :py:attr:`~bob.pipelines.SampleSet.references` list, and a list of :py:attr:`~bob.pipelines.Sample` containing at least the :py:attr:`~bob.pipelines.Sample.key` attribute as well as the :py:attr:`~bob.pipelines.Sample.data` of the sample.
 
+Furthermore, the :py:meth:`~bob.db.base.Database.all_samples` method must return a list of all the existing samples in the dataset. This functionality is used for annotating a whole dataset.
 
 Here is a code snippet of a simple database interface:
 
@@ -235,10 +237,10 @@ Here is a code snippet of a simple database interface:
 
     class CustomDatabase:
         def background_model_samples(self):
-            world_samples = []
-            for a_sample in dataset_world_subjects:
-                world_samples.append( Sample(data=a_sample.data, key=a_sample.sample_id) )
-            return world_samples
+            train_samples = []
+            for a_sample in dataset_train_subjects:
+                train_samples.append( Sample(data=a_sample.data, key=a_sample.sample_id) )
+            return train_samples
 
         def references(self, group="dev"):
             all_references = []
@@ -257,6 +259,13 @@ Here is a code snippet of a simple database interface:
                     current_sampleset.insert(-1, Sample(data=a_sample.data, key=a_sample.sample_id))
                 all_probes.append(current_sampleset)
             return all_probes
+
+        def all_samples(self, group=None):
+            all_subjects = dataset_train_subjects + dataset_dev_subjects
+            all_samples = []
+            for a_sample in all_subjects:
+                all_samples.append( Sample(data=a_sample.data, key=a_sample.sample_id) )
+            return all_samples
 
         allow_scoring_with_all_biometric_references = True
 
@@ -303,7 +312,7 @@ When doing so, the output of each :py:class:`Transformer` of the pipeline will b
 .. WARNING::
 
   You have to be careful when using checkpoints: If you modify an early step of an experiment, the created checkpoints are not valid anymore, but the system has no way of knowing that.
-  
+
   **You** have to take care of removing invalid checkpoints files.
 
   When changing the pipeline or the dataset of an experiment, you should change the output folder (``-o``) accordingly. Otherwise, the system could try to load a checkpoint of an older experiment, or samples from another dataset.

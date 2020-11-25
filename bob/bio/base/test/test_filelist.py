@@ -107,6 +107,9 @@ def test_csv_file_list_dev_eval():
     assert len(dataset.probes(group="eval")) == 13
     assert check_all_true(dataset.probes(group="eval"), SampleSet)
 
+    assert len(dataset.all_samples(groups=None)) == 49
+    assert check_all_true(dataset.all_samples(groups=None), DelayedSample)
+
 
 def test_csv_file_list_atnt():
 
@@ -114,6 +117,32 @@ def test_csv_file_list_atnt():
     assert len(dataset.background_model_samples()) == 200
     assert len(dataset.references()) == 20
     assert len(dataset.probes()) == 100
+    assert len(dataset.all_samples(groups=["dev"])) == 400
+    assert len(dataset.all_samples(groups=None)) == 400
+
+
+def data_loader(path):
+    import bob.io.image
+
+    return bob.io.base.load(path)
+
+
+def test_csv_cross_validation_atnt():
+
+    dataset = CSVDatasetCrossValidation(
+        csv_file_name=atnt_protocol_path_cross_validation,
+        random_state=0,
+        test_size=0.8,
+        csv_to_sample_loader=CSVToSampleLoader(
+            data_loader=data_loader,
+            dataset_original_directory=atnt_database_directory(),
+            extension=".pgm",
+        ),
+    )
+    assert len(dataset.background_model_samples()) == 80
+    assert len(dataset.references("dev")) == 32
+    assert len(dataset.probes("dev")) == 288
+    assert len(dataset.all_samples(groups=None)) == 400
 
 
 def run_experiment(dataset):
@@ -129,12 +158,6 @@ def run_experiment(dataset):
     return vanilla_biometrics_pipeline(
         dataset.background_model_samples(), dataset.references(), dataset.probes(),
     )
-
-
-def data_loader(path):
-    import bob.io.image
-
-    return bob.io.base.load(path)
 
 
 def test_atnt_experiment():
@@ -160,7 +183,7 @@ def test_atnt_experiment_cross_validation():
     total_identities = 40
     samples_for_enrollment = 1
 
-    def run_cross_validataion_experiment(test_size=0.9):
+    def run_cross_validation_experiment(test_size=0.9):
         dataset = CSVDatasetCrossValidation(
             csv_file_name=atnt_protocol_path_cross_validation,
             random_state=0,
@@ -179,9 +202,9 @@ def test_atnt_experiment_cross_validation():
             * (samples_per_identity - samples_for_enrollment)
         )
 
-    run_cross_validataion_experiment(test_size=0.9)
-    run_cross_validataion_experiment(test_size=0.8)
-    run_cross_validataion_experiment(test_size=0.5)
+    run_cross_validation_experiment(test_size=0.9)
+    run_cross_validation_experiment(test_size=0.8)
+    run_cross_validation_experiment(test_size=0.5)
 
 
 ####

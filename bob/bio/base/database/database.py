@@ -671,12 +671,15 @@ class ZTBioDatabase(BioDatabase):
         files = self.objects(protocol=self.protocol, groups=groups, **self.all_files_options)
 
         # add all files that belong to the ZT-norm
-        if add_zt_files:
+        if add_zt_files and groups:
             for group in groups:
                 if group == 'world':
                     continue
                 files += self.tobjects(protocol=self.protocol, groups=group, model_ids=None)
                 files += self.zobjects(protocol=self.protocol, groups=group, **self.z_probe_options)
+        elif add_zt_files:
+            files += self.tobjects(protocol=self.protocol, groups=groups, model_ids=None)
+            files += self.zobjects(protocol=self.protocol, groups=groups, **self.z_probe_options)
         return self.sort(files)
 
     @abc.abstractmethod
