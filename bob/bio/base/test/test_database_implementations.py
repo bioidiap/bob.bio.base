@@ -57,3 +57,6 @@ def test_all_samples():
     all_samples = dummy_database.all_samples(groups=None)
     assert len(all_samples) == 400
     assert all([isinstance(s, DelayedSample) for s in all_samples])
+    assert len(dummy_database.all_samples(groups=["world"])) == 200
+    assert len(dummy_database.all_samples(groups=["dev"])) == 200
+    assert len(dummy_database.all_samples(groups=[])) == 400

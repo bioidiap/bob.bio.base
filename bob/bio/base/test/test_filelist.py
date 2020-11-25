@@ -117,7 +117,8 @@ def test_csv_file_list_atnt():
     assert len(dataset.background_model_samples()) == 200
     assert len(dataset.references()) == 20
     assert len(dataset.probes()) == 100
-    assert len(dataset.all_samples(groups=["dev"])) == 400
+    assert len(dataset.all_samples(groups=["train"])) == 200
+    assert len(dataset.all_samples(groups=["dev"])) == 200
     assert len(dataset.all_samples(groups=None)) == 400
 
 

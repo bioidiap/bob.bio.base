@@ -12,6 +12,7 @@ from bob.bio.base.algorithm import Algorithm
 from bob.pipelines import DelayedSample
 from bob.pipelines import DelayedSampleSet
 from bob.pipelines import SampleSet
+from bob.db.base.utils import check_parameters_for_validity
 
 from .abstract_classes import BioAlgorithm
 from .abstract_classes import Database
@@ -188,15 +189,23 @@ class DatabaseConnector(Database):
         Parameters
         ----------
         groups: list or `None`
-            List of groups to consider (like 'dev' or 'eval'). If `None`, will
-            return samples from all the groups.
+            List of groups to consider ('world'/'train', 'dev', and/or 'eval').
+            If `None` is given, returns samples from all the groups.
 
         Returns
         -------
         samples: list
-            List of all the samples of a database, conforming to the pipeline
-            API.  See, e.g., :py:func:`bob.pipelines.first`.
+            List of all the samples of a database in :class:`bob.pipelines.Sample`
+            objects.
         """
+        valid_groups = self.database.groups()
+        groups = check_parameters_for_validity(
+            parameters=groups,
+            parameter_description="groups",
+            valid_parameters=valid_groups,
+            default_parameters=valid_groups,
+        )
+        logger.debug(f"Fetching all samples of groups '{groups}'.")
         objects = self.database.all_files(groups=groups)
         return [_biofile_to_delayed_sample(k, self.database) for k in objects]
 
