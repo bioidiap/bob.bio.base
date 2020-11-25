@@ -4,6 +4,7 @@
 
 import os
 from bob.pipelines import SampleSet, DelayedSample
+from bob.pipelines.sample import SAMPLE_DATA_ATTRS
 from .abstract_classes import ScoreWriter
 import functools
 import csv
@@ -74,7 +75,7 @@ class CSVScoreWriter(ScoreWriter):
         self,
         path,
         n_sample_sets=1000,
-        exclude_list=["samples", "key", "data", "load", "_data", "references", "annotations"],
+        exclude_list=tuple(SAMPLE_DATA_ATTRS) + ("key", "references", "annotations"),
     ):
         super().__init__(path)
         self.n_sample_sets = n_sample_sets
@@ -92,13 +93,13 @@ class CSVScoreWriter(ScoreWriter):
             probe_dict = dict(
                 (k, f"probe_{k}")
                 for k in probe_sampleset.__dict__.keys()
-                if k not in self.exclude_list
+                if not (k in self.exclude_list or k.startswith("_"))
             )
 
             bioref_dict = dict(
                 (k, f"bio_ref_{k}")
                 for k in first_biometric_reference.__dict__.keys()
-                if k not in self.exclude_list
+                if not (k in self.exclude_list or k.startswith("_"))
             )
 
             header = (
@@ -130,7 +131,7 @@ class CSVScoreWriter(ScoreWriter):
 
             rows = []
             probe_row = [str(probe.key)] + [
-                str(probe.__dict__[k]) for k in probe_dict.keys()
+                str(getattr(probe, k)) for k in probe_dict.keys()
             ]
 
             # If it's delayed, load it
@@ -139,7 +140,7 @@ class CSVScoreWriter(ScoreWriter):
 
             for biometric_reference in probe:
                 bio_ref_row = [
-                    str(biometric_reference.__dict__[k])
+                    str(getattr(biometric_reference, k))
                     for k in list(bioref_dict.keys()) + ["data"]
                 ]
 
@@ -182,4 +183,4 @@ class CSVScoreWriter(ScoreWriter):
         if isinstance(score_paths, dask.bag.Bag):
             all_paths = dask.delayed(list)(score_paths)
             return dask.delayed(_post_process)(all_paths, path)
-        return _post_process(score_paths, path)        
+        return _post_process(score_paths, path)

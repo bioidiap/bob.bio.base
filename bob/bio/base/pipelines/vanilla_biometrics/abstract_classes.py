@@ -3,7 +3,7 @@
 
 
 from abc import ABCMeta, abstractmethod
-from bob.pipelines.sample import Sample, SampleSet, DelayedSample
+from bob.pipelines.sample import SAMPLE_DATA_ATTRS, Sample, SampleSet, DelayedSample
 import functools
 import numpy as np
 import os
@@ -211,13 +211,7 @@ class BioAlgorithm(metaclass=ABCMeta):
 
                 scores_biometric_references.append(Sample(score, parent=ref))
 
-        # Fetching metadata from the probe
-        kwargs = dict(
-            (metadata, sampleset.__dict__[metadata])
-            for metadata in sampleset.__dict__.keys()
-            if metadata not in ["samples", "key", "data", "load", "_data"]
-        )
-        return SampleSet(scores_biometric_references, parent=sampleset, **kwargs)
+        return SampleSet(scores_biometric_references, parent=sampleset)
 
     @abstractmethod
     def score(self, biometric_reference, data):

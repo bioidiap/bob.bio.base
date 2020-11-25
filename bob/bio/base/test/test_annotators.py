@@ -5,6 +5,7 @@ from click.testing import CliRunner
 from bob.bio.base.script.annotate import annotate, annotate_samples
 from bob.bio.base.annotator import Callable, FailSafe
 from bob.db.base import read_annotation_file
+from bob.extension.scripts.click_helper import assert_click_runner_result
 
 
 def test_annotate():
@@ -14,16 +15,10 @@ def test_annotate():
         runner = CliRunner()
         result = runner.invoke(annotate, args=(
             '-d', 'dummy', '-g', 'dev', '-a', 'dummy', '-o', tmp_dir))
-        assertion_error_message = (
-            'Command exited with this output: `{}\' \n'
-            'If the output is empty, you can run this script locally to see '
-            'what is wrong:\n'
-            'bin/bob bio annotate -vvv -d dummy -g dev -a dummy -o /tmp/temp_annotations'
-            ''.format(result.output))
-        assert result.exit_code == 0, assertion_error_message
+        assert_click_runner_result(result)
 
         # test if annotations exist
-        for dirpath, dirnames, filenames in os.walk(tmp_dir):
+        for dirpath, _, filenames in os.walk(tmp_dir):
             for filename in filenames:
                 path = os.path.join(dirpath, filename)
                 annot = read_annotation_file(path, 'json')
@@ -40,13 +35,7 @@ def test_annotate_samples():
         runner = CliRunner()
         result = runner.invoke(annotate_samples, args=(
             'dummy_samples', '-a', 'dummy', '-o', tmp_dir))
-        assertion_error_message = (
-            'Command exited with this output: `{}\' \n'
-            'If the output is empty, you can run this script locally to see '
-            'what is wrong:\n'
-            'bin/bob bio annotate-samples -vvv dummy_samples -a dummy -o /tmp/temp_annotations'
-            ''.format(result.output))
-        assert result.exit_code == 0, assertion_error_message
+        assert_click_runner_result(result)
 
         # test if annotations exist
         for dirpath, dirnames, filenames in os.walk(tmp_dir):

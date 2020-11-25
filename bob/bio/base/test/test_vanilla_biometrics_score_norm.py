@@ -288,7 +288,7 @@ def test_norm_mechanics():
             z_normed_scores = _dump_scores_from_samples(
                 z_normed_score_samples, shape=(n_probes, n_references)
             )
-            assert np.allclose(z_normed_scores, z_normed_scores_ref)
+            np.testing.assert_allclose(z_normed_scores, z_normed_scores_ref)
 
             ############
             # TESTING T-NORM
