@@ -343,7 +343,7 @@ class CSVDatasetDevEval:
         # Get enroll and probe samples
         groups = ["dev", "eval"] if not groups else groups
         if "eval" in groups and (not self.eval_enroll_csv or not self.eval_probe_csv):
-            logger.info("'eval' requested, but dataset has no 'eval' group.")
+            logger.warning("'eval' requested, but dataset has no 'eval' group.")
             groups.remove("eval")
         for group in groups:
             for purpose in ("enroll", "probe"):
