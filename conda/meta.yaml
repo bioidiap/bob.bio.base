@@ -24,7 +24,7 @@ requirements:
     - bob.blitz
     - bob.core
     - bob.db.base >2.2.0
-    - bob.extension
+    - bob.extension >5.0.1
     - bob.io.base
     - bob.learn.activation
     - bob.learn.em

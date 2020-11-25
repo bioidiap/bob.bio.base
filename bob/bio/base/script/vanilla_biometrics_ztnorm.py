@@ -5,17 +5,15 @@
 
 """Executes biometric pipeline"""
 
-import click
-
-from bob.extension.scripts.click_helper import (
-    verbosity_option,
-    ResourceOption,
-    ConfigCommand,
-)
-
 import logging
 
+import click
 from bob.bio.base.pipelines.vanilla_biometrics import execute_vanilla_biometrics_ztnorm
+from bob.extension.scripts.click_helper import ConfigCommand
+from bob.extension.scripts.click_helper import ResourceOption
+from bob.extension.scripts.click_helper import verbosity_option
+
+from .vanilla_biometrics import VALID_DASK_CLIENT_STRINGS
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +54,9 @@ It is possible to do it via configuration file
 
 
 @click.command(
-    entry_point_group="bob.bio.config", cls=ConfigCommand, epilog=EPILOG,
+    entry_point_group="bob.bio.config",
+    cls=ConfigCommand,
+    epilog=EPILOG,
 )
 @click.option(
     "--pipeline",
@@ -78,6 +78,8 @@ It is possible to do it via configuration file
     "--dask-client",
     "-l",
     entry_point_group="dask.client",
+    string_exceptions=VALID_DASK_CLIENT_STRINGS,
+    default="single-threaded",
     help="Dask client for the execution of the pipeline.",
     cls=ResourceOption,
 )
