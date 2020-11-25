@@ -44,7 +44,6 @@ class CSVBaseSampleLoader(metaclass=ABCMeta):
         self.data_loader = data_loader
         self.extension = extension
         self.dataset_original_directory = dataset_original_directory
-        self.excluding_attributes = ["_data", "load", "key"]
 
     @abstractmethod
     def __call__(self, filename):
@@ -104,15 +103,6 @@ class CSVToSampleLoader(CSVBaseSampleLoader):
     def convert_samples_to_samplesets(
         self, samples, group_by_subject=True, references=None
     ):
-        def get_attribute_from_sample(sample):
-            return dict(
-                [
-                    [attribute, sample.__dict__[attribute]]
-                    for attribute in list(sample.__dict__.keys())
-                    if attribute not in self.excluding_attributes
-                ]
-            )
-
         if group_by_subject:
 
             # Grouping sample sets
@@ -120,7 +110,7 @@ class CSVToSampleLoader(CSVBaseSampleLoader):
             for s in samples:
                 if s.subject not in sample_sets:
                     sample_sets[s.subject] = SampleSet(
-                        [s], **get_attribute_from_sample(s)
+                        [s], parent=s, references=references
                     )
                 else:
                     sample_sets[s.subject].append(s)
@@ -128,7 +118,7 @@ class CSVToSampleLoader(CSVBaseSampleLoader):
 
         else:
             return [
-                SampleSet([s], **get_attribute_from_sample(s), references=references)
+                SampleSet([s], parent=s, references=references)
                 for s in samples
             ]
 
@@ -174,7 +164,7 @@ class CSVDatasetDevEval:
        path_i,subject_j
        ...
 
-    
+
     You might want to ship metadata within your Samples (e.g gender, age, annotation, ...)
     To do so is simple, just do as below:
 
@@ -189,7 +179,7 @@ class CSVDatasetDevEval:
 
     The files `my_dataset/my_protocol/train.csv/eval_enroll.csv` and `my_dataset/my_protocol/train.csv/eval_probe.csv`
     are optional and it is used in case a protocol contains data for evaluation.
-    
+
     Finally, the content of the file `my_dataset/my_protocol/train.csv` is used in the case a protocol
     contains data for training (`bob.bio.base.pipelines.vanilla_biometrics.Database.background_model_samples`)
 
@@ -329,7 +319,7 @@ class CSVDatasetDevEval:
 
 class CSVDatasetCrossValidation:
     """
-    Generic filelist dataset for :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` pipeline that 
+    Generic filelist dataset for :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` pipeline that
     handles **CROSS VALIDATION**.
 
     Check :any:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
