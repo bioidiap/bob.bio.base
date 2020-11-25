@@ -1,23 +1,18 @@
 import logging
 import os
+
 import dask.bag
-from dask.delayed import Delayed
-from bob.bio.base.pipelines.vanilla_biometrics import (
-    BioAlgorithmDaskWrapper,
-    checkpoint_vanilla_biometrics,
-    dask_vanilla_biometrics,
-    dask_get_partition_size,
-    FourColumnsScoreWriter,
-    CSVScoreWriter,
-    is_checkpointed,
-)
+from bob.bio.base.pipelines.vanilla_biometrics import BioAlgorithmDaskWrapper
+from bob.bio.base.pipelines.vanilla_biometrics import CSVScoreWriter
+from bob.bio.base.pipelines.vanilla_biometrics import FourColumnsScoreWriter
+from bob.bio.base.pipelines.vanilla_biometrics import ZTNormCheckpointWrapper
+from bob.bio.base.pipelines.vanilla_biometrics import ZTNormPipeline
+from bob.bio.base.pipelines.vanilla_biometrics import checkpoint_vanilla_biometrics
+from bob.bio.base.pipelines.vanilla_biometrics import dask_get_partition_size
+from bob.bio.base.pipelines.vanilla_biometrics import dask_vanilla_biometrics
+from bob.bio.base.pipelines.vanilla_biometrics import is_checkpointed
 from bob.pipelines.utils import isinstance_nested
-
-from bob.bio.base.pipelines.vanilla_biometrics import (
-    ZTNormPipeline,
-    ZTNormCheckpointWrapper,
-)
-
+from dask.delayed import Delayed
 
 logger = logging.getLogger(__name__)
 
@@ -110,19 +105,22 @@ def execute_vanilla_biometrics(
             pipeline.biometric_algorithm, "biometric_algorithm", BioAlgorithmDaskWrapper
         ):
             # Scaling up
-            if dask_n_workers is not None:
+            if dask_n_workers is not None and not isinstance(dask_client, str):
                 dask_client.cluster.scale(dask_n_workers)
 
             n_objects = max(
                 len(background_model_samples), len(biometric_references), len(probes)
             )
-            partition_size = (
-                dask_get_partition_size(dask_client.cluster, n_objects)
-                if dask_partition_size is None
-                else dask_partition_size
-            )
+            partition_size = None
+            if not isinstance(dask_client, str):
+                partition_size = dask_get_partition_size(dask_client.cluster, n_objects)
+            if dask_partition_size is not None:
+                partition_size = dask_partition_size
 
-            pipeline = dask_vanilla_biometrics(pipeline, partition_size=partition_size,)
+            pipeline = dask_vanilla_biometrics(
+                pipeline,
+                partition_size=partition_size,
+            )
 
         logger.info(f"Running vanilla biometrics for group {group}")
         allow_scoring_with_all_biometric_references = (
@@ -193,7 +191,7 @@ def execute_vanilla_biometrics_ztnorm(
     dask_partition_size: int
         If using Dask, this option defines the size of each dask.bag.partition. Use this option if the current heuristic that sets this value doesn't suit your experiment. (https://docs.dask.org/en/latest/bag-api.html?highlight=partition_size#dask.bag.from_sequence).
 
-    dask_n_workers: int    
+    dask_n_workers: int
         If using Dask, this option defines the number of workers to start your experiment. Dask automatically scales up/down the number of workers due to the current load of tasks to be solved. Use this option if the current amount of workers set to start an experiment doesn't suit you.
 
     ztnorm_cohort_proportion: float
