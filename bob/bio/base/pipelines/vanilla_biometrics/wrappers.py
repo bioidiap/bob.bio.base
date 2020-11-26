@@ -1,4 +1,10 @@
-from bob.pipelines import DelayedSample, SampleSet, Sample, DelayedSampleSet
+from bob.pipelines import (
+    DelayedSample,
+    SampleSet,
+    Sample,
+    DelayedSampleSet,
+    DelayedSampleSetCached,
+)
 import bob.io.base
 import os
 import dask
@@ -176,7 +182,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
             self.write_scores(scored_sample_set.samples, path)
             parent = scored_sample_set
 
-        scored_sample_set = DelayedSampleSet(
+        scored_sample_set = DelayedSampleSetCached(
             functools.partial(_load, path), parent=parent
         )
 
