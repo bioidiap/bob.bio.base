@@ -86,9 +86,8 @@ Examples:
     "--groups",
     "-g",
     multiple=True,
-    default=["dev", "eval"],
-    show_default=True,
-    help="Biometric Database group that will be annotated.",
+    help="Biometric Database group that will be annotated. Can be added multiple"
+        "times for different groups. [Default: All groups]",
 )
 @annotate_common_options
 @verbosity_option(cls=ResourceOption)

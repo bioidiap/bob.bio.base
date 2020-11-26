@@ -4,6 +4,7 @@
 
 import os
 from bob.pipelines import Sample, DelayedSample, SampleSet
+from bob.db.base.utils import check_parameters_for_validity
 import csv
 import bob.io.base
 import functools
@@ -325,16 +326,34 @@ class CSVDatasetDevEval:
         Parameters
         ----------
         groups: list or None
-            Groups to consider, or all groups if `None` is given.
+            Groups to consider ('train', 'dev', and/or 'eval'). If `None` is
+            given, returns the samples from all groups.
+
+        Returns
+        -------
+        samples: list
+            List of :class:`bob.pipelines.Sample` objects.
         """
+        valid_groups = ["train"]
+        if self.dev_enroll_csv and self.dev_probe_csv:
+            valid_groups.append("dev")
+        if self.eval_enroll_csv and self.eval_probe_csv:
+            valid_groups.append("eval")
+        groups = check_parameters_for_validity(
+            parameters=groups,
+            parameter_description="groups",
+            valid_parameters=valid_groups,
+            default_parameters=valid_groups,
+        )
+
+        samples = []
+
         # Get train samples (background_model_samples returns a list of samples)
-        samples = self.background_model_samples()
+        if "train" in groups:
+            samples = samples + self.background_model_samples()
+            groups.remove("train")
 
         # Get enroll and probe samples
-        groups = ["dev", "eval"] if not groups else groups
-        if "eval" in groups and (not self.eval_enroll_csv or not self.eval_probe_csv):
-            logger.warning("'eval' requested, but dataset has no 'eval' group.")
-            groups.remove("eval")
         for group in groups:
             for purpose in ("enroll", "probe"):
                 label = f"{group}_{purpose}_csv"
@@ -478,19 +497,33 @@ class CSVDatasetCrossValidation:
         Parameters
         ----------
         groups: list or None
-            Groups to consider, or all groups if `None` is given.
+            Groups to consider ('train' and/or 'dev'). If `None` is given,
+            returns the samples from all groups.
+
+        Returns
+        -------
+        samples: list
+            List of :class:`bob.pipelines.Sample` objects.
         """
+        valid_groups = ["train", "dev"]
+        groups = check_parameters_for_validity(
+            parameters=groups,
+            parameter_description="groups",
+            valid_parameters=valid_groups,
+            default_parameters=valid_groups,
+        )
+
+        samples = []
+
         # Get train samples (background_model_samples returns a list of samples)
-        samples = self.background_model_samples()
+        if "train" in groups:
+            samples = samples + self.background_model_samples()
+            groups.remove("train")
 
         # Get enroll and probe samples
-        groups = ["dev"] if not groups else groups
-        if "eval" in groups:
-            logger.info("'eval' requested but there is no 'eval' group defined.")
-            groups.remove("eval")
         for group in groups:
-            samples = samples+ [s for s_set in self.references(group) for s in s_set]
-            samples = samples+ [s for s_set in self.probes(group) for s in s_set]
+            samples = samples + [s for s_set in self.references(group) for s in s_set]
+            samples = samples + [s for s_set in self.probes(group) for s in s_set]
         return samples
 
 

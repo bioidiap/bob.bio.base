@@ -45,5 +45,8 @@ class DummyDatabase(ZTBioDatabase):
     def annotations(self, file):
         return None
 
+    def groups(self, protocol=None):
+        return self._db.groups(protocol)
+
 
 database = DatabaseConnector(DummyDatabase())
