@@ -11,6 +11,8 @@ from bob.bio.base.database import (
     CSVDatasetDevEval,
     CSVToSampleLoader,
     CSVDatasetCrossValidation,
+    IdiapAnnotationsLoader,
+    LSTToSampleLoader,
 )
 import nose.tools
 from bob.pipelines import DelayedSample, SampleSet
@@ -91,14 +93,31 @@ def test_csv_file_list_dev_only_metadata():
 
 def test_csv_file_list_dev_eval():
 
-    dataset = CSVDatasetDevEval(example_dir, "protocol_dev_eval")
+    annotation_directory = os.path.realpath(
+        bob.io.base.test_utils.datafile(
+            ".", __name__, "data/example_csv_filelist/annotations"
+        )
+    )
+
+    dataset = CSVDatasetDevEval(
+        example_dir,
+        "protocol_dev_eval",
+        csv_to_sample_loader=CSVToSampleLoader(
+            data_loader=bob.io.base.load,
+            metadata_loader=IdiapAnnotationsLoader(
+                annotation_directory=annotation_directory
+            ),
+            dataset_original_directory="",
+            extension="",
+        ),
+    )
     assert len(dataset.background_model_samples()) == 8
     assert check_all_true(dataset.background_model_samples(), DelayedSample)
 
     assert len(dataset.references()) == 2
     assert check_all_true(dataset.references(), SampleSet)
 
-    assert len(dataset.probes()) == 10
+    assert len(dataset.probes()) == 8
     assert check_all_true(dataset.references(), SampleSet)
 
     assert len(dataset.references(group="eval")) == 6
@@ -107,8 +126,52 @@ def test_csv_file_list_dev_eval():
     assert len(dataset.probes(group="eval")) == 13
     assert check_all_true(dataset.probes(group="eval"), SampleSet)
 
-    assert len(dataset.all_samples(groups=None)) == 49
+    assert len(dataset.all_samples(groups=None)) == 47
     assert check_all_true(dataset.all_samples(groups=None), DelayedSample)
+
+    # Check the annotations
+    for s in dataset.all_samples(groups=None):
+        assert isinstance(s.annotations, dict)
+
+    assert len(dataset.reference_ids(group="dev")) == 2
+    assert len(dataset.reference_ids(group="eval")) == 6
+
+    assert len(dataset.groups()) == 3
+
+
+def test_lst_file_list_dev_eval():
+
+    dataset = CSVDatasetDevEval(
+        legacy_example_dir,
+        "",
+        csv_to_sample_loader=LSTToSampleLoader(
+            data_loader=bob.io.base.load, dataset_original_directory="", extension="",
+        ),
+    )
+
+    assert len(dataset.background_model_samples()) == 8
+
+    assert check_all_true(dataset.background_model_samples(), DelayedSample)
+
+    assert len(dataset.references()) == 2
+    assert check_all_true(dataset.references(), SampleSet)
+
+    assert len(dataset.probes()) == 10
+    assert check_all_true(dataset.references(), SampleSet)
+
+    assert len(dataset.references(group="eval")) == 2
+    assert check_all_true(dataset.references(group="eval"), SampleSet)
+
+    assert len(dataset.probes(group="eval")) == 8
+    assert check_all_true(dataset.probes(group="eval"), SampleSet)
+
+    assert len(dataset.all_samples(groups=None)) == 42
+    assert check_all_true(dataset.all_samples(groups=None), DelayedSample)
+
+    assert len(dataset.reference_ids(group="dev")) == 2
+    assert len(dataset.reference_ids(group="eval")) == 2
+
+    assert len(dataset.groups()) == 3
 
 
 def test_csv_file_list_atnt():

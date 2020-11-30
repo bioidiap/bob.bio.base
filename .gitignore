@@ -13,4 +13,4 @@ sphinx
 dist
 build
 record.txt
-.DS_Store
+*.DS_Store

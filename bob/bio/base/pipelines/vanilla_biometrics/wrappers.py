@@ -160,10 +160,10 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         def _make_name(sampleset, biometric_references):
             # The score file name is composed by sampleset key and the
             # first 3 biometric_references
-            subject = str(sampleset.subject)
+            reference_id = str(sampleset.reference_id)
             name = str(sampleset.key)
             suffix = "_".join([str(s.key) for s in biometric_references[0:3]])
-            return os.path.join(subject, name + suffix)
+            return os.path.join(reference_id, name + suffix)
 
         path = os.path.join(
             self.score_dir,

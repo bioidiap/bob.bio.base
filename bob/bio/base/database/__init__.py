@@ -3,6 +3,8 @@ from .csv_dataset import (
     CSVToSampleLoader,
     CSVDatasetCrossValidation,
     CSVBaseSampleLoader,
+    IdiapAnnotationsLoader,
+    LSTToSampleLoader,
 )
 from .file import BioFile
 from .file import BioFileSet

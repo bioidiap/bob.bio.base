@@ -1,4 +1,4 @@
-PATH,SUBJECT,METADATA_1,METADATA_2
+PATH,REFERENCE_ID,METADATA_1,METADATA_2
 data/model3_session3_sample1,3,F,10
 data/model3_session3_sample2,3,F,10
 data/model3_session3_sample3,3,F,10

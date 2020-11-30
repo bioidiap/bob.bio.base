@@ -29,7 +29,7 @@ def _biofile_to_delayed_sample(biofile, database):
         load=functools.partial(
             biofile.load, database.original_directory, database.original_extension,
         ),
-        subject=str(biofile.client_id),
+        reference_id=str(biofile.client_id),
         key=biofile.path,
         path=biofile.path,
         delayed_attributes=dict(
@@ -138,7 +138,7 @@ class DatabaseConnector(Database):
                     [_biofile_to_delayed_sample(k, self.database) for k in objects],
                     key=str(m),
                     path=str(m),
-                    subject=str(objects[0].client_id),
+                    reference_id=str(objects[0].client_id),
                 )
             )
 
