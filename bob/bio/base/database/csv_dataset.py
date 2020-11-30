@@ -4,13 +4,16 @@
 
 import os
 from bob.pipelines import Sample, DelayedSample, SampleSet
+from bob.db.base.utils import check_parameters_for_validity
 import csv
 import bob.io.base
 import functools
 from abc import ABCMeta, abstractmethod
 import numpy as np
 import itertools
+import logging
 
+logger = logging.getLogger(__name__)
 
 class CSVBaseSampleLoader(metaclass=ABCMeta):
     """
@@ -44,7 +47,6 @@ class CSVBaseSampleLoader(metaclass=ABCMeta):
         self.data_loader = data_loader
         self.extension = extension
         self.dataset_original_directory = dataset_original_directory
-        self.excluding_attributes = ["_data", "load", "key"]
 
     @abstractmethod
     def __call__(self, filename):
@@ -67,25 +69,24 @@ class CSVToSampleLoader(CSVBaseSampleLoader):
     :any:`bob.pipelines.DelayedSample` or :any:`bob.pipelines.SampleSet`
     """
 
-    def __call__(self, filename):
-        def check_header(header):
-            """
-            A header should have at least "SUBJECT" AND "PATH"
-            """
-            header = [h.lower() for h in header]
-            if not "subject" in header:
-                raise ValueError(
-                    "The field `subject` is not available in your dataset."
-                )
+    def check_header(self, header):
+        """
+        A header should have at least "SUBJECT" AND "PATH"
+        """
+        header = [h.lower() for h in header]
+        if not "subject" in header:
+            raise ValueError("The field `subject` is not available in your dataset.")
 
-            if not "path" in header:
-                raise ValueError("The field `path` is not available in your dataset.")
+        if not "path" in header:
+            raise ValueError("The field `path` is not available in your dataset.")
+
+    def __call__(self, filename):
 
         with open(filename) as cf:
             reader = csv.reader(cf)
             header = next(reader)
 
-            check_header(header)
+            self.check_header(header)
             return [self.convert_row_to_sample(row, header) for row in reader]
 
     def convert_row_to_sample(self, row, header):
@@ -105,15 +106,6 @@ class CSVToSampleLoader(CSVBaseSampleLoader):
     def convert_samples_to_samplesets(
         self, samples, group_by_subject=True, references=None
     ):
-        def get_attribute_from_sample(sample):
-            return dict(
-                [
-                    [attribute, sample.__dict__[attribute]]
-                    for attribute in list(sample.__dict__.keys())
-                    if attribute not in self.excluding_attributes
-                ]
-            )
-
         if group_by_subject:
 
             # Grouping sample sets
@@ -121,7 +113,7 @@ class CSVToSampleLoader(CSVBaseSampleLoader):
             for s in samples:
                 if s.subject not in sample_sets:
                     sample_sets[s.subject] = SampleSet(
-                        [s], **get_attribute_from_sample(s)
+                        [s], parent=s, references=references
                     )
                 else:
                     sample_sets[s.subject].append(s)
@@ -129,15 +121,15 @@ class CSVToSampleLoader(CSVBaseSampleLoader):
 
         else:
             return [
-                SampleSet([s], **get_attribute_from_sample(s), references=references)
+                SampleSet([s], parent=s, references=references)
                 for s in samples
             ]
 
 
 class CSVDatasetDevEval:
     """
-    Generic filelist dataset for :any:`bob.bio.base.pipelines.VanillaBiometrics` pipeline.
-    Check :ref:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
+    Generic filelist dataset for :any:` bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` pipeline.
+    Check :any:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
     interface.
 
     To create a new dataset, you need to provide a directory structure similar to the one below:
@@ -163,8 +155,8 @@ class CSVDatasetDevEval:
 
 
     Those csv files should contain in each row i-) the path to raw data and ii-) the subject label
-    for enrollment (:ref:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.Database.references`) and
-    probing (:ref:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.Database.probes`).
+    for enrollment (:any:`bob.bio.base.pipelines.vanilla_biometrics.Database.references`) and
+    probing (:any:`bob.bio.base.pipelines.vanilla_biometrics.Database.probes`).
     The structure of each CSV file should be as below:
 
     .. code-block:: text
@@ -175,7 +167,7 @@ class CSVDatasetDevEval:
        path_i,subject_j
        ...
 
-    
+
     You might want to ship metadata within your Samples (e.g gender, age, annotation, ...)
     To do so is simple, just do as below:
 
@@ -190,9 +182,9 @@ class CSVDatasetDevEval:
 
     The files `my_dataset/my_protocol/train.csv/eval_enroll.csv` and `my_dataset/my_protocol/train.csv/eval_probe.csv`
     are optional and it is used in case a protocol contains data for evaluation.
-    
+
     Finally, the content of the file `my_dataset/my_protocol/train.csv` is used in the case a protocol
-    contains data for training (:ref:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.Database.background_model_samples`)
+    contains data for training (`bob.bio.base.pipelines.vanilla_biometrics.Database.background_model_samples`)
 
     Parameters
     ----------
@@ -203,8 +195,8 @@ class CSVDatasetDevEval:
         protocol_na,e: str
           The name of the protocol
 
-        csv_to_sample_loader: :any:`CSVBaseSampleLoader`
-            Base class that whose objective is to generate :any:`bob.pipelines.Samples`
+        csv_to_sample_loader: :any:`bob.bio.base.database.CSVBaseSampleLoader`
+            Base class that whose objective is to generate :any:`bob.pipelines.Sample`
             and/or :any:`bob.pipelines.SampleSet` from csv rows
 
     """
@@ -327,13 +319,54 @@ class CSVDatasetDevEval:
             group=group, purpose="probe", group_by_subject=False
         )
 
+    def all_samples(self, groups=None):
+        """
+        Reads and returns all the samples in `groups`.
+
+        Parameters
+        ----------
+        groups: list or None
+            Groups to consider ('train', 'dev', and/or 'eval'). If `None` is
+            given, returns the samples from all groups.
+
+        Returns
+        -------
+        samples: list
+            List of :class:`bob.pipelines.Sample` objects.
+        """
+        valid_groups = ["train"]
+        if self.dev_enroll_csv and self.dev_probe_csv:
+            valid_groups.append("dev")
+        if self.eval_enroll_csv and self.eval_probe_csv:
+            valid_groups.append("eval")
+        groups = check_parameters_for_validity(
+            parameters=groups,
+            parameter_description="groups",
+            valid_parameters=valid_groups,
+            default_parameters=valid_groups,
+        )
+
+        samples = []
+
+        # Get train samples (background_model_samples returns a list of samples)
+        if "train" in groups:
+            samples = samples + self.background_model_samples()
+            groups.remove("train")
+
+        # Get enroll and probe samples
+        for group in groups:
+            for purpose in ("enroll", "probe"):
+                label = f"{group}_{purpose}_csv"
+                samples = samples + self.csv_to_sample_loader(self.__dict__[label])
+        return samples
+
 
 class CSVDatasetCrossValidation:
     """
-    Generic filelist dataset for :any:`bob.bio.base.pipelines.VanillaBiometrics` pipeline that 
+    Generic filelist dataset for :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` pipeline that
     handles **CROSS VALIDATION**.
 
-    Check :ref:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
+    Check :any:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
     interface.
 
 
@@ -365,8 +398,8 @@ class CSVDatasetCrossValidation:
     samples_for_enrollment: float
       Number of samples used for enrollment
 
-    csv_to_sample_loader: :any:`CSVBaseSampleLoader`
-        Base class that whose objective is to generate :any:`bob.pipelines.Samples`
+    csv_to_sample_loader: :any:`bob.bio.base.database.CSVBaseSampleLoader`
+        Base class that whose objective is to generate :any:`bob.pipelines.Sample`
         and/or :any:`bob.pipelines.SampleSet` from csv rows
 
     """
@@ -456,6 +489,42 @@ class CSVDatasetCrossValidation:
 
     def probes(self, group="dev"):
         return self._load_from_cache("dev_probe_csv")
+
+    def all_samples(self, groups=None):
+        """
+        Reads and returns all the samples in `groups`.
+
+        Parameters
+        ----------
+        groups: list or None
+            Groups to consider ('train' and/or 'dev'). If `None` is given,
+            returns the samples from all groups.
+
+        Returns
+        -------
+        samples: list
+            List of :class:`bob.pipelines.Sample` objects.
+        """
+        valid_groups = ["train", "dev"]
+        groups = check_parameters_for_validity(
+            parameters=groups,
+            parameter_description="groups",
+            valid_parameters=valid_groups,
+            default_parameters=valid_groups,
+        )
+
+        samples = []
+
+        # Get train samples (background_model_samples returns a list of samples)
+        if "train" in groups:
+            samples = samples + self.background_model_samples()
+            groups.remove("train")
+
+        # Get enroll and probe samples
+        for group in groups:
+            samples = samples + [s for s_set in self.references(group) for s in s_set]
+            samples = samples + [s for s_set in self.probes(group) for s in s_set]
+        return samples
 
 
 def group_samples_by_subject(samples):

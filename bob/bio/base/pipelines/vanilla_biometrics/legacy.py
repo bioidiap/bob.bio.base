@@ -3,23 +3,23 @@
 
 """Re-usable blocks for legacy bob.bio.base algorithms"""
 
-import os
 import functools
-from collections import defaultdict
-
-from bob.bio.base import utils
-from .abstract_classes import (
-    BioAlgorithm,
-    Database,
-)
-from bob.io.base import HDF5File
-from bob.pipelines import DelayedSample, SampleSet, Sample, DelayedSampleSet
 import logging
-import copy
-import joblib
-from .score_writers import FourColumnsScoreWriter
+import os
 
+import joblib
 from bob.bio.base.algorithm import Algorithm
+from bob.pipelines import DelayedSample
+from bob.pipelines import DelayedSampleSet
+from bob.pipelines import SampleSet
+from bob.db.base.utils import (
+    check_parameters_for_validity,
+    convert_names_to_highlevel,
+    convert_names_to_lowlevel,
+)
+
+from .abstract_classes import BioAlgorithm
+from .abstract_classes import Database
 
 logger = logging.getLogger("bob.bio.base")
 
@@ -32,7 +32,9 @@ def _biofile_to_delayed_sample(biofile, database):
         subject=str(biofile.client_id),
         key=biofile.path,
         path=biofile.path,
-        annotations=database.annotations(biofile),
+        delayed_attributes=dict(
+            annotations=functools.partial(database.annotations, biofile)
+        ),
     )
 
 
@@ -52,7 +54,7 @@ class DatabaseConnector(Database):
 
     protocol : str
         The name of the protocol to generate samples from.
-        To be plugged at :py:method:`bob.db.base.Database.objects`.
+        To be plugged at `bob.db.base.Database.objects`.
 
     allow_scoring_with_all_biometric_references: bool
         If True will allow the scoring function to be performed in one shot with multiple probes.
@@ -66,6 +68,10 @@ class DatabaseConnector(Database):
     fixed_positions: dict
         In case database contains one single annotation for all samples.
         This is useful for registered databases.
+
+    memory_demanding: bool
+        Sinalizes that a database has some memory demanding components.
+        It might be useful for future processing
     """
 
     def __init__(
@@ -74,6 +80,7 @@ class DatabaseConnector(Database):
         allow_scoring_with_all_biometric_references=True,
         annotation_type="eyes-center",
         fixed_positions=None,
+        memory_demanding=False,
         **kwargs,
     ):
         self.database = database
@@ -82,6 +89,7 @@ class DatabaseConnector(Database):
         )
         self.annotation_type = annotation_type
         self.fixed_positions = fixed_positions
+        self.memory_demanding = memory_demanding
 
     def background_model_samples(self):
         """Returns :py:class:`Sample`'s to train a background model (group
@@ -136,7 +144,7 @@ class DatabaseConnector(Database):
 
         return retval
 
-    def probes(self, group):
+    def probes(self, group="dev"):
         """Returns :py:class:`Probe`'s to score biometric references
 
 
@@ -179,6 +187,41 @@ class DatabaseConnector(Database):
 
         return list(probes.values())
 
+    def all_samples(self, groups=None):
+        """Returns all the legacy database files in Sample format
+
+        Parameters
+        ----------
+        groups: list or `None`
+            List of groups to consider ('train', 'dev', and/or 'eval').
+            If `None` is given, returns samples from all the groups.
+
+        Returns
+        -------
+        samples: list
+            List of all the samples of a database in :class:`bob.pipelines.Sample`
+            objects.
+        """
+        valid_groups = convert_names_to_highlevel(
+            self.database.groups(),
+            low_level_names=["world", "dev", "eval"],
+            high_level_names=["train", "dev", "eval"],
+        )
+        groups = check_parameters_for_validity(
+            parameters=groups,
+            parameter_description="groups",
+            valid_parameters=valid_groups,
+            default_parameters=valid_groups,
+        )
+        logger.debug(f"Fetching all samples of groups '{groups}'.")
+        low_level_groups = convert_names_to_lowlevel(
+            names=groups,
+            low_level_names=["world", "dev", "eval"],
+            high_level_names=["train", "dev", "eval"],
+        )
+        objects = self.database.all_files(groups=low_level_groups)
+        return [_biofile_to_delayed_sample(k, self.database) for k in objects]
+
 
 class BioAlgorithmLegacy(BioAlgorithm):
     """Biometric Algorithm that handles :py:class:`bob.bio.base.algorithm.Algorithm`
@@ -200,7 +243,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
     -------
         >>> from bob.bio.base.pipelines.vanilla_biometrics import BioAlgorithmLegacy
         >>> from bob.bio.base.algorithm import PCA
-        >>> biometric_algorithm = BioAlgorithmLegacy(PCA())
+        >>> biometric_algorithm = BioAlgorithmLegacy(PCA(subspace_dimension=0.99), base_dir="./", projector_file="Projector.hdf5")
 
     """
 
@@ -294,7 +337,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
 
     def write_scores(self, samples, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        #open(path, "wb").write(pickle.dumps(samples))
+        # open(path, "wb").write(pickle.dumps(samples))
         joblib.dump(samples, path, compress=4)
 
     def _score_sample_set(
@@ -304,7 +347,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
         allow_scoring_with_all_biometric_references=False,
     ):
         def _load(path):
-            #return pickle.loads(open(path, "rb").read())
+            # return pickle.loads(open(path, "rb").read())
             return joblib.load(path)
 
         def _make_name(sampleset, biometric_references):
@@ -315,7 +358,8 @@ class BioAlgorithmLegacy(BioAlgorithm):
             return name + suffix
 
         path = os.path.join(
-            self.score_dir, _make_name(sampleset, biometric_references) + self._score_extension
+            self.score_dir,
+            _make_name(sampleset, biometric_references) + self._score_extension,
         )
 
         if self.force or not os.path.exists(path):
@@ -329,8 +373,9 @@ class BioAlgorithmLegacy(BioAlgorithm):
 
             self.write_scores(scored_sample_set.samples, path)
 
-            scored_sample_set = DelayedSampleSet(functools.partial(_load, path),
-                                                 parent=scored_sample_set)
+            scored_sample_set = DelayedSampleSet(
+                functools.partial(_load, path), parent=scored_sample_set
+            )
 
         else:
             scored_sample_set = SampleSet(_load(path), parent=sampleset)

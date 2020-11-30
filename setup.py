@@ -76,6 +76,7 @@ setup(
       'bob.bio.config': [
         'dummy             = bob.bio.base.test.dummy.config', # for test purposes only
         'dummy2            = bob.bio.base.test.dummy.config2', # for test purposes only
+        'dummy_samples     = bob.bio.base.test.dummy.samples_list', # for test purposes only
       ],
 
       'bob.bio.database': [

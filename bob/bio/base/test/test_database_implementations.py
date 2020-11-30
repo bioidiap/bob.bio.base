@@ -10,7 +10,8 @@ Very simple tests for Implementations
 
 import os
 from bob.bio.base.database import BioDatabase, ZTBioDatabase
-
+from bob.bio.base.test.dummy.database import database as dummy_database
+from bob.pipelines import DelayedSample
 
 def check_database(database, groups=('dev',), protocol=None, training_depends=False, models_depend=False, skip_train=False, check_zt=False):
     database_legacy = database.database
@@ -51,3 +52,11 @@ def check_database_zt(database, groups=('dev', 'eval'), protocol=None, training_
         assert database_legacy.client_id_from_model_id(t_model_ids[0], group) is not None
         assert len(database_legacy.t_enroll_files(t_model_ids[0], group)) > 0
         assert len(database_legacy.z_probe_files(group)) > 0
+
+def test_all_samples():
+    all_samples = dummy_database.all_samples(groups=None)
+    assert len(all_samples) == 400
+    assert all([isinstance(s, DelayedSample) for s in all_samples])
+    assert len(dummy_database.all_samples(groups=["train"])) == 200
+    assert len(dummy_database.all_samples(groups=["dev"])) == 200
+    assert len(dummy_database.all_samples(groups=[])) == 400

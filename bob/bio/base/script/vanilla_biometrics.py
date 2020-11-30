@@ -5,17 +5,15 @@
 
 """Executes biometric pipeline"""
 
-import click
-
-from bob.extension.scripts.click_helper import (
-    verbosity_option,
-    ResourceOption,
-    ConfigCommand,
-)
-
 import logging
-import os
+
+import click
 from bob.bio.base.pipelines.vanilla_biometrics import execute_vanilla_biometrics
+from bob.extension.scripts.click_helper import ConfigCommand
+from bob.extension.scripts.click_helper import ResourceOption
+from bob.extension.scripts.click_helper import verbosity_option
+
+VALID_DASK_CLIENT_STRINGS = ("single-threaded", "sync", "threaded", "processes")
 
 
 logger = logging.getLogger(__name__)
@@ -51,13 +49,15 @@ It is possible to do it via configuration file
    >>> database = .... # Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)"
 
 \b
-  
+
 
 """
 
 
 @click.command(
-    entry_point_group="bob.bio.config", cls=ConfigCommand, epilog=EPILOG,
+    entry_point_group="bob.bio.config",
+    cls=ConfigCommand,
+    epilog=EPILOG,
 )
 @click.option(
     "--pipeline",
@@ -79,6 +79,8 @@ It is possible to do it via configuration file
     "--dask-client",
     "-l",
     entry_point_group="dask.client",
+    string_exceptions=VALID_DASK_CLIENT_STRINGS,
+    default="single-threaded",
     help="Dask client for the execution of the pipeline.",
     cls=ResourceOption,
 )
@@ -114,6 +116,26 @@ It is possible to do it via configuration file
     help="If set, it will checkpoint all steps of the pipeline. Checkpoints will be saved in `--output`.",
     cls=ResourceOption,
 )
+@click.option(
+    "--dask-partition-size",
+    "-s",
+    help="If using Dask, this option defines the size of each dask.bag.partition."
+    "Use this option if the current heuristic that sets this value doesn't suit your experiment."
+    "(https://docs.dask.org/en/latest/bag-api.html?highlight=partition_size#dask.bag.from_sequence).",
+    default=None,
+    type=click.INT,
+    cls=ResourceOption,
+)
+@click.option(
+    "--dask-n-workers",
+    "-n",
+    help="If using Dask, this option defines the number of workers to start your experiment."
+    "Dask automatically scales up/down the number of workers due to the current load of tasks to be solved."
+    "Use this option if the current amount of workers set to start an experiment doesn't suit you.",
+    default=None,
+    type=click.INT,
+    cls=ResourceOption,
+)
 @verbosity_option(cls=ResourceOption)
 def vanilla_biometrics(
     pipeline,
@@ -123,6 +145,8 @@ def vanilla_biometrics(
     output,
     write_metadata_scores,
     checkpoint,
+    dask_partition_size,
+    dask_n_workers,
     **kwargs,
 ):
     """Runs the simplest biometrics pipeline.
@@ -180,7 +204,7 @@ def vanilla_biometrics(
         instead.
 
     """
-    print("hello")
+    logger.debug("Executing Vanilla-biometrics")
     execute_vanilla_biometrics(
         pipeline,
         database,
@@ -189,12 +213,9 @@ def vanilla_biometrics(
         output,
         write_metadata_scores,
         checkpoint,
+        dask_partition_size,
+        dask_n_workers,
         **kwargs,
     )
 
-    logger.info("Experiment finished !!!!!")
-    if dask_client is not None:
-        logger.info("Shutdown workers !!!!!")
-        dask_client.shutdown()
-        logger.info("Done !!!!!")
-
+    logger.info("Experiment finished !")

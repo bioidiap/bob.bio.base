@@ -24,7 +24,7 @@ requirements:
     - bob.blitz
     - bob.core
     - bob.db.base >2.2.0
-    - bob.extension
+    - bob.extension >5.0.1
     - bob.io.base
     - bob.learn.activation
     - bob.learn.em
@@ -59,6 +59,8 @@ test:
     - bob bio gen --help
     - bob bio evaluate --help
     - bob bio sort --help
+    - bob bio pipelines vanilla-biometrics --help
+    - bob bio pipelines vanilla-biometrics-ztnorm --help
     - nosetests --with-coverage --cover-package={{ name }} -sv {{ name }}
     - sphinx-build -aEW {{ project_dir }}/doc {{ project_dir }}/sphinx
     - sphinx-build -aEb doctest {{ project_dir }}/doc sphinx

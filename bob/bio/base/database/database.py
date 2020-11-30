@@ -80,7 +80,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
             original_directory=None,
             original_extension=None,
             annotation_directory=None,
-            annotation_extension='.pos',
+            annotation_extension=None,
             annotation_type=None,
             protocol='Default',
             training_depends_on_protocol=False,
@@ -106,8 +106,8 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
         self._kwargs = {}
 
         self.annotation_directory = annotation_directory
-        self.annotation_extension = annotation_extension
-        self.annotation_type = annotation_type
+        self.annotation_extension = annotation_extension or ".json"
+        self.annotation_type = annotation_type or "json"
         self.protocol = protocol
         self.training_depends_on_protocol = training_depends_on_protocol
         self.models_depend_on_protocol = models_depend_on_protocol
@@ -338,7 +338,6 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
         """
         raise NotImplementedError("This function must be implemented in your derived class.")
 
-    @abc.abstractmethod
     def annotations(self, file):
         """
         Returns the annotations for the given File object, if available.
@@ -672,12 +671,15 @@ class ZTBioDatabase(BioDatabase):
         files = self.objects(protocol=self.protocol, groups=groups, **self.all_files_options)
 
         # add all files that belong to the ZT-norm
-        if add_zt_files:
+        if add_zt_files and groups:
             for group in groups:
                 if group == 'world':
                     continue
                 files += self.tobjects(protocol=self.protocol, groups=group, model_ids=None)
                 files += self.zobjects(protocol=self.protocol, groups=group, **self.z_probe_options)
+        elif add_zt_files:
+            files += self.tobjects(protocol=self.protocol, groups=groups, model_ids=None)
+            files += self.zobjects(protocol=self.protocol, groups=groups, **self.z_probe_options)
         return self.sort(files)
 
     @abc.abstractmethod

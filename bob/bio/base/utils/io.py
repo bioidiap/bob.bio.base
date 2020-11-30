@@ -64,22 +64,18 @@ def read_original_data(biofile, directory, extension):
 
   Parameters
   ----------
-
-  ``biofile`` : :py:class:`bob.bio.base.database.BioFile` or one of its derivatives
-    The file to read the original data.
-
-  ``directory`` : str
-    The base directory of the database.
-
-  ``extension`` : str or ``None``
-    The extension of the original data.
-    Might be ``None`` if the ``biofile`` itself has the extension stored.
+  biofile : :py:class:`bob.bio.base.database.BioFile` or one of its derivatives
+      The file to read the original data.
+  directory : str
+      The base directory of the database.
+  extension : str or ``None``
+      The extension of the original data.
+      Might be ``None`` if the ``biofile`` itself has the extension stored.
 
   Returns
   -------
-
-  object:
-    Whatver ``biofile.load`` returns; usually a :py:class:`numpy.ndarray`
+  object
+      Whatver ``biofile.load`` returns; usually a :py:class:`numpy.ndarray`
   """
   assert isinstance(biofile, database.BioFile)
   return biofile.load(directory, extension)

@@ -3,7 +3,7 @@
 
 
 from abc import ABCMeta, abstractmethod
-from bob.pipelines.sample import Sample, SampleSet, DelayedSample
+from bob.pipelines.sample import SAMPLE_DATA_ATTRS, Sample, SampleSet, DelayedSample
 import functools
 import numpy as np
 import os
@@ -31,9 +31,15 @@ class BioAlgorithm(metaclass=ABCMeta):
 
     """
 
-    def __init__(self, score_reduction_operation=average_scores,**kwargs):
+    def __init__(self, score_reduction_operation=average_scores, **kwargs):
         self.stacked_biometric_references = None
         self.score_reduction_operation = average_scores
+
+    def clear_caches(self):
+        """
+        Clean all cached objects from BioAlgorithm
+        """
+        self.stacked_biometric_references = None
 
     def enroll_samples(self, biometric_references):
         """This method should implement the enrollment sub-pipeline of the Vanilla Biometrics Pipeline. TODO REF
@@ -122,7 +128,7 @@ class BioAlgorithm(metaclass=ABCMeta):
                     allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
                 )
             )
-
+        self.clear_caches()
         return retval
 
     def _score_sample_set(
@@ -163,30 +169,49 @@ class BioAlgorithm(metaclass=ABCMeta):
             # There are some protocols where each probe has
             # to be scored with a specific list of biometric_references
             total_scores = []
+            if self.stacked_biometric_references is None:
+                self.stacked_biometric_references = dict()
+
+            def cache_references(probe_refererences):
+                """
+                Stack referecences in a dictionary
+                """
+                for r in biometric_references:
+                    if (
+                        str(r.subject) in probe_refererences
+                        and str(r.subject) not in self.stacked_biometric_references
+                    ):
+                        self.stacked_biometric_references[str(r.subject)] = r.data
+
             for probe_sample in sampleset:
-                scores = []
-                for ref in [
-                    r for r in biometric_references if str(r.subject) in sampleset.references
-                ]:
-                    scores.append(self.score(ref.data, probe_sample.data))
+
+                cache_references(sampleset.references)
+                references = [
+                    self.stacked_biometric_references[str(r.subject)]
+                    for r in biometric_references
+                    if str(r.subject) in sampleset.references
+                ]
+
+                scores = self.score_multiple_biometric_references(
+                    references, probe_sample.data
+                )
+
                 total_scores.append(scores)
 
             total_scores = self.score_reduction_operation(np.array(total_scores))
 
-            for ref, score in zip([
-                r for r in biometric_references if str(r.subject) in sampleset.references
-            ], total_scores):
+            for ref, score in zip(
+                [
+                    r
+                    for r in biometric_references
+                    if str(r.subject) in sampleset.references
+                ],
+                total_scores,
+            ):
 
                 scores_biometric_references.append(Sample(score, parent=ref))
 
-        # Fetching metadata from the probe
-        kwargs = dict(
-            (metadata, sampleset.__dict__[metadata])
-            for metadata in sampleset.__dict__.keys()
-            if metadata not in ["samples", "key", "data", "load", "_data"]
-        )
-        return SampleSet(scores_biometric_references, parent=sampleset, **kwargs)
-
+        return SampleSet(scores_biometric_references, parent=sampleset)
 
     @abstractmethod
     def score(self, biometric_reference, data):
@@ -226,7 +251,9 @@ class BioAlgorithm(metaclass=ABCMeta):
                 Data used for the creation of ONE BIOMETRIC REFERENCE
 
         """
-        raise NotImplementedError("Your BioAlgorithm implementation should implement score_multiple_biometric_references.")
+        raise NotImplementedError(
+            "Your BioAlgorithm implementation should implement score_multiple_biometric_references."
+        )
 
 
 class Database(metaclass=ABCMeta):
@@ -284,6 +311,23 @@ class Database(metaclass=ABCMeta):
         """
         pass
 
+    @abstractmethod
+    def all_samples(self, groups=None):
+        """Returns all the samples of the dataset
+
+        Parameters
+        ----------
+        groups: list or `None`
+            List of groups to consider (like 'dev' or 'eval'). If `None`, will
+            return samples from all the groups.
+
+        Returns
+        -------
+        samples: list
+            List of all the samples of the dataset.
+        """
+        pass
+
 
 class ScoreWriter(metaclass=ABCMeta):
     """
@@ -298,17 +342,19 @@ class ScoreWriter(metaclass=ABCMeta):
     @abstractmethod
     def write(self, sampleset, path):
         pass
-    
+
     def post_process(self, score_paths, filename):
         def _post_process(score_paths, filename):
             os.makedirs(os.path.dirname(filename), exist_ok=True)
-            f = open(filename, "w")
-            for path in score_paths:
-                f.writelines(open(path).readlines())
+            with open(filename, "w") as f:
+                for path in score_paths:
+                    with open(path) as f2:
+                        f.writelines(f2.readlines())
             return filename
-    
+
         import dask.bag
         import dask
+
         if isinstance(score_paths, dask.bag.Bag):
             all_paths = dask.delayed(list)(score_paths)
             return dask.delayed(_post_process)(all_paths, filename)

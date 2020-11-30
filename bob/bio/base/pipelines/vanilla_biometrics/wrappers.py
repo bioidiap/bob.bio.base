@@ -1,4 +1,10 @@
-from bob.pipelines import DelayedSample, SampleSet, Sample, DelayedSampleSet
+from bob.pipelines import (
+    DelayedSample,
+    SampleSet,
+    Sample,
+    DelayedSampleSet,
+    DelayedSampleSetCached,
+)
 import bob.io.base
 import os
 import dask
@@ -31,8 +37,8 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
 
     Parameters
     ----------
-        biometric_algorithm: :any:`BioAlgorithm`
-           An implemented :any:`BioAlgorithm`
+        biometric_algorithm: :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`
+           An implemented :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`
     
         base_dir: str
            Path to store biometric references and scores
@@ -46,9 +52,9 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
     Examples
     --------
 
-    >>> from bob.bio.base.pipelines.vanilla_biometrics.biometric_algorithm import BioAlgCheckpointWrapper, Distance    
-    >>> biometric_algorithm = BioAlgCheckpointWrapper(Distance(), base_dir="./")
-    >>> biometric_algorithm.enroll(sample)
+    >>> from bob.bio.base.pipelines.vanilla_biometrics import BioAlgorithmCheckpointWrapper, Distance    
+    >>> biometric_algorithm = BioAlgorithmCheckpointWrapper(Distance(), base_dir="./")
+    >>> biometric_algorithm.enroll(sample) # doctest: +SKIP
 
     """
 
@@ -64,6 +70,9 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         self.force = force
         self._biometric_reference_extension = ".hdf5"
         self._score_extension = ".joblib"
+
+    def clear_caches(self):
+        self.biometric_algorithm.clear_caches()
 
     def set_score_references_path(self, group):
         if group is None:
@@ -173,7 +182,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
             self.write_scores(scored_sample_set.samples, path)
             parent = scored_sample_set
 
-        scored_sample_set = DelayedSampleSet(
+        scored_sample_set = DelayedSampleSetCached(
             functools.partial(_load, path), parent=parent
         )
 
@@ -182,11 +191,14 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
 
 class BioAlgorithmDaskWrapper(BioAlgorithm):
     """
-    Wrap :any:`BioAlgorithm` to work with DASK
+    Wrap :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm` to work with DASK
     """
 
     def __init__(self, biometric_algorithm, **kwargs):
         self.biometric_algorithm = biometric_algorithm
+
+    def clear_caches(self):
+        self.biometric_algorithm.clear_caches()
 
     def enroll_samples(self, biometric_reference_features):
 
@@ -235,20 +247,20 @@ class BioAlgorithmDaskWrapper(BioAlgorithm):
 
 def dask_vanilla_biometrics(pipeline, npartitions=None, partition_size=None):
     """
-    Given a :any:`VanillaBiometrics`, wraps :any:`VanillaBiometrics.transformer` and
-    :any:`VanillaBiometrics.biometric_algorithm` to be executed with dask
+    Given a :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`, wraps :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` and
+    :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm` to be executed with dask
 
     Parameters
     ----------
 
-    pipeline: :any:`VanillaBiometrics`
+    pipeline: :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`
        Vanilla Biometrics based pipeline to be dasked
 
     npartitions: int
-       Number of partitions for the initial :any:`dask.bag`
+       Number of partitions for the initial `dask.bag`
 
     partition_size: int
-       Size of the partition for the initial :any:`dask.bag`
+       Size of the partition for the initial `dask.bag`
     """
 
     if isinstance(pipeline, ZTNormPipeline):
@@ -294,11 +306,11 @@ def dask_get_partition_size(cluster, n_objects):
     The heuristics is pretty simple, given the max number of possible workers to be run
     in a queue (not the number of current workers running) and a total number objects to be processed do n_objects/n_max_workers:
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
 
-        cluster:  :any:`bob.pipelines.distributed.SGEMultipleQueuesCluster`
-            Cluster of the type :any:`bob.pipelines.distributed.SGEMultipleQueuesCluster`
+        cluster:  :any:`bob.pipelines.distributed.sge.SGEMultipleQueuesCluster`
+            Cluster of the type :any:`bob.pipelines.distributed.sge.SGEMultipleQueuesCluster`
 
         n_objects: int
             Number of objects to be processed
@@ -311,15 +323,17 @@ def dask_get_partition_size(cluster, n_objects):
     return n_objects // (max_jobs * 2) if n_objects > max_jobs else 1
 
 
-def checkpoint_vanilla_biometrics(pipeline, base_dir, biometric_algorithm_dir=None):
+def checkpoint_vanilla_biometrics(
+    pipeline, base_dir, biometric_algorithm_dir=None, hash_fn=None
+):
     """
-    Given a :any:`VanillaBiometrics`, wraps :any:`VanillaBiometrics.transformer` and
-    :any:`VanillaBiometrics.biometric_algorithm` to be checkpointed
+    Given a :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`, wraps :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` and
+    :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm` to be checkpointed
 
     Parameters
     ----------
 
-    pipeline: :any:`VanillaBiometrics`
+    pipeline: :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`
        Vanilla Biometrics based pipeline to be checkpointed
 
     base_dir: str
@@ -331,7 +345,12 @@ def checkpoint_vanilla_biometrics(pipeline, base_dir, biometric_algorithm_dir=No
        This is useful when it's suitable to have the transformed data path, and biometric references and scores
        in different paths.
 
-
+    hash_fn
+       Pointer to a hash function. This hash function will map
+       `sample.key` to a hash code and this hash code will be the
+       relative directory where a single `sample` will be checkpointed.
+       This is useful when is desireable file directories with more than
+       a certain number of files.
     """
 
     sk_pipeline = pipeline.transformer
@@ -362,7 +381,9 @@ def checkpoint_vanilla_biometrics(pipeline, base_dir, biometric_algorithm_dir=No
         ):
             save_func = estimator.estimator.instance.write_feature
             load_func = estimator.estimator.instance.read_feature
-            estimator.estimator.projector_file = os.path.join(bio_ref_scores_dir,"Projector.hdf5")
+            estimator.estimator.projector_file = os.path.join(
+                bio_ref_scores_dir, "Projector.hdf5"
+            )
 
         wraped_estimator = bob.pipelines.wrap(
             ["checkpoint"],
@@ -370,10 +391,10 @@ def checkpoint_vanilla_biometrics(pipeline, base_dir, biometric_algorithm_dir=No
             features_dir=os.path.join(base_dir, name),
             load_func=load_func,
             save_func=save_func,
+            hash_fn=hash_fn,
         )
 
         sk_pipeline.steps[i] = (name, wraped_estimator)
-
 
     if isinstance(pipeline.biometric_algorithm, BioAlgorithmLegacy):
         pipeline.biometric_algorithm.base_dir = bio_ref_scores_dir
@@ -387,13 +408,13 @@ def checkpoint_vanilla_biometrics(pipeline, base_dir, biometric_algorithm_dir=No
 
 def is_checkpointed(pipeline):
     """
-    Check if :any:`VanillaBiometrics` is checkpointed
+    Check if :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` is checkpointed
 
 
     Parameters
     ----------
 
-    pipeline: :any:`VanillaBiometrics`
+    pipeline: :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`
        Vanilla Biometrics based pipeline to be checkpointed
 
     """
@@ -402,7 +423,7 @@ def is_checkpointed(pipeline):
     # If it BioAlgorithmLegacy and the transformer of BioAlgorithmLegacy is also checkpointable
     return isinstance_nested(
         pipeline, "biometric_algorithm", BioAlgorithmCheckpointWrapper
-    ) or \
-    (   isinstance_nested(pipeline, "biometric_algorithm", BioAlgorithmLegacy) and \
-        isinstance_nested(pipeline, "transformer", CheckpointWrapper)
+    ) or (
+        isinstance_nested(pipeline, "biometric_algorithm", BioAlgorithmLegacy)
+        and isinstance_nested(pipeline, "transformer", CheckpointWrapper)
     )
