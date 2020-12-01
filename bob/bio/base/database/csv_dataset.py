@@ -31,7 +31,7 @@ class AnnotationsLoader:
         self,
         annotation_directory=None,
         annotation_extension=".json",
-        annotation_type="eyecenter",
+        annotation_type="json",
     ):
         self.annotation_directory = annotation_directory
         self.annotation_extension = annotation_extension
@@ -172,7 +172,7 @@ class CSVToSampleLoader(CSVBaseSampleLoader):
         kwargs = dict([[str(h).lower(), r] for h, r in zip(header[2:], row[2:])])
 
         if self.metadata_loader is not None:
-            metadata = self.metadata_loader(row)
+            metadata = self.metadata_loader(row, header=header)
             kwargs.update(metadata)
 
         return DelayedSample(
@@ -220,7 +220,7 @@ class LSTToSampleLoader(CSVBaseSampleLoader):
                 kwargs = {"subject": str(subject)}
 
         if self.metadata_loader is not None:
-            metadata = self.metadata_loader(row)
+            metadata = self.metadata_loader(row, header=header)
             kwargs.update(metadata)
 
         return DelayedSample(

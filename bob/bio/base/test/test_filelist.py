@@ -111,7 +111,9 @@ def test_csv_file_list_dev_eval():
         csv_to_sample_loader=CSVToSampleLoader(
             data_loader=bob.io.base.load,
             metadata_loader=AnnotationsLoader(
-                annotation_directory=annotation_directory, annotation_extension=".pos"
+                annotation_directory=annotation_directory,
+                annotation_extension=".pos",
+                annotation_type="eyecenter",
             ),
             dataset_original_directory="",
             extension="",
@@ -159,7 +161,9 @@ def test_csv_file_list_dev_eval_sparse():
         csv_to_sample_loader=CSVToSampleLoader(
             data_loader=bob.io.base.load,
             metadata_loader=AnnotationsLoader(
-                annotation_directory=annotation_directory, annotation_extension=".pos"
+                annotation_directory=annotation_directory,
+                annotation_extension=".pos",
+                annotation_type="eyecenter",
             ),
             dataset_original_directory="",
             extension="",
