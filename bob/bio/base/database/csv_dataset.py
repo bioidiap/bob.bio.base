@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 #####
 # ANNOTATIONS LOADERS
 ####
-class IdiapAnnotationsLoader:
+class AnnotationsLoader:
     """
     Load annotations in the Idiap format
     """
@@ -30,7 +30,7 @@ class IdiapAnnotationsLoader:
     def __init__(
         self,
         annotation_directory=None,
-        annotation_extension=".pos",
+        annotation_extension=".json",
         annotation_type="eyecenter",
     ):
         self.annotation_directory = annotation_directory
@@ -120,15 +120,21 @@ class CSVBaseSampleLoader(metaclass=ABCMeta):
             sample_sets = dict()
             for s in samples:
                 if s.reference_id not in sample_sets:
-                    sample_sets[s.reference_id] = SampleSet(
-                        [s], parent=s, references=references
+                    sample_sets[s.reference_id] = (
+                        SampleSet([s], parent=s)
+                        if references is None
+                        else SampleSet([s], parent=s, references=references)
                     )
                 else:
                     sample_sets[s.reference_id].append(s)
             return list(sample_sets.values())
 
         else:
-            return [SampleSet([s], parent=s, references=references) for s in samples]
+            return (
+                [SampleSet([s], parent=s) for s in samples]
+                if references is None
+                else [SampleSet([s], parent=s, references=references) for s in samples]
+            )
 
 
 class CSVToSampleLoader(CSVBaseSampleLoader):
@@ -163,7 +169,7 @@ class CSVToSampleLoader(CSVBaseSampleLoader):
         path = row[0]
         reference_id = row[1]
 
-        kwargs = dict([[h, r] for h, r in zip(header[2:], row[2:])])
+        kwargs = dict([[str(h).lower(), r] for h, r in zip(header[2:], row[2:])])
 
         if self.metadata_loader is not None:
             metadata = self.metadata_loader(row)
@@ -190,16 +196,28 @@ class LSTToSampleLoader(CSVBaseSampleLoader):
 
         with open(filename) as cf:
             reader = csv.reader(cf, delimiter=" ")
-            return [self.convert_row_to_sample(row) for row in reader]
+            samples = []
+            for row in reader:
+                if row[0][0] == "#":
+                    continue
+                samples.append(self.convert_row_to_sample(row))
+
+            return samples
 
     def convert_row_to_sample(self, row, header=None):
 
-        path = row[0]
-        reference_id = str(row[1])
-        kwargs = dict()
-        if len(row) == 3:
-            subject = row[2]
-            kwargs = {"subject": str(subject)}
+        if len(row) == 4:
+            path = row[0]
+            compare_reference_id = row[1]
+            reference_id = str(row[3])
+            kwargs = {"compare_reference_id": str(compare_reference_id)}
+        else:
+            path = row[0]
+            reference_id = str(row[1])
+            kwargs = dict()
+            if len(row) == 3:
+                subject = row[2]
+                kwargs = {"subject": str(subject)}
 
         if self.metadata_loader is not None:
             metadata = self.metadata_loader(row)
@@ -232,12 +250,11 @@ class CSVDatasetDevEval(Database):
     .. code-block:: text
 
        my_dataset/
-       my_dataset/my_protocol/
-       my_dataset/my_protocol/train.csv
-       my_dataset/my_protocol/train.csv/dev_enroll.csv
-       my_dataset/my_protocol/train.csv/dev_probe.csv
-       my_dataset/my_protocol/train.csv/eval_enroll.csv
-       my_dataset/my_protocol/train.csv/eval_probe.csv
+       my_dataset/my_protocol/norm/train_world.csv
+       my_dataset/my_protocol/dev/for_models.csv
+       my_dataset/my_protocol/dev/for_probes.csv
+       my_dataset/my_protocol/eval/for_models.csv
+       my_dataset/my_protocol/eval/for_probes.csv
        ...
 
 
@@ -245,8 +262,8 @@ class CSVDatasetDevEval(Database):
     evaluation protocols this dataset might have.
     Inside of the `my_protocol` directory should contain at least two csv files:
 
-     - dev_enroll.csv
-     - dev_probe.csv
+     - for_models.csv
+     - for_probes.csv
 
 
     Those csv files should contain in each row i-) the path to raw data and ii-) the reference_id label
@@ -306,8 +323,10 @@ class CSVDatasetDevEval(Database):
             dataset_original_directory="",
             extension="",
         ),
+        is_sparse=False,
     ):
         self.dataset_protocol_path = dataset_protocol_path
+        self.is_sparse = is_sparse
 
         def get_paths():
 
@@ -333,8 +352,9 @@ class CSVDatasetDevEval(Database):
                 os.path.join(protocol_path, "dev", "for_models.csv"),
             )
 
+            legacy_probe = "for_scores.lst" if self.is_sparse else "for_probes.lst"
             dev_probe_csv = path_discovery(
-                os.path.join(protocol_path, "dev", "for_probes.lst"),
+                os.path.join(protocol_path, "dev", legacy_probe),
                 os.path.join(protocol_path, "dev", "for_probes.csv"),
             )
 
@@ -344,7 +364,7 @@ class CSVDatasetDevEval(Database):
             )
 
             eval_probe_csv = path_discovery(
-                os.path.join(protocol_path, "eval", "for_probes.lst"),
+                os.path.join(protocol_path, "eval", legacy_probe),
                 os.path.join(protocol_path, "eval", "for_probes.csv"),
             )
 
@@ -421,16 +441,35 @@ class CSVDatasetDevEval(Database):
         if self.cache[cache_label] is not None:
             return self.cache[cache_label]
 
-        references = None
-        if fetching_probes:
-            references = list(
-                set([s.reference_id for s in self.references(group=group)])
-            )
-
+        # Getting samples from CSV
         samples = self.csv_to_sample_loader(self.__dict__[cache_label])
 
+        references = None
+        if fetching_probes and self.is_sparse:
+
+            # Checking if `is_sparse` was set properly
+            if len(samples) > 0 and not hasattr(samples[0], "compare_reference_id"):
+                ValueError(
+                    f"Attribute `compare_reference_id` not found in `{samples[0]}`."
+                    "Make sure this attribute exists in your dataset if `is_sparse=True`"
+                )
+
+            sparse_samples = dict()
+            for s in samples:
+                if s.key in sparse_samples:
+                    sparse_samples[s.key].references.append(s.compare_reference_id)
+                else:
+                    s.references = [s.compare_reference_id]
+                    sparse_samples[s.key] = s
+            samples = sparse_samples.values()
+        else:
+            if fetching_probes:
+                references = list(
+                    set([s.reference_id for s in self.references(group=group)])
+                )
+
         sample_sets = self.csv_to_sample_loader.convert_samples_to_samplesets(
-            samples, group_by_reference_id=group_by_reference_id, references=references
+            samples, group_by_reference_id=group_by_reference_id, references=references,
         )
 
         self.cache[cache_label] = sample_sets

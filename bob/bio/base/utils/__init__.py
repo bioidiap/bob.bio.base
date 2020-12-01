@@ -3,6 +3,7 @@
 # Laurent El Shafey <Laurent.El-Shafey@idiap.ch>
 # Roy Wallace <roy.wallace@idiap.ch>
 
+
 from .resources import *
 from .io import *
 import six
