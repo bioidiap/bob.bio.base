@@ -106,7 +106,8 @@ def atnt_database_directory():
     if atnt_downloaded_directory:
         return atnt_downloaded_directory
 
-    if os.path.isdir(atnt_default_directory):
+    if atnt_default_directory is not None and os.path.isdir(atnt_default_directory):
+
         return atnt_default_directory
 
     from bob.db.atnt.driver import download
@@ -115,12 +116,9 @@ def atnt_database_directory():
 
     atnt_downloaded_directory = tempfile.mkdtemp(prefix="atnt_db_")
     logger.warn(
-        "Downloading the AT&T database to '%s' ...",
-        atnt_downloaded_directory,
+        "Downloading the AT&T database to '%s' ...", atnt_downloaded_directory,
     )
-    logger.warn(
-        "To avoid this, please run bob_dbmanage.py atnt download."
-    )
+    logger.warn("To avoid this, please run bob_dbmanage.py atnt download.")
     download(Namespace(output_dir=atnt_downloaded_directory))
 
     # to avoid re-downloading in parallel test execution
