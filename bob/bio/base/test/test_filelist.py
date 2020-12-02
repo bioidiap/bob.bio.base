@@ -105,46 +105,50 @@ def test_csv_file_list_dev_eval():
         )
     )
 
-    dataset = CSVDatasetDevEval(
-        example_dir,
-        "protocol_dev_eval",
-        csv_to_sample_loader=CSVToSampleLoader(
-            data_loader=bob.io.base.load,
-            metadata_loader=AnnotationsLoader(
-                annotation_directory=annotation_directory,
-                annotation_extension=".pos",
-                annotation_type="eyecenter",
+    def run(filename):
+        dataset = CSVDatasetDevEval(
+            filename,
+            "protocol_dev_eval",
+            csv_to_sample_loader=CSVToSampleLoader(
+                data_loader=bob.io.base.load,
+                metadata_loader=AnnotationsLoader(
+                    annotation_directory=annotation_directory,
+                    annotation_extension=".pos",
+                    annotation_type="eyecenter",
+                ),
+                dataset_original_directory="",
+                extension="",
             ),
-            dataset_original_directory="",
-            extension="",
-        ),
-    )
-    assert len(dataset.background_model_samples()) == 8
-    assert check_all_true(dataset.background_model_samples(), DelayedSample)
+        )
+        assert len(dataset.background_model_samples()) == 8
+        assert check_all_true(dataset.background_model_samples(), DelayedSample)
 
-    assert len(dataset.references()) == 2
-    assert check_all_true(dataset.references(), SampleSet)
+        assert len(dataset.references()) == 2
+        assert check_all_true(dataset.references(), SampleSet)
 
-    assert len(dataset.probes()) == 8
-    assert check_all_true(dataset.references(), SampleSet)
+        assert len(dataset.probes()) == 8
+        assert check_all_true(dataset.references(), SampleSet)
 
-    assert len(dataset.references(group="eval")) == 6
-    assert check_all_true(dataset.references(group="eval"), SampleSet)
+        assert len(dataset.references(group="eval")) == 6
+        assert check_all_true(dataset.references(group="eval"), SampleSet)
 
-    assert len(dataset.probes(group="eval")) == 13
-    assert check_all_true(dataset.probes(group="eval"), SampleSet)
+        assert len(dataset.probes(group="eval")) == 13
+        assert check_all_true(dataset.probes(group="eval"), SampleSet)
 
-    assert len(dataset.all_samples(groups=None)) == 47
-    assert check_all_true(dataset.all_samples(groups=None), DelayedSample)
+        assert len(dataset.all_samples(groups=None)) == 47
+        assert check_all_true(dataset.all_samples(groups=None), DelayedSample)
 
-    # Check the annotations
-    for s in dataset.all_samples(groups=None):
-        assert isinstance(s.annotations, dict)
+        # Check the annotations
+        for s in dataset.all_samples(groups=None):
+            assert isinstance(s.annotations, dict)
 
-    assert len(dataset.reference_ids(group="dev")) == 2
-    assert len(dataset.reference_ids(group="eval")) == 6
+        assert len(dataset.reference_ids(group="dev")) == 2
+        assert len(dataset.reference_ids(group="eval")) == 6
 
-    assert len(dataset.groups()) == 3
+        assert len(dataset.groups()) == 3
+
+    run(example_dir)
+    run(example_dir + ".tar.gz")
 
 
 def test_csv_file_list_dev_eval_sparse():
