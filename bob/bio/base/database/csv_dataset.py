@@ -24,7 +24,8 @@ logger = logging.getLogger(__name__)
 ####
 class AnnotationsLoader:
     """
-    Load annotations in the Idiap format
+    Metadata loader that loads annotations in the Idiap format using the function
+    :any:`bob.db.base.read_annotation_file`
     """
 
     def __init__(
@@ -64,8 +65,8 @@ class AnnotationsLoader:
 
 
 class CSVBaseSampleLoader(metaclass=ABCMeta):
-    """
-    Convert CSV files in the format below to either a list of
+    """    
+    Base class that converts the lines of a CSV file, like the one below to
     :any:`bob.pipelines.DelayedSample` or :any:`bob.pipelines.SampleSet`
 
     .. code-block:: text
@@ -86,8 +87,14 @@ class CSVBaseSampleLoader(metaclass=ABCMeta):
             A python function that can be called parameterlessly, to load the
             sample in question from whatever medium
 
-        extension:
-            The file extension
+        metadata_loader:
+            AnnotationsLoader
+
+        dataset_original_directory: str
+            Path of where data is stored
+        
+        extension: str
+            Default file extension
 
     """
 
@@ -139,7 +146,7 @@ class CSVBaseSampleLoader(metaclass=ABCMeta):
 
 class CSVToSampleLoader(CSVBaseSampleLoader):
     """
-    Simple mechanism to convert CSV files in the format below to either a list of
+    Simple mechanism that converts the lines of a CSV file to
     :any:`bob.pipelines.DelayedSample` or :any:`bob.pipelines.SampleSet`
     """
 
@@ -187,7 +194,7 @@ class CSVToSampleLoader(CSVBaseSampleLoader):
 
 class LSTToSampleLoader(CSVBaseSampleLoader):
     """
-    Simple mechanism to convert LST files in the format below to either a list of
+    Simple mechanism that converts the lines of a LST file to
     :any:`bob.pipelines.DelayedSample` or :any:`bob.pipelines.SampleSet`
     """
 
@@ -300,7 +307,7 @@ class CSVDatasetDevEval(Database):
     ----------
 
         dataset_path: str
-          Absolute path of the dataset protocol description
+          Absolute path or a tarball of the dataset protocol description.
 
         protocol_na,e: str
           The name of the protocol
@@ -308,6 +315,7 @@ class CSVDatasetDevEval(Database):
         csv_to_sample_loader: :any:`bob.bio.base.database.CSVBaseSampleLoader`
             Base class that whose objective is to generate :any:`bob.pipelines.Sample`
             and/or :any:`bob.pipelines.SampleSet` from csv rows
+    
 
     """
 

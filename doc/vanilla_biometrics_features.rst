@@ -84,7 +84,7 @@ You must provide a series of *comma separated values* (csv) files containing at 
 
 .. code-block:: text
 
-  PATH,SUBJECT
+  PATH,REFERENCE_ID
   data/model11_session1_sample1,1
   data/model11_session1_sample2,1
   data/model11_session1_sample3,1
@@ -94,7 +94,7 @@ You must provide a series of *comma separated values* (csv) files containing at 
   data/model12_session1_sample3,2
   data/model12_session2_sample1,2
 
-The required columns in each file are the path to a sample (header: ``PATH``, relative to the dataset root) and a unique identifier for the individual represented by the sample (header: ``SUBJECT``).
+The required columns in each file are the path to a sample (header: ``PATH``, relative to the dataset root) and a unique identifier for the individual represented by the sample (header: ``REFERENCE_ID``).
 
 Metadata
 ........
@@ -103,7 +103,7 @@ This interface allows metadata to be shipped with the samples. To do so, simply 
 
 .. code-block:: text
 
-  PATH,SUBJECT,MY_METADATA_1,METADATA_2
+  PATH,REFERENCE_ID,MY_METADATA_1,METADATA_2
   data/model11_session1_sample1,1,F,10
   data/model11_session1_sample2,1,F,10
   data/model11_session1_sample3,1,F,10
@@ -126,16 +126,26 @@ The following file structure and file naming must be followed, in order for the 
   |
   +-- my_protocol_1
   |   |
-  |   +-- dev_enroll.csv
-  |   +-- dev_probe.csv
+  |   +-- dev
+  |      |
+  |      +-- for_models
+  |      +-- for_probes
   |
   +-- my_protocol_2
       |
-      +-- train.csv
-      +-- dev_enroll.csv
-      +-- dev_probe.csv
-      +-- eval_enroll.csv
-      +-- eval_probe.csv
+      +-- norm
+      |    |
+      |    +-- train_world.csv
+      |
+      +-- dev
+      |   |     
+      |   +-- for_models.csv
+      |   +-- for_probes.csv
+      |
+      +-- eval
+           |
+           +-- for_models.csv
+           +-- for_probes.csv
 
 - The minimal required files are the ``dev_enroll.csv`` and ``dev_probe.csv``, containing the sample paths and subjects of the *dev* set.
 - The ``train.csv`` file (as shown in ``my_protocol_2``) is optional and contains the information of the *world* set.
@@ -145,7 +155,7 @@ In this example, ``my_dataset`` would be the base path given to the ``dataset_pr
 
 .. code-block:: python
 
-    from bob.bio.base.database import CSVDatasetDevEval
+    from bob.bio.base.database import CSVDatasetDevEval, AnnotationsLoader
 
     # Define a loading function called for each sample with its path
     def my_load_function(full_path):
@@ -158,6 +168,7 @@ In this example, ``my_dataset`` would be the base path given to the ``dataset_pr
         data_loader=my_load_function,
         dataset_original_directory="/path/to/dataset/root",
         extension=".png",
+        metadata_loader=AnnotationsLoader()
     )
 
     # Create the csv interface
@@ -165,9 +176,9 @@ In this example, ``my_dataset`` would be the base path given to the ``dataset_pr
 
 This will create a database interface with:
 
-- The elements in ``train.csv`` returned by :py:meth:`~bob.db.base.Database.background_model_samples`,
-- The elements in ``*_enroll.csv`` returned by :py:meth:`~bob.db.base.Database.references`,
-- The elements in ``*_probe.csv`` returned by :py:meth:`~bob.db.base.Database.probes`.
+- The elements in ``train_world.csv`` returned by :py:meth:`~bob.db.base.Database.background_model_samples`,
+- The elements in ``for_models.csv`` returned by :py:meth:`~bob.db.base.Database.references`,
+- The elements in ``for_probes.csv`` returned by :py:meth:`~bob.db.base.Database.probes`.
 
 An aggregation of all of the above is available with the :py:meth:`~bob.db.base.Database.all_samples` method, which returns all the samples of the protocol.
 
@@ -182,7 +193,7 @@ The format of the CSV file is the same as in :py:class:`~bob.bio.base.database.C
 
 .. code-block:: text
 
-  PATH,SUBJECT
+  PATH,REFERENCE_ID
   path/to/sample0_subj0,0
   path/to/sample1_subj0,0
   path/to/sample2_subj0,0
@@ -205,7 +216,10 @@ To use the cross-validation database interface, use the following:
         test_size=0.8,
         samples_for_enrollment=1,
         csv_to_sample_loader=CSVToSampleLoader(
-            data_loader=bob.io.base.load, dataset_original_directory="", extension=""
+            data_loader=bob.io.base.load, 
+            dataset_original_directory="", 
+            extension="",
+            metadata_loader=AnnotationsLoader()
         ),
     )
 
@@ -245,7 +259,7 @@ Here is a code snippet of a simple database interface:
         def references(self, group="dev"):
             all_references = []
             for a_subject in dataset_dev_subjects:
-                current_sampleset = SampleSet(samples=[], subject=a_subject.id)
+                current_sampleset = SampleSet(samples=[], reference_id=a_subject.id)
                 for a_sample in a_subject:
                     current_sampleset.insert(-1, Sample(data=a_sample.data, key=a_sample.sample_id))
                 all_references.append(current_sampleset)
@@ -254,7 +268,7 @@ Here is a code snippet of a simple database interface:
         def probes(self, group="dev"):
             all_probes = []
             for a_subject in dataset_dev_subjects:
-                current_sampleset = SampleSet(samples=[], subject=a_subject.id, references=list_of_references_id)
+                current_sampleset = SampleSet(samples=[], reference_id=a_subject.id, references=list_of_references_id)
                 for a_sample in a_subject:
                     current_sampleset.insert(-1, Sample(data=a_sample.data, key=a_sample.sample_id))
                 all_probes.append(current_sampleset)
