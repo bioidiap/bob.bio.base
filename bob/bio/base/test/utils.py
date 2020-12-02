@@ -9,7 +9,11 @@ import sys
 import functools
 from nose.plugins.skip import SkipTest
 import importlib
-from bob.db.atnt.models import DEFAULT_DATADIR as ATNT_DEFAULT_DIR
+
+try:
+    from bob.db.atnt.models import DEFAULT_DATADIR as ATNT_DEFAULT_DIR
+except ModuleNotFoundError:
+    ATNT_DEFAULT_DIR = None
 
 # based on: http://stackoverflow.com/questions/6796492/temporarily-redirect-stdout-stderr
 class Quiet(object):
