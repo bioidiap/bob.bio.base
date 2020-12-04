@@ -11,6 +11,7 @@ import csv
 import uuid
 import shutil
 
+
 class FourColumnsScoreWriter(ScoreWriter):
     """
     Read and write scores using the four columns format
@@ -22,6 +23,7 @@ class FourColumnsScoreWriter(ScoreWriter):
         Write scores and returns a :py:class:`bob.pipelines.DelayedSample`
         containing the instruction to open the score file
         """
+
         def _write(probe_sampleset):
             os.makedirs(self.path, exist_ok=True)
             n_lines = 0
@@ -35,8 +37,8 @@ class FourColumnsScoreWriter(ScoreWriter):
 
                     lines = [
                         "{0} {1} {2} {3}\n".format(
-                            biometric_reference.subject,
-                            probe.subject,
+                            biometric_reference.reference_id,
+                            probe.reference_id,
                             probe.key,
                             biometric_reference.data,
                         )
@@ -48,6 +50,7 @@ class FourColumnsScoreWriter(ScoreWriter):
 
         import dask.bag
         import dask
+
         if isinstance(probe_sampleset, dask.bag.Bag):
             return probe_sampleset.map_partitions(_write)
         return _write(probe_sampleset)
@@ -160,16 +163,18 @@ class CSVScoreWriter(ScoreWriter):
             post_process_scores = []
             os.makedirs(path, exist_ok=True)
             for i, score in enumerate(score_paths):
-                fname = os.path.join(path, os.path.basename(score)+"_post_process.csv")
+                fname = os.path.join(
+                    path, os.path.basename(score) + "_post_process.csv"
+                )
                 post_process_scores.append(fname)
-                if i==0:
+                if i == 0:
                     shutil.move(score, fname)
                     continue
 
                 # Not memory intensive score writing
-                with open(score,'r') as f:
-                    with open(fname,'w') as f1:
-                        f.readline() # skip header line
+                with open(score, "r") as f:
+                    with open(fname, "w") as f1:
+                        f.readline()  # skip header line
                         for line in f:
                             f1.write(line)
 
@@ -177,9 +182,9 @@ class CSVScoreWriter(ScoreWriter):
                 os.remove(score)
             return post_process_scores
 
-
         import dask.bag
         import dask
+
         if isinstance(score_paths, dask.bag.Bag):
             all_paths = dask.delayed(list)(score_paths)
             return dask.delayed(_post_process)(all_paths, path)

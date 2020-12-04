@@ -3,11 +3,10 @@ from .Distance import Distance
 from .PCA import PCA
 from .LDA import LDA
 from .PLDA import PLDA
-from .BIC import BIC
 
 # gets sphinx autodoc done right - don't remove it
 def __appropriate__(*args):
-  """Says object was actually declared here, and not in the import module.
+    """Says object was actually declared here, and not in the import module.
   Fixing sphinx warnings of not being able to find classes, when path is shortened.
   Parameters:
 
@@ -17,15 +16,12 @@ def __appropriate__(*args):
   <https://github.com/sphinx-doc/sphinx/issues/3048>`
   """
 
-  for obj in args: obj.__module__ = __name__
+    for obj in args:
+        obj.__module__ = __name__
+
 
 __appropriate__(
-    Algorithm,
-    Distance,
-    PCA,
-    LDA,
-    PLDA,
-    BIC,
-    )
+    Algorithm, Distance, PCA, LDA, PLDA,
+)
 
-__all__ = [_ for _ in dir() if not _.startswith('_')]
+__all__ = [_ for _ in dir() if not _.startswith("_")]

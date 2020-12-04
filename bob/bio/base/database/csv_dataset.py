@@ -12,20 +12,69 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 import itertools
 import logging
+import bob.db.base
+from bob.extension.download import find_element_in_tarball
+from bob.bio.base.pipelines.vanilla_biometrics.abstract_classes import Database
 
 logger = logging.getLogger(__name__)
 
-class CSVBaseSampleLoader(metaclass=ABCMeta):
+
+#####
+# ANNOTATIONS LOADERS
+####
+class AnnotationsLoader:
     """
-    Convert CSV files in the format below to either a list of
+    Metadata loader that loads annotations in the Idiap format using the function
+    :any:`bob.db.base.read_annotation_file`
+    """
+
+    def __init__(
+        self,
+        annotation_directory=None,
+        annotation_extension=".json",
+        annotation_type="json",
+    ):
+        self.annotation_directory = annotation_directory
+        self.annotation_extension = annotation_extension
+        self.annotation_type = annotation_type
+
+    def __call__(self, row, header=None):
+        if self.annotation_directory is None:
+            return None
+
+        path = row[0]
+
+        # since the file id is equal to the file name, we can simply use it
+        annotation_file = os.path.join(
+            self.annotation_directory, path + self.annotation_extension
+        )
+
+        # return the annotations as read from file
+        annotation = {
+            "annotations": bob.db.base.read_annotation_file(
+                annotation_file, self.annotation_type
+            )
+        }
+        return annotation
+
+
+#######
+# SAMPLE LOADERS
+# CONVERT CSV LINES TO SAMPLES
+#######
+
+
+class CSVBaseSampleLoader(metaclass=ABCMeta):
+    """    
+    Base class that converts the lines of a CSV file, like the one below to
     :any:`bob.pipelines.DelayedSample` or :any:`bob.pipelines.SampleSet`
 
     .. code-block:: text
 
-       PATH,SUBJECT
-       path_1,subject_1
-       path_2,subject_2
-       path_i,subject_j
+       PATH,REFERENCE_ID
+       path_1,reference_id_1
+       path_2,reference_id_2
+       path_i,reference_id_j
        ...
 
     .. note::
@@ -38,15 +87,28 @@ class CSVBaseSampleLoader(metaclass=ABCMeta):
             A python function that can be called parameterlessly, to load the
             sample in question from whatever medium
 
-        extension:
-            The file extension
+        metadata_loader:
+            AnnotationsLoader
+
+        dataset_original_directory: str
+            Path of where data is stored
+        
+        extension: str
+            Default file extension
 
     """
 
-    def __init__(self, data_loader, dataset_original_directory="", extension=""):
+    def __init__(
+        self,
+        data_loader,
+        metadata_loader=None,
+        dataset_original_directory="",
+        extension="",
+    ):
         self.data_loader = data_loader
         self.extension = extension
         self.dataset_original_directory = dataset_original_directory
+        self.metadata_loader = metadata_loader
 
     @abstractmethod
     def __call__(self, filename):
@@ -56,77 +118,149 @@ class CSVBaseSampleLoader(metaclass=ABCMeta):
     def convert_row_to_sample(self, row, header):
         pass
 
-    @abstractmethod
     def convert_samples_to_samplesets(
-        self, samples, group_by_subject=True, references=None
+        self, samples, group_by_reference_id=True, references=None
     ):
-        pass
+        if group_by_reference_id:
+
+            # Grouping sample sets
+            sample_sets = dict()
+            for s in samples:
+                if s.reference_id not in sample_sets:
+                    sample_sets[s.reference_id] = (
+                        SampleSet([s], parent=s)
+                        if references is None
+                        else SampleSet([s], parent=s, references=references)
+                    )
+                else:
+                    sample_sets[s.reference_id].append(s)
+            return list(sample_sets.values())
+
+        else:
+            return (
+                [SampleSet([s], parent=s) for s in samples]
+                if references is None
+                else [SampleSet([s], parent=s, references=references) for s in samples]
+            )
 
 
 class CSVToSampleLoader(CSVBaseSampleLoader):
     """
-    Simple mechanism to convert CSV files in the format below to either a list of
+    Simple mechanism that converts the lines of a CSV file to
     :any:`bob.pipelines.DelayedSample` or :any:`bob.pipelines.SampleSet`
     """
 
     def check_header(self, header):
         """
-        A header should have at least "SUBJECT" AND "PATH"
+        A header should have at least "reference_id" AND "PATH"
         """
         header = [h.lower() for h in header]
-        if not "subject" in header:
-            raise ValueError("The field `subject` is not available in your dataset.")
+        if not "reference_id" in header:
+            raise ValueError(
+                "The field `reference_id` is not available in your dataset."
+            )
 
         if not "path" in header:
             raise ValueError("The field `path` is not available in your dataset.")
 
-    def __call__(self, filename):
+    def __call__(self, f):
+        f.seek(0)
+        reader = csv.reader(f)
+        header = next(reader)
 
-        with open(filename) as cf:
-            reader = csv.reader(cf)
-            header = next(reader)
-
-            self.check_header(header)
-            return [self.convert_row_to_sample(row, header) for row in reader]
+        self.check_header(header)
+        return [self.convert_row_to_sample(row, header) for row in reader]
 
     def convert_row_to_sample(self, row, header):
         path = row[0]
-        subject = row[1]
-        kwargs = dict([[h, r] for h, r in zip(header[2:], row[2:])])
+        reference_id = row[1]
+
+        kwargs = dict([[str(h).lower(), r] for h, r in zip(header[2:], row[2:])])
+
+        if self.metadata_loader is not None:
+            metadata = self.metadata_loader(row, header=header)
+            kwargs.update(metadata)
+
         return DelayedSample(
             functools.partial(
                 self.data_loader,
                 os.path.join(self.dataset_original_directory, path + self.extension),
             ),
             key=path,
-            subject=subject,
+            reference_id=reference_id,
             **kwargs,
         )
 
-    def convert_samples_to_samplesets(
-        self, samples, group_by_subject=True, references=None
-    ):
-        if group_by_subject:
 
-            # Grouping sample sets
-            sample_sets = dict()
-            for s in samples:
-                if s.subject not in sample_sets:
-                    sample_sets[s.subject] = SampleSet(
-                        [s], parent=s, references=references
-                    )
-                else:
-                    sample_sets[s.subject].append(s)
-            return list(sample_sets.values())
+class LSTToSampleLoader(CSVBaseSampleLoader):
+    """
+    Simple mechanism that converts the lines of a LST file to
+    :any:`bob.pipelines.DelayedSample` or :any:`bob.pipelines.SampleSet`
+    """
 
+    def __call__(self, f):
+        f.seek(0)
+        reader = csv.reader(f, delimiter=" ")
+        samples = []
+        for row in reader:
+            if row[0][0] == "#":
+                continue
+            samples.append(self.convert_row_to_sample(row))
+
+        return samples
+
+    def convert_row_to_sample(self, row, header=None):
+
+        if len(row) == 4:
+            path = row[0]
+            compare_reference_id = row[1]
+            reference_id = str(row[3])
+            kwargs = {"compare_reference_id": str(compare_reference_id)}
         else:
-            return [
-                SampleSet([s], parent=s, references=references)
-                for s in samples
-            ]
+            path = row[0]
+            reference_id = str(row[1])
+            kwargs = dict()
+            if len(row) == 3:
+                subject = row[2]
+                kwargs = {"subject": str(subject)}
+
+        if self.metadata_loader is not None:
+            metadata = self.metadata_loader(row, header=header)
+            kwargs.update(metadata)
+
+        return DelayedSample(
+            functools.partial(
+                self.data_loader,
+                os.path.join(self.dataset_original_directory, path + self.extension),
+            ),
+            key=path,
+            reference_id=reference_id,
+            **kwargs,
+        )
 
 
-class CSVDatasetDevEval:
+#####
+# DATABASE INTERFACES
+#####
+
+
+def path_discovery(dataset_protocol_path, option1, option2):
+
+    # If the input is a directory
+    if os.path.isdir(dataset_protocol_path):
+        option1 = os.path.join(dataset_protocol_path, option1)
+        option2 = os.path.join(dataset_protocol_path, option2)
+        if os.path.exists(option1):
+            return open(option1)
+        else:
+            return open(option2) if os.path.exists(option2) else None
+
+    # If it's not a directory is a tarball
+    op1 = find_element_in_tarball(dataset_protocol_path, option1)
+    return op1 if op1 else find_element_in_tarball(dataset_protocol_path, option2)
+
+
+class CSVDatasetDevEval(Database):
     """
     Generic filelist dataset for :any:` bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` pipeline.
     Check :any:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
@@ -137,12 +271,11 @@ class CSVDatasetDevEval:
     .. code-block:: text
 
        my_dataset/
-       my_dataset/my_protocol/
-       my_dataset/my_protocol/train.csv
-       my_dataset/my_protocol/train.csv/dev_enroll.csv
-       my_dataset/my_protocol/train.csv/dev_probe.csv
-       my_dataset/my_protocol/train.csv/eval_enroll.csv
-       my_dataset/my_protocol/train.csv/eval_probe.csv
+       my_dataset/my_protocol/norm/train_world.csv
+       my_dataset/my_protocol/dev/for_models.csv
+       my_dataset/my_protocol/dev/for_probes.csv
+       my_dataset/my_protocol/eval/for_models.csv
+       my_dataset/my_protocol/eval/for_probes.csv
        ...
 
 
@@ -150,21 +283,21 @@ class CSVDatasetDevEval:
     evaluation protocols this dataset might have.
     Inside of the `my_protocol` directory should contain at least two csv files:
 
-     - dev_enroll.csv
-     - dev_probe.csv
+     - for_models.csv
+     - for_probes.csv
 
 
-    Those csv files should contain in each row i-) the path to raw data and ii-) the subject label
+    Those csv files should contain in each row i-) the path to raw data and ii-) the reference_id label
     for enrollment (:any:`bob.bio.base.pipelines.vanilla_biometrics.Database.references`) and
     probing (:any:`bob.bio.base.pipelines.vanilla_biometrics.Database.probes`).
     The structure of each CSV file should be as below:
 
     .. code-block:: text
 
-       PATH,SUBJECT
-       path_1,subject_1
-       path_2,subject_2
-       path_i,subject_j
+       PATH,reference_id
+       path_1,reference_id_1
+       path_2,reference_id_2
+       path_i,reference_id_j
        ...
 
 
@@ -173,10 +306,10 @@ class CSVDatasetDevEval:
 
     .. code-block:: text
 
-       PATH,SUBJECT,METADATA_1,METADATA_2,METADATA_k
-       path_1,subject_1,A,B,C
-       path_2,subject_2,A,B,1
-       path_i,subject_j,2,3,4
+       PATH,reference_id,METADATA_1,METADATA_2,METADATA_k
+       path_1,reference_id_1,A,B,C
+       path_2,reference_id_2,A,B,1
+       path_i,reference_id_j,2,3,4
        ...
 
 
@@ -190,7 +323,7 @@ class CSVDatasetDevEval:
     ----------
 
         dataset_path: str
-          Absolute path of the dataset protocol description
+          Absolute path or a tarball of the dataset protocol description.
 
         protocol_na,e: str
           The name of the protocol
@@ -198,6 +331,7 @@ class CSVDatasetDevEval:
         csv_to_sample_loader: :any:`bob.bio.base.database.CSVBaseSampleLoader`
             Base class that whose objective is to generate :any:`bob.pipelines.Sample`
             and/or :any:`bob.pipelines.SampleSet` from csv rows
+    
 
     """
 
@@ -206,44 +340,68 @@ class CSVDatasetDevEval:
         dataset_protocol_path,
         protocol_name,
         csv_to_sample_loader=CSVToSampleLoader(
-            data_loader=bob.io.base.load, dataset_original_directory="", extension=""
+            data_loader=bob.io.base.load,
+            metadata_loader=None,
+            dataset_original_directory="",
+            extension="",
         ),
+        is_sparse=False,
     ):
+        self.dataset_protocol_path = dataset_protocol_path
+        self.is_sparse = is_sparse
+        self.protocol_name = protocol_name
+
         def get_paths():
 
             if not os.path.exists(dataset_protocol_path):
                 raise ValueError(f"The path `{dataset_protocol_path}` was not found")
 
-            # TODO: Unzip file if dataset path is a zip
-            protocol_path = os.path.join(dataset_protocol_path, protocol_name)
-            if not os.path.exists(protocol_path):
-                raise ValueError(f"The protocol `{protocol_name}` was not found")
+            # Here we are handling the legacy
+            train_csv = path_discovery(
+                dataset_protocol_path,
+                os.path.join(protocol_name, "norm", "train_world.lst"),
+                os.path.join(protocol_name, "norm", "train_world.csv"),
+            )
 
-            train_csv = os.path.join(protocol_path, "train.csv")
-            dev_enroll_csv = os.path.join(protocol_path, "dev_enroll.csv")
-            dev_probe_csv = os.path.join(protocol_path, "dev_probe.csv")
-            eval_enroll_csv = os.path.join(protocol_path, "eval_enroll.csv")
-            eval_probe_csv = os.path.join(protocol_path, "eval_probe.csv")
+            dev_enroll_csv = path_discovery(
+                dataset_protocol_path,
+                os.path.join(protocol_name, "dev", "for_models.lst"),
+                os.path.join(protocol_name, "dev", "for_models.csv"),
+            )
+
+            legacy_probe = "for_scores.lst" if self.is_sparse else "for_probes.lst"
+            dev_probe_csv = path_discovery(
+                dataset_protocol_path,
+                os.path.join(protocol_name, "dev", legacy_probe),
+                os.path.join(protocol_name, "dev", "for_probes.csv"),
+            )
+
+            eval_enroll_csv = path_discovery(
+                dataset_protocol_path,
+                os.path.join(protocol_name, "eval", "for_models.lst"),
+                os.path.join(protocol_name, "eval", "for_models.csv"),
+            )
+
+            eval_probe_csv = path_discovery(
+                dataset_protocol_path,
+                os.path.join(protocol_name, "eval", legacy_probe),
+                os.path.join(protocol_name, "eval", "for_probes.csv"),
+            )
 
             # The minimum required is to have `dev_enroll_csv` and `dev_probe_csv`
-            train_csv = train_csv if os.path.exists(train_csv) else None
-
-            # Eval
-            eval_enroll_csv = (
-                eval_enroll_csv if os.path.exists(eval_enroll_csv) else None
-            )
-            eval_probe_csv = eval_probe_csv if os.path.exists(eval_probe_csv) else None
 
             # Dev
-            if not os.path.exists(dev_enroll_csv):
+            if dev_enroll_csv is None:
                 raise ValueError(
                     f"The file `{dev_enroll_csv}` is required and it was not found"
                 )
 
-            if not os.path.exists(dev_probe_csv):
+            if dev_probe_csv is None:
                 raise ValueError(
                     f"The file `{dev_probe_csv}` is required and it was not found"
                 )
+            dev_enroll_csv = dev_enroll_csv
+            dev_probe_csv = dev_probe_csv
 
             return (
                 train_csv,
@@ -274,7 +432,6 @@ class CSVDatasetDevEval:
         self.csv_to_sample_loader = csv_to_sample_loader
 
     def background_model_samples(self):
-
         self.cache["train"] = (
             self.csv_to_sample_loader(self.train_csv)
             if self.cache["train"] is None
@@ -283,26 +440,47 @@ class CSVDatasetDevEval:
 
         return self.cache["train"]
 
-    def _get_samplesets(self, group="dev", purpose="enroll", group_by_subject=False):
-
-        fetching_probes = False
-        if purpose == "enroll":
-            cache_label = "dev_enroll_csv" if group == "dev" else "eval_enroll_csv"
-        else:
-            fetching_probes = True
-            cache_label = "dev_probe_csv" if group == "dev" else "eval_probe_csv"
+    def _get_samplesets(
+        self,
+        group="dev",
+        cache_label=None,
+        group_by_reference_id=False,
+        fetching_probes=False,
+        is_sparse=False,
+    ):
 
         if self.cache[cache_label] is not None:
             return self.cache[cache_label]
 
-        references = None
-        if fetching_probes:
-            references = list(set([s.subject for s in self.references(group=group)]))
+        # Getting samples from CSV
+        samples = self.csv_to_sample_loader(self.__getattribute__(cache_label))
 
-        samples = self.csv_to_sample_loader(self.__dict__[cache_label])
+        references = None
+        if fetching_probes and is_sparse:
+
+            # Checking if `is_sparse` was set properly
+            if len(samples) > 0 and not hasattr(samples[0], "compare_reference_id"):
+                ValueError(
+                    f"Attribute `compare_reference_id` not found in `{samples[0]}`."
+                    "Make sure this attribute exists in your dataset if `is_sparse=True`"
+                )
+
+            sparse_samples = dict()
+            for s in samples:
+                if s.key in sparse_samples:
+                    sparse_samples[s.key].references.append(s.compare_reference_id)
+                else:
+                    s.references = [s.compare_reference_id]
+                    sparse_samples[s.key] = s
+            samples = sparse_samples.values()
+        else:
+            if fetching_probes:
+                references = list(
+                    set([s.reference_id for s in self.references(group=group)])
+                )
 
         sample_sets = self.csv_to_sample_loader.convert_samples_to_samplesets(
-            samples, group_by_subject=group_by_subject, references=references
+            samples, group_by_reference_id=group_by_reference_id, references=references,
         )
 
         self.cache[cache_label] = sample_sets
@@ -310,13 +488,21 @@ class CSVDatasetDevEval:
         return self.cache[cache_label]
 
     def references(self, group="dev"):
+        cache_label = "dev_enroll_csv" if group == "dev" else "eval_enroll_csv"
+
         return self._get_samplesets(
-            group=group, purpose="enroll", group_by_subject=True
+            group=group, cache_label=cache_label, group_by_reference_id=True
         )
 
     def probes(self, group="dev"):
+        cache_label = "dev_probe_csv" if group == "dev" else "eval_probe_csv"
+
         return self._get_samplesets(
-            group=group, purpose="probe", group_by_subject=False
+            group=group,
+            cache_label=cache_label,
+            group_by_reference_id=False,
+            fetching_probes=True,
+            is_sparse=self.is_sparse,
         )
 
     def all_samples(self, groups=None):
@@ -357,8 +543,150 @@ class CSVDatasetDevEval:
         for group in groups:
             for purpose in ("enroll", "probe"):
                 label = f"{group}_{purpose}_csv"
-                samples = samples + self.csv_to_sample_loader(self.__dict__[label])
+                samples = samples + self.csv_to_sample_loader(
+                    self.__getattribute__(label)
+                )
         return samples
+
+    def groups(self):
+        """This function returns the list of groups for this database.
+
+        Returns
+        -------
+
+        [str]
+          A list of groups
+        """
+
+        # We always have dev-set
+        groups = ["dev"]
+
+        if self.train_csv is not None:
+            groups.append("train")
+
+        if self.eval_enroll_csv is not None:
+            groups.append("eval")
+
+        return groups
+
+
+class CSVDatasetDevEvalZTNorm(Database):
+    """
+    Generic filelist dataset for :any:`bob.bio.base.pipelines.vanilla_biometrics.ZTNormPipeline` pipelines.
+    Check :any:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
+    interface. 
+
+    This dataset interface takes as in put a :any:`CSVDatasetDevEval` as input and have two extra methods:
+    :any:`CSVDatasetDevEvalZTNorm.zprobes` and :any:`CSVDatasetDevEvalZTNorm.treferences`.
+
+    To create a new dataset, you need to provide a directory structure similar to the one below:
+
+    .. code-block:: text
+
+       my_dataset/
+       my_dataset/my_protocol/norm/train_world.csv
+       my_dataset/my_protocol/norm/for_znorm.csv
+       my_dataset/my_protocol/norm/for_tnorm.csv
+       my_dataset/my_protocol/dev/for_models.csv
+       my_dataset/my_protocol/dev/for_probes.csv
+       my_dataset/my_protocol/eval/for_models.csv
+       my_dataset/my_protocol/eval/for_probes.csv
+
+    Parameters
+    ----------
+    
+      database: :any:`CSVDatasetDevEval`
+         :any:`CSVDatasetDevEval` to be aggregated
+
+    """
+
+    def __init__(self, database):
+        self.database = database
+        self.cache = self.database.cache
+        self.csv_to_sample_loader = self.database.csv_to_sample_loader
+        self.protocol_name = self.database.protocol_name
+        self.dataset_protocol_path = self.database.dataset_protocol_path
+        self._get_samplesets = self.database._get_samplesets
+
+        ## create_cache
+        self.cache["znorm_csv"] = None
+        self.cache["tnorm_csv"] = None
+
+        znorm_csv = path_discovery(
+            self.dataset_protocol_path,
+            os.path.join(self.protocol_name, "norm", "for_znorm.lst"),
+            os.path.join(self.protocol_name, "norm", "for_znorm.csv"),
+        )
+
+        tnorm_csv = path_discovery(
+            self.dataset_protocol_path,
+            os.path.join(self.protocol_name, "norm", "for_tnorm.lst"),
+            os.path.join(self.protocol_name, "norm", "for_tnorm.csv"),
+        )
+
+        if znorm_csv is None:
+            raise ValueError(
+                f"The file `for_znorm.lst` is required and it was not found in `{self.protocol_name}/norm` "
+            )
+
+        if tnorm_csv is None:
+            raise ValueError(
+                f"The file `for_tnorm.csv` is required and it was not found `{self.protocol_name}/norm`"
+            )
+
+        self.database.znorm_csv = znorm_csv
+        self.database.tnorm_csv = tnorm_csv
+
+    def background_model_samples(self):
+        return self.database.background_model_samples()
+
+    def references(self, group="dev"):
+        return self.database.references(group=group)
+
+    def probes(self, group="dev"):
+        return self.database.probes(group=group)
+
+    def all_samples(self, groups=None):
+        return self.database.all_samples(groups=groups)
+
+    def groups(self):
+        return self.database.groups()
+
+    def zprobes(self, group="dev", proportion=1.0):
+
+        if proportion <= 0 or proportion > 1:
+            raise ValueError(
+                f"Invalid proportion value ({proportion}). Values allowed from [0-1]"
+            )
+
+        cache_label = "znorm_csv"
+        samplesets = self._get_samplesets(
+            group=group,
+            cache_label=cache_label,
+            group_by_reference_id=False,
+            fetching_probes=True,
+            is_sparse=False,
+        )
+
+        zprobes = samplesets[: int(len(samplesets) * proportion)]
+
+        return zprobes
+
+    def treferences(self, covariate="sex", proportion=1.0):
+
+        if proportion <= 0 or proportion > 1:
+            raise ValueError(
+                f"Invalid proportion value ({proportion}). Values allowed from [0-1]"
+            )
+
+        cache_label = "tnorm_csv"
+        samplesets = self._get_samplesets(
+            group="dev", cache_label=cache_label, group_by_reference_id=True,
+        )
+
+        treferences = samplesets[: int(len(samplesets) * proportion)]
+
+        return treferences
 
 
 class CSVDatasetCrossValidation:
@@ -377,10 +705,10 @@ class CSVDatasetCrossValidation:
 
     .. code-block:: text
 
-       PATH,SUBJECT
-       path_1,subject_1
-       path_2,subject_2
-       path_i,subject_j
+       PATH,reference_id
+       path_1,reference_id_1
+       path_2,reference_id_2
+       path_i,reference_id_j
        ...
 
     Parameters
@@ -393,7 +721,7 @@ class CSVDatasetCrossValidation:
       Pseudo-random number generator seed
 
     test_size: float
-      Percentage of the subjects used for testing
+      Percentage of the reference_ids used for testing
 
     samples_for_enrollment: float
       Number of samples used for enrollment
@@ -424,7 +752,7 @@ class CSVDatasetCrossValidation:
         self.random_state = random_state
         self.cache = get_dict_cache()
         self.csv_to_sample_loader = csv_to_sample_loader
-        self.csv_file_name = csv_file_name
+        self.csv_file_name = open(csv_file_name)
         self.samples_for_enrollment = samples_for_enrollment
         self.test_size = test_size
 
@@ -435,30 +763,35 @@ class CSVDatasetCrossValidation:
 
     def _do_cross_validation(self):
 
-        # Shuffling samples by subject
-        samples_by_subject = group_samples_by_subject(
+        # Shuffling samples by reference_id
+        samples_by_reference_id = group_samples_by_reference_id(
             self.csv_to_sample_loader(self.csv_file_name)
         )
-        subjects = list(samples_by_subject.keys())
+        reference_ids = list(samples_by_reference_id.keys())
         np.random.seed(self.random_state)
-        np.random.shuffle(subjects)
+        np.random.shuffle(reference_ids)
 
         # Getting the training data
-        n_samples_for_training = len(subjects) - int(self.test_size * len(subjects))
+        n_samples_for_training = len(reference_ids) - int(
+            self.test_size * len(reference_ids)
+        )
         self.cache["train"] = list(
             itertools.chain(
-                *[samples_by_subject[s] for s in subjects[0:n_samples_for_training]]
+                *[
+                    samples_by_reference_id[s]
+                    for s in reference_ids[0:n_samples_for_training]
+                ]
             )
         )
 
         # Splitting enroll and probe
         self.cache["dev_enroll_csv"] = []
         self.cache["dev_probe_csv"] = []
-        for s in subjects[n_samples_for_training:]:
-            samples = samples_by_subject[s]
+        for s in reference_ids[n_samples_for_training:]:
+            samples = samples_by_reference_id[s]
             if len(samples) < self.samples_for_enrollment:
                 raise ValueError(
-                    f"Not enough samples ({len(samples)}) for enrollment for the subject {s}"
+                    f"Not enough samples ({len(samples)}) for enrollment for the reference_id {s}"
                 )
 
             # Enrollment samples
@@ -472,8 +805,8 @@ class CSVDatasetCrossValidation:
                 "dev_probe_csv"
             ] += self.csv_to_sample_loader.convert_samples_to_samplesets(
                 samples[self.samples_for_enrollment :],
-                group_by_subject=False,
-                references=subjects[n_samples_for_training:],
+                group_by_reference_id=False,
+                references=reference_ids[n_samples_for_training:],
             )
 
     def _load_from_cache(self, cache_key):
@@ -527,12 +860,12 @@ class CSVDatasetCrossValidation:
         return samples
 
 
-def group_samples_by_subject(samples):
+def group_samples_by_reference_id(samples):
 
     # Grouping sample sets
-    samples_by_subject = dict()
+    samples_by_reference_id = dict()
     for s in samples:
-        if s.subject not in samples_by_subject:
-            samples_by_subject[s.subject] = []
-        samples_by_subject[s.subject].append(s)
-    return samples_by_subject
+        if s.reference_id not in samples_by_reference_id:
+            samples_by_reference_id[s.reference_id] = []
+        samples_by_reference_id[s.reference_id].append(s)
+    return samples_by_reference_id

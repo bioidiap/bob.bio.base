@@ -378,13 +378,15 @@ class ZTNorm(object):
         stats = {}
         if axis == 0:
             # Z-Norm is one statistic per biometric references
-            biometric_reference_subjects = [br.subject for br in sampleset_for_norm[0]]
+            biometric_reference_subjects = [
+                br.reference_id for br in sampleset_for_norm[0]
+            ]
             for mu, std, s in zip(big_mu, big_std, biometric_reference_subjects):
                 stats[s] = {"big_mu": mu, "big_std": std}
         else:
             # T-Norm is one statistic per probe
             for mu, std, sset in zip(big_mu, big_std, sampleset_for_norm):
-                stats[sset.subject] = {"big_mu": mu, "big_std": std}
+                stats[sset.reference_id] = {"big_mu": mu, "big_std": std}
 
         return stats
 
@@ -401,8 +403,8 @@ class ZTNorm(object):
         z_normed_score = SampleSet([], parent=probe_score)
         for biometric_reference_score in probe_score:
 
-            mu = stats[biometric_reference_score.subject]["big_mu"]
-            std = stats[biometric_reference_score.subject]["big_std"]
+            mu = stats[biometric_reference_score.reference_id]["big_mu"]
+            std = stats[biometric_reference_score.reference_id]["big_std"]
 
             score = self._norm(biometric_reference_score.data, mu, std)
             new_sample = Sample(score, parent=biometric_reference_score)
@@ -425,8 +427,8 @@ class ZTNorm(object):
 
         t_normed_scores = SampleSet([], parent=probe_score)
 
-        mu = stats[probe_score.subject]["big_mu"]
-        std = stats[probe_score.subject]["big_std"]
+        mu = stats[probe_score.reference_id]["big_mu"]
+        std = stats[probe_score.reference_id]["big_std"]
 
         for biometric_reference_score in probe_score:
             score = self._norm(biometric_reference_score.data, mu, std)
@@ -601,12 +603,12 @@ class ZTNormCheckpointWrapper(object):
     def _make_name(self, sampleset, biometric_references, for_zt=False):
         # The score file name is composed by sampleset key and the
         # first 3 biometric_references
-        subject = str(sampleset.subject)
+        reference_id = str(sampleset.reference_id)
         name = str(sampleset.key)
         # suffix = "_".join([s for s in biometric_references[0:5]])
         suffix = "_".join([str(s) for s in biometric_references[0:5]])
         suffix += "_zt_norm" if for_zt else ""
-        return os.path.join(subject, name + suffix)
+        return os.path.join(reference_id, name + suffix)
 
     def _apply_znorm(self, probe_score, stats, for_zt=False):
         path = os.path.join(
