@@ -179,7 +179,7 @@ class DatabaseConnector(Database):
                         [_biofile_to_delayed_sample(o, self.database)],
                         key=str(o.path),
                         path=o.path,
-                        subject=str(o.client_id),
+                        reference_id=str(o.client_id),
                         references=[str(m)],
                     )
                 else:
