@@ -17,7 +17,7 @@ from bob.db.base.utils import (
     convert_names_to_highlevel,
     convert_names_to_lowlevel,
 )
-
+import pickle
 from .abstract_classes import BioAlgorithm
 from .abstract_classes import Database
 
@@ -336,8 +336,17 @@ class BioAlgorithmLegacy(BioAlgorithm):
         return delayed_enrolled_sample
 
     def write_scores(self, samples, path):
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        # open(path, "wb").write(pickle.dumps(samples))
+        try:
+            final_path = os.path.dirname(path)
+            os.makedirs(final_path, exist_ok=True)
+        except NotADirectoryError:
+            # If it cannot make the directory, saves in /tmp/
+            # This is useful and necessary for some
+            # very specific types of baselines (ROC)
+            final_path = "/tmp/" + os.path.dirname(path)
+            os.makedirs(final_path, exist_ok=True)
+            path = "/tmp/" + path
+        open(path, "wb").write(pickle.dumps(samples))
         joblib.dump(samples, path, compress=4)
 
     def _score_sample_set(
@@ -348,7 +357,11 @@ class BioAlgorithmLegacy(BioAlgorithm):
     ):
         def _load(path):
             # return pickle.loads(open(path, "rb").read())
-            return joblib.load(path)
+            if os.path.exists(path):
+                return joblib.load(path)
+            else:
+                # If doesn't exists. the cached sample might be at /tmp
+                return joblib.load("/tmp/" + path)
 
         def _make_name(sampleset, biometric_references):
             # The score file name is composed by sampleset key and the
