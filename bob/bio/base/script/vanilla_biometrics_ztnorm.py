@@ -13,7 +13,7 @@ from bob.extension.scripts.click_helper import ConfigCommand
 from bob.extension.scripts.click_helper import ResourceOption
 from bob.extension.scripts.click_helper import verbosity_option
 
-from .vanilla_biometrics import VALID_DASK_CLIENT_STRINGS
+from bob.pipelines.distributed import VALID_DASK_CLIENT_STRINGS
 
 logger = logging.getLogger(__name__)
 
@@ -54,9 +54,7 @@ It is possible to do it via configuration file
 
 
 @click.command(
-    entry_point_group="bob.bio.config",
-    cls=ConfigCommand,
-    epilog=EPILOG,
+    entry_point_group="bob.bio.config", cls=ConfigCommand, epilog=EPILOG,
 )
 @click.option(
     "--pipeline",
