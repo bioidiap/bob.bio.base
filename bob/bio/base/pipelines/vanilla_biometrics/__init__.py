@@ -7,7 +7,6 @@ from .wrappers import (
     BioAlgorithmDaskWrapper,
     dask_vanilla_biometrics,
     checkpoint_vanilla_biometrics,
-    dask_get_partition_size,
     is_checkpointed,
 )
 
@@ -51,7 +50,6 @@ __appropriate__(
     BioAlgorithmDaskWrapper,
     dask_vanilla_biometrics,
     checkpoint_vanilla_biometrics,
-    dask_get_partition_size,
     is_checkpointed,
     ZTNormPipeline,
     ZTNormDaskWrapper,

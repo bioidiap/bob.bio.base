@@ -8,9 +8,9 @@ from bob.bio.base.pipelines.vanilla_biometrics import FourColumnsScoreWriter
 from bob.bio.base.pipelines.vanilla_biometrics import ZTNormCheckpointWrapper
 from bob.bio.base.pipelines.vanilla_biometrics import ZTNormPipeline
 from bob.bio.base.pipelines.vanilla_biometrics import checkpoint_vanilla_biometrics
-from bob.bio.base.pipelines.vanilla_biometrics import dask_get_partition_size
 from bob.bio.base.pipelines.vanilla_biometrics import dask_vanilla_biometrics
 from bob.bio.base.pipelines.vanilla_biometrics import is_checkpointed
+from bob.pipelines.distributed import dask_get_partition_size
 from bob.pipelines.utils import isinstance_nested
 from dask.delayed import Delayed
 
