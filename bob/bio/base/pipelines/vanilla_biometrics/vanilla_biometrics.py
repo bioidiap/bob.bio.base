@@ -121,10 +121,7 @@ def execute_vanilla_biometrics(
             if dask_partition_size is not None:
                 partition_size = dask_partition_size
 
-            pipeline = dask_vanilla_biometrics(
-                pipeline,
-                partition_size=partition_size,
-            )
+            pipeline = dask_vanilla_biometrics(pipeline, partition_size=partition_size,)
 
         logger.info(f"Running vanilla biometrics for group {group}")
         allow_scoring_with_all_biometric_references = (
@@ -206,8 +203,8 @@ def execute_vanilla_biometrics_ztnorm(
     """
 
     def _merge_references_ztnorm(biometric_references, probes, zprobes, treferences):
-        treferences_sub = [t.subject for t in treferences]
-        biometric_references_sub = [t.subject for t in biometric_references]
+        treferences_sub = [t.reference_id for t in treferences]
+        biometric_references_sub = [t.reference_id for t in biometric_references]
 
         for i in range(len(zprobes)):
             probes[i].references += treferences_sub

@@ -102,7 +102,6 @@ Implementations
   bob.bio.base.algorithm.PCA
   bob.bio.base.algorithm.LDA
   bob.bio.base.algorithm.PLDA
-  bob.bio.base.algorithm.BIC
 
 
 

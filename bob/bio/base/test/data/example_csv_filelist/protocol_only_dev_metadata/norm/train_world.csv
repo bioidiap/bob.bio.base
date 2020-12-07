@@ -1,0 +1,9 @@
+PATH,REFERENCE_ID,METADATA_1,METADATA_2
+data/model11_session1_sample1,1,M,10
+data/model11_session1_sample2,1,M,10
+data/model11_session1_sample3,1,M,10
+data/model11_session2_sample1,1,M,10
+data/model12_session1_sample1,2,F,20
+data/model12_session1_sample2,2,F,20
+data/model12_session1_sample3,2,F,20
+data/model12_session2_sample1,2,F,20

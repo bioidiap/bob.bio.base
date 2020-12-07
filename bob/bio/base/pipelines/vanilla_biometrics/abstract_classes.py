@@ -178,18 +178,18 @@ class BioAlgorithm(metaclass=ABCMeta):
                 """
                 for r in biometric_references:
                     if (
-                        str(r.subject) in probe_refererences
-                        and str(r.subject) not in self.stacked_biometric_references
+                        str(r.reference_id) in probe_refererences
+                        and str(r.reference_id) not in self.stacked_biometric_references
                     ):
-                        self.stacked_biometric_references[str(r.subject)] = r.data
+                        self.stacked_biometric_references[str(r.reference_id)] = r.data
 
             for probe_sample in sampleset:
 
                 cache_references(sampleset.references)
                 references = [
-                    self.stacked_biometric_references[str(r.subject)]
+                    self.stacked_biometric_references[str(r.reference_id)]
                     for r in biometric_references
-                    if str(r.subject) in sampleset.references
+                    if str(r.reference_id) in sampleset.references
                 ]
 
                 scores = self.score_multiple_biometric_references(
@@ -204,7 +204,7 @@ class BioAlgorithm(metaclass=ABCMeta):
                 [
                     r
                     for r in biometric_references
-                    if str(r.subject) in sampleset.references
+                    if str(r.reference_id) in sampleset.references
                 ],
                 total_scores,
             ):
@@ -327,6 +327,12 @@ class Database(metaclass=ABCMeta):
             List of all the samples of the dataset.
         """
         pass
+
+    def groups(self):
+        pass
+
+    def reference_ids(self, group):
+        return [s.reference_id for s in self.references(group=group)]
 
 
 class ScoreWriter(metaclass=ABCMeta):

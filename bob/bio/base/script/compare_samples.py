@@ -15,7 +15,8 @@ from bob.extension.scripts.click_helper import (
 import bob.io.base
 from tabulate import tabulate
 from bob.bio.base.pipelines.vanilla_biometrics import dask_vanilla_biometrics
-from bob.pipelines import Sample, SampleSet
+from bob.pipelines import SampleSet, DelayedSample
+import functools
 
 
 EPILOG = """\n
@@ -57,9 +58,7 @@ EPILOG = """\n
     help="Dask client for the execution of the pipeline.",
 )
 @verbosity_option()
-def compare_samples(
-    samples, pipeline, dask_client, verbose
-):
+def compare_samples(samples, pipeline, dask_client, verbose):
     """Compare several samples in a All vs All fashion.
     """
     if len(samples) == 1:
@@ -68,12 +67,15 @@ def compare_samples(
         )
 
     sample_sets = [
-        SampleSet([Sample(bob.io.base.load(s), key=str(i))], key=str(i), subject=str(i))
+        SampleSet(
+            [DelayedSample(functools.partial(bob.io.base.load, s), key=str(s))],
+            key=str(s),
+            biometric_id=str(i),
+        )
         for i, s in enumerate(samples)
     ]
-
     if dask_client is not None:
-        pipeline = dask_vanilla_biometrics (pipeline)
+        pipeline = dask_vanilla_biometrics(pipeline)
 
     table = [[s for s in samples]]
     biometric_references = pipeline.create_biometric_reference(sample_sets)

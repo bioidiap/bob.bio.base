@@ -144,18 +144,18 @@ def test_norm_mechanics():
         if references is None:
             return [
                 SampleSet(
-                    [Sample(s, subject=str(i + offset), key=str(uuid.uuid4()))],
+                    [Sample(s, reference_id=str(i + offset), key=str(uuid.uuid4()))],
                     key=str(i + offset),
-                    subject=str(i + offset),
+                    reference_id=str(i + offset),
                 )
                 for i, s in enumerate(raw_data)
             ]
         else:
             return [
                 SampleSet(
-                    [Sample(s, subject=str(i + offset), key=str(uuid.uuid4()))],
+                    [Sample(s, reference_id=str(i + offset), key=str(uuid.uuid4()))],
                     key=str(i + offset),
-                    subject=str(i + offset),
+                    reference_id=str(i + offset),
                     references=references,
                 )
                 for i, s in enumerate(raw_data)
@@ -212,8 +212,8 @@ def test_norm_mechanics():
             t_reference_sample_sets = _create_sample_sets(t_references, offset=300)
 
             # Fetching ids
-            reference_ids = [r.subject for r in biometric_reference_sample_sets]
-            t_reference_ids = [r.subject for r in t_reference_sample_sets]
+            reference_ids = [r.reference_id for r in biometric_reference_sample_sets]
+            t_reference_ids = [r.reference_id for r in t_reference_sample_sets]
             ids = reference_ids + t_reference_ids
 
             probe_sample_sets = _create_sample_sets(probes, offset=600, references=ids)

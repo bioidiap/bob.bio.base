@@ -45,7 +45,7 @@ class DummyDatabase:
                 np.random.rand(dim),
                 key=str(uuid.uuid4()),
                 annotations=1,
-                subject=str(i),
+                reference_id=str(i),
             )
             for i in range(offset, offset + n_samples)
         ]
@@ -56,7 +56,7 @@ class DummyDatabase:
                 np.random.rand(dim, dim),
                 key=str(uuid.uuid4()),
                 annotations=1,
-                subject=str(i),
+                reference_id=str(i),
             )
             for i in range(offset, offset + n_samples)
         ]
@@ -69,7 +69,7 @@ class DummyDatabase:
             SampleSet(
                 samples=[],
                 key=str(i),
-                subject=str(i),
+                reference_id=str(i),
                 gender=np.random.choice(self.gender_choices),
                 metadata_1=np.random.choice(self.metadata_1_choices),
             )
@@ -109,7 +109,7 @@ class DummyDatabase:
 
         zprobes = self._create_random_sample_set(n_sample_set=10, n_samples=1, seed=14)
         for p in zprobes:
-            p.subject = "z-" + str(p.subject)
+            p.reference_id = "z-" + str(p.reference_id)
             p.references = [str(r) for r in list(range(self.n_references))]
 
         return zprobes
@@ -117,7 +117,7 @@ class DummyDatabase:
     def treferences(self):
         t_sset = self._create_random_sample_set(self.n_references, self.dim, seed=15)
         for t in t_sset:
-            t.subject = "t_" + str(t.subject)
+            t.reference_id = "t_" + str(t.reference_id)
         return t_sset
 
     @property
@@ -146,7 +146,9 @@ def _make_transformer_with_algorithm(dir_name):
             transform_extra_arguments=(("annotations", "annotations"),),
         ),
         wrap_bob_legacy(FakeExtractor(), dir_name),
-        wrap_bob_legacy(FakeAlgorithm(), dir_name, fit_extra_arguments = [("y", "subject")]),
+        wrap_bob_legacy(
+            FakeAlgorithm(), dir_name, fit_extra_arguments=[("y", "reference_id")]
+        ),
     )
 
     return pipeline
@@ -249,17 +251,16 @@ def test_checkpoint_bioalg_as_transformer():
                         scheduler="single-threaded"
                     )
 
-                if isinstance(vanilla_biometrics_pipeline.score_writer, FourColumnsScoreWriter):
-                    assert (
-                        len(open(concatenated_scores).readlines()) == 100
-                    )
+                if isinstance(
+                    vanilla_biometrics_pipeline.score_writer, FourColumnsScoreWriter
+                ):
+                    assert len(open(concatenated_scores).readlines()) == 100
                 else:
                     n_lines = 0
                     for s in concatenated_scores:
-                        n_lines+= len(open(s).readlines())
+                        n_lines += len(open(s).readlines())
 
                     assert n_lines == 101
-                    
 
         run_pipeline(False)
         run_pipeline(False)  # Checking if the checkpointng works
@@ -278,7 +279,7 @@ def test_checkpoint_bioalg_as_transformer():
         run_pipeline(True)  # Checking if the checkpointng works
         shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
-        
+
         # Writing scores
         run_pipeline(
             True, FourColumnsScoreWriter(os.path.join(dir_name, "final_scores"))
@@ -288,7 +289,7 @@ def test_checkpoint_bioalg_as_transformer():
 
         # CSVWriter
         run_pipeline(
-           False, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
+            False, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
         )
         run_pipeline(
             False, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
@@ -301,7 +302,7 @@ def test_checkpoint_bioalg_as_transformer():
             True, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
         )
         run_pipeline(
-           True, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
+            True, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
         )  # Checking if the checkpointng works
 
 
@@ -360,10 +361,7 @@ def test_checkpoint_bioalg_as_bioalg():
                         scheduler="single-threaded"
                     )
 
-                assert (
-                    len(open(concatenated_scores).readlines()) == 100
-                )
-
+                assert len(open(concatenated_scores).readlines()) == 100
 
         run_pipeline(False)
         run_pipeline(False)  # Checking if the checkpointng works
