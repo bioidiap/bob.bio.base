@@ -12,6 +12,7 @@ from bob.bio.base.pipelines.vanilla_biometrics import dask_vanilla_biometrics
 from bob.bio.base.pipelines.vanilla_biometrics import is_checkpointed
 from bob.pipelines.utils import isinstance_nested, is_estimator_stateless
 from dask.delayed import Delayed
+from bob.pipelines.distributed import dask_get_partition_size
 
 logger = logging.getLogger(__name__)
 
