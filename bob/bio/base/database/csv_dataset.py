@@ -400,8 +400,6 @@ class CSVDataset(Database):
                 raise ValueError(
                     f"The file `{dev_probe_csv}` is required and it was not found"
                 )
-            dev_enroll_csv = dev_enroll_csv
-            dev_probe_csv = dev_probe_csv
 
             return (
                 train_csv,
