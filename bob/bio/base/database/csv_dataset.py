@@ -345,17 +345,17 @@ class CSVDataset(Database):
     def _get_samplesets(
         self,
         group="dev",
-        cache_label=None,
+        cache_key=None,
         group_by_reference_id=False,
         fetching_probes=False,
         is_sparse=False,
     ):
 
-        if self.cache[cache_label] is not None:
-            return self.cache[cache_label]
+        if self.cache[cache_key] is not None:
+            return self.cache[cache_key]
 
         # Getting samples from CSV
-        samples = self.csv_to_sample_loader(self.__getattribute__(cache_label))
+        samples = self.csv_to_sample_loader(self.__getattribute__(cache_key))
 
         references = None
         if fetching_probes and is_sparse:
@@ -385,23 +385,23 @@ class CSVDataset(Database):
             samples, group_by_reference_id=group_by_reference_id, references=references,
         )
 
-        self.cache[cache_label] = sample_sets
+        self.cache[cache_key] = sample_sets
 
-        return self.cache[cache_label]
+        return self.cache[cache_key]
 
     def references(self, group="dev"):
-        cache_label = "dev_enroll_csv" if group == "dev" else "eval_enroll_csv"
+        cache_key = "dev_enroll_csv" if group == "dev" else "eval_enroll_csv"
 
         return self._get_samplesets(
-            group=group, cache_label=cache_label, group_by_reference_id=True
+            group=group, cache_key=cache_key, group_by_reference_id=True
         )
 
     def probes(self, group="dev"):
-        cache_label = "dev_probe_csv" if group == "dev" else "eval_probe_csv"
+        cache_key = "dev_probe_csv" if group == "dev" else "eval_probe_csv"
 
         return self._get_samplesets(
             group=group,
-            cache_label=cache_label,
+            cache_key=cache_key,
             group_by_reference_id=False,
             fetching_probes=True,
             is_sparse=self.is_sparse,
@@ -565,10 +565,10 @@ class CSVDatasetZTNorm(Database):
                 f"Invalid proportion value ({proportion}). Values allowed from [0-1]"
             )
 
-        cache_label = "znorm_csv"
+        cache_key = "znorm_csv"
         samplesets = self._get_samplesets(
             group=group,
-            cache_label=cache_label,
+            cache_key=cache_key,
             group_by_reference_id=False,
             fetching_probes=True,
             is_sparse=False,
@@ -585,9 +585,9 @@ class CSVDatasetZTNorm(Database):
                 f"Invalid proportion value ({proportion}). Values allowed from [0-1]"
             )
 
-        cache_label = "tnorm_csv"
+        cache_key = "tnorm_csv"
         samplesets = self._get_samplesets(
-            group="dev", cache_label=cache_label, group_by_reference_id=True,
+            group="dev", cache_key=cache_key, group_by_reference_id=True,
         )
 
         treferences = samplesets[: int(len(samplesets) * proportion)]
