@@ -1,11 +1,11 @@
 from .csv_dataset import (
-    CSVDatasetDevEval,
+    CSVDataset,
     CSVToSampleLoader,
     CSVDatasetCrossValidation,
     CSVBaseSampleLoader,
     AnnotationsLoader,
     LSTToSampleLoader,
-    CSVDatasetDevEvalZTNorm,
+    CSVDatasetZTNorm,
 )
 from .file import BioFile
 from .file import BioFileSet
@@ -37,7 +37,7 @@ __appropriate__(
     BioDatabase,
     ZTBioDatabase,
     CSVBaseSampleLoader,
-    CSVDatasetDevEval,
+    CSVDataset,
     CSVToSampleLoader,
     CSVDatasetCrossValidation,
 )

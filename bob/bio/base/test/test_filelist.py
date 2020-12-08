@@ -8,12 +8,12 @@ import os
 import bob.io.base
 import bob.io.base.test_utils
 from bob.bio.base.database import (
-    CSVDatasetDevEval,
+    CSVDataset,
     CSVToSampleLoader,
     CSVDatasetCrossValidation,
     AnnotationsLoader,
     LSTToSampleLoader,
-    CSVDatasetDevEvalZTNorm,
+    CSVDatasetZTNorm,
 )
 import nose.tools
 from bob.pipelines import DelayedSample, SampleSet
@@ -62,7 +62,7 @@ def check_all_true(list_of_something, something):
 
 def test_csv_file_list_dev_only():
 
-    dataset = CSVDatasetDevEval(example_dir, "protocol_only_dev")
+    dataset = CSVDataset(example_dir, "protocol_only_dev")
     assert len(dataset.background_model_samples()) == 8
     assert check_all_true(dataset.background_model_samples(), DelayedSample)
 
@@ -75,7 +75,7 @@ def test_csv_file_list_dev_only():
 
 def test_csv_file_list_dev_only_metadata():
 
-    dataset = CSVDatasetDevEval(example_dir, "protocol_only_dev_metadata")
+    dataset = CSVDataset(example_dir, "protocol_only_dev_metadata")
     assert len(dataset.background_model_samples()) == 8
 
     assert check_all_true(dataset.background_model_samples(), DelayedSample)
@@ -107,7 +107,7 @@ def test_csv_file_list_dev_eval():
     )
 
     def run(filename):
-        dataset = CSVDatasetDevEval(
+        dataset = CSVDataset(
             filename,
             "protocol_dev_eval",
             csv_to_sample_loader=CSVToSampleLoader(
@@ -161,7 +161,7 @@ def test_csv_file_list_dev_eval_score_norm():
     )
 
     def run(filename):
-        dataset = CSVDatasetDevEval(
+        dataset = CSVDataset(
             filename,
             "protocol_dev_eval",
             csv_to_sample_loader=CSVToSampleLoader(
@@ -175,7 +175,7 @@ def test_csv_file_list_dev_eval_score_norm():
                 extension="",
             ),
         )
-        znorm_dataset = CSVDatasetDevEvalZTNorm(dataset)
+        znorm_dataset = CSVDatasetZTNorm(dataset)
 
         assert len(znorm_dataset.background_model_samples()) == 8
         assert check_all_true(znorm_dataset.background_model_samples(), DelayedSample)
@@ -222,7 +222,7 @@ def test_csv_file_list_dev_eval_sparse():
         )
     )
 
-    dataset = CSVDatasetDevEval(
+    dataset = CSVDataset(
         example_dir,
         "protocol_dev_eval_sparse",
         csv_to_sample_loader=CSVToSampleLoader(
@@ -280,7 +280,7 @@ def test_csv_file_list_dev_eval_sparse():
 
 def test_lst_file_list_dev_eval():
 
-    dataset = CSVDatasetDevEval(
+    dataset = CSVDataset(
         legacy_example_dir,
         "",
         csv_to_sample_loader=LSTToSampleLoader(
@@ -315,7 +315,7 @@ def test_lst_file_list_dev_eval():
 
 def test_lst_file_list_dev_eval_sparse():
 
-    dataset = CSVDatasetDevEval(
+    dataset = CSVDataset(
         legacy_example_dir,
         "",
         csv_to_sample_loader=LSTToSampleLoader(
@@ -351,7 +351,7 @@ def test_lst_file_list_dev_eval_sparse():
 
 def test_lst_file_list_dev_sparse_filelist2():
 
-    dataset = CSVDatasetDevEval(
+    dataset = CSVDataset(
         legacy2_example_dir,
         "",
         csv_to_sample_loader=LSTToSampleLoader(
@@ -369,7 +369,7 @@ def test_lst_file_list_dev_sparse_filelist2():
 
 def test_csv_file_list_atnt():
 
-    dataset = CSVDatasetDevEval(atnt_protocol_path, "idiap_protocol")
+    dataset = CSVDataset(atnt_protocol_path, "idiap_protocol")
     assert len(dataset.background_model_samples()) == 200
     assert len(dataset.references()) == 20
     assert len(dataset.probes()) == 100
@@ -419,7 +419,7 @@ def run_experiment(dataset):
 
 def test_atnt_experiment():
 
-    dataset = CSVDatasetDevEval(
+    dataset = CSVDataset(
         dataset_protocol_path=atnt_protocol_path,
         protocol_name="idiap_protocol",
         csv_to_sample_loader=CSVToSampleLoader(
