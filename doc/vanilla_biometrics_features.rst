@@ -57,7 +57,7 @@ $ bob bio pipelines vanilla-biometrics -d my_database.py -p <pipeline_name>
 
 The ``database`` object defined in ``my_database.py`` is an instance of either:
 
-- A :py:class:`~bob.bio.base.database.CSVDatasetDevEval` (see :ref:`here <bob.bio.base.database.csv_file_interface>`),
+- A :py:class:`~bob.bio.base.database.CSVDataset` (see :ref:`here <bob.bio.base.database.csv_file_interface>`),
 - A :py:class:`~bob.bio.base.database.CSVDatasetCrossValidation` (see :ref:`here <bob.bio.base.database.csv_cross_validation>`),
 - Your own implementation of a :ref:`Database Interface <bob.bio.base.database.interface_class>`,
 - A :ref:`legacy Database connector <bob.bio.base.legacy.database_connector>`.
@@ -73,7 +73,7 @@ This method is less complete and less flexible than implementing a :ref:`full in
 
 Protocol definition is possible and a set of csv files (at least ``dev_enroll.csv`` and ``dev_probe.csv``) in a folder must be created for each protocol.
 
-The interface is created with :py:class:`~bob.bio.base.database.CSVDatasetDevEval`.
+The interface is created with :py:class:`~bob.bio.base.database.CSVDataset`.
 This class takes as input the base directory, and the protocol sub-directory of the :ref:`csv file structure <bob.bio.base.database.csv_file_structure>`, and finally a ``csv_to_sample_loader`` that will load a sample data from a csv row read from the csv files.
 This csv_to_sample_loader needs to know the dataset base path and the extension of the dataset files.
 
@@ -151,11 +151,11 @@ The following file structure and file naming must be followed, in order for the 
 - The ``train.csv`` file (as shown in ``my_protocol_2``) is optional and contains the information of the *world* set.
 - The ``eval_enroll.csv`` and ``eval_probe.csv`` files (as shown in ``my_protocol_2``) are optional and contain the information of the *eval* set.
 
-In this example, ``my_dataset`` would be the base path given to the ``dataset_protocol_path`` parameter of :py:class:`~bob.bio.base.database.CSVDatasetDevEval`, and ``my_protocol_1`` the ``protocol_name`` parameter:
+In this example, ``my_dataset`` would be the base path given to the ``dataset_protocol_path`` parameter of :py:class:`~bob.bio.base.database.CSVDataset`, and ``my_protocol_1`` the ``protocol_name`` parameter:
 
 .. code-block:: python
 
-    from bob.bio.base.database import CSVDatasetDevEval, AnnotationsLoader
+    from bob.bio.base.database import CSVDataset, AnnotationsLoader
 
     # Define a loading function called for each sample with its path
     def my_load_function(full_path):
@@ -172,7 +172,7 @@ In this example, ``my_dataset`` would be the base path given to the ``dataset_pr
     )
 
     # Create the csv interface
-    database = CSVDatasetDevEval("my_dataset", "my_protocol_1", csv_to_sample_loader=my_sample_loader)
+    database = CSVDataset("my_dataset", "my_protocol_1", csv_to_sample_loader=my_sample_loader)
 
 This will create a database interface with:
 
@@ -189,7 +189,7 @@ CSV file Cross-validation Database interface
 
 The :py:class:`~bob.bio.base.database.CSVDatasetCrossValidation` takes only one CSV file of identities and creates the necessary sets pseudo-randomly.
 
-The format of the CSV file is the same as in :py:class:`~bob.bio.base.database.CSVDatasetDevEval`, comma separated with a header:
+The format of the CSV file is the same as in :py:class:`~bob.bio.base.database.CSVDataset`, comma separated with a header:
 
 .. code-block:: text
 

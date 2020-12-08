@@ -260,7 +260,7 @@ def path_discovery(dataset_protocol_path, option1, option2):
     return op1 if op1 else find_element_in_tarball(dataset_protocol_path, option2)
 
 
-class CSVDatasetDevEval(Database):
+class CSVDataset(Database):
     """
     Generic filelist dataset for :any:` bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` pipeline.
     Check :any:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
@@ -570,14 +570,14 @@ class CSVDatasetDevEval(Database):
         return groups
 
 
-class CSVDatasetDevEvalZTNorm(Database):
+class CSVDatasetZTNorm(Database):
     """
     Generic filelist dataset for :any:`bob.bio.base.pipelines.vanilla_biometrics.ZTNormPipeline` pipelines.
     Check :any:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
     interface. 
 
-    This dataset interface takes as in put a :any:`CSVDatasetDevEval` as input and have two extra methods:
-    :any:`CSVDatasetDevEvalZTNorm.zprobes` and :any:`CSVDatasetDevEvalZTNorm.treferences`.
+    This dataset interface takes as in put a :any:`CSVDataset` as input and have two extra methods:
+    :any:`CSVDatasetZTNorm.zprobes` and :any:`CSVDatasetZTNorm.treferences`.
 
     To create a new dataset, you need to provide a directory structure similar to the one below:
 
@@ -595,8 +595,8 @@ class CSVDatasetDevEvalZTNorm(Database):
     Parameters
     ----------
     
-      database: :any:`CSVDatasetDevEval`
-         :any:`CSVDatasetDevEval` to be aggregated
+      database: :any:`CSVDataset`
+         :any:`CSVDataset` to be aggregated
 
     """
 
