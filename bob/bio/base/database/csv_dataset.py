@@ -61,15 +61,6 @@ class LSTToSampleLoader(CSVToSampleLoader):
 
         return samples
 
-    def fit(self, X, y=None):
-        return self
-
-    def _more_tags(self):
-        return {
-            "stateless": True,
-            "requires_fit": False,
-        }
-
     def convert_row_to_sample(self, row, header=None):
 
         if len(row) == 4:
@@ -610,7 +601,7 @@ class CSVDatasetCrossValidation:
 
         # Shuffling samples by reference_id
         samples_by_reference_id = group_samples_by_reference_id(
-            self.csv_to_sample_loader(self.csv_file_name)
+            self.csv_to_sample_loader.transform(self.csv_file_name)
         )
         reference_ids = list(samples_by_reference_id.keys())
         np.random.seed(self.random_state)
