@@ -155,7 +155,7 @@ class CSVDataset(Database):
         protocol_na,e: str
           The name of the protocol
 
-        csv_to_sample_loader: :any:`bob.bio.base.database.CSVBaseSampleLoader`
+        csv_to_sample_loader: `bob.pipelines.datasets.CSVToSampleLoader`
             Base class that whose objective is to generate :any:`bob.pipelines.Sample`
             and/or :any:`bob.pipelines.SampleSet` from csv rows
     
@@ -562,7 +562,7 @@ class CSVDatasetCrossValidation:
     samples_for_enrollment: float
       Number of samples used for enrollment
 
-    csv_to_sample_loader: :any:`bob.bio.base.database.CSVBaseSampleLoader`
+    csv_to_sample_loader: `bob.pipelines.datasets.CSVToSampleLoader`
         Base class that whose objective is to generate :any:`bob.pipelines.Sample`
         and/or :any:`bob.pipelines.SampleSet` from csv rows
 
