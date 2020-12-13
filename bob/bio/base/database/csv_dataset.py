@@ -14,108 +14,45 @@ import logging
 import bob.db.base
 from bob.bio.base.pipelines.vanilla_biometrics.abstract_classes import Database
 from bob.extension.download import search_file
-from bob.pipelines.datasets.sample_loaders import CSVBaseSampleLoader
+from bob.pipelines.datasets import CSVToSampleLoader
 
 
 logger = logging.getLogger(__name__)
 
 
-#####
-# ANNOTATIONS LOADERS
-####
-class AnnotationsLoader:
-    """
-    Metadata loader that loads annotations in the Idiap format using the function
-    :any:`bob.db.base.read_annotation_file`
-    """
+def convert_samples_to_samplesets(samples, group_by_reference_id=True, references=None):
+    if group_by_reference_id:
 
-    def __init__(
-        self,
-        annotation_directory=None,
-        annotation_extension=".json",
-        annotation_type="json",
-    ):
-        self.annotation_directory = annotation_directory
-        self.annotation_extension = annotation_extension
-        self.annotation_type = annotation_type
+        # Grouping sample sets
+        sample_sets = dict()
+        for s in samples:
+            if s.reference_id not in sample_sets:
+                sample_sets[s.reference_id] = (
+                    SampleSet([s], parent=s)
+                    if references is None
+                    else SampleSet([s], parent=s, references=references)
+                )
+            else:
+                sample_sets[s.reference_id].append(s)
+        return list(sample_sets.values())
 
-    def __call__(self, row, header=None):
-        if self.annotation_directory is None:
-            return None
-
-        path = row[0]
-
-        # since the file id is equal to the file name, we can simply use it
-        annotation_file = os.path.join(
-            self.annotation_directory, path + self.annotation_extension
-        )
-
-        # return the annotations as read from file
-        annotation = {
-            "annotations": bob.db.base.read_annotation_file(
-                annotation_file, self.annotation_type
-            )
-        }
-        return annotation
-
-
-class CSVToSampleLoader(CSVBaseSampleLoader):
-    """
-    Simple mechanism that converts the lines of a CSV file to
-    :any:`bob.pipelines.DelayedSample` or :any:`bob.pipelines.SampleSet`
-    """
-
-    def check_header(self, header):
-        """
-        A header should have at least "reference_id" AND "PATH"
-        """
-        header = [h.lower() for h in header]
-        if not "reference_id" in header:
-            raise ValueError(
-                "The field `reference_id` is not available in your dataset."
-            )
-
-        if not "path" in header:
-            raise ValueError("The field `path` is not available in your dataset.")
-
-    def __call__(self, f):
-        f.seek(0)
-        reader = csv.reader(f)
-        header = next(reader)
-
-        self.check_header(header)
-        return [self.convert_row_to_sample(row, header) for row in reader]
-
-    def convert_row_to_sample(self, row, header):
-        path = row[0]
-        reference_id = row[1]
-
-        kwargs = dict([[str(h).lower(), r] for h, r in zip(header[2:], row[2:])])
-
-        if self.metadata_loader is not None:
-            metadata = self.metadata_loader(row, header=header)
-            kwargs.update(metadata)
-
-        return DelayedSample(
-            functools.partial(
-                self.data_loader,
-                os.path.join(self.dataset_original_directory, path + self.extension),
-            ),
-            key=path,
-            reference_id=reference_id,
-            **kwargs,
+    else:
+        return (
+            [SampleSet([s], parent=s) for s in samples]
+            if references is None
+            else [SampleSet([s], parent=s, references=references) for s in samples]
         )
 
 
-class LSTToSampleLoader(CSVBaseSampleLoader):
+class LSTToSampleLoader(CSVToSampleLoader):
     """
     Simple mechanism that converts the lines of a LST file to
     :any:`bob.pipelines.DelayedSample` or :any:`bob.pipelines.SampleSet`
     """
 
-    def __call__(self, f):
-        f.seek(0)
-        reader = csv.reader(f, delimiter=" ")
+    def transform(self, X):
+        X.seek(0)
+        reader = csv.reader(X, delimiter=" ")
         samples = []
         for row in reader:
             if row[0][0] == "#":
@@ -138,10 +75,6 @@ class LSTToSampleLoader(CSVBaseSampleLoader):
             if len(row) == 3:
                 subject = row[2]
                 kwargs = {"subject": str(subject)}
-
-        if self.metadata_loader is not None:
-            metadata = self.metadata_loader(row, header=header)
-            kwargs.update(metadata)
 
         return DelayedSample(
             functools.partial(
@@ -222,7 +155,7 @@ class CSVDataset(Database):
         protocol_na,e: str
           The name of the protocol
 
-        csv_to_sample_loader: :any:`bob.bio.base.database.CSVBaseSampleLoader`
+        csv_to_sample_loader: `bob.pipelines.datasets.CSVToSampleLoader`
             Base class that whose objective is to generate :any:`bob.pipelines.Sample`
             and/or :any:`bob.pipelines.SampleSet` from csv rows
     
@@ -234,10 +167,7 @@ class CSVDataset(Database):
         dataset_protocol_path,
         protocol_name,
         csv_to_sample_loader=CSVToSampleLoader(
-            data_loader=bob.io.base.load,
-            metadata_loader=None,
-            dataset_original_directory="",
-            extension="",
+            data_loader=bob.io.base.load, dataset_original_directory="", extension="",
         ),
         is_sparse=False,
     ):
@@ -335,7 +265,7 @@ class CSVDataset(Database):
 
     def background_model_samples(self):
         self.cache["train"] = (
-            self.csv_to_sample_loader(self.train_csv)
+            self.csv_to_sample_loader.transform(self.train_csv)
             if self.cache["train"] is None
             else self.cache["train"]
         )
@@ -355,7 +285,7 @@ class CSVDataset(Database):
             return self.cache[cache_key]
 
         # Getting samples from CSV
-        samples = self.csv_to_sample_loader(self.__getattribute__(cache_key))
+        samples = self.csv_to_sample_loader.transform(self.__getattribute__(cache_key))
 
         references = None
         if fetching_probes and is_sparse:
@@ -381,7 +311,7 @@ class CSVDataset(Database):
                     set([s.reference_id for s in self.references(group=group)])
                 )
 
-        sample_sets = self.csv_to_sample_loader.convert_samples_to_samplesets(
+        sample_sets = convert_samples_to_samplesets(
             samples, group_by_reference_id=group_by_reference_id, references=references,
         )
 
@@ -445,7 +375,7 @@ class CSVDataset(Database):
         for group in groups:
             for purpose in ("enroll", "probe"):
                 label = f"{group}_{purpose}_csv"
-                samples = samples + self.csv_to_sample_loader(
+                samples = samples + self.csv_to_sample_loader.transform(
                     self.__getattribute__(label)
                 )
         return samples
@@ -632,7 +562,7 @@ class CSVDatasetCrossValidation:
     samples_for_enrollment: float
       Number of samples used for enrollment
 
-    csv_to_sample_loader: :any:`bob.bio.base.database.CSVBaseSampleLoader`
+    csv_to_sample_loader: `bob.pipelines.datasets.CSVToSampleLoader`
         Base class that whose objective is to generate :any:`bob.pipelines.Sample`
         and/or :any:`bob.pipelines.SampleSet` from csv rows
 
@@ -671,7 +601,7 @@ class CSVDatasetCrossValidation:
 
         # Shuffling samples by reference_id
         samples_by_reference_id = group_samples_by_reference_id(
-            self.csv_to_sample_loader(self.csv_file_name)
+            self.csv_to_sample_loader.transform(self.csv_file_name)
         )
         reference_ids = list(samples_by_reference_id.keys())
         np.random.seed(self.random_state)
@@ -702,14 +632,12 @@ class CSVDatasetCrossValidation:
 
             # Enrollment samples
             self.cache["dev_enroll_csv"].append(
-                self.csv_to_sample_loader.convert_samples_to_samplesets(
-                    samples[0 : self.samples_for_enrollment]
-                )[0]
+                convert_samples_to_samplesets(samples[0 : self.samples_for_enrollment])[
+                    0
+                ]
             )
 
-            self.cache[
-                "dev_probe_csv"
-            ] += self.csv_to_sample_loader.convert_samples_to_samplesets(
+            self.cache["dev_probe_csv"] += convert_samples_to_samplesets(
                 samples[self.samples_for_enrollment :],
                 group_by_reference_id=False,
                 references=reference_ids[n_samples_for_training:],

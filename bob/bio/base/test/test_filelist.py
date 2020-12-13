@@ -9,9 +9,7 @@ import bob.io.base
 import bob.io.base.test_utils
 from bob.bio.base.database import (
     CSVDataset,
-    CSVToSampleLoader,
     CSVDatasetCrossValidation,
-    AnnotationsLoader,
     LSTToSampleLoader,
     CSVDatasetZTNorm,
 )
@@ -27,6 +25,7 @@ from bob.bio.base.database import FileListBioDatabase
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import make_pipeline
 from bob.pipelines import wrap
+from bob.pipelines.datasets import AnnotationsLoader, CSVToSampleLoader
 
 
 legacy_example_dir = os.path.realpath(
@@ -110,15 +109,17 @@ def test_csv_file_list_dev_eval():
         dataset = CSVDataset(
             filename,
             "protocol_dev_eval",
-            csv_to_sample_loader=CSVToSampleLoader(
-                data_loader=bob.io.base.load,
-                metadata_loader=AnnotationsLoader(
+            csv_to_sample_loader=make_pipeline(
+                CSVToSampleLoader(
+                    data_loader=bob.io.base.load,
+                    dataset_original_directory="",
+                    extension="",
+                ),
+                AnnotationsLoader(
                     annotation_directory=annotation_directory,
                     annotation_extension=".pos",
                     annotation_type="eyecenter",
                 ),
-                dataset_original_directory="",
-                extension="",
             ),
         )
         assert len(dataset.background_model_samples()) == 8
@@ -164,17 +165,20 @@ def test_csv_file_list_dev_eval_score_norm():
         dataset = CSVDataset(
             filename,
             "protocol_dev_eval",
-            csv_to_sample_loader=CSVToSampleLoader(
-                data_loader=bob.io.base.load,
-                metadata_loader=AnnotationsLoader(
+            csv_to_sample_loader=make_pipeline(
+                CSVToSampleLoader(
+                    data_loader=bob.io.base.load,
+                    dataset_original_directory="",
+                    extension="",
+                ),
+                AnnotationsLoader(
                     annotation_directory=annotation_directory,
                     annotation_extension=".pos",
                     annotation_type="eyecenter",
                 ),
-                dataset_original_directory="",
-                extension="",
             ),
         )
+
         znorm_dataset = CSVDatasetZTNorm(dataset)
 
         assert len(znorm_dataset.background_model_samples()) == 8
@@ -225,15 +229,17 @@ def test_csv_file_list_dev_eval_sparse():
     dataset = CSVDataset(
         example_dir,
         "protocol_dev_eval_sparse",
-        csv_to_sample_loader=CSVToSampleLoader(
-            data_loader=bob.io.base.load,
-            metadata_loader=AnnotationsLoader(
+        csv_to_sample_loader=make_pipeline(
+            CSVToSampleLoader(
+                data_loader=bob.io.base.load,
+                dataset_original_directory="",
+                extension="",
+            ),
+            AnnotationsLoader(
                 annotation_directory=annotation_directory,
                 annotation_extension=".pos",
                 annotation_type="eyecenter",
             ),
-            dataset_original_directory="",
-            extension="",
         ),
         is_sparse=True,
     )
