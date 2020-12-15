@@ -260,7 +260,9 @@ def test_checkpoint_bioalg_as_transformer():
                     for s in concatenated_scores:
                         n_lines += len(open(s).readlines())
 
-                    assert n_lines == 101
+                    assert n_lines == 100 + len(
+                        concatenated_scores
+                    )  # There are len(concatenated_scores) headers.
 
         run_pipeline(False)
         run_pipeline(False)  # Checking if the checkpointng works
