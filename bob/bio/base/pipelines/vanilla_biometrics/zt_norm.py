@@ -371,6 +371,7 @@ class ZTNorm(object):
         else:
             top_scores = sorted_scores[:, 0:proportion]
 
+        top_scores = np.nan_to_num(top_scores)
         big_mu = np.mean(top_scores, axis=axis)
         big_std = self._compute_std(big_mu, top_scores, axis=axis)
 
