@@ -161,25 +161,19 @@ class CSVScoreWriter(ScoreWriter):
 
         def _post_process(score_paths, path):
             post_process_scores = []
-            os.makedirs(path, exist_ok=True)
-            for i, score in enumerate(score_paths):
-                fname = os.path.join(
-                    path, os.path.basename(score) + "_post_process.csv"
-                )
-                post_process_scores.append(fname)
-                if i == 0:
-                    shutil.move(score, fname)
-                    continue
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w") as f:
 
-                # Not memory intensive score writing
-                with open(score, "r") as f:
-                    with open(fname, "w") as f1:
-                        f.readline()  # skip header line
-                        for line in f:
-                            f1.write(line)
+                for i, score in enumerate(score_paths):
+                    post_process_scores.append(score)
 
-                open(fname, "w").writelines(open(score, "r").readlines()[1:])
-                os.remove(score)
+                    # Not memory intensive score writing
+                    with open(score, "r") as f1:
+                        if i > 0:
+                            f1.readline()  # skip header line
+                        for line in f1:
+                            f.write(line)
+
             return post_process_scores
 
         import dask.bag
