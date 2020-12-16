@@ -66,9 +66,6 @@ class CSVScoreWriter(ScoreWriter):
     path: str
         Directory to save the scores
 
-    n_sample_sets: int
-        Number of samplesets in one chunk of scores
-
     exclude_list: list
         List of metadata to exclude from the CSV file
 
@@ -77,11 +74,9 @@ class CSVScoreWriter(ScoreWriter):
     def __init__(
         self,
         path,
-        n_sample_sets=1000,
         exclude_list=tuple(SAMPLE_DATA_ATTRS) + ("key", "references", "annotations"),
     ):
         super().__init__(path)
-        self.n_sample_sets = n_sample_sets
         self.exclude_list = exclude_list
 
     def write(self, probe_sampleset):
@@ -116,31 +111,21 @@ class CSVScoreWriter(ScoreWriter):
         os.makedirs(self.path, exist_ok=True)
         header, probe_dict, bioref_dict = create_csv_header(probe_sampleset[0])
 
-        f = None
         filename = os.path.join(self.path, str(uuid.uuid4()))
-        filenames = []
+        f = open(filename, "w")
+        csv_writer = csv.writer(f)
+        rows = []
         for i, probe in enumerate(probe_sampleset):
-            if i % self.n_sample_sets == 0:
-                filename = filename + "_" + f"chunk_{i}.csv"
-                filenames.append(filename)
-                if f is not None:
-                    f.close()
-                    del f
 
-                f = open(filename, "w")
-                csv_writer = csv.writer(f)
-                if i == 0:
-                    csv_writer.writerow(header)
+            # Writing the header
+            if i == 0:
+                csv_writer.writerow(header)
 
-            rows = []
             probe_row = [str(probe.key)] + [
                 str(getattr(probe, k)) for k in probe_dict.keys()
             ]
 
-            # If it's delayed, load it
-            if isinstance(probe[0], DelayedSample):
-                probe.samples = probe.samples[0].data
-
+            # Iterating over the biometric references
             for biometric_reference in probe:
                 bio_ref_row = [
                     str(getattr(biometric_reference, k))
@@ -149,9 +134,9 @@ class CSVScoreWriter(ScoreWriter):
 
                 rows.append(probe_row + bio_ref_row)
 
-            csv_writer.writerows(rows)
+        csv_writer.writerows(rows)
         f.close()
-        return filenames
+        return [filename]
 
     def post_process(self, score_paths, path):
         """
@@ -173,6 +158,7 @@ class CSVScoreWriter(ScoreWriter):
                             f1.readline()  # skip header line
                         for line in f1:
                             f.write(line)
+                    os.remove(score)
 
             return post_process_scores
 
