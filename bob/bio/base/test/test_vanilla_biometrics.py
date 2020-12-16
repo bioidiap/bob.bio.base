@@ -242,8 +242,9 @@ def test_checkpoint_bioalg_as_transformer():
                         assert len(sset) == 10
             else:
                 writed_scores = vanilla_biometrics_pipeline.write_scores(scores)
+                scores_dev_path = os.path.join(dir_name, "scores-dev")
                 concatenated_scores = vanilla_biometrics_pipeline.post_process(
-                    writed_scores, os.path.join(dir_name, "scores-dev")
+                    writed_scores, scores_dev_path
                 )
 
                 if with_dask:
@@ -254,15 +255,11 @@ def test_checkpoint_bioalg_as_transformer():
                 if isinstance(
                     vanilla_biometrics_pipeline.score_writer, FourColumnsScoreWriter
                 ):
-                    assert len(open(concatenated_scores).readlines()) == 100
+                    assert len(open(scores_dev_path).readlines()) == 100
                 else:
-                    n_lines = 0
-                    for s in concatenated_scores:
-                        n_lines += len(open(s).readlines())
-
-                    assert n_lines == 100 + len(
-                        concatenated_scores
-                    )  # There are len(concatenated_scores) headers.
+                    assert (
+                        len(open(scores_dev_path).readlines()) == 101
+                    )  # Counting the heade.
 
         run_pipeline(False)
         run_pipeline(False)  # Checking if the checkpointng works

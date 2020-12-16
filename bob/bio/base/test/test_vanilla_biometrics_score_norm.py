@@ -455,28 +455,36 @@ def test_znorm_on_memory():
 
             def _concatenate(pipeline, scores, path):
                 writed_scores = pipeline.write_scores(scores)
-                concatenated_scores = pipeline.post_process(
-                    writed_scores, os.path.join(dir_name, "scores-dev")
-                )
+                concatenated_scores = pipeline.post_process(writed_scores, path)
                 return concatenated_scores
 
             if isinstance(score_writer, CSVScoreWriter):
                 raw_scores = _concatenate(
-                    vanilla_biometrics_pipeline, raw_scores, "scores-dev"
+                    vanilla_biometrics_pipeline,
+                    raw_scores,
+                    os.path.join(dir_name, "scores-dev", "raw_scores"),
                 )
                 z_scores = _concatenate(
-                    vanilla_biometrics_pipeline, z_scores, "scores-dev_zscores"
+                    vanilla_biometrics_pipeline,
+                    z_scores,
+                    os.path.join(dir_name, "scores-dev", "z_scores"),
                 )
                 t_scores = _concatenate(
-                    vanilla_biometrics_pipeline, t_scores, "scores-dev_tscores"
+                    vanilla_biometrics_pipeline,
+                    t_scores,
+                    os.path.join(dir_name, "scores-dev", "t_scores"),
                 )
 
                 zt_scores = _concatenate(
-                    vanilla_biometrics_pipeline, zt_scores, "scores-dev_ztscores"
+                    vanilla_biometrics_pipeline,
+                    zt_scores,
+                    os.path.join(dir_name, "scores-dev", "zt_scores"),
                 )
 
                 s_scores = _concatenate(
-                    vanilla_biometrics_pipeline, s_scores, "scores-dev_sscores"
+                    vanilla_biometrics_pipeline,
+                    s_scores,
+                    os.path.join(dir_name, "scores-dev", "s_scores"),
                 )
 
             if with_dask:
@@ -487,13 +495,47 @@ def test_znorm_on_memory():
                 s_scores = s_scores.compute(scheduler="single-threaded")
 
             if isinstance(score_writer, CSVScoreWriter):
-                n_lines = 51 if with_dask else 101
 
-                assert len(open(raw_scores[0], "r").readlines()) == n_lines
-                assert len(open(z_scores[0], "r").readlines()) == n_lines
-                assert len(open(t_scores[0], "r").readlines()) == n_lines
-                assert len(open(zt_scores[0], "r").readlines()) == n_lines
-                assert len(open(s_scores[0], "r").readlines()) == n_lines
+                assert (
+                    len(
+                        open(
+                            os.path.join(dir_name, "scores-dev", "raw_scores"), "r"
+                        ).readlines()
+                    )
+                    == 101
+                )
+                assert (
+                    len(
+                        open(
+                            os.path.join(dir_name, "scores-dev", "z_scores"), "r"
+                        ).readlines()
+                    )
+                    == 101
+                )
+                assert (
+                    len(
+                        open(
+                            os.path.join(dir_name, "scores-dev", "t_scores"), "r"
+                        ).readlines()
+                    )
+                    == 101
+                )
+                assert (
+                    len(
+                        open(
+                            os.path.join(dir_name, "scores-dev", "zt_scores"), "r"
+                        ).readlines()
+                    )
+                    == 101
+                )
+                assert (
+                    len(
+                        open(
+                            os.path.join(dir_name, "scores-dev", "s_scores"), "r"
+                        ).readlines()
+                    )
+                    == 101
+                )
 
             else:
                 assert len(raw_scores) == 10
