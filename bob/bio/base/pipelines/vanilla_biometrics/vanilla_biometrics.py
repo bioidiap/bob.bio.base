@@ -207,8 +207,7 @@ def execute_vanilla_biometrics_ztnorm(
     def _merge_references_ztnorm(biometric_references, probes, zprobes, treferences):
         treferences_sub = [t.reference_id for t in treferences]
         biometric_references_sub = [t.reference_id for t in biometric_references]
-
-        for i in range(len(zprobes)):
+        for i in range(len(probes)):
             probes[i].references += treferences_sub
 
         for i in range(len(zprobes)):
@@ -298,6 +297,7 @@ def execute_vanilla_biometrics_ztnorm(
             return os.path.join(score_file_name, suffix)
 
         # Running RAW_SCORES
+
         raw_scores = post_process_scores(
             pipeline, raw_scores, _build_filename(score_file_name, "raw_scores")
         )
