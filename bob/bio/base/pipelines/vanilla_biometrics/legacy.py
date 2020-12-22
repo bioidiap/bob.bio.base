@@ -20,8 +20,41 @@ from bob.db.base.utils import (
 import pickle
 from .abstract_classes import BioAlgorithm
 from .abstract_classes import Database
+import tempfile
 
 logger = logging.getLogger("bob.bio.base")
+
+
+def get_temp_directory(sub_dir):
+    """
+    Get Temporary directory for legacy algorithms.
+    Most of the legacy algorithms are not pickled serializable, therefore,
+    we can't wrap their transformations as :any:`bob.pipelines.Sample`.
+    Hence, we need to make them automatically checkpointable.
+    This function returns possible temporary directories to store such checkpoints.
+    The possible temporary directorys are (in order of priority):
+       1. `/.../temp/[user]/bob.bio.base.legacy_cache` if you are at Idiap and has acess to temp.
+       2. `~/temp/` in case the algorithm runs in the CI
+       3. `/tmp/bob.bio.base.legacy_cache` in case your are not at Idiap
+
+    Parameters
+    ----------
+
+    sub_dir: str
+        Sub-directory to checkpoint your data
+
+    """
+
+    default_temp = (
+        os.path.join("/idiap", "temp", os.environ["USER"])
+        if "USER" in os.environ
+        else "~/temp"
+    )
+    if os.path.exists(default_temp):
+        return os.path.join(default_temp, "bob.bio.base.legacy_cache", sub_dir)
+    else:
+        # if /idiap/temp/<USER> does not exist, use /tmp/tmpxxxxxxxx
+        tempdir = os.path.join(tempfile.TemporaryDirectory().name, sub_dir)
 
 
 def _biofile_to_delayed_sample(biofile, database):
