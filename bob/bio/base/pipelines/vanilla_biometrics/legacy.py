@@ -54,7 +54,7 @@ def get_temp_directory(sub_dir):
         return os.path.join(default_temp, "bob.bio.base.legacy_cache", sub_dir)
     else:
         # if /idiap/temp/<USER> does not exist, use /tmp/tmpxxxxxxxx
-        tempdir = os.path.join(tempfile.TemporaryDirectory().name, sub_dir)
+        return os.path.join(tempfile.TemporaryDirectory().name, sub_dir)
 
 
 def _biofile_to_delayed_sample(biofile, database):
