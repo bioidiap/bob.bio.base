@@ -102,7 +102,7 @@ def execute_vanilla_biometrics(
     for group in groups:
 
         score_file_name = os.path.join(
-            output, f"scores-{group}" + ".csv" if write_metadata_scores else ""
+            output, f"scores-{group}" + (".csv" if write_metadata_scores else "")
         )
         biometric_references = database.references(group=group)
         probes = database.probes(group=group)
