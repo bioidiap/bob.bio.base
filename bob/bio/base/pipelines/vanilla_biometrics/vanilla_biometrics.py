@@ -107,6 +107,11 @@ def execute_vanilla_biometrics(
         biometric_references = database.references(group=group)
         probes = database.probes(group=group)
 
+        # If there's no data to be processed, continue
+        if len(biometric_references)==0 or len(probes)==0:
+            logger.warning(f"Current dataset ({database}) does not have `{group}` set. The experiment will not be executed.")
+            continue
+
         if dask_client is not None and not isinstance_nested(
             pipeline.biometric_algorithm, "biometric_algorithm", BioAlgorithmDaskWrapper
         ):
@@ -243,6 +248,12 @@ def execute_vanilla_biometrics_ztnorm(
 
         biometric_references = database.references(group=group)
         probes = database.probes(group=group)
+
+        # If there's no data to be processed, continue
+        if len(biometric_references)==0 or len(probes)==0:
+            logger.warning(f"Current dataset ({database}) does not have `{group}` set. The experiment will not be executed.")
+            continue
+
 
         if dask_client is not None and not isinstance_nested(
             pipeline.biometric_algorithm, "biometric_algorithm", BioAlgorithmDaskWrapper
