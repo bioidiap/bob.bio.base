@@ -6,7 +6,7 @@ Annotating biometric databases
 
 It is often required to annotate the biometric samples before running
 experiments. This often happens in face biometrics where each face is detected
-and location of landmarks on the face is saved prior to running experiments.
+and the location of landmarks on the face is saved before running experiments.
 
 To facilitate the process of annotating a new database, this package provides
 a command-line script:
