@@ -271,7 +271,7 @@ The Equal Error Rate (EER) is a criterion used to define the threshold value suc
 .. math:: \theta^* = \text{arg}\min\limits_{\theta} \mid \text{FMR}(\theta) - \text{FNMR}(\theta) \mid
 
 ROC, DET, and EPC
-................
+.................
 
 To decide which threshold value is the best for an application, and to compare different systems, the Receiver Operation Characteristic (ROC) and Detection Error Tradeoff (DET) curves were defined, as well as the Expected Performance Curve (EPC).
 

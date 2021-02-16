@@ -32,7 +32,7 @@ $ bob bio pipelines vanilla-biometrics --help
 .. _bob.bio.base.build_pipelines:
 
 Building your own Vanilla Biometrics pipeline
---------------------------------------------
+---------------------------------------------
 
 The Vanilla Biometrics represents **the simplest** biometrics pipeline possible and for this reason, is the backbone for any biometric test in this library.
 It's composed of:
