@@ -83,7 +83,6 @@ class LSTToSampleLoader(CSVToSampleLoader):
             ),
             key=path,
             reference_id=reference_id,
-            subject_id=reference_id,
             **kwargs,
         )
 

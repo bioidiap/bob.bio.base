@@ -10,7 +10,7 @@ import functools
 
 class Distance(BioAlgorithm):
     def __init__(
-        self, distance_function=scipy.spatial.distance.euclidean, factor=-1, **kwargs
+        self, distance_function=scipy.spatial.distance.cosine, factor=-1, **kwargs
     ):
         super().__init__(**kwargs)
         self.distance_function = distance_function

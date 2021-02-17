@@ -171,7 +171,8 @@ class DatabaseConnector(Database):
                     [_biofile_to_delayed_sample(k, self.database) for k in objects],
                     key=str(m),
                     path=str(m),
-                    reference_id=str(objects[0].client_id),
+                    reference_id=(str(m)),
+                    subject_id=str(self.database.client_id_from_model_id(m)),
                 )
             )
 
@@ -199,7 +200,6 @@ class DatabaseConnector(Database):
         """
 
         probes = dict()
-
         for m in self.database.model_ids(groups=group):
 
             # Getting all the probe objects from a particular biometric
@@ -212,12 +212,12 @@ class DatabaseConnector(Database):
                         [_biofile_to_delayed_sample(o, self.database)],
                         key=str(o.path),
                         path=o.path,
-                        reference_id=str(o.client_id),
+                        reference_id=str(m),
                         references=[str(m)],
+                        subject_id=o.client_id,
                     )
                 else:
-                    probes[o.id].references.append(str(m))
-
+                    probes[o.id].references.append(str(str(m)))
         return list(probes.values())
 
     def all_samples(self, groups=None):

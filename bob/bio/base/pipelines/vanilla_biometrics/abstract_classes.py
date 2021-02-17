@@ -146,7 +146,6 @@ class BioAlgorithm(metaclass=ABCMeta):
             # static batch of biometric references
             total_scores = []
             for probe_sample in sampleset:
-
                 # Multiple scoring
                 if self.stacked_biometric_references is None:
                     self.stacked_biometric_references = [
@@ -184,13 +183,18 @@ class BioAlgorithm(metaclass=ABCMeta):
                         self.stacked_biometric_references[str(r.reference_id)] = r.data
 
             for probe_sample in sampleset:
-
                 cache_references(sampleset.references)
                 references = [
                     self.stacked_biometric_references[str(r.reference_id)]
                     for r in biometric_references
                     if str(r.reference_id) in sampleset.references
                 ]
+
+                if len(references) == 0:
+                    raise ValueError(
+                        f"The probe {sampleset} can't be compared with any biometric reference. "
+                        "Something is probably wrong with your database interface."
+                    )
 
                 scores = self.score_multiple_biometric_references(
                     references, probe_sample.data
