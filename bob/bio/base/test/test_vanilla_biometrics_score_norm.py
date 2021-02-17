@@ -33,7 +33,7 @@ import bob.pipelines as mario
 import uuid
 import shutil
 import itertools
-from scipy.spatial.distance import cdist
+from scipy.spatial.distance import cdist, euclidean
 from sklearn.preprocessing import FunctionTransformer
 import copy
 
@@ -147,6 +147,7 @@ def test_norm_mechanics():
                     [Sample(s, reference_id=str(i + offset), key=str(uuid.uuid4()))],
                     key=str(i + offset),
                     reference_id=str(i + offset),
+                    subject_id=str(i + offset),
                 )
                 for i, s in enumerate(raw_data)
             ]
@@ -156,6 +157,7 @@ def test_norm_mechanics():
                     [Sample(s, reference_id=str(i + offset), key=str(uuid.uuid4()))],
                     key=str(i + offset),
                     reference_id=str(i + offset),
+                    subject_id=str(i + offset),
                     references=references,
                 )
                 for i, s in enumerate(raw_data)
@@ -226,11 +228,11 @@ def test_norm_mechanics():
             #############
 
             transformer = make_pipeline(FunctionTransformer(func=_do_nothing_fn))
-            biometric_algorithm = Distance(factor=1)
+            biometric_algorithm = Distance(euclidean, factor=1)
 
             if with_checkpoint:
                 biometric_algorithm = BioAlgorithmCheckpointWrapper(
-                    Distance(factor=1), dir_name
+                    Distance(distance_function=euclidean, factor=1), dir_name,
                 )
 
             vanilla_pipeline = VanillaBiometricsPipeline(
@@ -252,6 +254,7 @@ def test_norm_mechanics():
             raw_scores = _dump_scores_from_samples(
                 score_samples, shape=(n_probes, n_references)
             )
+
             assert np.allclose(raw_scores, raw_scores_ref)
 
             ############

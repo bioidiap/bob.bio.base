@@ -12,6 +12,7 @@ from bob.bio.base.database import (
     CSVDatasetCrossValidation,
     LSTToSampleLoader,
     CSVDatasetZTNorm,
+    CSVToSampleLoaderBiometrics,
 )
 import nose.tools
 from bob.pipelines import DelayedSample, SampleSet
@@ -25,7 +26,7 @@ from bob.bio.base.database import FileListBioDatabase
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import make_pipeline
 from bob.pipelines import wrap
-from bob.pipelines.datasets import AnnotationsLoader, CSVToSampleLoader
+from bob.pipelines.datasets import AnnotationsLoader
 
 
 legacy_example_dir = os.path.realpath(
@@ -110,7 +111,7 @@ def test_csv_file_list_dev_eval():
             filename,
             "protocol_dev_eval",
             csv_to_sample_loader=make_pipeline(
-                CSVToSampleLoader(
+                CSVToSampleLoaderBiometrics(
                     data_loader=bob.io.base.load,
                     dataset_original_directory="",
                     extension="",
@@ -166,7 +167,7 @@ def test_csv_file_list_dev_eval_score_norm():
             filename,
             "protocol_dev_eval",
             csv_to_sample_loader=make_pipeline(
-                CSVToSampleLoader(
+                CSVToSampleLoaderBiometrics(
                     data_loader=bob.io.base.load,
                     dataset_original_directory="",
                     extension="",
@@ -230,7 +231,7 @@ def test_csv_file_list_dev_eval_sparse():
         example_dir,
         "protocol_dev_eval_sparse",
         csv_to_sample_loader=make_pipeline(
-            CSVToSampleLoader(
+            CSVToSampleLoaderBiometrics(
                 data_loader=bob.io.base.load,
                 dataset_original_directory="",
                 extension="",
@@ -396,7 +397,7 @@ def test_csv_cross_validation_atnt():
         csv_file_name=atnt_protocol_path_cross_validation,
         random_state=0,
         test_size=0.8,
-        csv_to_sample_loader=CSVToSampleLoader(
+        csv_to_sample_loader=CSVToSampleLoaderBiometrics(
             data_loader=data_loader,
             dataset_original_directory=atnt_database_directory(),
             extension=".pgm",
@@ -428,7 +429,7 @@ def test_atnt_experiment():
     dataset = CSVDataset(
         dataset_protocol_path=atnt_protocol_path,
         protocol_name="idiap_protocol",
-        csv_to_sample_loader=CSVToSampleLoader(
+        csv_to_sample_loader=CSVToSampleLoaderBiometrics(
             data_loader=data_loader,
             dataset_original_directory=atnt_database_directory(),
             extension=".pgm",
@@ -451,7 +452,7 @@ def test_atnt_experiment_cross_validation():
             csv_file_name=atnt_protocol_path_cross_validation,
             random_state=0,
             test_size=test_size,
-            csv_to_sample_loader=CSVToSampleLoader(
+            csv_to_sample_loader=CSVToSampleLoaderBiometrics(
                 data_loader=data_loader,
                 dataset_original_directory=atnt_database_directory(),
                 extension=".pgm",
@@ -691,6 +692,7 @@ def test_multiple_extensions():
     file = bob.bio.base.database.BioFile(
         4, "data/model4_session1_sample2", "data/model4_session1_sample2"
     )
+
     file_name = db.original_file_name(file, True)
     assert file_name == os.path.join(legacy_example_dir, file.path + ".pos")
 

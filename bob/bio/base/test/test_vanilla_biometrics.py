@@ -46,6 +46,7 @@ class DummyDatabase:
                 key=str(uuid.uuid4()),
                 annotations=1,
                 reference_id=str(i),
+                subject_id=str(i),
             )
             for i in range(offset, offset + n_samples)
         ]
@@ -57,6 +58,7 @@ class DummyDatabase:
                 key=str(uuid.uuid4()),
                 annotations=1,
                 reference_id=str(i),
+                subject_id=str(i),
             )
             for i in range(offset, offset + n_samples)
         ]
@@ -70,6 +72,7 @@ class DummyDatabase:
                 samples=[],
                 key=str(i),
                 reference_id=str(i),
+                subject_id=str(i),
                 gender=np.random.choice(self.gender_choices),
                 metadata_1=np.random.choice(self.metadata_1_choices),
             )

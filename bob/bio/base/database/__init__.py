@@ -1,6 +1,6 @@
 from .csv_dataset import (
     CSVDataset,
-    CSVToSampleLoader,
+    CSVToSampleLoaderBiometrics,
     CSVDatasetCrossValidation,
     LSTToSampleLoader,
     CSVDatasetZTNorm,
@@ -35,7 +35,7 @@ __appropriate__(
     BioDatabase,
     ZTBioDatabase,
     CSVDataset,
-    CSVToSampleLoader,
+    CSVToSampleLoaderBiometrics,
     CSVDatasetCrossValidation,
 )
 __all__ = [_ for _ in dir() if not _.startswith("_")]

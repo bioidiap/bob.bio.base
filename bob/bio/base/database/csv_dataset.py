@@ -74,7 +74,71 @@ class LSTToSampleLoader(CSVToSampleLoader):
             kwargs = dict()
             if len(row) == 3:
                 subject = row[2]
-                kwargs = {"subject": str(subject)}
+                kwargs = {"subject_id": str(subject)}
+
+        return DelayedSample(
+            functools.partial(
+                self.data_loader,
+                os.path.join(self.dataset_original_directory, path + self.extension),
+            ),
+            key=path,
+            reference_id=reference_id,
+            **kwargs,
+        )
+
+
+class CSVToSampleLoaderBiometrics(CSVToSampleLoader):
+    """
+    Base class that converts the lines of a CSV file, like the one below to
+    :any:`bob.pipelines.DelayedSample` or :any:`bob.pipelines.SampleSet`
+
+    .. code-block:: text
+
+       PATH,REFERENCE_ID
+       path_1,reference_id_1
+       path_2,reference_id_2
+       path_i,reference_id_j
+       ...
+
+    Parameters
+    ----------
+
+        data_loader:
+            A python function that can be called parameterlessly, to load the
+            sample in question from whatever medium
+
+        dataset_original_directory: str
+            Path of where data is stored
+        
+        extension: str
+            Default file extension
+
+    """
+
+    def __init__(
+        self,
+        data_loader,
+        dataset_original_directory="",
+        extension="",
+        reference_id_equal_subject_id=True,
+    ):
+        super().__init__(
+            data_loader=data_loader,
+            extension=extension,
+            dataset_original_directory=dataset_original_directory,
+        )
+        self.reference_id_equal_subject_id = reference_id_equal_subject_id
+
+    def convert_row_to_sample(self, row, header):
+        path = row[0]
+        reference_id = row[1]
+
+        kwargs = dict([[str(h).lower(), r] for h, r in zip(header[2:], row[2:])])
+        if self.reference_id_equal_subject_id:
+            kwargs["subject_id"] = reference_id
+        else:
+            if "subject_id" not in kwargs:
+                raise ValueError(f"`subject_id` not available in {header}")
 
         return DelayedSample(
             functools.partial(
@@ -166,7 +230,7 @@ class CSVDataset(Database):
         self,
         dataset_protocol_path,
         protocol_name,
-        csv_to_sample_loader=CSVToSampleLoader(
+        csv_to_sample_loader=CSVToSampleLoaderBiometrics(
             data_loader=bob.io.base.load, dataset_original_directory="", extension="",
         ),
         is_sparse=False,
@@ -574,7 +638,7 @@ class CSVDatasetCrossValidation:
         random_state=0,
         test_size=0.8,
         samples_for_enrollment=1,
-        csv_to_sample_loader=CSVToSampleLoader(
+        csv_to_sample_loader=CSVToSampleLoaderBiometrics(
             data_loader=bob.io.base.load, dataset_original_directory="", extension=""
         ),
     ):

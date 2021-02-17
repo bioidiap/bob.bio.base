@@ -37,8 +37,8 @@ class FourColumnsScoreWriter(ScoreWriter):
 
                     lines = [
                         "{0} {1} {2} {3}\n".format(
-                            biometric_reference.reference_id,
-                            probe.reference_id,
+                            biometric_reference.subject_id,
+                            probe.subject_id,
                             probe.key,
                             biometric_reference.data,
                         )
