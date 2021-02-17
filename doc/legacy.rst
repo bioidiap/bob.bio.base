@@ -9,10 +9,10 @@
 ======================================================
 
 The transition to the pipeline concept changed the way data goes from the raw sample to the extracted features, and how the biometric algorithm is applied.
-However a set of tools was implemented to support the older bob implementations (designated as *legacy*) of database, preprocessor, extractor and algorithms.
+However, a set of tools was implemented to support the older bob implementations (designated as *legacy*) of database, preprocessor, extractor, and algorithms.
 
 
-This adaptation consists of wrappers classes that take a legacy bob class as input and constructs a :py:class:`Transformer` or :py:class:`BiometricAlgorithm` out of it.
+This adaptation consists of wrapper classes that take a legacy bob class as input and constructs a :py:class:`Transformer` or :py:class:`BiometricAlgorithm` out of it.
 
 
 .. WARNING::
@@ -24,10 +24,10 @@ This adaptation consists of wrappers classes that take a legacy bob class as inp
 Legacy FileList Database interface
 ----------------------------------
 
-This is a similar database interface to :ref:`the CSV file interface <bob.bio.base.database.csv_file_interface>`, but takes information from a series of two- or three-columns files without header instead of CSV files and returns a legacy database (use a :ref:`Database Connector <bob.bio.base.legacy.database_connector>` to create a database interface).
+This is a similar database interface to :ref:`the CSV file interface <bob.bio.base.database.csv_file_interface>`, but takes information from a series of two- or three-column files without header instead of CSV files and returns a legacy database (use a :ref:`Database Connector <bob.bio.base.legacy.database_connector>` to create a database interface).
 
 
-The files are separated in three sets: ``'world'`` (training; optional), ``'dev'`` (development; required) and ``'eval'`` (evaluation; optional) set to be used by the biometric verification algorithm.
+The files are separated into three sets: ``'world'`` (training; optional), ``'dev'`` (development; required) and ``'eval'`` (evaluation; optional) set to be used by the biometric verification algorithm.
 The summarized complete structure of the list base directory (here denoted as ``basedir``) containing all the files should be like this:
 
 .. code-block:: text
@@ -86,7 +86,7 @@ The following list files need to be created:
 
   * two *world files*, with default names ``train_optional_world_1.lst`` and ``train_optional_world_2.lst``, in default sub-directory ``norm``.
     The format is the same as for the world file.
-    These files are not needed for most of biometric recognition algorithms, hence, they need to be specified only if the algorithm uses them.
+    These files are not needed for most biometric recognition algorithms, hence, they need to be specified only if the algorithm uses them.
 
 - **For enrollment**:
 
@@ -102,14 +102,14 @@ The following list files need to be created:
   There exist two different ways to implement file lists used for scoring.
 
   * The first (and simpler) variant is to define a file list of probe files, where all probe files will be tested against all models.
-    Hence, you need to specify one or two *probe files* for the development (and evaluation) set, with default name ``for_probes.lst`` in the  default sub-directories ``dev`` (and ``eval``).
+    Hence, you need to specify one (or two) *probe files* for the development (and evaluation) set, with the default name ``for_probes.lst`` in the default sub-directory ``dev`` (and ``eval``).
     They are 2-column files with format:
 
     .. code-block:: text
 
       filename client_id
 
-  * The other option is to specify a detailed list, which probe file should be be compared with which client model, i.e., one or two *score files* for the development (and evaluation) set, with default name ``for_scores.lst`` in the  sub-directories ``dev`` (and ``eval``).
+  * The other option is to specify a detailed list of which probe files should be compared with which client model, i.e., one (or two) *score files* for the development (and evaluation) set, with the default name ``for_scores.lst`` in the sub-directory ``dev`` (and ``eval``).
     These files need to be provided only if the scoring is to be done selectively, meaning by creating a sparse probe/model scoring matrix.
     They are 4-column files with format:
 
@@ -154,7 +154,7 @@ Legacy Database Connector
 
 This *legacy database wrapper* is used to translate an old ``bob.db`` package functions into a bob pipelines database interface.
 
-It uses :py:func:`~bob.db.base.objects` to retrieve a list of files for each roles (``world``, ``references`` and ``probes``) and specified groups (``dev`` and ``eval``), and creates the according :py:class:`Sample` and :py:class:`SampleSet` lists.
+It uses :py:func:`~bob.db.base.objects` to retrieve a list of files for each role (``world``, ``references``, and ``probes``) and specified group (``dev`` and ``eval``) and creates the matching :py:class:`Sample` and :py:class:`SampleSet` lists.
 
 
 This example shows the creation of the Mobio database interface in the bob.pipelines format from the legacy bob.db:

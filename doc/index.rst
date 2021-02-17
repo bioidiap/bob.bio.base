@@ -10,7 +10,7 @@
 =====================================
 
 
-``bob.bio.base`` provides open source tools to run comparable and reproducible biometric recognition experiments.
+``bob.bio.base`` provides open-source tools to run comparable and reproducible biometric recognition experiments.
 It covers the following biometrics traits:
 
  * Face Biometrics: `bob.bio.face <http://gitlab.idiap.ch/bob/bob.bio.face>`__

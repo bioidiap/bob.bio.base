@@ -13,13 +13,13 @@ Such CLI command is an entry-point to several pipelines implemented under :py:mo
 This tutorial will focus on the pipeline called **vanilla-biometrics**.
 
 In our very first example, we've shown how to compare two samples using the ``bob bio compare-samples`` command, where the "biometric" algorithm is set with the argument ``-p``.
-The ``-p`` points to a so called :py:mod:`~bob.bio.base.pipelines.VanillaBiometricsPipeline`.
+The ``-p`` points to a so-called :py:mod:`~bob.bio.base.pipelines.VanillaBiometricsPipeline`.
 
 
 Running a biometric experiment with Vanilla Biometrics
 ------------------------------------------------------
 
-A set of commands are available to run Vanilla Biometrics experiments from the shell. Those are on the form of::
+A set of commands are available to run Vanilla Biometrics experiments from the shell. Those are in the form of::
 
 $ bob bio pipelines vanilla-biometrics [OPTIONS] -p <pipeline>
 
@@ -31,15 +31,15 @@ $ bob bio pipelines vanilla-biometrics --help
 
 .. _bob.bio.base.build_pipelines:
 
-Building you own Vanilla Biometrics pipeline
---------------------------------------------
+Building your own Vanilla Biometrics pipeline
+---------------------------------------------
 
-The Vanilla Biometrics represents **the simplest** biometrics pipeline possible and for this reason is the backbone for any biometric test in this library.
-It's basically composed of:
+The Vanilla Biometrics represents **the simplest** biometrics pipeline possible and for this reason, is the backbone for any biometric test in this library.
+It's composed of:
 
-  :ref:`Transformers <bob.bio.base.transformer>`: Instances of :py:class:`sklearn.base.BaseEstimator` and :py:class:`sklearn.base.TransformerMixin`. A Transformer can be trained if needed, and applies one or several transformations on an input sample. It must implement the :py:meth:`~Transformer.transform` and a :py:meth:`~Transformer.fit` methods. Multiple transformers can be chained together, each working on the output of the previous one.
+  :ref:`Transformers <bob.bio.base.transformer>`: Instances of :py:class:`sklearn.base.BaseEstimator` and :py:class:`sklearn.base.TransformerMixin`. A Transformer can be trained if needed and applies one or several transformations on an input sample. It must implement a :py:meth:`~Transformer.transform` and a :py:meth:`~Transformer.fit` method. Multiple transformers can be chained together, each working on the output of the previous one.
 
-  A :ref:`Biometric Algorithm <bob.bio.base.biometric_algorithm>`: Instance of :py:class:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm` that implements the methods :py:meth:`enroll` and :py:meth:`score` to generate a biometric experiment results.
+  A :ref:`Biometric Algorithm <bob.bio.base.biometric_algorithm>`: Instance of :py:class:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm` that implements the methods :py:meth:`enroll` and :py:meth:`score` to generate biometric experiment results.
 
 Running the vanilla-biometric pipeline will retrieve samples from a dataset and generate score files.
 It does not encompass the analysis of those scores (Error rates, ROC, DET). This can be done with other utilities of the ``bob.bio`` packages.
@@ -50,8 +50,8 @@ It does not encompass the analysis of those scores (Error rates, ROC, DET). This
 Transformer
 ^^^^^^^^^^^
 
-Following the structure of `pipelines of scikit-learn <https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html>`__, a Transformer is a class that must implement a :py:meth:`~Transformer.transform` and a :py:meth:`~Transformer.fit` methods.
-This class represents a simple operation that can be applied on data, like preprocessing of a sample or extraction of a feature vector from data.
+Following the structure of `pipelines of scikit-learn <https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html>`__, a Transformer is a class that must implement a :py:meth:`~Transformer.transform` and a :py:meth:`~Transformer.fit` method.
+This class represents a simple operation that can be applied to data, like preprocessing of a sample or extraction of a feature vector from data.
 
 A :py:class:`Transformer` must implement the following methods:
 
@@ -94,23 +94,23 @@ Biometric Algorithm
 
 A biometric algorithm represents the enrollment and scoring phase of a biometric experiment.
 
-A biometric algorithm is a class implementing the methods :py:meth:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm.enroll` that allows to save the identity representation of a subject, and :py:meth:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm.score` that computes the score of a subject's sample against a previously enrolled model.
+A biometric algorithm is a class implementing the method :py:meth:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm.enroll` that allows to save the identity representation of a subject, and :py:meth:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm.score` that computes the score of a subject's sample against a previously enrolled model.
 
 A common example of a biometric algorithm class would compute the mean vector of the features of each enrolled subject, and the scoring would be done by measuring the distance between the unknown identity vector and the enrolled mean vector.
 
 .. py:method:: BiometricAlgorithm.enroll(reference_sample)
 
-  The :py:meth:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm.enroll` method takes extracted features (data that went trough transformers) of the *reference* samples as input.
-  It should save (on memory or on disk) a representation of the identity of each subject for later comparison with the :py:meth:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm.score` method.
+  The :py:meth:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm.enroll` method takes extracted features (data that went through transformers) of the *reference* samples as input.
+  It should save (on memory or disk) a representation of the identity of each subject for later comparison with the :py:meth:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm.score` method.
 
 
 .. py:method:: BiometricAlgorithm.score(model,probe_sample)
 
-  The :py:meth:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm.score` method also takes extracted features (data that went trough transformers) as input, but coming from the *probe* samples.
+  The :py:meth:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm.score` method also takes extracted features (data that went through transformers) as input but coming from the *probe* samples.
   It should compare the probe sample to the model and output a similarity score.
 
 
-Here is a simple example of a custom :py:class:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm` implementation that compute a model with the mean of multiple reference samples, and measures the inverse of the distance as similarity score.
+Here is a simple example of a custom :py:class:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm` implementation that computes a model with the mean of multiple reference samples, and measures the inverse of the distance as a similarity score.
 
 .. code-block:: python
 
@@ -175,7 +175,7 @@ This will create a ``results`` folder with a ``scores-dev`` file in it containin
 Minimal example of the vanilla-biometrics pipeline
 --------------------------------------------------
 
-Find below a complete file containing a Transformer, a Biometric Algorithm and the construction of the pipeline:
+Find below a complete file containing a Transformer, a Biometric Algorithm, and the construction of the pipeline:
 
 
 .. This raw html is used to create a "hidden" code block that can be revealed by clicking on its summary
