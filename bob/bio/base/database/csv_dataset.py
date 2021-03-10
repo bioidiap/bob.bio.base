@@ -14,7 +14,7 @@ import logging
 import bob.db.base
 from bob.bio.base.pipelines.vanilla_biometrics.abstract_classes import Database
 from bob.extension.download import search_file
-from bob.pipelines.datasets import CSVToSampleLoader
+from bob.pipelines.sample_loaders import CSVToSampleLoader
 
 
 logger = logging.getLogger(__name__)
@@ -109,7 +109,7 @@ class CSVToSampleLoaderBiometrics(CSVToSampleLoader):
 
         dataset_original_directory: str
             Path of where data is stored
-        
+
         extension: str
             Default file extension
 
@@ -219,10 +219,10 @@ class CSVDataset(Database):
         protocol_na,e: str
           The name of the protocol
 
-        csv_to_sample_loader: `bob.pipelines.datasets.CSVToSampleLoader`
+        csv_to_sample_loader: `bob.pipelines.sample_loaders.CSVToSampleLoader`
             Base class that whose objective is to generate :any:`bob.pipelines.Sample`
             and/or :any:`bob.pipelines.SampleSet` from csv rows
-    
+
 
     """
 
@@ -470,7 +470,7 @@ class CSVDatasetZTNorm(Database):
     """
     Generic filelist dataset for :any:`bob.bio.base.pipelines.vanilla_biometrics.ZTNormPipeline` pipelines.
     Check :any:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
-    interface. 
+    interface.
 
     This dataset interface takes as in put a :any:`CSVDataset` as input and have two extra methods:
     :any:`CSVDatasetZTNorm.zprobes` and :any:`CSVDatasetZTNorm.treferences`.
@@ -490,7 +490,7 @@ class CSVDatasetZTNorm(Database):
 
     Parameters
     ----------
-    
+
       database: :any:`CSVDataset`
          :any:`CSVDataset` to be aggregated
 
@@ -626,7 +626,7 @@ class CSVDatasetCrossValidation:
     samples_for_enrollment: float
       Number of samples used for enrollment
 
-    csv_to_sample_loader: `bob.pipelines.datasets.CSVToSampleLoader`
+    csv_to_sample_loader: `bob.pipelines.sample_loaders.CSVToSampleLoader`
         Base class that whose objective is to generate :any:`bob.pipelines.Sample`
         and/or :any:`bob.pipelines.SampleSet` from csv rows
 
