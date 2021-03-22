@@ -26,7 +26,7 @@ from bob.bio.base.database import FileListBioDatabase
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import make_pipeline
 from bob.pipelines import wrap
-from bob.pipelines.datasets import AnnotationsLoader
+from bob.pipelines.sample_loaders import AnnotationsLoader
 
 
 legacy_example_dir = os.path.realpath(
