@@ -5,6 +5,7 @@
 """A set of utilities to load score files with different formats.
 """
 
+import pandas
 import numpy
 import csv
 import tarfile
@@ -586,3 +587,47 @@ def _split_cmc_scores(score_lines, real_id_index, probe_name_index=None, claimed
       numpy.array(pos_dict[probe_name],
                   numpy.float64) if probe_name in pos_dict else None
   ) for probe_name in probe_names]
+
+
+def csv_split_vuln(csv_score_file, licit_column="probe_attack_type", licit_value="licit"):
+    """Loads vulnerability scores from a CSV score file.
+
+    Returns the scores split between positive and negative as well as licit
+    and presentation attack (spoof).
+
+    The CSV must contain a column with the value of `licit_column` with each
+    licit probe containing the same string as in `licit_value`, and the
+    spoofing probes containing any other value ('spoof', or an attack type).
+
+    Parameters
+    ----------
+
+    csv_score_file: str
+        The path to a CSV file containing all the scores
+
+    licit_column: str
+        The column header in the CSV file differentiating the licit scores from
+        the presentation attack scores.
+
+    licit_value: any
+        The value of the licit scores rows in the `licit_column` of the CSV.
+
+    Returns
+    -------
+
+    (negatives_licit, positive_licit), (negative_spoof, positive_spoof): 1D lists
+        The licit and spoof scores for negative and positive probes.
+    """
+    logger.debug(f"Loading CSV file: '{csv_score_file}'")
+    dataframe = pandas.read_csv(csv_score_file)
+
+
+    neg_licit = dataframe[(dataframe[licit_column] == licit_value) & (dataframe.probe_reference_id != dataframe.bio_ref_subject_id)]["score"]
+    pos_licit = dataframe[(dataframe[licit_column] == licit_value) & (dataframe.probe_reference_id == dataframe.bio_ref_subject_id)]["score"]
+
+    neg_spoof = dataframe[(dataframe[licit_column] != licit_value) & (dataframe.probe_reference_id != dataframe.bio_ref_subject_id)]["score"]
+    pos_spoof = dataframe[(dataframe[licit_column] != licit_value) & (dataframe.probe_reference_id == dataframe.bio_ref_subject_id)]["score"]
+
+    logger.debug(f"Found {len(neg_licit)} negative and {len(pos_licit)} positive licit scores, and {len(neg_spoof)} negative and {len(pos_spoof)} positive spoof scores.")
+
+    return (neg_licit.to_numpy(), pos_licit.to_numpy()), (neg_spoof.to_numpy(), pos_spoof.to_numpy())

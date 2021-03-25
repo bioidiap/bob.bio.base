@@ -4,7 +4,7 @@ import click
 import numpy as np
 import matplotlib.pyplot as mpl
 import bob.measure.script.figure as measure_figure
-from bob.measure.utils import get_fta_list
+from bob.measure.utils import get_fta_list, get_thres
 from bob.measure import (
     frr_threshold, far_threshold, farfrr,
     ppndf, min_weighted_error_rate_threshold
@@ -70,23 +70,59 @@ class HistVuln(measure_figure.Hist):
             neg[0], n=1, label='Zero-effort impostors', alpha=0.8, color='C0'
         )
         self._density_hist(
-            neg[1], n=2, label='Presentation attack', alpha=0.4, color='C7',
+            pos[1], n=2, label='Presentation attack', alpha=0.4, color='C7',
             hatch='\\\\'
         )
 
-    def _lines(self, threshold, label, neg, pos, idx, **kwargs):
-        if 'iapmr_line' not in self._ctx.meta or self._ctx.meta['iapmr_line']:
-            # plot vertical line
-            super(HistVuln, self)._lines(threshold, label, neg, pos, idx)
+    def _get_neg_pos_thres(self, idx, input_scores, input_names):
+        """Get scores and threshold for the given system at index idx for vuln
 
-            # plot iapmr_line
-            iapmr, _ = farfrr(neg[1], pos[0], threshold)
+        Returns
+        -------
+        dev_neg, dev_pos, eval_neg, eval_pos: 2D arrays
+            The scores negatives and positives for each set. Each element
+            contains two lists: licit [0] and spoof [1]
+        threshold: int
+            The value of the threshold computed on the `dev` set licit scores.
+        """
+        # input_scores: [dev/eval][licit/spoof][neg/pos][sample]
+        neg_list, pos_list, _ = get_fta_list(
+            [licit_spoof for dev_eval in input_scores for licit_spoof in dev_eval]
+        )
+
+        length = len(neg_list)
+        step = 4 if self._eval else 2
+        dev_neg = [neg_list[x] for x in range(0, length, step)]
+        dev_pos = [pos_list[x] for x in range(0, length, step)]
+        dev_neg.extend([neg_list[x] for x in range(1, length, step)])
+        dev_pos.extend([pos_list[x] for x in range(1, length, step)])
+        eval_neg = eval_pos = None
+        if self._eval:
+            eval_neg = [neg_list[x] for x in range(2, length, step)]
+            eval_pos = [pos_list[x] for x in range(2, length, step)]
+            eval_pos.extend([pos_list[x] for x in range(3, length, step)])
+            eval_neg.extend([neg_list[x] for x in range(3, length, step)])
+
+        threshold = (
+            get_thres(self._criterion, dev_neg[0], dev_pos[0])
+            if self._thres is None
+            else self._thres[idx]
+        )
+        return dev_neg, dev_pos, eval_neg, eval_pos, threshold
+
+    def _lines(self, threshold, label, neg, pos, idx, **kwargs):
+        # plot EER treshold vertical line
+        super(HistVuln, self)._lines(threshold, label, neg, pos, idx)
+
+        if 'iapmr_line' not in self._ctx.meta or self._ctx.meta['iapmr_line']:
+            # Plot iapmr_line (accepted PA vs threshold)
+            iapmr, _ = farfrr(pos[1], [0.], threshold)
             ax2 = mpl.twinx()
             # we never want grid lines on axis 2
             ax2.grid(False)
             real_data = True if 'real_data' not in self._ctx.meta else \
                 self._ctx.meta['real_data']
-            _iapmr_plot(neg[1], threshold, iapmr, real_data=real_data)
+            _iapmr_plot(pos[1], threshold, iapmr, real_data=real_data)
             n = idx % self._step_print
             col = n % self._ncols
             rest_print = self.n_systems - \
@@ -149,7 +185,7 @@ class Epc(VulnPlot):
     def compute(self, idx, input_scores, input_names):
         ''' Plot EPC for vuln'''
         # extract pos and negative and remove NaNs
-        neg_list, pos_list, _ = get_fta_list(input_scores)
+        neg_list, pos_list, _ = get_fta_list([s for l in input_scores for s in l])
         licit_dev_neg, licit_dev_pos = neg_list[0], pos_list[0]
         licit_eval_neg, licit_eval_pos = neg_list[1], pos_list[1]
         spoof_eval_neg = neg_list[3]

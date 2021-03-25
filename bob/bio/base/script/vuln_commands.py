@@ -12,7 +12,7 @@ from bob.extension.scripts.click_helper import (
 )
 from bob.core import random
 from bob.io.base import create_directories_safe
-from bob.bio.base.score import load
+from bob.bio.base.score.load import csv_split_vuln
 from . import vuln_figure as figure
 
 LOGGER = logging.getLogger(__name__)
@@ -140,7 +140,7 @@ def roc(ctx, scores, real_data, **kwargs):
 
       $ bob vuln roc -v scores-{licit,spoof}
   """
-  process = figure.RocVuln(ctx, scores, True, load.split, real_data, False)
+  process = figure.RocVuln(ctx, scores, True, csv_split_vuln, real_data, False)
   process.run()
 
 
@@ -180,7 +180,7 @@ def det(ctx, scores, real_data, **kwargs):
 
       $ bob vuln det -v scores-{licit,spoof}
   """
-  process = figure.DetVuln(ctx, scores, True, load.split, real_data, False)
+  process = figure.DetVuln(ctx, scores, True, csv_split_vuln, real_data, False)
   process.run()
 
 
@@ -224,7 +224,7 @@ def epc(ctx, scores, **kwargs):
 
       $ bob vuln epc -v {licit,spoof}/scores-{dev,eval}
   """
-  process = figure.Epc(ctx, scores, True, load.split)
+  process = figure.Epc(ctx, scores, True, csv_split_vuln)
   process.run()
 
 
@@ -293,19 +293,19 @@ def epsc(ctx, scores, criteria, var_param, three_d, sampling,
       ctx.meta['iapmr'] = False
     ctx.meta['sampling'] = sampling
     process = figure.Epsc3D(
-        ctx, scores, True, load.split,
+        ctx, scores, True, csv_split_vuln,
         criteria, var_param, fixed_params
     )
   else:
     process = figure.Epsc(
-        ctx, scores, True, load.split,
+        ctx, scores, True, csv_split_vuln,
         criteria, var_param, fixed_params
     )
   process.run()
 
 
 @click.command()
-@common_options.scores_argument(nargs=-1, min_arg=2)
+@common_options.scores_argument(nargs=-1, min_arg=1)
 @common_options.output_plot_file_option(default_out='hist.pdf')
 @common_options.n_bins_option()
 @common_options.criterion_option()
@@ -352,14 +352,13 @@ def hist(ctx, scores, evaluation, **kwargs):
 
   Examples:
 
-      $ bob vuln hist -v licit/scores-dev spoof/scores-dev
+      $ bob vuln hist -v results/scores-dev.csv
 
-      $ bob vuln hist -e -v licit/scores-dev licit/scores-eval \
-                          spoof/scores-dev spoof/scores-eval
+      $ bob vuln hist -e -v results/scores-dev.csv results/scores-eval.csv
 
-      $ bob vuln hist -e -v {licit,spoof}/scores-{dev,eval}
+      $ bob vuln hist -e -v results/scores-{dev,eval}.csv
   '''
-  process = figure.HistVuln(ctx, scores, evaluation, load.split)
+  process = figure.HistVuln(ctx, scores, evaluation, csv_split_vuln)
   process.run()
 
 
@@ -397,5 +396,5 @@ def fmr_iapmr(ctx, scores, **kwargs):
 
       $ bob vuln fmr_iapmr -v {licit,spoof}/scores-{dev,eval}
   """
-  process = figure.FmrIapmr(ctx, scores, True, load.split)
+  process = figure.FmrIapmr(ctx, scores, True, csv_split_vuln)
   process.run()
