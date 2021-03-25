@@ -7,6 +7,5 @@ bob.bio.spear
 bob.bio.vein
 bob.learn.linear
 gridtk
-bob.db.youtube
 bob.pipelines
 dask
