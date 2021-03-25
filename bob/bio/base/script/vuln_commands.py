@@ -2,7 +2,7 @@
 """
 
 import os
-import logging
+import csv
 import numpy
 import click
 from click.types import FLOAT
@@ -10,12 +10,12 @@ from bob.measure.script import common_options
 from bob.extension.scripts.click_helper import (
     verbosity_option, bool_option, list_float_option
 )
-from bob.core import random
+from bob.core import random, log
 from bob.io.base import create_directories_safe
 from bob.bio.base.score.load import csv_split_vuln
 from . import vuln_figure as figure
 
-LOGGER = logging.getLogger(__name__)
+logger = log.setup(__name__)
 NUM_GENUINE_ACCESS = 5000
 NUM_ZEIMPOSTORS = 5000
 NUM_PA = 5000
@@ -47,9 +47,9 @@ def gen_score_distr(mean_gen, mean_zei, mean_pa, sigma_gen=1, sigma_zei=1,
   return genuine_scores, zei_scores, pa_scores
 
 
-def write_scores_to_file(neg, pos, filename, attack=False):
-  """Writes score distributions into 4-column score files. For the format of
-    the 4-column score files, please refer to Bob's documentation.
+def write_scores_to_file(neg_licit, pos_licit, neg_spoof, pos_spoof, filename):
+  """Writes score distributions into a CSV score file. For the format of
+    the score files, please refer to Bob's documentation.
 
   Parameters
   ----------
@@ -60,15 +60,19 @@ def write_scores_to_file(neg, pos, filename, attack=False):
   filename : str
       The path to write the score to.
   """
+  logger.info(f"Creating score file '{filename}'")
   create_directories_safe(os.path.dirname(filename))
   with open(filename, 'wt') as f:
-    for i in pos:
-      f.write('x x foo %f\n' % i)
-    for i in neg:
-      if attack:
-        f.write('x attack foo %f\n' % i)
-      else:
-        f.write('x y foo %f\n' % i)
+    csv_writer = csv.writer(f)
+    csv_writer.writerow(["bio_ref_subject_id", "probe_reference_id", "probe_attack_type", "score"])
+    for score in neg_licit:
+      csv_writer.writerow(["x", "y", "licit", score])
+    for score in pos_licit:
+      csv_writer.writerow(["x", "x", "licit", score])
+    for score in neg_spoof:
+      csv_writer.writerow(["x", "y", "pai", score])
+    for score in pos_spoof:
+      csv_writer.writerow(["x", "x", "pai", score])
 
 
 @click.command()
@@ -92,16 +96,10 @@ def gen(outdir, mean_gen, mean_zei, mean_pa, **kwargs):
       mean_gen, mean_zei, mean_pa)
 
   # Write the data into files
-  write_scores_to_file(zei_dev, genuine_dev,
-                       os.path.join(outdir, 'licit', 'scores-dev'))
-  write_scores_to_file(zei_eval, genuine_eval,
-                       os.path.join(outdir, 'licit', 'scores-eval'))
-  write_scores_to_file(pa_dev, genuine_dev,
-                       os.path.join(outdir, 'spoof', 'scores-dev'),
-                       attack=True)
-  write_scores_to_file(pa_eval, genuine_eval,
-                       os.path.join(outdir, 'spoof', 'scores-eval'),
-                       attack=True)
+  write_scores_to_file(zei_dev, genuine_dev, [], pa_dev,
+                       os.path.join(outdir, 'scores-dev.csv'))
+  write_scores_to_file(zei_eval, genuine_eval, [], pa_eval,
+                       os.path.join(outdir, 'scores-eval.csv'))
 
 
 @click.command()
@@ -289,7 +287,7 @@ def epsc(ctx, scores, criteria, var_param, three_d, sampling,
   fixed_params = ctx.meta.get('fixed_params', [0.5])
   if three_d:
     if (ctx.meta['wer'] and ctx.meta['iapmr']):
-      LOGGER.info('Cannot plot both WER and IAPMR in 3D. Will turn IAPMR off.')
+      logger.info('Cannot plot both WER and IAPMR in 3D. Will turn IAPMR off.')
       ctx.meta['iapmr'] = False
     ctx.meta['sampling'] = sampling
     process = figure.Epsc3D(
