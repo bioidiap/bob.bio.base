@@ -13,7 +13,7 @@ from bob.measure import plot
 from . import error_utils
 import logging
 
-LOGGER = logging.getLogger("bob.pad.base")
+LOGGER = logging.getLogger("bob.bio.base")
 
 
 def _iapmr_dot(threshold, iapmr, real_data, **kwargs):
@@ -147,7 +147,7 @@ class Epc(VulnPlot):
                                      "spoof}/{dev,eval}")
 
     def compute(self, idx, input_scores, input_names):
-        ''' Plot EPC for PAD'''
+        ''' Plot EPC for vuln'''
         # extract pos and negative and remove NaNs
         neg_list, pos_list, _ = get_fta_list(input_scores)
         licit_dev_neg, licit_dev_pos = neg_list[0], pos_list[0]
@@ -237,7 +237,7 @@ class Epsc(VulnPlot, measure_figure.GridSubplot):
         self._ncols += 1 if self._wer else 0
 
     def compute(self, idx, input_scores, input_names):
-        ''' Plot EPSC for PAD'''
+        ''' Plot EPSC for vuln'''
         licit_dev_neg = input_scores[0][0]
         licit_dev_pos = input_scores[0][1]
         licit_eval_neg = input_scores[1][0]
@@ -355,7 +355,7 @@ class Epsc(VulnPlot, measure_figure.GridSubplot):
 
 
 class Epsc3D(Epsc):
-    ''' 3D EPSC plots for PAD'''
+    ''' 3D EPSC plots for vuln'''
 
     def compute(self, idx, input_scores, input_names):
         ''' Implements plots'''

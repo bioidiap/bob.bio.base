@@ -351,13 +351,13 @@ def test_sort():
 
 
 def test_det_vuln():
-    licit_dev = pkg_resources.resource_filename('bob.pad.base.test',
+    licit_dev = pkg_resources.resource_filename('bob.bio.base.test',
                                                 'data/licit/scores-dev')
-    licit_test = pkg_resources.resource_filename('bob.pad.base.test',
+    licit_test = pkg_resources.resource_filename('bob.bio.base.test',
                                                  'data/licit/scores-eval')
-    spoof_dev = pkg_resources.resource_filename('bob.pad.base.test',
+    spoof_dev = pkg_resources.resource_filename('bob.bio.base.test',
                                                 'data/spoof/scores-dev')
-    spoof_test = pkg_resources.resource_filename('bob.pad.base.test',
+    spoof_test = pkg_resources.resource_filename('bob.bio.base.test',
                                                  'data/spoof/scores-eval')
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -370,13 +370,13 @@ def test_det_vuln():
 
 
 def test_fmr_iapmr_vuln():
-    licit_dev = pkg_resources.resource_filename('bob.pad.base.test',
+    licit_dev = pkg_resources.resource_filename('bob.bio.base.test',
                                                 'data/licit/scores-dev')
-    licit_test = pkg_resources.resource_filename('bob.pad.base.test',
+    licit_test = pkg_resources.resource_filename('bob.bio.base.test',
                                                  'data/licit/scores-eval')
-    spoof_dev = pkg_resources.resource_filename('bob.pad.base.test',
+    spoof_dev = pkg_resources.resource_filename('bob.bio.base.test',
                                                 'data/spoof/scores-dev')
-    spoof_test = pkg_resources.resource_filename('bob.pad.base.test',
+    spoof_test = pkg_resources.resource_filename('bob.bio.base.test',
                                                  'data/spoof/scores-eval')
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -394,13 +394,13 @@ def test_fmr_iapmr_vuln():
 
 
 def test_hist_vuln():
-    licit_dev = pkg_resources.resource_filename('bob.pad.base.test',
+    licit_dev = pkg_resources.resource_filename('bob.bio.base.test',
                                                 'data/licit/scores-dev')
-    licit_test = pkg_resources.resource_filename('bob.pad.base.test',
+    licit_test = pkg_resources.resource_filename('bob.bio.base.test',
                                                  'data/licit/scores-eval')
-    spoof_dev = pkg_resources.resource_filename('bob.pad.base.test',
+    spoof_dev = pkg_resources.resource_filename('bob.bio.base.test',
                                                 'data/spoof/scores-dev')
-    spoof_test = pkg_resources.resource_filename('bob.pad.base.test',
+    spoof_test = pkg_resources.resource_filename('bob.bio.base.test',
                                                  'data/spoof/scores-eval')
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -420,13 +420,13 @@ def test_hist_vuln():
 
 
 def test_epc_vuln():
-    licit_dev = pkg_resources.resource_filename('bob.pad.base.test',
+    licit_dev = pkg_resources.resource_filename('bob.bio.base.test',
                                                 'data/licit/scores-dev')
-    licit_test = pkg_resources.resource_filename('bob.pad.base.test',
+    licit_test = pkg_resources.resource_filename('bob.bio.base.test',
                                                  'data/licit/scores-eval')
-    spoof_dev = pkg_resources.resource_filename('bob.pad.base.test',
+    spoof_dev = pkg_resources.resource_filename('bob.bio.base.test',
                                                 'data/spoof/scores-dev')
-    spoof_test = pkg_resources.resource_filename('bob.pad.base.test',
+    spoof_test = pkg_resources.resource_filename('bob.bio.base.test',
                                                  'data/spoof/scores-eval')
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -444,13 +444,13 @@ def test_epc_vuln():
 
 
 def test_epsc_vuln():
-    licit_dev = pkg_resources.resource_filename('bob.pad.base.test',
+    licit_dev = pkg_resources.resource_filename('bob.bio.base.test',
                                                 'data/licit/scores-dev')
-    licit_test = pkg_resources.resource_filename('bob.pad.base.test',
+    licit_test = pkg_resources.resource_filename('bob.bio.base.test',
                                                  'data/licit/scores-eval')
-    spoof_dev = pkg_resources.resource_filename('bob.pad.base.test',
+    spoof_dev = pkg_resources.resource_filename('bob.bio.base.test',
                                                 'data/spoof/scores-dev')
-    spoof_test = pkg_resources.resource_filename('bob.pad.base.test',
+    spoof_test = pkg_resources.resource_filename('bob.bio.base.test',
                                                  'data/spoof/scores-eval')
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -468,13 +468,13 @@ def test_epsc_vuln():
         assert_click_runner_result(result)
 
 def test_epsc_3D_vuln():
-    licit_dev = pkg_resources.resource_filename('bob.pad.base.test',
+    licit_dev = pkg_resources.resource_filename('bob.bio.base.test',
                                                 'data/licit/scores-dev')
-    licit_test = pkg_resources.resource_filename('bob.pad.base.test',
+    licit_test = pkg_resources.resource_filename('bob.bio.base.test',
                                                  'data/licit/scores-eval')
-    spoof_dev = pkg_resources.resource_filename('bob.pad.base.test',
+    spoof_dev = pkg_resources.resource_filename('bob.bio.base.test',
                                                 'data/spoof/scores-dev')
-    spoof_test = pkg_resources.resource_filename('bob.pad.base.test',
+    spoof_test = pkg_resources.resource_filename('bob.bio.base.test',
                                                  'data/spoof/scores-eval')
     runner = CliRunner()
     with runner.isolated_filesystem():

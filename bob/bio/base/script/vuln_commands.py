@@ -1,4 +1,4 @@
-"""The main entry for bob.pad and its(click-based) scripts.
+"""The click-based vulnerability analysis commands.
 """
 
 import os
