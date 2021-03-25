@@ -116,6 +116,7 @@ setup(
       # main entry for bob bio cli
       'bob.cli': [
         'bio               = bob.bio.base.script.bio:bio',
+        'vulnerability     = bob.bio.base.script.vulnerability:vulnerability'
       ],
 
       # bob bio scripts
@@ -149,7 +150,16 @@ setup(
         'vanilla-biometrics-ztnorm = bob.bio.base.script.vanilla_biometrics_ztnorm:vanilla_biometrics_ztnorm'
      ],
 
-     
+       # Vulnerability analysis commands
+      'bob.vuln.cli':[
+        'hist              = bob.bio.base.script.vuln_commands:hist',
+        'det               = bob.bio.base.script.vuln_commands:det',
+        'roc               = bob.bio.base.script.vuln_commands:roc',
+        'epc               = bob.bio.base.script.vuln_commands:epc',
+        'epsc              = bob.bio.base.script.vuln_commands:epsc',
+        'gen               = bob.bio.base.script.vuln_commands:gen',
+        'fmr_iapmr         = bob.bio.base.script.vuln_commands:fmr_iapmr',
+     ],
 
    },
 
