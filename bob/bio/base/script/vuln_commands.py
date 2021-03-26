@@ -19,6 +19,7 @@ logger = log.setup(__name__)
 NUM_GENUINE_ACCESS = 5000
 NUM_ZEIMPOSTORS = 5000
 NUM_PA = 5000
+NUM_NEG_PA = 5000
 
 
 def fnmr_at_option(dflt=' ', **kwargs):
@@ -32,19 +33,21 @@ def fnmr_at_option(dflt=' ', **kwargs):
   )
 
 
-def gen_score_distr(mean_gen, mean_zei, mean_pa, sigma_gen=1, sigma_zei=1,
-                    sigma_pa=1):
+def gen_score_distr(mean_gen, mean_zei, mean_pa, mean_npa, sigma_gen=1,
+                    sigma_zei=1, sigma_pa=1, sigma_npa=1):
   mt = random.mt19937()  # initialise the random number generator
 
   genuine_generator = random.normal(numpy.float32, mean_gen, sigma_gen)
   zei_generator = random.normal(numpy.float32, mean_zei, sigma_zei)
   pa_generator = random.normal(numpy.float32, mean_pa, sigma_pa)
+  neg_pa_generator = random.normal(numpy.float32, mean_npa, sigma_npa)
 
   genuine_scores = [genuine_generator(mt) for i in range(NUM_GENUINE_ACCESS)]
   zei_scores = [zei_generator(mt) for i in range(NUM_ZEIMPOSTORS)]
   pa_scores = [pa_generator(mt) for i in range(NUM_PA)]
+  neg_pa_scores = [neg_pa_generator(mt) for i in range(NUM_NEG_PA)]
 
-  return genuine_scores, zei_scores, pa_scores
+  return genuine_scores, zei_scores, pa_scores, neg_pa_scores
 
 
 def write_scores_to_file(neg_licit, pos_licit, neg_spoof, pos_spoof, filename):
@@ -80,8 +83,9 @@ def write_scores_to_file(neg_licit, pos_licit, neg_spoof, pos_spoof, filename):
 @click.option('-mg', '--mean-gen', default=7, type=FLOAT, show_default=True)
 @click.option('-mz', '--mean-zei', default=3, type=FLOAT, show_default=True)
 @click.option('-mp', '--mean-pa', default=5, type=FLOAT, show_default=True)
+@click.option('-mnp', '--mean-npa', default=3, type=FLOAT, show_default=True)
 @verbosity_option()
-def gen(outdir, mean_gen, mean_zei, mean_pa, **kwargs):
+def gen(outdir, mean_gen, mean_zei, mean_pa, mean_npa, **kwargs):
   """Generate random scores.
   Generates random scores for three types of verification attempts:
   genuine users, zero-effort impostors and spoofing attacks and writes them
@@ -90,15 +94,15 @@ def gen(outdir, mean_gen, mean_zei, mean_pa, **kwargs):
   parameter. The generated scores can be used as hypothetical datasets.
   """
   # Generate the data
-  genuine_dev, zei_dev, pa_dev = gen_score_distr(
-      mean_gen, mean_zei, mean_pa)
-  genuine_eval, zei_eval, pa_eval = gen_score_distr(
-      mean_gen, mean_zei, mean_pa)
+  genuine_dev, zei_dev, pa_dev, npa_dev = gen_score_distr(
+      mean_gen, mean_zei, mean_pa, mean_npa)
+  genuine_eval, zei_eval, pa_eval, npa_eval = gen_score_distr(
+      mean_gen, mean_zei, mean_pa, mean_npa)
 
   # Write the data into files
-  write_scores_to_file(zei_dev, genuine_dev, [], pa_dev,
+  write_scores_to_file(zei_dev, genuine_dev, npa_dev, pa_dev,
                        os.path.join(outdir, 'scores-dev.csv'))
-  write_scores_to_file(zei_eval, genuine_eval, [], pa_eval,
+  write_scores_to_file(zei_eval, genuine_eval, npa_eval, pa_eval,
                        os.path.join(outdir, 'scores-eval.csv'))
 
 
