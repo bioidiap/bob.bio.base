@@ -5,7 +5,6 @@
 """A set of utilities to load score files with different formats.
 """
 
-import pandas
 import numpy
 import csv
 import tarfile
@@ -13,7 +12,7 @@ import os
 import sys
 
 import logging
-logger = logging.getLogger('bob.bio.base')
+logger = logging.getLogger(__name__)
 
 
 def open_file(filename, mode='rt'):
@@ -547,6 +546,18 @@ def _iterate_score_file(filename):
     splits[-1] = float(splits[-1])
     yield splits
 
+def _iterate_csv_score_file(filename):
+  """Opens a CSV score file for reading and yields each line in an iterable.
+
+  The `score` field of the line will be transformed to float, the other
+  elements will be str
+  """
+  opened = open_file(filename)
+  reader = csv.DictReader(opened)
+  for row in reader:
+    row['score'] = float(row['score'])
+    yield row
+
 
 def _split_scores(score_lines, real_id_index, claimed_id_index=0, score_index=-1):
   """Take the output of :py:func:`four_column` or :py:func:`five_column` and return negatives and positives.
@@ -589,45 +600,62 @@ def _split_cmc_scores(score_lines, real_id_index, probe_name_index=None, claimed
   ) for probe_name in probe_names]
 
 
-def csv_split_vuln(csv_score_file, licit_column="probe_attack_type", licit_value="licit"):
-    """Loads vulnerability scores from a CSV score file.
+def _split_vuln_scores(
+  score_lines,
+  real_id_col="probe_reference_id",
+  claimed_id_col="bio_ref_subject_id",
+  score_col="score",
+  licit_col="probe_attack_type",
+  licit_val="licit",
+):
+  """Returns separated negatives and positives scores for licit and spoof.
+  """
+  split_scores = {"neg_licit":[],"pos_licit":[],"neg_spoof":[],"pos_spoof":[]}
+  for row in score_lines:
+    neg_pos = "pos" if row[claimed_id_col] == row[real_id_col] else "neg"
+    licit_spoof = "licit" if row[licit_col] == licit_val else "spoof"
+    split_scores[f"{neg_pos}_{licit_spoof}"].append(row[score_col])
 
-    Returns the scores split between positive and negative as well as licit
-    and presentation attack (spoof).
-
-    The CSV must contain a column with the value of `licit_column` with each
-    licit probe containing the same string as in `licit_value`, and the
-    spoofing probes containing any other value ('spoof', or an attack type).
-
-    Parameters
-    ----------
-
-    csv_score_file: str
-        The path to a CSV file containing all the scores
-
-    licit_column: str
-        The column header in the CSV file differentiating the licit scores from
-        the presentation attack scores.
-
-    licit_value: any
-        The value of the licit scores rows in the `licit_column` of the CSV.
-
-    Returns
-    -------
-
-    (negatives_licit, positive_licit), (negative_spoof, positive_spoof): 1D lists
-        The licit and spoof scores for negative and positive probes.
-    """
-    logger.debug(f"Loading CSV file: '{csv_score_file}'")
-    dataframe = pandas.read_csv(csv_score_file)
+  logger.debug(
+      f"Found {len(split_scores['neg_licit'])} negative and "
+      f"{len(split_scores['pos_licit'])} positive licit scores, and "
+      f"{len(split_scores['neg_spoof'])} negative and "
+      f"{len(split_scores['pos_spoof'])} positive spoof scores."
+  )
+  for key, val in split_scores.items():
+    split_scores[key] = numpy.array(val)
+  return split_scores
 
 
-    neg_licit = dataframe[(dataframe[licit_column] == licit_value) & (dataframe.probe_reference_id != dataframe.bio_ref_subject_id)]["score"]
-    pos_licit = dataframe[(dataframe[licit_column] == licit_value) & (dataframe.probe_reference_id == dataframe.bio_ref_subject_id)]["score"]
+def split_csv_vuln(filename, licit_column="probe_attack_type", licit_value="licit"):
+  """Loads vulnerability scores from a CSV score file.
 
-    neg_spoof = dataframe[(dataframe[licit_column] != licit_value) & (dataframe.probe_reference_id != dataframe.bio_ref_subject_id)]["score"]
-    pos_spoof = dataframe[(dataframe[licit_column] != licit_value) & (dataframe.probe_reference_id == dataframe.bio_ref_subject_id)]["score"]
+  Returns the scores split between positive and negative as well as licit
+  and presentation attack (spoof).
 
-    logger.debug(f"Found {len(neg_licit)} negative and {len(pos_licit)} positive licit scores, and {len(neg_spoof)} negative and {len(pos_spoof)} positive spoof scores.")
+  The CSV must contain a column with the value of `licit_column` with each
+  licit probe containing the same string as in `licit_value`, and the
+  spoofing probes containing any other value ('spoof', or an attack type).
 
-    return (neg_licit.to_numpy(), pos_licit.to_numpy()), (neg_spoof.to_numpy(), pos_spoof.to_numpy())
+  Parameters
+  ----------
+
+  filename: str
+    The path to a CSV file containing all the scores
+
+  licit_column: str
+    The column header in the CSV file differentiating the licit scores from
+    the presentation attack scores.
+
+  licit_value: any
+    The value of the licit scores rows in the `licit_column` of the CSV.
+
+  Returns
+  -------
+
+  split_scores: dict
+    The licit and spoof scores for negative and positive probes.
+  """
+  logger.debug(f"Loading CSV file: '{filename}'")
+  score_lines = _iterate_csv_score_file(filename)
+  return _split_vuln_scores(score_lines)

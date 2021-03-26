@@ -12,7 +12,7 @@ from bob.extension.scripts.click_helper import (
 )
 from bob.core import random, log
 from bob.io.base import create_directories_safe
-from bob.bio.base.score.load import csv_split_vuln
+from bob.bio.base.score.load import split_csv_vuln
 from . import vuln_figure as figure
 
 logger = log.setup(__name__)
@@ -142,12 +142,12 @@ def roc(ctx, scores, real_data, **kwargs):
 
       $ bob vuln roc -v scores-{licit,spoof}
   """
-  process = figure.RocVuln(ctx, scores, True, csv_split_vuln, real_data, False)
+  process = figure.RocVuln(ctx, scores, True, split_csv_vuln, real_data, False)
   process.run()
 
 
 @click.command()
-@common_options.scores_argument(min_arg=2, nargs=-1)
+@common_options.scores_argument(min_arg=1, nargs=-1)
 @common_options.output_plot_file_option(default_out='det.pdf')
 @common_options.legends_option()
 @common_options.no_legend_option()
@@ -182,12 +182,12 @@ def det(ctx, scores, real_data, **kwargs):
 
       $ bob vuln det -v scores-{licit,spoof}
   """
-  process = figure.DetVuln(ctx, scores, True, csv_split_vuln, real_data, False)
+  process = figure.DetVuln(ctx, scores, True, split_csv_vuln, real_data, False)
   process.run()
 
 
 @click.command()
-@common_options.scores_argument(min_arg=2, force_eval=True, nargs=-1)
+@common_options.scores_argument(min_arg=1, force_eval=True, nargs=-1)
 @common_options.output_plot_file_option(default_out='epc.pdf')
 @common_options.legends_option()
 @common_options.no_legend_option()
@@ -226,12 +226,12 @@ def epc(ctx, scores, **kwargs):
 
       $ bob vuln epc -v {licit,spoof}/scores-{dev,eval}
   """
-  process = figure.Epc(ctx, scores, True, csv_split_vuln)
+  process = figure.Epc(ctx, scores, True, split_csv_vuln)
   process.run()
 
 
 @click.command()
-@common_options.scores_argument(min_arg=2, force_eval=True, nargs=-1)
+@common_options.scores_argument(min_arg=1, force_eval=True, nargs=-1)
 @common_options.output_plot_file_option(default_out='epsc.pdf')
 @common_options.titles_option()
 @common_options.legends_option()
@@ -295,12 +295,12 @@ def epsc(ctx, scores, criteria, var_param, three_d, sampling,
       ctx.meta['iapmr'] = False
     ctx.meta['sampling'] = sampling
     process = figure.Epsc3D(
-        ctx, scores, True, csv_split_vuln,
+        ctx, scores, True, split_csv_vuln,
         criteria, var_param, fixed_params
     )
   else:
     process = figure.Epsc(
-        ctx, scores, True, csv_split_vuln,
+        ctx, scores, True, split_csv_vuln,
         criteria, var_param, fixed_params
     )
   process.run()
@@ -360,12 +360,12 @@ def hist(ctx, scores, evaluation, **kwargs):
 
       $ bob vuln hist -e -v results/scores-{dev,eval}.csv
   '''
-  process = figure.HistVuln(ctx, scores, evaluation, csv_split_vuln)
+  process = figure.HistVuln(ctx, scores, evaluation, split_csv_vuln)
   process.run()
 
 
 @click.command()
-@common_options.scores_argument(min_arg=2, force_eval=True, nargs=-1)
+@common_options.scores_argument(min_arg=1, force_eval=True, nargs=-1)
 @common_options.output_plot_file_option(default_out='fmr_iapmr.pdf')
 @common_options.legends_option()
 @common_options.no_legend_option()
@@ -398,5 +398,5 @@ def fmr_iapmr(ctx, scores, **kwargs):
 
       $ bob vuln fmr_iapmr -v {licit,spoof}/scores-{dev,eval}
   """
-  process = figure.FmrIapmr(ctx, scores, True, csv_split_vuln)
+  process = figure.FmrIapmr(ctx, scores, True, split_csv_vuln)
   process.run()

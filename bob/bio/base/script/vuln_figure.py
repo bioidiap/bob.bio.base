@@ -4,7 +4,7 @@ import click
 import numpy as np
 import matplotlib.pyplot as mpl
 import bob.measure.script.figure as measure_figure
-from bob.measure.utils import get_fta_list, get_thres
+from bob.measure.utils import get_fta_list, get_thres, remove_nan
 from bob.measure import (
     frr_threshold, far_threshold, farfrr,
     ppndf, min_weighted_error_rate_threshold
@@ -85,29 +85,27 @@ class HistVuln(measure_figure.Hist):
         threshold: int
             The value of the threshold computed on the `dev` set licit scores.
         """
-        # input_scores: [dev/eval][licit/spoof][neg/pos][sample]
-        neg_list, pos_list, _ = get_fta_list(
-            [licit_spoof for dev_eval in input_scores for licit_spoof in dev_eval]
-        )
+        # input_scores: [dev0/eval0/dev1/eval1]{neg/pos_licit/spoof}[sample]
+        neg_licit_list = [remove_nan(scores['neg_licit'])[0] for scores in input_scores]
+        pos_licit_list = [remove_nan(scores['pos_licit'])[0] for scores in input_scores]
+        neg_spoof_list = [remove_nan(scores['neg_spoof'])[0] for scores in input_scores]
+        pos_spoof_list = [remove_nan(scores['pos_spoof'])[0] for scores in input_scores]
+        # neg_licit_list: [dev0/eval0/dev1/eval1][sample]
 
-        length = len(neg_list)
-        step = 4 if self._eval else 2
-        dev_neg = [neg_list[x] for x in range(0, length, step)]
-        dev_pos = [pos_list[x] for x in range(0, length, step)]
-        dev_neg.extend([neg_list[x] for x in range(1, length, step)])
-        dev_pos.extend([pos_list[x] for x in range(1, length, step)])
+        # TODO Does not support multiple system (dev0, dev1, eval0, eval1)
+        dev_neg = (neg_licit_list[0], neg_spoof_list[0])
+        dev_pos = (pos_licit_list[0], pos_spoof_list[0])
         eval_neg = eval_pos = None
         if self._eval:
-            eval_neg = [neg_list[x] for x in range(2, length, step)]
-            eval_pos = [pos_list[x] for x in range(2, length, step)]
-            eval_pos.extend([pos_list[x] for x in range(3, length, step)])
-            eval_neg.extend([neg_list[x] for x in range(3, length, step)])
+            eval_neg = (neg_licit_list[1], neg_spoof_list[1])
+            eval_pos = (pos_licit_list[1], pos_spoof_list[1])
 
         threshold = (
             get_thres(self._criterion, dev_neg[0], dev_pos[0])
             if self._thres is None
             else self._thres[idx]
         )
+        # dev_neg: [licit/spoof][sample]
         return dev_neg, dev_pos, eval_neg, eval_pos, threshold
 
     def _lines(self, threshold, label, neg, pos, idx, **kwargs):
