@@ -13,7 +13,7 @@ from bob.measure import plot
 from . import error_utils
 import logging
 
-LOGGER = logging.getLogger("bob.bio.base")
+LOGGER = logging.getLogger(__name__)
 
 
 def _iapmr_dot(threshold, iapmr, real_data, **kwargs):
