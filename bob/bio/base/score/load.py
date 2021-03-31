@@ -603,27 +603,30 @@ def _split_cmc_scores(score_lines, real_id_index, probe_name_index=None, claimed
 def _split_vuln_scores(
   score_lines,
   real_id_col="probe_reference_id",
-  claimed_id_col="bio_ref_subject_id",
+  claimed_id_col="bio_ref_reference_id",
   score_col="score",
   licit_col="probe_attack_type",
   licit_val="licit",
 ):
   """Returns separated negatives and positives scores for licit and spoof.
   """
-  split_scores = {"neg_licit":[],"pos_licit":[],"neg_spoof":[],"pos_spoof":[]}
+  split_scores = {"licit_neg":[],"licit_pos":[],"spoof":[]}
   for row in score_lines:
-    neg_pos = "pos" if row[claimed_id_col] == row[real_id_col] else "neg"
-    licit_spoof = "licit" if row[licit_col] == licit_val else "spoof"
-    split_scores[f"{neg_pos}_{licit_spoof}"].append(row[score_col])
+    if row[licit_col] == licit_val:
+      if row[claimed_id_col] == row[real_id_col]:
+        split_scores["licit_pos"].append(row[score_col])
+      else:
+        split_scores["licit_neg"].append(row[score_col])
+    else:
+      split_scores["spoof"].append(row[score_col])
 
   logger.debug(
-      f"Found {len(split_scores['neg_licit'])} negative and "
-      f"{len(split_scores['pos_licit'])} positive licit scores, and "
-      f"{len(split_scores['neg_spoof'])} negative and "
-      f"{len(split_scores['pos_spoof'])} positive spoof scores."
+      f"Found {len(split_scores['licit_neg'])} negative (ZEI), "
+      f"{len(split_scores['licit_pos'])} positive (licit), and "
+      f"{len(split_scores['spoof'])} PA (spoof) scores."
   )
   for key, val in split_scores.items():
-    split_scores[key] = numpy.array(val)
+    split_scores[key] = numpy.array(val, dtype=numpy.float64)
   return split_scores
 
 
