@@ -8,6 +8,7 @@ from . import pipelines
 
 from . import script
 from . import test
+from . import score
 
 
 def get_config():

@@ -1,5 +1,51 @@
 from .pipelines import VanillaBiometricsPipeline
 
+import pickle
+import gzip
+
+import os
+
+
+def pickle_compress(path, obj, attempts=5):
+    """
+    Pickle an object, compressed it and save it 
+
+    Parameters
+    ----------
+
+       path: str
+          Path where to save the object
+
+       obj:
+          Object to be saved
+
+       attempts: Serialization attempts
+
+    """
+    for i in range(attempts):
+        try:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            # Trying to get writting right
+            # This might fail in our file system
+            with gzip.open(path, "wb") as f:
+                f.write(pickle.dumps(obj))
+
+            # Testing unpression
+            uncompress_unpickle(path)
+            break
+        except:
+            continue
+    else:
+        # If it fails in the 5 attemps
+        raise EOFError(f"Failed to serialize/desserialize {path}")
+
+
+def uncompress_unpickle(path):
+
+    with gzip.open(path, "rb") as f:
+        return pickle.loads(f.read())
+
+
 from .biometric_algorithms import Distance
 from .score_writers import FourColumnsScoreWriter, CSVScoreWriter
 from .wrappers import (

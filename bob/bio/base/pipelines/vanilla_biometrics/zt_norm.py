@@ -13,6 +13,8 @@ from bob.pipelines import (
     DelayedSampleSet,
     DelayedSampleSetCached,
 )
+
+
 import numpy as np
 import dask
 import functools
@@ -20,9 +22,9 @@ import cloudpickle
 import os
 from .score_writers import FourColumnsScoreWriter
 import copy
-import joblib
 import logging
 from .pipelines import check_valid_pipeline
+from . import pickle_compress, uncompress_unpickle
 
 logger = logging.getLogger(__name__)
 
@@ -596,16 +598,13 @@ class ZTNormCheckpointWrapper(object):
 
         self.force = force
         self.base_dir = base_dir
-        self._score_extension = ".joblib"
+        self._score_extension = ".pickle.gz"
 
     def write_scores(self, samples, path):
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        # open(path, "wb").write(cloudpickle.dumps(samples))
-        joblib.dump(samples, path, compress=4)
+        pickle_compress(path, samples)
 
     def _load(self, path):
-        # return cloudpickle.loads(open(path, "rb").read())
-        return joblib.load(path)
+        return uncompress_unpickle(path)
 
     def _make_name(self, sampleset, biometric_references, for_zt=False):
         # The score file name is composed by sampleset key and the

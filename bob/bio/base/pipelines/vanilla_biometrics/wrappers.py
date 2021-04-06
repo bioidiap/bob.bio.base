@@ -14,7 +14,6 @@ from .abstract_classes import BioAlgorithm
 import bob.pipelines
 import numpy as np
 import h5py
-import cloudpickle
 from .zt_norm import ZTNormPipeline, ZTNormDaskWrapper
 from .legacy import BioAlgorithmLegacy
 from bob.bio.base.transformers import (
@@ -24,10 +23,11 @@ from bob.bio.base.transformers import (
 )
 from bob.pipelines.wrappers import SampleWrapper, CheckpointWrapper
 from bob.pipelines.distributed.sge import SGEMultipleQueuesCluster
-import joblib
 import logging
 from bob.pipelines.utils import isinstance_nested
 import gc
+import time
+from . import pickle_compress, uncompress_unpickle
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         self.biometric_algorithm = biometric_algorithm
         self.force = force
         self._biometric_reference_extension = ".hdf5"
-        self._score_extension = ".joblib"
+        self._score_extension = ".pickle.gz"
 
     def clear_caches(self):
         self.biometric_algorithm.clear_caches()
@@ -101,18 +101,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         return bob.io.base.save(sample.data, path, create_directories=True)
 
     def write_scores(self, samples, path):
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        gc.collect()
-        joblib.dump(samples, path, compress=4)
-
-        # cleaning parent
-        # with open(path, "wb") as f:
-        #    f.write(cloudpickle.dumps(samples))
-        #    f.flush()
-
-        # from bob.pipelines.sample import sample_to_hdf5
-        # with h5py.File(path, "w") as hdf5:
-        #    sample_to_hdf5(samples, hdf5)
+        pickle_compress(path, samples)
 
     def _enroll_sample_set(self, sampleset):
         """
@@ -148,14 +137,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         """
 
         def _load(path):
-            gc.collect()
-            return joblib.load(path)
-
-            # return cloudpickle.loads(open(path, "rb").read())
-
-            # from bob.pipelines.sample import hdf5_to_sample
-            # with h5py.File(path) as hdf5:
-            #    return hdf5_to_sample(hdf5)
+            return uncompress_unpickle(path)
 
         def _make_name(sampleset, biometric_references):
             # The score file name is composed by sampleset key and the
