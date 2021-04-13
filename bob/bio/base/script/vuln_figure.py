@@ -1000,7 +1000,7 @@ class RocVuln(BaseVulnDetRoc):
             )  # FAR point, spoof scenario
 
 
-class FmrIapmr(VulnPlot):
+class FmrIapmr(measure_figure.PlotBase):
     '''FMR vs IAPMR'''
 
     def __init__(self, ctx, scores, evaluation, func_load):
@@ -1009,47 +1009,32 @@ class FmrIapmr(VulnPlot):
         self._split = False
         self._nb_figs = 1
         self._semilogx = ctx.meta.get('semilogx', False)
-        if self._min_arg != 4:
-            raise click.BadParameter("You must provide 4 scores files:{licit,"
-                                     "spoof}/{dev,eval}")
+        if not self._titles:
+            self._titles = [''] * self._nb_figs
+        for i, t in enumerate(self._titles):
+            self._titles[i] = t or "FMR vs IAPMR"
+        self._x_label = self._x_label or "FMR"
+        self._y_label = self._y_label or "IAPMR"
+        if self._min_arg != 2:
+            raise click.BadParameter("You must provide 2 scores files: "
+                                     "scores-{dev,eval}.csv")
 
     def compute(self, idx, input_scores, input_names):
         ''' Implements plots'''
-        licit_eval_neg = input_scores[1][0]
-        licit_eval_pos = input_scores[1][1]
-        spoof_eval_neg = input_scores[3][0]
+        dev_scores = clean_scores(input_scores[0])
+        if self._eval:
+            eval_scores = clean_scores(input_scores[1])
         fmr_list = np.linspace(0, 1, 100)
         iapmr_list = []
         for i, fmr in enumerate(fmr_list):
-            thr = far_threshold(licit_eval_neg, licit_eval_pos, fmr)
-            iapmr_list.append(farfrr(spoof_eval_neg, licit_eval_pos, thr)[0])
+            thr = far_threshold(dev_scores['licit_neg'], dev_scores['licit_pos'], fmr)
+            iapmr_list.append(far_for_threshold(eval_scores['spoof'], thr))
             # re-calculate fmr since threshold might give a different result
             # for fmr.
+            fmr_list[i] = far_for_threshold(eval_scores['licit_neg'], thr)
+        label = self._legends[idx] if self._legends is not None else f'curve {idx+1}'
         logger.info(f"Plot FmrIapmr using: {input_names[1]}")
         if self._semilogx:
             mpl.semilogx(fmr_list, iapmr_list, label=label)
         else:
             mpl.plot(fmr_list, iapmr_list, label=label)
-
-    def end_process(self):
-        ''' Set title, legend, axis labels, grid colors, save figures and
-        close pdf is needed '''
-        # only for plots
-        title = self._title if self._title is not None else "FMR vs IAPMR"
-        if title.replace(' ', ''):
-            mpl.title(title)
-        mpl.xlabel(self._x_label or "FMR")
-        mpl.ylabel(self._y_label or "IAPMR")
-        mpl.grid(True, color=self._grid_color)
-        if self._disp_legend:
-            mpl.legend(loc=self._legend_loc)
-        self._set_axis()
-        fig = mpl.gcf()
-        mpl.xticks(rotation=self._x_rotation)
-
-        self._pdf_page.savefig(fig)
-
-        # do not want to close PDF when running evaluate
-        if 'PdfPages' in self._ctx.meta and \
-                ('closef' not in self._ctx.meta or self._ctx.meta['closef']):
-            self._pdf_page.close()
