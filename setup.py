@@ -160,6 +160,7 @@ setup(
         'epsc              = bob.bio.base.script.vuln_commands:epsc',
         'gen               = bob.bio.base.script.vuln_commands:gen',
         'fmr_iapmr         = bob.bio.base.script.vuln_commands:fmr_iapmr',
+        'evaluate          = bob.bio.base.script.vuln_commands:evaluate',
      ],
 
    },

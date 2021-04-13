@@ -453,3 +453,78 @@ def hist(ctx, scores, evaluation, **kwargs):
 def fmr_iapmr(ctx, scores, **kwargs):
   process = figure.FmrIapmr(ctx, scores, True, split_csv_vuln)
   process.run()
+
+
+SCORE_FORMAT = (
+    "Files must be in CSV format, with the `bio_ref_reference_id`, "
+    "`probe_references_id`, `score`, and `attack_type` columns."
+)
+CRITERIA = (
+    "eer",
+    "min-hter",
+    "far",
+    "bpcer5000",
+    "bpcer2000",
+    "bpcer1000",
+    "bpcer500",
+    "bpcer200",
+    "bpcer100",
+    "bpcer50",
+    "bpcer20",
+    "bpcer10",
+    "bpcer5",
+    "bpcer2",
+    "bpcer1",
+    "apcer5000",
+    "apcer2000",
+    "apcer1000",
+    "apcer500",
+    "apcer200",
+    "apcer100",
+    "apcer50",
+    "apcer20",
+    "apcer10",
+    "apcer5",
+    "apcer2",
+    "apcer1",
+)
+
+@common_options.evaluate_command(
+    common_options.EVALUATE_HELP.format(
+        score_format=SCORE_FORMAT, command="bob vuln evaluate",
+    ),
+    criteria=CRITERIA,
+)
+def evaluate(ctx, scores, evaluation, **kwargs):
+  # open_mode is always 'write' in this command.
+  ctx.meta['open_mode'] = "w"
+  criterion = ctx.meta.get("criterion")
+  if criterion is not None:
+    click.echo(f"Computing metrics with {criterion}...")
+    ctx.invoke(metrics, scores=scores, evaluation=evaluation)
+    if ctx.meta.get('log') is not None:
+      click.echo(f"[metrics] => {ctx.meta['log']}")
+
+  ctx.meta['lines_at'] = None
+
+  # Avoid closing pdf file before all figures are plotted
+  ctx.meta['closef'] = False
+  if evaluation:
+    click.echo("Starting evaluate with dev and eval scores...")
+  else:
+    click.echo("Starting evaluate with dev scores only...")
+  click.echo("Plotting FMR vs IAPMR for bob vuln evaluate...")
+  ctx.forward(fmr_iapmr)  # uses class defaults plot settings
+  click.echo("Plotting ROC for bob vuln evaluate...")
+  ctx.forward(roc)  # uses class defaults plot settings
+  click.echo("Plotting DET for bob vuln evaluate...")
+  ctx.forward(det)  # uses class defaults plot settings
+  if evaluation:
+    click.echo("Plotting EPSC for bob vuln evaluate...")
+    ctx.forward(epsc)  # uses class defaults plot settings
+  # Mark the last plot to close the output file
+  ctx.meta['closef'] = True
+  click.echo("Plotting score histograms for bob vuln evaluate...")
+  ctx.forward(hist)
+  click.echo("Evaluate successfully completed!")
+  click.echo(f"[plots] => {ctx.meta['output']}")
