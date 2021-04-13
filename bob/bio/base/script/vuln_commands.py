@@ -4,12 +4,10 @@
 import os
 import csv
 import numpy
+import functools
 import click
 from click.types import FLOAT
 from bob.measure.script import common_options
-from bob.extension.scripts.click_helper import (
-    verbosity_option, bool_option, list_float_option
-)
 from bob.core import random, log
 from bob.io.base import create_directories_safe
 from bob.bio.base.score.load import split_csv_vuln
@@ -17,10 +15,63 @@ from . import vuln_figure as figure
 
 logger = log.setup(__name__)
 
+def vuln_plot_options(
+  docstring,
+  plot_output_default="vuln_plot.pdf",
+  legend_loc_default="best",
+  axes_lim_default=None,
+  figsize_default="4,3",
+  force_eval=False,
+  ):
+  def custom_options_command(func):
+    func.__doc__ = docstring
+
+    def eval_if_not_forced(force_eval):
+      def decorator(f): 
+        if not force_eval:
+          return common_options.eval_option()(
+            common_options.sep_dev_eval_option()(
+              common_options.hide_dev_option()(
+                f
+              )
+            )
+          )
+        else:
+          return f
+      return decorator
+
+    @click.command()
+    @common_options.scores_argument(min_arg=1, force_eval=force_eval, nargs=-1)
+    @eval_if_not_forced(force_eval)
+    @common_options.titles_option()
+    @common_options.legends_option()
+    @common_options.no_legend_option()
+    @common_options.legend_loc_option(dflt=legend_loc_default)
+    @common_options.output_plot_file_option(default_out=plot_output_default)
+    @common_options.lines_at_option(dflt=" ")
+    @common_options.axes_val_option(dflt=axes_lim_default)
+    @common_options.x_rotation_option()
+    @common_options.x_label_option()
+    @common_options.y_label_option()
+    @common_options.points_curve_option()
+    @common_options.const_layout_option()
+    @common_options.figsize_option(dflt=figsize_default)
+    @common_options.style_option()
+    @common_options.linestyles_option()
+    @common_options.alpha_option()
+    @common_options.verbosity_option()
+    @click.pass_context
+    @functools.wraps(func)
+    def wrapper(*args, **kwds):
+        return func(*args, **kwds)
+
+    return wrapper
+
+  return custom_options_command
 
 def fnmr_at_option(dflt=' ', **kwargs):
   '''Get option to draw const FNMR lines'''
-  return list_float_option(
+  return common_options.list_float_option(
       name='fnmr', short_name='fnmr',
       desc='If given, draw horizontal lines at the given FNMR position. '
       'Your values must be separated with a comma (,) without space. '
@@ -76,7 +127,7 @@ def write_scores_to_file(neg_licit, pos_licit, spoof, filename):
 @click.option('-mg', '--mean-gen', default=7, type=FLOAT, show_default=True)
 @click.option('-mz', '--mean-zei', default=3, type=FLOAT, show_default=True)
 @click.option('-mp', '--mean-pa', default=5, type=FLOAT, show_default=True)
-@verbosity_option()
+@common_options.verbosity_option()
 def gen(outdir, mean_gen, mean_zei, mean_pa, **kwargs):
   """Generate random scores.
   Generates random scores for three types of verification attempts:
@@ -119,141 +170,151 @@ def metrics(ctx, scores, evaluation, **kwargs):
   process.run()
 
 
-@common_options.min_far_option()
-@common_options.axes_val_option()
-@verbosity_option()
-@common_options.x_rotation_option(dflt=45)
-@common_options.x_label_option()
-@common_options.y_label_option()
-@click.option('--real-data/--no-real-data', default=True, show_default=True,
-              help='If False, will annotate the plots hypothetically, instead '
-              'of with real data values of the calculated error rates.')
-@fnmr_at_option()
-@click.pass_context
-def roc(ctx, scores, real_data, **kwargs):
-  """Plot ROC
+@vuln_plot_options(
+  docstring="""Plots the ROC for vulnerability analysis
 
-  You need to provide 2 scores
+  You need to provide 1 or 2 (with `--eval`) score
   files for each vulnerability system in this order:
 
   \b
-  * licit scores
-  * spoof scores
+  * dev scores
+  * [eval scores]
+
+  The CSV score files must contain an `attack-type` column, in addition to the
+  "regular" biometric scores columns (`bio_ref_reference_id`,
+  `probe_reference_id`, and `score`).
 
   Examples:
-      $ bob vuln roc -v licit-scores spoof-scores
 
-      $ bob vuln roc -v scores-{licit,spoof}
-  """
-  process = figure.RocVuln(ctx, scores, True, split_csv_vuln, real_data, False)
-  process.run()
+      $ bob vuln roc -v -o roc.pdf scores.csv
 
-
-@click.command()
-@common_options.scores_argument(min_arg=1, nargs=-1)
-@common_options.output_plot_file_option(default_out='det.pdf')
-@common_options.legends_option()
-@common_options.no_legend_option()
-@common_options.legend_loc_option(dflt='upper-right')
-@common_options.title_option()
-@common_options.const_layout_option()
-@common_options.style_option()
-@common_options.figsize_option(dflt=None)
-@verbosity_option()
-@common_options.axes_val_option(dflt='0.01,95,0.01,95')
-@common_options.x_rotation_option(dflt=45)
-@common_options.x_label_option()
-@common_options.y_label_option()
-@click.option('--real-data/--no-real-data', default=True, show_default=True,
-              help='If False, will annotate the plots hypothetically, instead '
-              'of with real data values of the calculated error rates.')
-@fnmr_at_option()
-@click.pass_context
-def det(ctx, scores, real_data, **kwargs):
-  """Plot DET
-
-
-  You need to provide 2 scores
-  files for each vulnerability system in this order:
-
-  \b
-  * licit scores
-  * spoof scores
-
-  Examples:
-      $ bob vuln det -v licit-scores spoof-scores
-
-      $ bob vuln det -v scores-{licit,spoof}
-  """
-  process = figure.DetVuln(ctx, scores, True, split_csv_vuln, real_data, False)
-  process.run()
-
-
-@click.command()
-@common_options.scores_argument(min_arg=1, force_eval=True, nargs=-1)
-@common_options.output_plot_file_option(default_out='epc.pdf')
-@common_options.legends_option()
-@common_options.no_legend_option()
-@common_options.legend_loc_option()
-@common_options.title_option()
-@common_options.const_layout_option()
-@common_options.x_label_option()
-@common_options.y_label_option()
-@common_options.figsize_option(dflt=None)
-@common_options.style_option()
-@common_options.bool_option(
-    'iapmr', 'I', 'Whether to plot the IAPMR related lines or not.', True
+      $ bob vuln roc -v -e scores-{dev,eval}.csv
+  """,
+  plot_output_default="vuln_roc.pdf",
 )
-@common_options.style_option()
-@verbosity_option()
-@click.pass_context
-def epc(ctx, scores, **kwargs):
-  """Plot EPC (expected performance curve):
+@common_options.min_far_option()
+@common_options.tpr_option(dflt=True)
+@common_options.semilogx_option(dflt=True)
+@fnmr_at_option()
+@click.option('--real-data/--no-real-data', default=True, show_default=True,
+              help='If False, will annotate the plots hypothetically, instead '
+              'of with real data values of the calculated error rates.')
+def roc(ctx, scores, evaluation, real_data, **kwargs):
+  process = figure.RocVuln(ctx, scores, evaluation, split_csv_vuln, real_data, False)
+  process.run()
 
-  You need to provide 4 score
-  files for each biometric system in this order:
+
+@vuln_plot_options(
+  docstring="""Plots the DET for vulnerability analysis
+
+  You need to provide 1 or 2 (with `--eval`) score
+  files for each vulnerability system in this order:
 
   \b
-  * licit development scores
-  * licit evaluation scores
-  * spoof development scores
-  * spoof evaluation scores
+  * dev scores
+  * [eval scores]
 
-  See :ref:`bob.pad.base.vulnerability` in the documentation for a guide on
+  The CSV score files must contain an `attack-type` column, in addition to the
+  "regular" biometric scores columns (`bio_ref_reference_id`,
+  `probe_reference_id`, and `score`).
+
+  See :ref:`bob.bio.base.vulnerability` in the documentation for a guide on
   vulnerability analysis.
 
   Examples:
-      $ bob vuln epc -v dev-scores eval-scores
 
-      $ bob vuln epc -v -o my_epc.pdf dev-scores1 eval-scores1
+      $ bob vuln det -v -o det.pdf scores.csv
 
-      $ bob vuln epc -v {licit,spoof}/scores-{dev,eval}
-  """
+      $ bob vuln det -v -e scores-{dev,eval}.csv
+  """,
+  plot_output_default="vuln_det.pdf",
+  legend_loc_default="best",
+  axes_lim_default="0.01,95,0.01,95",
+)
+@click.option('--real-data/--no-real-data', default=True, show_default=True,
+              help='If False, will annotate the plots hypothetically, instead '
+              'of with real data values of the calculated error rates.')
+@fnmr_at_option()
+def det(ctx, scores, evaluation, real_data, **kwargs):
+  process = figure.DetVuln(ctx, scores, evaluation, split_csv_vuln, real_data, False)
+  process.run()
+
+
+@vuln_plot_options(
+  docstring="""Plots the EPC for vulnerability analysis
+
+  You need to provide 2 score files for each vulnerability system in this order:
+
+  \b
+  * dev scores
+  * eval scores
+
+  The CSV score files must contain an `attack-type` column, in addition to the
+  "regular" biometric scores columns (`bio_ref_reference_id`,
+  `probe_reference_id`, and `score`).
+
+  See :ref:`bob.bio.base.vulnerability` in the documentation for a guide on
+  vulnerability analysis.
+
+  Examples:
+
+      $ bob vuln epc -v scores-dev.csv scores-eval.csv
+
+      $ bob vuln epc -v -o epc.pdf scores-{dev,eval}.csv
+  """,
+  plot_output_default="vuln_epc.pdf",
+  force_eval=True,
+)
+@common_options.bool_option(
+    'iapmr', 'I', 'Whether to plot the IAPMR related lines or not.', True
+)
+def epc(ctx, scores, **kwargs):
   process = figure.Epc(ctx, scores, True, split_csv_vuln)
   process.run()
 
 
-@click.command()
-@common_options.scores_argument(min_arg=1, force_eval=True, nargs=-1)
-@common_options.output_plot_file_option(default_out='epsc.pdf')
-@common_options.titles_option()
-@common_options.legends_option()
-@common_options.no_legend_option()
-@common_options.legend_ncols_option()
-@common_options.const_layout_option()
-@common_options.x_label_option()
-@common_options.y_label_option()
-@common_options.figsize_option(dflt='5,3')
-@common_options.style_option()
+@vuln_plot_options(
+  docstring="""Plots the EPSC for vulnerability analysis
+
+  Plots the Expected Performance Spoofing Curve.
+
+  Note that when using 3D plots with option ``--three-d``, you cannot plot
+  both WER and IAPMR on the same figure (which is possible in 2D).
+
+  You need to provide 2 score files for each vulnerability system in this order:
+
+  \b
+  * dev scores
+  * eval scores
+
+  The CSV score files must contain an `attack-type` column, in addition to the
+  "regular" biometric scores columns (`bio_ref_reference_id`,
+  `probe_reference_id`, and `score`).
+
+  See :ref:`bob.bio.base.vulnerability` in the documentation for a guide on
+  vulnerability analysis.
+
+  Examples:
+
+      $ bob vuln epsc -v scores-dev.csv scores-eval.csv
+
+      $ bob vuln epsc -v -o epsc.pdf scores-{dev,eval}.csv
+
+      $ bob vuln epsc -v -D -o epsc_3D.pdf scores-{dev,eval}.csv
+  """,
+  plot_output_default="vuln_epc.pdf",
+  force_eval=True,
+  figsize_default="8,4",
+)
 @common_options.bool_option(
     'wer', 'w', 'Whether to plot the WER related lines or not.', True
 )
 @common_options.bool_option(
-    'three-d', 'D', 'If true, generate 3D plots. You need to turn off '
-    'wer or iapmr when using this option.', False
+    'iapmr', 'I', 'Whether to plot the IAPMR related lines or not.', True
 )
 @common_options.bool_option(
-    'iapmr', 'I', 'Whether to plot the IAPMR related lines or not.', True
+    'three-d', 'D', 'If true, generate 3D plots. You need to turn off '
+    'wer or iapmr when using this option.', False
 )
 @click.option('-c', '--criteria', default="eer", show_default=True,
               help='Criteria for threshold selection',
@@ -261,37 +322,11 @@ def epc(ctx, scores, **kwargs):
 @click.option('-vp', '--var-param', default="omega", show_default=True,
               help='Name of the varying parameter',
               type=click.Choice(('omega', 'beta')))
-@list_float_option(name='fixed-params', short_name='fp', dflt='0.5',
+@common_options.list_float_option(name='fixed-params', short_name='fp', dflt='0.5',
                    desc='Values of the fixed parameter, separated by commas')
 @click.option('-s', '--sampling', default=5, show_default=True,
               help='Sampling of the EPSC 3D surface', type=click.INT)
-@verbosity_option()
-@click.pass_context
-def epsc(ctx, scores, criteria, var_param, three_d, sampling,
-         **kwargs):
-  """Plot EPSC (expected performance spoofing curve):
-
-  You need to provide 4 score
-  files for each biometric system in this order:
-
-  \b
-  * licit development scores
-  * licit evaluation scores
-  * spoof development scores
-  * spoof evaluation scores
-
-  See :ref:`bob.pad.base.vulnerability` in the documentation for a guide on
-  vulnerability analysis.
-
-  Note that when using 3D plots with option ``--three-d``, you cannot plot
-  both WER and IAPMR on the same figure (which is possible in 2D).
-
-  Examples:
-      $ bob vuln epsc -v -o my_epsc.pdf dev-scores1 eval-scores1
-
-      $ bob vuln epsc -v -D {licit,spoof}/scores-{dev,eval}
-  """
-  fixed_params = ctx.meta.get('fixed_params', [0.5])
+def epsc(ctx, scores, criteria, var_param, three_d, sampling, **kwargs):
   if three_d:
     if (ctx.meta['wer'] and ctx.meta['iapmr']):
       logger.info('Cannot plot both WER and IAPMR in 3D. Will turn IAPMR off.')
@@ -299,107 +334,122 @@ def epsc(ctx, scores, criteria, var_param, three_d, sampling,
     ctx.meta['sampling'] = sampling
     process = figure.Epsc3D(
         ctx, scores, True, split_csv_vuln,
-        criteria, var_param, fixed_params
+        criteria, var_param,
+        **kwargs
     )
   else:
     process = figure.Epsc(
         ctx, scores, True, split_csv_vuln,
-        criteria, var_param, fixed_params
+        criteria, var_param,
+        **kwargs
     )
   process.run()
 
 
-@click.command()
-@common_options.scores_argument(nargs=-1, min_arg=1)
-@common_options.output_plot_file_option(default_out='hist.pdf')
-@common_options.n_bins_option()
-@common_options.criterion_option()
-@common_options.thresholds_option()
-@common_options.print_filenames_option(dflt=False)
-@bool_option(
-    'iapmr-line', 'I', 'Whether to plot the IAPMR related lines or not.', True
-)
-@bool_option(
-    'real-data', 'R',
-    'If False, will annotate the plots hypothetically, instead '
-    'of with real data values of the calculated error rates.', True
-)
-@common_options.titles_option()
-@common_options.const_layout_option()
-@common_options.figsize_option(dflt=None)
-@common_options.subplot_option()
-@common_options.legend_ncols_option()
-@common_options.style_option()
-@common_options.hide_dev_option()
-@common_options.eval_option()
-@verbosity_option()
-@click.pass_context
-def hist(ctx, scores, evaluation, **kwargs):
-  '''Vulnerability analysis distributions.
+@vuln_plot_options(
+  docstring="""Vulnerability analysis score distribution histograms.
 
-  Plots the histogram of score distributions. You need to provide 2 or 4 score
-  files for each biometric system in this order.
-  When evaluation scores are provided, you must use the ``--eval`` option.
+  Plots the histogram of score distributions. You need to provide 1 or 2 score
+  files for each biometric system in this order:
 
   \b
-  * licit development scores
-  * (optional) licit evaluation scores
-  * spoof development scores
-  * (optional) spoof evaluation scores
+  * development scores
+  * [evaluation scores]
 
-  See :ref:`bob.pad.base.vulnerability` in the documentation for a guide on
+  When evaluation scores are provided, you must use the ``--eval`` option.
+
+  The CSV score files must contain an `attack-type` column, in addition to the
+  "regular" biometric scores columns (`bio_ref_reference_id`,
+  `probe_reference_id`, and `score`).
+
+  See :ref:`bob.bio.base.vulnerability` in the documentation for a guide on
   vulnerability analysis.
 
-
-  By default, when eval-scores are given, only eval-scores histograms are
-  displayed with threshold line
-  computed from dev-scores.
+  When eval-scores are given, eval-scores histograms are displayed with the
+  threshold line computed from dev-scores.
 
   Examples:
 
-      $ bob vuln hist -v results/scores-dev.csv
+      $ bob vuln hist -v -o hist.pdf results/scores-dev.csv
 
       $ bob vuln hist -e -v results/scores-dev.csv results/scores-eval.csv
 
       $ bob vuln hist -e -v results/scores-{dev,eval}.csv
-  '''
+  """,
+  plot_output_default="vuln_hist.pdf",
+)
+@common_options.n_bins_option()
+@common_options.thresholds_option()
+@common_options.print_filenames_option(dflt=False)
+@common_options.bool_option(
+    'iapmr-line', 'I', 'Whether to plot the IAPMR related lines or not.', True
+)
+@common_options.bool_option(
+    'real-data', 'R',
+    'If False, will annotate the plots hypothetically, instead '
+    'of with real data values of the calculated error rates.', True
+)
+@common_options.subplot_option()
+@common_options.criterion_option()
+def hist(ctx, scores, evaluation, **kwargs):
+  """Vulnerability analysis scores distributions.
+
+  Plots the histogram of score distributions. You need to provide 1 or 2 score
+  files for each biometric system in this order:
+
+  \b
+  * development scores
+  * [evaluation scores]
+
+  When evaluation scores are provided, you must use the ``--eval`` option.
+
+  The CSV score files must contain an `attack-type` column, in addition to the
+  "regular" biometric scores columns (`bio_ref_reference_id`,
+  `probe_reference_id`, and `score`).
+
+  See :ref:`bob.bio.base.vulnerability` in the documentation for a guide on
+  vulnerability analysis.
+
+  When eval-scores are given, eval-scores histograms are displayed with the
+  threshold line computed from dev-scores.
+
+  Examples:
+
+      $ bob vuln hist -v -o hist.pdf results/scores-dev.csv
+
+      $ bob vuln hist -e -v results/scores-dev.csv results/scores-eval.csv
+
+      $ bob vuln hist -e -v results/scores-{dev,eval}.csv
+  """
   process = figure.HistVuln(ctx, scores, evaluation, split_csv_vuln)
   process.run()
 
 
-@click.command()
-@common_options.scores_argument(min_arg=1, force_eval=True, nargs=-1)
-@common_options.output_plot_file_option(default_out='fmr_iapmr.pdf')
-@common_options.legends_option()
-@common_options.no_legend_option()
-@common_options.legend_loc_option()
-@common_options.title_option()
-@common_options.const_layout_option()
-@common_options.style_option()
-@common_options.figsize_option()
-@verbosity_option()
-@common_options.axes_val_option()
-@common_options.x_rotation_option()
-@common_options.x_label_option()
-@common_options.y_label_option()
-@common_options.semilogx_option()
-@click.pass_context
-def fmr_iapmr(ctx, scores, **kwargs):
-  """Plot FMR vs IAPMR
+@vuln_plot_options(
+  docstring="""Plots the FMR vs IAPMR for vulnerability analysis
 
-  You need to provide 4 scores
-  files for each vuln system in this order:
+  You need to provide 1 or 2 (with `--eval`) score
+  files for each vulnerability system in this order:
 
   \b
-  * licit development scores
-  * licit evaluation scores
-  * spoof development scores
-  * spoof evaluation scores
+  * dev scores
+  * [eval scores]
+
+  The CSV score files must contain an `attack-type` column, in addition to the
+  "regular" biometric scores columns (`bio_ref_reference_id`,
+  `probe_reference_id`, and `score`).
 
   Examples:
-      $ bob vuln fmr_iapmr -v dev-scores eval-scores
 
-      $ bob vuln fmr_iapmr -v {licit,spoof}/scores-{dev,eval}
-  """
+      $ bob vuln fmr_iapmr -v -o fmr_iapmr.pdf scores.csv
+
+      $ bob vuln fmr_iapmr -v -e scores-{dev,eval}.csv
+  """,
+  plot_output_default="vuln_roc.pdf",
+  force_eval=True,
+)
+@common_options.axes_val_option()
+@common_options.semilogx_option()
+def fmr_iapmr(ctx, scores, **kwargs):
   process = figure.FmrIapmr(ctx, scores, True, split_csv_vuln)
   process.run()
