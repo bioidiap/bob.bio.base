@@ -5,7 +5,7 @@ import numpy as np
 from tabulate import tabulate
 import matplotlib.pyplot as mpl
 import bob.measure.script.figure as measure_figure
-from bob.measure.utils import get_fta_list, get_thres, remove_nan
+from bob.measure.utils import get_thres, remove_nan
 from bob.measure import (
     frr_threshold, far_threshold, farfrr, f_score, roc_auc_score,
     ppndf, min_weighted_error_rate_threshold, precision_recall,
@@ -273,9 +273,7 @@ class HistVuln(measure_figure.Hist):
 
     def _setup_hist(self, neg, pos):
         self._title_base = ' '
-        self._density_hist(
-            pos[0], n=0, label='Genuine', color='C2'
-        )
+        self._density_hist(pos[0], n=0, label='Genuine', color='C2')
         self._density_hist(
             neg[0], n=1, label='Zero-effort impostors', alpha=0.8, color='C0'
         )
@@ -289,48 +287,49 @@ class HistVuln(measure_figure.Hist):
 
         Returns
         -------
-        dev_neg, dev_pos, eval_neg, eval_pos: 2D arrays
+        dev_neg, dev_pos, eval_neg, eval_pos: list of arrays
             The scores negatives and positives for each set. Each element
             contains two lists: licit [0] and spoof [1]
         threshold: int
             The value of the threshold computed on the `dev` set licit scores.
         """
-        # input_scores: [dev0/eval0/dev1/eval1]{neg/pos_licit/spoof}[sample]
-        neg_licit_list = [remove_nan(scores['neg_licit'])[0] for scores in input_scores]
-        pos_licit_list = [remove_nan(scores['pos_licit'])[0] for scores in input_scores]
-        neg_spoof_list = [remove_nan(scores['neg_spoof'])[0] for scores in input_scores]
-        pos_spoof_list = [remove_nan(scores['pos_spoof'])[0] for scores in input_scores]
-        # neg_licit_list: [dev0/eval0/dev1/eval1][sample]
 
-        # TODO Does not support multiple system (dev0, dev1, eval0, eval1)
-        dev_neg = (neg_licit_list[0], neg_spoof_list[0])
-        dev_pos = (pos_licit_list[0], pos_spoof_list[0])
-        eval_neg = eval_pos = None
+        dev_scores = clean_scores(input_scores[0])
         if self._eval:
-            eval_neg = (neg_licit_list[1], neg_spoof_list[1])
-            eval_pos = (pos_licit_list[1], pos_spoof_list[1])
+            eval_scores = clean_scores(input_scores[1])
+        else:
+            eval_scores = {'licit_neg':[], 'licit_pos':[], 'spoof':[]}
 
         threshold = (
-            get_thres(self._criterion, dev_neg[0], dev_pos[0])
+            get_thres(self._criterion, dev_scores['licit_neg'], dev_scores['licit_pos'])
             if self._thres is None
             else self._thres[idx]
         )
-        # dev_neg: [licit/spoof][sample]
-        return dev_neg, dev_pos, eval_neg, eval_pos, threshold
+        return (
+            [dev_scores['licit_neg'], ],
+            [dev_scores['licit_pos'], dev_scores['spoof']],
+            [eval_scores['licit_neg'], ],
+            [eval_scores['licit_pos'], eval_scores['spoof']],
+            threshold
+        )
+
 
     def _lines(self, threshold, label, neg, pos, idx, **kwargs):
+        spoof = pos[1]
+        neg = neg[0]
+        pos = pos[0]
         # plot EER treshold vertical line
-        super(HistVuln, self)._lines(threshold, label, neg, pos, idx)
+        super(HistVuln, self)._lines(threshold, label, neg, pos, idx, **kwargs)
 
         if 'iapmr_line' not in self._ctx.meta or self._ctx.meta['iapmr_line']:
             # Plot iapmr_line (accepted PA vs threshold)
-            iapmr, _ = farfrr(pos[1], [0.], threshold)
+            iapmr = far_for_threshold(spoof, threshold)
             ax2 = mpl.twinx()
             # we never want grid lines on axis 2
             ax2.grid(False)
             real_data = True if 'real_data' not in self._ctx.meta else \
                 self._ctx.meta['real_data']
-            _iapmr_plot(pos[1], threshold, iapmr, real_data=real_data)
+            _iapmr_plot(spoof, threshold, iapmr, real_data=real_data)
             n = idx % self._step_print
             col = n % self._ncols
             rest_print = self.n_systems - \
