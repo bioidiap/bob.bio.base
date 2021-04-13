@@ -663,10 +663,7 @@ class Epsc3D(Epsc):
         ax1.set_yticklabels(ax1.get_yticks())
         ax1.set_zticklabels(ax1.get_zticks())
 
-        self._pdf_page.savefig()
-
-
-class BaseVulnDetRoc(VulnPlot):
+class BaseVulnDetRoc(measure_figure.PlotBase):
     '''Base for DET and ROC'''
 
     def __init__(self, ctx, scores, evaluation, func_load, real_data,
@@ -675,65 +672,175 @@ class BaseVulnDetRoc(VulnPlot):
             ctx, scores, evaluation, func_load)
         self._no_spoof = no_spoof
         self._fnmrs_at = ctx.meta.get('fnmr', [])
+        self._fnmrs_at = [] if self._fnmrs_at is None else self._fnmrs_at
         self._real_data = True if real_data is None else real_data
-        self._legend_loc = None
         self._min_dig = -4 if self._min_dig is None else self._min_dig
+        self._tpr = ctx.meta.get("tpr", True)
 
     def compute(self, idx, input_scores, input_names):
-        ''' Implements plots'''
-        licit_neg = input_scores[0][0]
-        licit_pos = input_scores[0][1]
-        spoof_neg = input_scores[1][0]
-        spoof_pos = input_scores[1][1]
-        LOGGER.info("FNMR licit using %s", input_names[0])
+        '''Implements plots'''
+        dev_scores = clean_scores(input_scores[0])
+        if self._eval:
+            eval_scores = clean_scores(input_scores[1])
+        else:
+            eval_scores = {'licit_neg':[], 'licit_pos':[], 'spoof':[]}
+
+        mpl.figure(1)
+        if self._eval:
+            logger.info(f"dev curve using {input_names[0]}")
+            self._plot(
+                dev_scores['licit_neg'],
+                dev_scores['licit_pos'],
+                dev_scores['spoof'],
+                npoints=self._points,
+                tpr=self._tpr,
+                min_far=self._min_dig,
+                color=self._colors[idx],
+                linestyle=self._linestyles[idx],
+                label=self._label("dev", idx),
+                alpha=self._alpha,
+            )
+            if not self._fnmrs_at:
+                logger.info("Plotting fnmr line at dev eer threshold for dev")
+                dev_threshold = get_thres(
+                    criter="eer",
+                    neg=dev_scores['licit_neg'],
+                    pos=dev_scores['licit_pos'],
+                )
+                fnmr_at_dev_threshold = frr_for_threshold(dev_scores['licit_pos'], dev_threshold)
+            fnmrs_dev = self._fnmrs_at or [fnmr_at_dev_threshold]
+            self._draw_fnmrs(idx, dev_scores, fnmrs_dev)
+
+            if self._split:
+                mpl.figure(2)
+
+            # Add the eval plot
+            linestyle = "--" if not self._split else self._linestyles[idx]
+            logger.info(f"eval curve using {input_names[1]}")
+            self._plot(
+                eval_scores['licit_neg'],
+                eval_scores['licit_pos'],
+                eval_scores['spoof'],
+                linestyle=linestyle,
+                npoints=self._points,
+                tpr=self._tpr,
+                min_far=self._min_dig,
+                color=self._colors[idx],
+                label=self._label("eval", idx),
+                alpha=self._alpha,
+            )
+            if not self._fnmrs_at:
+                logger.info("printing fnmr at dev eer threshold for eval")
+                fnmr_at_dev_threshold = frr_for_threshold(eval_scores['licit_pos'], dev_threshold)
+            fnmrs_dev = self._fnmrs_at or [fnmr_at_dev_threshold]
+            self._draw_fnmrs(idx, eval_scores, fnmrs_dev, True)
+
+        # Only dev scores available
+        else:
+            logger.info(f"dev curve using {input_names[0]}")
         self._plot(
-            licit_neg,
-            licit_pos,
-            self._points,
-            color='C0',
-            linestyle='-',
-            label=self._label("Licit scenario", idx)
+                dev_scores['licit_neg'],
+                dev_scores['licit_pos'],
+                dev_scores['spoof'],
+                npoints=self._points,
+                tpr=self._tpr,
+                min_far=self._min_dig,
+                color=self._colors[idx],
+                linestyle=self._linestyles[idx],
+                label=self._label("dev", idx),
+                alpha=self._alpha,
+            )
+            if not self._fnmrs_at:
+                logger.info("Plotting fnmr line at dev eer threshold for dev")
+                dev_threshold = get_thres(
+                    criter="eer",
+                    neg=dev_scores['licit_neg'],
+                    pos=dev_scores['licit_pos'],
+                )
+                fnmr_at_dev_threshold = frr_for_threshold(dev_scores['licit_pos'], dev_threshold)
+            fnmrs_dev = self._fnmrs_at or [fnmr_at_dev_threshold]
+            self._draw_fnmrs(idx, dev_scores, fnmrs_dev)
+
+    def _get_farfrr(self, x, y, thres):
+        return None, None
+
+    def _plot(self, x, y, s, npoints, **kwargs):
+        pass
+
+    def _draw_fnmrs(self, idx, scores, fnmrs=[], eval=False):
+        pass
+
+class DetVuln(BaseVulnDetRoc):
+    '''DET for vuln'''
+
+    def __init__(self, ctx, scores, evaluation, func_load, real_data, no_spoof):
+        super(DetVuln, self).__init__(ctx, scores, evaluation, func_load,
+                                      real_data, no_spoof)
+        self._x_label = self._x_label or "FMR (%)"
+        self._y_label = self._y_label or "FNMR (%)"
+        self._semilogx = ctx.meta.get('semilogx', False)
+        add = ''
+        if not self._titles:
+            self._titles = [''] * self._nb_figs
+        if not self._no_spoof:
+            add = " and overlaid SPOOF scenario"
+        for i, t in enumerate(self._titles):
+            self._titles[i] = t or ('DET: LICIT' + add)
+        self._legend_loc = self._legend_loc or 'upper right'
+
+    def _set_axis(self):
+        if self._axlim is not None and None not in self._axlim:
+            plot.det_axis(self._axlim)
+        else:
+            plot.det_axis([0.01, 99, 0.01, 99])
+
+    def _get_farfrr(self, x, y, thres):
+        points = farfrr(x, y, thres)
+        return points, [ppndf(i) for i in points]
+
+    def _plot(self, x, y, s, npoints, **kwargs):
+        logger.info("Plotting DET")
+        plot.det(
+            x, y, npoints,
+            min_far=self._min_dig,
+            color=kwargs.get('color'),
+            linestyle=kwargs.get('linestyle'),
+            label=kwargs.get('label')
         )
-        if not self._no_spoof and spoof_neg is not None:
+        if not self._no_spoof and s is not None:
             ax1 = mpl.gca()
+            ax1.plot([0], [0], linestyle=":", color="C3", label="Spoof " + kwargs.get('label'))
             ax2 = ax1.twiny()
             ax2.set_xlabel('IAPMR (%)', color='C3')
-            ax2.set_xticklabels(ax2.get_xticks())
-            ax2.tick_params(axis='x', colors='C3')
-            ax2.xaxis.label.set_color('C3')
+            mpl.xticks(rotation=self._x_rotation)
+            ax2.tick_params(axis='x', colors='C3', labelrotation=self._x_rotation, labelcolor='C3')
             ax2.spines['top'].set_color('C3')
-            ax2.spines['bottom'].set_color('C0')
-            ax1.xaxis.label.set_color('C0')
-            ax1.tick_params(axis='x', colors='C0')
-            LOGGER.info("Spoof IAPMR using %s", input_names[1])
-            self._plot(
-                spoof_neg,
-                spoof_pos,
-                self._points,
+            plot.det(
+                s, y, npoints,
+                min_far=self._min_dig,
                 color='C3',
                 linestyle=':',
-                label=self._label("Spoof scenario", idx)
+                label="Spoof " + kwargs.get('label'),
             )
+            self._set_axis()
             mpl.sca(ax1)
 
-        if self._fnmrs_at is None:
-            return
-
-        for line in self._fnmrs_at:
-            thres_baseline = frr_threshold(licit_neg, licit_pos, line)
+    def _draw_fnmrs(self, idx, scores, fnmrs=[], eval=False):
+        for line in fnmrs:
+            thres_baseline = frr_threshold(scores['licit_neg'], scores['licit_pos'], line)
 
             axlim = mpl.axis()
 
             farfrr_licit, farfrr_licit_det = self._get_farfrr(
-                licit_neg, licit_pos,
+                scores['licit_neg'], scores['licit_pos'],
                 thres_baseline
             )
             if farfrr_licit is None:
                 return
 
             farfrr_spoof, farfrr_spoof_det = self._get_farfrr(
-                spoof_neg, spoof_pos,
-                frr_threshold(spoof_neg, spoof_pos, farfrr_licit[1])
+                scores['spoof'], scores['licit_pos'],
+                frr_threshold(scores['spoof'], scores['licit_pos'], farfrr_licit[1])
             )
 
             if not self._real_data:
@@ -752,7 +859,7 @@ class BaseVulnDetRoc(VulnPlot):
                     color='k',
                     linestyle='--',
                     label="%s = %.2f%%" %
-                    ('FMNR', farfrr_licit[1] * 100))
+                    ('FNMR', farfrr_licit[1] * 100))
 
             if not self._real_data:
                 label_licit = '%s @ operating point' % self._x_label
@@ -765,7 +872,7 @@ class BaseVulnDetRoc(VulnPlot):
                 farfrr_licit_det[0],
                 farfrr_licit_det[1],
                 'o',
-                color='C0',
+                color=self._colors[idx],
                 label=label_licit
             )  # FAR point, licit scenario
             mpl.plot(
@@ -775,80 +882,6 @@ class BaseVulnDetRoc(VulnPlot):
                 color='C3',
                 label=label_spoof
             )  # FAR point, spoof scenario
-
-    def end_process(self):
-        ''' Set title, legend, axis labels, grid colors, save figures and
-        close pdf is needed '''
-        # only for plots
-
-        if self._title.replace(' ', ''):
-            mpl.title(self._title, y=1.15)
-        mpl.xlabel(self._x_label)
-        mpl.ylabel(self._y_label)
-        mpl.grid(True, color=self._grid_color)
-        lines = []
-        labels = []
-        for ax in mpl.gcf().get_axes():
-            li, la = ax.get_legend_handles_labels()
-            lines += li
-            labels += la
-            mpl.sca(ax)
-            self._set_axis()
-            fig = mpl.gcf()
-            mpl.xticks(rotation=self._x_rotation)
-            mpl.tick_params(axis='both', which='major', labelsize=6)
-        if self._disp_legend:
-            mpl.gca().legend(
-                lines, labels, loc=self._legend_loc, fancybox=True,
-                framealpha=0.5
-            )
-        self._pdf_page.savefig(fig)
-
-        # do not want to close PDF when running evaluate
-        if 'PdfPages' in self._ctx.meta and \
-                ('closef' not in self._ctx.meta or self._ctx.meta['closef']):
-            self._pdf_page.close()
-
-    def _get_farfrr(self, x, y, thres):
-        return None, None
-
-    def _plot(self, x, y, points, **kwargs):
-        pass
-
-
-class DetVuln(BaseVulnDetRoc):
-    '''DET for vuln'''
-
-    def __init__(self, ctx, scores, evaluation, func_load, real_data,
-                 no_spoof):
-        super(DetVuln, self).__init__(ctx, scores, evaluation, func_load,
-                                      real_data, no_spoof)
-        self._x_label = self._x_label or "FMR (%)"
-        self._y_label = self._y_label or "FNMR (%)"
-        add = ''
-        if not self._no_spoof:
-            add = " and overlaid SPOOF scenario"
-        self._title = self._title or ('DET: LICIT' + add)
-        self._legend_loc = self._legend_loc or 'upper right'
-
-    def _set_axis(self):
-        if self._axlim is not None and None not in self._axlim:
-            plot.det_axis(self._axlim)
-        else:
-            plot.det_axis([0.01, 99, 0.01, 99])
-
-    def _get_farfrr(self, x, y, thres):
-        points = farfrr(x, y, thres)
-        return points, [ppndf(i) for i in points]
-
-    def _plot(self, x, y, points, **kwargs):
-        LOGGER.info("Plot DET")
-        plot.det(
-            x, y, points,
-            color=kwargs.get('color'),
-            linestyle=kwargs.get('linestyle'),
-            label=kwargs.get('label')
-        )
 
 
 class RocVuln(BaseVulnDetRoc):
@@ -861,27 +894,110 @@ class RocVuln(BaseVulnDetRoc):
         self._y_label = self._y_label or "1 - FNMR"
         self._semilogx = ctx.meta.get('semilogx', True)
         add = ''
+        if not self._titles:
+            self._titles = [''] * self._nb_figs
         if not self._no_spoof:
             add = " and overlaid SPOOF scenario"
-        self._title = self._title or ('ROC: LICIT' + add)
-        best_legend = 'lower right' if self._semilogx else 'upper right'
-        self._legend_loc = self._legend_loc or best_legend
+        for i, t in enumerate(self._titles):
+            self._titles[i] = t or ('ROC: LICIT' + add)
+        if self._legend_loc == "best":
+            self._legend_loc = 'lower right' if self._semilogx else 'upper right'
 
+    def _plot(self, x, y, s, npoints, **kwargs):
         logger.info("Plotting ROC")
         plot.roc(
             x, y,
-            npoints=self._points,
-            CAR=self._semilogx,
+            npoints=npoints,
+            semilogx=self._semilogx,
+            tpr=self._tpr,
             min_far=self._min_dig,
             color=kwargs.get('color'),
             linestyle=kwargs.get('linestyle'),
             label=kwargs.get('label'),
         )
+        if not self._no_spoof and s is not None:
+            ax1 = mpl.gca()
+            ax1.plot([0], [0], linestyle=":", color="C3", label="Spoof " + kwargs.get('label'))
+            ax2 = ax1.twiny()
+            ax2.set_xlabel('IAPMR (%)', color='C3')
+            mpl.xticks(rotation=self._x_rotation)
+            ax2.tick_params(axis='x', colors='C3', labelrotation=self._x_rotation, labelcolor='C3')
+            ax2.spines['top'].set_color('C3')
+            plot.roc(
+                s, y,
+                npoints=npoints,
+                semilogx=self._semilogx,
+                tpr=self._tpr,
+                min_far=self._min_dig,
+                color='C3',
+                linestyle=':',
+                label="Spoof " + kwargs.get('label'),
+            )
+            self._set_axis()
+            mpl.sca(ax1)
 
     def _get_farfrr(self, x, y, thres):
         points = farfrr(x, y, thres)
         points2 = (points[0], 1 - points[1])
         return points, points2
+
+    def _draw_fnmrs(self, idx, scores, fnmrs=[], evaluation=False):
+        for line in fnmrs:
+            thres_baseline = frr_threshold(scores['licit_neg'], scores['licit_pos'], line)
+
+            axlim = mpl.axis()
+
+            farfrr_licit, farfrr_licit_roc = self._get_farfrr(
+                scores['licit_neg'], scores['licit_pos'],
+                thres_baseline
+            )
+            if farfrr_licit is None:
+                return
+
+            farfrr_spoof, farfrr_spoof_roc = self._get_farfrr(
+                scores['spoof'], scores['licit_pos'],
+                frr_threshold(scores['spoof'], scores['licit_pos'], farfrr_licit[1])
+            )
+
+            if not self._real_data and not evaluation:
+                mpl.axhline(
+                    y=farfrr_licit_roc[1],
+                    xmin=axlim[2],
+                    xmax=axlim[3],
+                    color='k',
+                    linestyle='--',
+                    label=f"{self._y_label} @ EER")
+            elif not evaluation:
+                mpl.axhline(
+                    y=farfrr_licit_roc[1],
+                    xmin=axlim[0],
+                    xmax=axlim[1],
+                    color='k',
+                    linestyle='--',
+                    label=f"FNMR = {farfrr_licit[1] * 100:.2f}%",
+                )
+
+            if not self._real_data:
+                label_licit = f"{self._x_label} @ operating point"
+                label_spoof = "IAPMR @ operating point"
+            else:
+                label_licit = f"FMR={farfrr_licit[0] * 100:.2f}%"
+                label_spoof = f"IAPMR={farfrr_spoof[0] * 100:.2f}%"
+
+            mpl.plot(
+                farfrr_licit_roc[0],
+                farfrr_licit_roc[1],
+                'o',
+                color=self._colors[idx],
+                label=label_licit
+            )  # FAR point, licit scenario
+            mpl.plot(
+                farfrr_spoof_roc[0],
+                farfrr_spoof_roc[1],
+                'o',
+                color='C3',
+                label=label_spoof
+            )  # FAR point, spoof scenario
 
 
 class FmrIapmr(VulnPlot):
