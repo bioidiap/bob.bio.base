@@ -3,10 +3,10 @@
 
 .. image:: https://img.shields.io/badge/docs-available-orange.svg
    :target: https://www.idiap.ch/software/bob/docs/bob/bob.bio.base/master/index.html
-.. image:: https://gitlab.idiap.ch/bob/bob.bio.base/badges/v5.0.0/pipeline.svg
-   :target: https://gitlab.idiap.ch/bob/bob.bio.base/commits/v5.0.0
-.. image:: https://gitlab.idiap.ch/bob/bob.bio.base/badges/v5.0.0/coverage.svg
-   :target: https://gitlab.idiap.ch/bob/bob.bio.base/commits/v5.0.0
+.. image:: https://gitlab.idiap.ch/bob/bob.bio.base/badges/master/pipeline.svg
+   :target: https://gitlab.idiap.ch/bob/bob.bio.base/commits/master
+.. image:: https://gitlab.idiap.ch/bob/bob.bio.base/badges/master/coverage.svg
+   :target: https://gitlab.idiap.ch/bob/bob.bio.base/commits/master
 .. image:: https://img.shields.io/badge/gitlab-project-0000c0.svg
    :target: https://gitlab.idiap.ch/bob/bob.bio.base
 
@@ -66,4 +66,4 @@ development `mailing list`_.
 .. _bob: https://www.idiap.ch/software/bob
 .. _installation: https://www.idiap.ch/software/bob/install
 .. _mailing list: https://www.idiap.ch/software/bob/discuss
-.. _user guide: https://www.idiap.ch/software/bob/docs/bob/bob.bio.base/v5.0.0/index.html
+.. _user guide: https://www.idiap.ch/software/bob/docs/bob/bob.bio.base/stable/index.html
