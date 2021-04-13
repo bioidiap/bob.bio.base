@@ -341,67 +341,38 @@ class HistVuln(measure_figure.Hist):
             ax2.spines['right'].set_color('C3')
 
 
-class VulnPlot(measure_figure.PlotBase):
-    '''Base class for vulnerability analysis plots'''
-
-    def __init__(self, ctx, scores, evaluation, func_load):
-        super(VulnPlot, self).__init__(ctx, scores, evaluation, func_load)
-        mpl.rcParams['figure.constrained_layout.use'] = self._clayout
-        self._nlegends = ctx.meta.get('legends_ncol', 3)
-
-    def end_process(self):
-        '''Close pdf '''
-        # do not want to close PDF when running evaluate
-        if 'PdfPages' in self._ctx.meta and \
-           ('closef' not in self._ctx.meta or self._ctx.meta['closef']):
-            self._pdf_page.close()
-
-    def _plot_legends(self):
-        # legends for all axes
-        lines = []
-        labels = []
-        for ax in mpl.gcf().get_axes():
-            li, la = ax.get_legend_handles_labels()
-            lines += li
-            labels += la
-        if self._disp_legend:
-            mpl.gca().legend(lines, labels, loc=self._legend_loc,
-                             ncol=self._nlegends, fancybox=True,
-                             framealpha=0.5)
-
-
-class Epc(VulnPlot):
+class Epc(measure_figure.PlotBase):
     ''' Handles the plotting of EPC '''
 
     def __init__(self, ctx, scores, evaluation, func_load):
         super(Epc, self).__init__(ctx, scores, evaluation, func_load)
         self._iapmr = True if 'iapmr' not in self._ctx.meta else \
             self._ctx.meta['iapmr']
-        self._title = self._title or ('EPC and IAPMR' if self._iapmr else
-                                      'EPC')
-        self._x_label = self._x_label or r"Weight $\beta$"
+        self._titles = self._titles or ['EPC and IAPMR' if self._iapmr else 'EPC']
+        self._x_label = self._x_label or "Weight $\\beta$"
         self._y_label = self._y_label or "HTER (%)"
         self._eval = True  # always eval data with EPC
         self._split = False
         self._nb_figs = 1
 
-        if self._min_arg != 4:
-            raise click.BadParameter("You must provide 4 scores files:{licit,"
-                                     "spoof}/{dev,eval}")
+        if self._min_arg != 2:
+            raise click.BadParameter("You must provide 2 scores files: "
+                                     "scores-{dev,eval}.csv")
 
     def compute(self, idx, input_scores, input_names):
-        ''' Plot EPC for vuln'''
-        # extract pos and negative and remove NaNs
-        neg_list, pos_list, _ = get_fta_list([s for l in input_scores for s in l])
-        licit_dev_neg, licit_dev_pos = neg_list[0], pos_list[0]
-        licit_eval_neg, licit_eval_pos = neg_list[1], pos_list[1]
-        spoof_eval_neg = neg_list[3]
+        '''Plot EPC with IAPMR for vuln'''
+        dev_scores = clean_scores(input_scores[0])
+        if self._eval:
+            eval_scores = clean_scores(input_scores[1])
+        else:
+            eval_scores = {'licit_neg':[], 'licit_pos':[], 'spoof':[]}
 
         mpl.gcf().clear()
         mpl.grid()
         logger.info(f"EPC using {input_names[0]} and {input_names[1]}")
         plot.epc(
-            licit_dev_neg, licit_dev_pos, licit_eval_neg, licit_eval_pos,
+            dev_scores['licit_neg'], dev_scores['licit_pos'],
+            eval_scores['licit_neg'], eval_scores['licit_pos'],
             self._points,
             color='C0', linestyle=self._linestyles[idx],
             label=self._label('HTER (licit)', idx)
@@ -410,50 +381,56 @@ class Epc(VulnPlot):
         mpl.ylabel(self._y_label)
         if self._iapmr:
             ax1 = mpl.gca()
+            # Fix legend
+            iapmr_curve_label = self._label('IAPMR (spoof)', idx)
+            ax1.plot([0], [0], color="C3", label=iapmr_curve_label)
             mpl.gca().set_axisbelow(True)
             prob_ax = mpl.gca().twinx()
             step = 1.0 / float(self._points)
             thres = [float(k * step) for k in range(self._points)]
             thres.append(1.0)
             apply_thres = [min_weighted_error_rate_threshold(
-                licit_dev_neg, licit_dev_pos, t) for t in thres]
+                dev_scores['licit_neg'], dev_scores['licit_pos'], t) for t in thres]
             mix_prob_y = []
             for k in apply_thres:
                 mix_prob_y.append(
-                    100. * error_utils.calc_pass_rate(k, spoof_eval_neg)
+                    100. * error_utils.calc_pass_rate(k,  eval_scores['spoof'])
                 )
 
             logger.info(f"IAPMR in EPC plot using {input_names[0]}, {input_names[1]}")
             mpl.plot(
-                thres, mix_prob_y, label=self._label('IAPMR (spoof)', idx), color='C3'
+                thres, mix_prob_y, label=iapmr_curve_label, color='C3',
             )
 
-            prob_ax.set_yticklabels(prob_ax.get_yticks())
+            # prob_ax.set_yticklabels(prob_ax.get_yticks())
             prob_ax.tick_params(axis='y', colors='C3')
             prob_ax.yaxis.label.set_color('C3')
             prob_ax.spines['right'].set_color('C3')
-            ylabels = prob_ax.get_yticks()
-            prob_ax.yaxis.set_ticklabels(["%.0f" % val for val in ylabels])
+            # ylabels = prob_ax.get_yticks()
+            # prob_ax.yaxis.set_ticklabels(["%.0f" % val for val in ylabels])
             prob_ax.set_ylabel('IAPMR (%)', color='C3')
+            # self._y_label = self._y_label or 'IAPMR (%)'
             prob_ax.set_axisbelow(True)
             ax1.yaxis.label.set_color('C0')
             ax1.tick_params(axis='y', colors='C0')
             ax1.spines['left'].set_color('C0')
+            mpl.sca(ax1)
 
-        title = self._legends[idx] if self._legends is not None else self._title
-        if title.replace(' ', ''):
-            mpl.title(title)
+        # title = self._legends[idx] if self._legends is not None else self._title
+        # if title.replace(' ', ''):
+        #     mpl.title(title)
         # legends for all axes
-        self._plot_legends()
-        mpl.xticks(rotation=self._x_rotation)
-        self._pdf_page.savefig(mpl.gcf())
+        # self.plot_legend()
+        # mpl.xticks(rotation=self._x_rotation)
+        # self._pdf_page.savefig(mpl.gcf())
 
 
 class Epsc(measure_figure.GridSubplot):
     ''' Handles the plotting of EPSC '''
 
-    def __init__(self, ctx, scores, evaluation, func_load,
+    def __init__(self, ctx, scores, func_load,
                  criteria, var_param, **kwargs):
+        evaluation = ctx.meta.get('evaluation', True)
         super(Epsc, self).__init__(ctx, scores, evaluation, func_load)
         self._iapmr = self._ctx.meta.get('iapmr', False)
         self._wer = self._ctx.meta.get('wer', True)
@@ -537,10 +514,10 @@ class Epsc(measure_figure.GridSubplot):
                 logger.debug(f"Plotting EPSC: WER for system {idx+1}, fix param {pi}: {fp}")
                 set_title = self._titles[(idx//self.n_systems)*self._nb_subplots] if self._titles else None
                 display = set_title.replace(' ', '') if set_title is not None else True
-                wer_title = set_title or "WER vs $\\beta$ and $\\omega$"
+                wer_title = set_title or "EPSC: WER vs $\\beta$ and $\\omega$"
                 if display:
                     self._axis1.set_title(wer_title)
-                base = f"({legend}) " if legend.strip() else "WER "
+                base = f"({legend}) " if legend.strip() else "WER, "
                 if self._var_param == 'omega':
                     label = f"{base}$\\beta={fp:.1f}$"
                     self._axis1.plot(
@@ -562,10 +539,10 @@ class Epsc(measure_figure.GridSubplot):
                 mpl.sca(self._axis2)
                 set_title = self._titles[(idx//self.n_systems)*self._nb_subplots+1] if self._titles else None
                 display = set_title.replace(' ', '') if set_title is not None else True
-                iapmr_title = set_title or "IAPMR vs $\\beta$ and $\\omega$"
+                iapmr_title = set_title or "EPSC: IAPMR vs $\\beta$ and $\\omega$"
                 if display:
                     self._axis2.set_title(iapmr_title)
-                base = f"({legend}) " if legend.strip() else "IAPMR "
+                base = f"({legend}) " if legend.strip() else "IAPMR, "
                 if self._var_param == 'omega':
                     label = f"{base} $\\beta={fp:.1f}$"
                     self._axis2.plot(
@@ -615,8 +592,8 @@ class Epsc(measure_figure.GridSubplot):
 
 class Epsc3D(Epsc):
     ''' 3D EPSC plots for vuln'''
-    def __init__(self, ctx, scores, evaluation, func_load, criteria, var_param, **kwargs):
-        super().__init__(ctx, scores, evaluation, func_load, criteria, var_param, **kwargs)
+    def __init__(self, ctx, scores, func_load, criteria, var_param, **kwargs):
+        super().__init__(ctx, scores, func_load, criteria, var_param, **kwargs)
         if self._nb_subplots != 1:
             raise ValueError("You cannot plot more than one type of plot (WER or IAPMR).")
 
@@ -757,7 +734,7 @@ class BaseVulnDetRoc(measure_figure.PlotBase):
         # Only dev scores available
         else:
             logger.info(f"dev curve using {input_names[0]}")
-        self._plot(
+            self._plot(
                 dev_scores['licit_neg'],
                 dev_scores['licit_pos'],
                 dev_scores['spoof'],
@@ -804,7 +781,13 @@ class DetVuln(BaseVulnDetRoc):
         if not self._no_spoof:
             add = " and overlaid SPOOF scenario"
         for i, t in enumerate(self._titles):
-            self._titles[i] = t or ('DET: LICIT' + add)
+            if self._eval and (i % 2):
+                dev_eval = ", eval group"
+            elif self._eval:
+                dev_eval = ", dev group"
+            else:
+                dev_eval = ""
+            self._titles[i] = t or ('DET: LICIT' + add + dev_eval)
         self._legend_loc = self._legend_loc or 'upper right'
 
     def _set_axis(self):
@@ -918,7 +901,13 @@ class RocVuln(BaseVulnDetRoc):
         if not self._no_spoof:
             add = " and overlaid SPOOF scenario"
         for i, t in enumerate(self._titles):
-            self._titles[i] = t or ('ROC: LICIT' + add)
+            if self._eval and (i % 2):
+                dev_eval = ", eval group"
+            elif self._eval:
+                dev_eval = ", dev group"
+            else:
+                dev_eval = ""
+            self._titles[i] = t or ('ROC: LICIT' + add + dev_eval)
         if self._legend_loc == "best":
             self._legend_loc = 'lower right' if self._semilogx else 'upper right'
 
@@ -1051,7 +1040,7 @@ class FmrIapmr(measure_figure.PlotBase):
             # re-calculate fmr since threshold might give a different result
             # for fmr.
             fmr_list[i] = far_for_threshold(eval_scores['licit_neg'], thr)
-        label = self._legends[idx] if self._legends is not None else f'curve {idx+1}'
+        label = self._legends[idx] if self._legends is not None else f'system {idx+1}'
         logger.info(f"Plot FmrIapmr using: {input_names[1]}")
         if self._semilogx:
             mpl.semilogx(fmr_list, iapmr_list, label=label)

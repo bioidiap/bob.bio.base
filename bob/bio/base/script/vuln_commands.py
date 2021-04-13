@@ -333,13 +333,13 @@ def epsc(ctx, scores, criteria, var_param, three_d, sampling, **kwargs):
       ctx.meta['iapmr'] = False
     ctx.meta['sampling'] = sampling
     process = figure.Epsc3D(
-        ctx, scores, True, split_csv_vuln,
+        ctx, scores, split_csv_vuln,
         criteria, var_param,
         **kwargs
     )
   else:
     process = figure.Epsc(
-        ctx, scores, True, split_csv_vuln,
+        ctx, scores, split_csv_vuln,
         criteria, var_param,
         **kwargs
     )
