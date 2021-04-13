@@ -350,143 +350,157 @@ def test_sort():
 
 
 
+def test_metrics_vuln():
+    dev1 = pkg_resources.resource_filename('bob.bio.base.test',
+                                           'data/vuln/scores-dev.csv')
+    runner = CliRunner()
+    result = runner.invoke(vuln_commands.metrics, [dev1])
+    with runner.isolated_filesystem():
+        with open('tmp', 'w') as f:
+            f.write(result.output)
+        assert_click_runner_result(result)
+    dev2 = pkg_resources.resource_filename('bob.bio.base.test',
+                                           'data/vuln/scores-dev-med.csv')
+    test1 = pkg_resources.resource_filename('bob.bio.base.test',
+                                            'data/vuln/scores-eval.csv')
+    test2 = pkg_resources.resource_filename('bob.bio.base.test',
+                                            'data/vuln/scores-eval-med.csv')
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            vuln_commands.metrics, ['-e', dev1, test1, dev2, test2]
+        )
+        with open('tmp', 'w') as f:
+            f.write(result.output)
+        assert_click_runner_result(result)
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            vuln_commands.metrics, ['-e', '-l', 'tmp', '-lg', 'A,B',
+                               dev1, test1, dev2, test2]
+        )
+        assert_click_runner_result(result)
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            vuln_commands.metrics, ['-e', '-l', 'tmp', dev1, test2]
+        )
+        assert_click_runner_result(result)
+
 def test_det_vuln():
-    licit_dev = pkg_resources.resource_filename('bob.bio.base.test',
-                                                'data/licit/scores-dev')
-    licit_test = pkg_resources.resource_filename('bob.bio.base.test',
-                                                 'data/licit/scores-eval')
-    spoof_dev = pkg_resources.resource_filename('bob.bio.base.test',
-                                                'data/spoof/scores-dev')
-    spoof_test = pkg_resources.resource_filename('bob.bio.base.test',
-                                                 'data/spoof/scores-eval')
+    dev_file = pkg_resources.resource_filename('bob.bio.base.test',
+                                                'data/vuln/scores-dev.csv')
+    eval_file = pkg_resources.resource_filename('bob.bio.base.test',
+                                                 'data/vuln/scores-eval.csv')
     runner = CliRunner()
     with runner.isolated_filesystem():
         result = runner.invoke(vuln_commands.det, ['-fnmr', '0.2',
                                                    '-o',
                                                    'DET.pdf',
-                                                   licit_dev, licit_test,
-                                                   spoof_dev, spoof_test])
+                                                   dev_file, eval_file])
         assert_click_runner_result(result)
 
 
 def test_fmr_iapmr_vuln():
-    licit_dev = pkg_resources.resource_filename('bob.bio.base.test',
-                                                'data/licit/scores-dev')
-    licit_test = pkg_resources.resource_filename('bob.bio.base.test',
-                                                 'data/licit/scores-eval')
-    spoof_dev = pkg_resources.resource_filename('bob.bio.base.test',
-                                                'data/spoof/scores-dev')
-    spoof_test = pkg_resources.resource_filename('bob.bio.base.test',
-                                                 'data/spoof/scores-eval')
+    dev_file = pkg_resources.resource_filename('bob.bio.base.test',
+                                                'data/vuln/scores-dev.csv')
+    eval_file = pkg_resources.resource_filename('bob.bio.base.test',
+                                                 'data/vuln/scores-eval.csv')
     runner = CliRunner()
     with runner.isolated_filesystem():
         result = runner.invoke(vuln_commands.fmr_iapmr, [
-            '--output', 'FMRIAPMR.pdf', licit_dev, licit_test, spoof_dev,
-            spoof_test
+            '--output', 'FMRIAPMR.pdf', dev_file, eval_file,
         ])
         assert_click_runner_result(result)
 
         result = runner.invoke(vuln_commands.fmr_iapmr, [
-            '--output', 'FMRIAPMR.pdf', licit_dev, licit_test, spoof_dev,
-            spoof_test, '-G', '-L', '1e-7,1,0,1'
+            '--output', 'FMRIAPMR.pdf', dev_file, eval_file,
+            '-G', '-L', '1e-7,1,0,1'
         ])
         assert_click_runner_result(result)
 
 
 def test_hist_vuln():
-    licit_dev = pkg_resources.resource_filename('bob.bio.base.test',
-                                                'data/licit/scores-dev')
-    licit_test = pkg_resources.resource_filename('bob.bio.base.test',
-                                                 'data/licit/scores-eval')
-    spoof_dev = pkg_resources.resource_filename('bob.bio.base.test',
-                                                'data/spoof/scores-dev')
-    spoof_test = pkg_resources.resource_filename('bob.bio.base.test',
-                                                 'data/spoof/scores-eval')
+    dev_file = pkg_resources.resource_filename('bob.bio.base.test',
+                                                'data/vuln/scores-dev.csv')
+    eval_file = pkg_resources.resource_filename('bob.bio.base.test',
+                                                 'data/vuln/scores-eval.csv')
     runner = CliRunner()
     with runner.isolated_filesystem():
         result = runner.invoke(vuln_commands.hist,
                                ['--criterion', 'eer', '--output',
                                 'HISTO.pdf', '-b', '30', '-ts', 'A,B',
-                                licit_dev, licit_test])
+                                dev_file, eval_file])
         assert_click_runner_result(result)
 
     with runner.isolated_filesystem():
         result = runner.invoke(vuln_commands.hist,
                                ['--criterion', 'eer', '--output',
                                 'HISTO.pdf', '-b', '2,20,30', '-e',
-                                licit_dev, licit_test,
-                                spoof_dev, spoof_test])
+                                dev_file, eval_file])
         assert_click_runner_result(result)
 
 
 def test_epc_vuln():
-    licit_dev = pkg_resources.resource_filename('bob.bio.base.test',
-                                                'data/licit/scores-dev')
-    licit_test = pkg_resources.resource_filename('bob.bio.base.test',
-                                                 'data/licit/scores-eval')
-    spoof_dev = pkg_resources.resource_filename('bob.bio.base.test',
-                                                'data/spoof/scores-dev')
-    spoof_test = pkg_resources.resource_filename('bob.bio.base.test',
-                                                 'data/spoof/scores-eval')
+    dev_file = pkg_resources.resource_filename('bob.bio.base.test',
+                                                'data/vuln/scores-dev.csv')
+    eval_file = pkg_resources.resource_filename('bob.bio.base.test',
+                                                 'data/vuln/scores-eval.csv')
     runner = CliRunner()
     with runner.isolated_filesystem():
         result = runner.invoke(vuln_commands.epc,
                                ['--output', 'epc.pdf',
-                                licit_dev, licit_test,
-                                spoof_dev, spoof_test])
+                                dev_file, eval_file,])
         assert_click_runner_result(result)
 
         result = runner.invoke(vuln_commands.epc,
                                ['--output', 'epc.pdf', '-I',
-                                licit_dev, licit_test,
-                                spoof_dev, spoof_test])
+                                dev_file, eval_file,])
         assert_click_runner_result(result)
 
 
 def test_epsc_vuln():
-    licit_dev = pkg_resources.resource_filename('bob.bio.base.test',
-                                                'data/licit/scores-dev')
-    licit_test = pkg_resources.resource_filename('bob.bio.base.test',
-                                                 'data/licit/scores-eval')
-    spoof_dev = pkg_resources.resource_filename('bob.bio.base.test',
-                                                'data/spoof/scores-dev')
-    spoof_test = pkg_resources.resource_filename('bob.bio.base.test',
-                                                 'data/spoof/scores-eval')
+    dev_file = pkg_resources.resource_filename('bob.bio.base.test',
+                                                'data/vuln/scores-dev.csv')
+    eval_file = pkg_resources.resource_filename('bob.bio.base.test',
+                                                 'data/vuln/scores-eval.csv')
     runner = CliRunner()
     with runner.isolated_filesystem():
         result = runner.invoke(vuln_commands.epsc,
                                ['--output', 'epsc.pdf',
-                                licit_dev, licit_test,
-                                spoof_dev, spoof_test])
+                                dev_file, eval_file,])
         assert_click_runner_result(result)
 
         result = runner.invoke(vuln_commands.epsc,
                                ['--output', 'epsc.pdf', '-I',
                                 '-fp', '0.1,0.3',
-                                licit_dev, licit_test,
-                                spoof_dev, spoof_test])
+                                dev_file, eval_file,])
         assert_click_runner_result(result)
 
 def test_epsc_3D_vuln():
-    licit_dev = pkg_resources.resource_filename('bob.bio.base.test',
-                                                'data/licit/scores-dev')
-    licit_test = pkg_resources.resource_filename('bob.bio.base.test',
-                                                 'data/licit/scores-eval')
-    spoof_dev = pkg_resources.resource_filename('bob.bio.base.test',
-                                                'data/spoof/scores-dev')
-    spoof_test = pkg_resources.resource_filename('bob.bio.base.test',
-                                                 'data/spoof/scores-eval')
+    dev_file = pkg_resources.resource_filename('bob.bio.base.test',
+                                                'data/vuln/scores-dev.csv')
+    eval_file = pkg_resources.resource_filename('bob.bio.base.test',
+                                                 'data/vuln/scores-eval.csv')
     runner = CliRunner()
     with runner.isolated_filesystem():
         result = runner.invoke(vuln_commands.epsc,
                                ['--output', 'epsc.pdf', '-D',
-                                licit_dev, licit_test,
-                                spoof_dev, spoof_test])
+                                dev_file, eval_file,])
         assert_click_runner_result(result)
 
         result = runner.invoke(vuln_commands.epsc,
                                ['--output', 'epsc.pdf', '-D',
                                 '-I', '--no-wer',
-                                licit_dev, licit_test,
-                                spoof_dev, spoof_test])
+                                dev_file, eval_file,])
+        assert_click_runner_result(result)
+
+def test_evaluate_vuln():
+    dev_file = pkg_resources.resource_filename('bob.bio.base.test',
+                                                'data/vuln/scores-dev.csv')
+    eval_file = pkg_resources.resource_filename('bob.bio.base.test',
+                                                 'data/vuln/scores-eval.csv')
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(vuln_commands.evaluate,
+                               ['-e', '-o', 'evaluate_vuln.pdf',
+                                dev_file, eval_file,])
         assert_click_runner_result(result)
