@@ -449,45 +449,43 @@ class Epc(VulnPlot):
         self._pdf_page.savefig(mpl.gcf())
 
 
-class Epsc(VulnPlot, measure_figure.GridSubplot):
+class Epsc(measure_figure.GridSubplot):
     ''' Handles the plotting of EPSC '''
 
     def __init__(self, ctx, scores, evaluation, func_load,
-                 criteria, var_param, fixed_params):
+                 criteria, var_param, **kwargs):
         super(Epsc, self).__init__(ctx, scores, evaluation, func_load)
-        self._iapmr = False if 'iapmr' not in self._ctx.meta else \
-            self._ctx.meta['iapmr']
-        self._wer = True if 'wer' not in self._ctx.meta else \
-            self._ctx.meta['wer']
+        self._iapmr = self._ctx.meta.get('iapmr', False)
+        self._wer = self._ctx.meta.get('wer', True)
         self._criteria = criteria or 'eer'
         self._var_param = var_param or "omega"
-        self._fixed_params = fixed_params or [0.5]
-        self._titles = ctx.meta.get('titles', []) * 2
+        self._fixed_params = ctx.meta.get('fixed_params', [0.5])
+        self._nb_subplots = 2 if (self._wer and self._iapmr) else 1
+        self._titles = ctx.meta.get('titles', [])
+        if len(self._titles) < self._nb_figs*self._nb_subplots:
+            self._titles = [v for v in self._titles for _ in range(self._nb_subplots)]
         self._eval = True  # always eval data with EPSC
         self._split = False
         self._nb_figs = 1
         self._sampling = ctx.meta.get('sampling', 5)
-        mpl.grid(True)
         self._axis1 = None
         self._axis2 = None
 
-        if self._min_arg != 4:
-            raise click.BadParameter("You must provide 4 scores files:{licit,"
-                                     "spoof}/{dev,eval}")
+        if self._min_arg != 2:
+            raise click.BadParameter("You must provide 2 scores files: "
+                                     "scores-{dev,eval}.csv")
 
         self._ncols = 1 if self._iapmr else 0
         self._ncols += 1 if self._wer else 0
 
     def compute(self, idx, input_scores, input_names):
         ''' Plot EPSC for vuln'''
-        licit_dev_neg = input_scores[0][0]
-        licit_dev_pos = input_scores[0][1]
-        licit_eval_neg = input_scores[1][0]
-        licit_eval_pos = input_scores[1][1]
-        spoof_dev_neg = input_scores[2][0]
-        spoof_dev_pos = input_scores[2][1]
-        spoof_eval_neg = input_scores[3][0]
-        spoof_eval_pos = input_scores[3][1]
+        dev_scores = clean_scores(input_scores[0])
+        if self._eval:
+            eval_scores = clean_scores(input_scores[1])
+        else:
+            eval_scores = {'licit_neg':[], 'licit_pos':[], 'spoof':[]}
+
         merge_sys = (self._fixed_params is None or
                      len(self._fixed_params) == 1) and self.n_systems > 1
         legend = ''
@@ -496,7 +494,7 @@ class Epsc(VulnPlot, measure_figure.GridSubplot):
         elif self.n_systems > 1:
             legend = 'Sys%d' % (idx + 1)
 
-        if not merge_sys or idx == 0:
+        if self._axis1 is None:
             # axes should only be created once
             self._axis1 = self.create_subplot(0)
             if self._ncols == 2:
@@ -510,158 +508,179 @@ class Epsc(VulnPlot, measure_figure.GridSubplot):
                 pi = idx
             if self._var_param == 'omega':
                 omega, beta, thrs = error_utils.epsc_thresholds(
-                    licit_dev_neg,
-                    licit_dev_pos,
-                    spoof_dev_neg,
-                    spoof_dev_pos,
+                    dev_scores['licit_neg'],
+                    dev_scores['licit_pos'],
+                    [0.0], # TODO check
+                    dev_scores['spoof'],
                     points=points,
                     criteria=self._criteria,
                     beta=fp)
             else:
                 omega, beta, thrs = error_utils.epsc_thresholds(
-                    licit_dev_neg,
-                    licit_dev_pos,
-                    spoof_dev_neg,
-                    spoof_dev_pos,
+                    dev_scores['licit_neg'],
+                    dev_scores['licit_pos'],
+                    [0.0], # TODO check
+                    dev_scores['spoof'],
                     points=points,
                     criteria=self._criteria,
                     omega=fp
                 )
 
             errors = error_utils.all_error_rates(
-                licit_eval_neg, licit_eval_pos, spoof_eval_neg,
-                spoof_eval_pos, thrs, omega, beta
+                eval_scores['licit_neg'], eval_scores['licit_pos'], eval_scores['spoof'], # TODO check
+                eval_scores['spoof'], thrs, omega, beta
             )  # error rates are returned in a list in the
             # following order: frr, far, IAPMR, far_w, wer_w
-
             mpl.sca(self._axis1)
-            # between the negatives (impostors and Presentation attacks)
-            base = r"(%s) " % legend if legend.strip() else ""
+            # Between zero-effort impostors and Presentation attacks
             if self._wer:
-                set_title = self._titles[idx] if self._titles is not None and \
-                    len(self._titles) > idx else None
-                display = set_title.replace(' ', '') if set_title is not None\
-                    else True
-                wer_title = set_title or ""
+                logger.debug(f"Plotting EPSC: WER for system {idx+1}, fix param {pi}: {fp}")
+                set_title = self._titles[(idx//self.n_systems)*self._nb_subplots] if self._titles else None
+                display = set_title.replace(' ', '') if set_title is not None else True
+                wer_title = set_title or "WER vs $\\beta$ and $\\omega$"
                 if display:
-                    mpl.title(wer_title)
+                    self._axis1.set_title(wer_title)
+                base = f"({legend}) " if legend.strip() else "WER "
                 if self._var_param == 'omega':
-                    label = r"%s$\beta=%.1f$" % (base, fp)
-                    mpl.plot(
+                    label = f"{base}$\\beta={fp:.1f}$"
+                    self._axis1.plot(
                         omega, 100. * errors[4].flatten(),
                         color=self._colors[pi], linestyle='-', label=label)
-                    mpl.xlabel(self._x_label or r"Weight $\omega$")
+                    self._axis1.set_xlabel(self._x_label or "Weight $\\omega$")
                 else:
-                    label = r"%s$\omega=%.1f$" % (base, fp)
-                    mpl.plot(
+                    label = f"{base}$\\omega={fp:.1f}$"
+                    self._axis1.plot(
                         beta, 100. * errors[4].flatten(),
                         color=self._colors[pi], linestyle='-', label=label)
-                    mpl.xlabel(self._x_label or r"Weight $\beta$")
-                mpl.ylabel(self._y_label or r"WER$_{\omega,\beta}$ (%)")
+                    self._axis1.set_xlabel(self._x_label or "Weight $\\beta$")
+                self._axis1.set_ylabel(self._y_label or "WER$_{\\omega,\\beta}$ (%)")
+                self._axis1.grid(True)
+                self._axis1.legend(loc=self._legend_loc)
 
             if self._iapmr:
+                logger.debug(f"Plotting EPSC: IAPMR for system {idx+1}, fix param {pi}: {fp}")
                 mpl.sca(self._axis2)
-                set_title = self._titles[idx + self.n_systems] \
-                    if self._titles is not None and \
-                    len(self._titles) > self.n_systems + idx else None
-                display = set_title.replace(' ', '') if set_title is not None\
-                    else True
-                iapmr_title = set_title or ""
+                set_title = self._titles[(idx//self.n_systems)*self._nb_subplots+1] if self._titles else None
+                display = set_title.replace(' ', '') if set_title is not None else True
+                iapmr_title = set_title or "IAPMR vs $\\beta$ and $\\omega$"
                 if display:
-                    mpl.title(iapmr_title)
+                    self._axis2.set_title(iapmr_title)
+                base = f"({legend}) " if legend.strip() else "IAPMR "
                 if self._var_param == 'omega':
-                    label = r"$%s $\beta=%.1f$" % (base, fp)
-                    mpl.plot(
+                    label = f"{base} $\\beta={fp:.1f}$"
+                    self._axis2.plot(
                         omega, 100. * errors[2].flatten(),
                         color=self._colors[pi], linestyle='-', label=label
                     )
-                    mpl.xlabel(self._x_label or r"Weight $\omega$")
+                    self._axis2.set_xlabel(self._x_label or  "Weight $\\omega$")
                 else:
-                    label = r"%s $\omega=%.1f$" % (base, fp)
-                    mpl.plot(
+                    label = f"{base} $\\omega={fp:.1f}$"
+                    self._axis2.plot(
                         beta, 100. * errors[2].flatten(), linestyle='-',
                         color=self._colors[pi], label=label
                     )
-                    mpl.xlabel(self._x_label or r"Weight $\beta$")
+                    self._axis2.set_xlabel(self._x_label or "Weight $\\beta$")
 
-                mpl.ylabel(self._y_label or r"IAPMR  (%)")
-                self._axis2.set_xticklabels(self._axis2.get_xticks())
-                self._axis2.set_yticklabels(self._axis2.get_yticks())
+                self._axis2.set_ylabel(self._y_label or "IAPMR (%)")
+                self._axis2.grid(True)
+                self._axis2.legend(loc=self._legend_loc)
 
-        self._axis1.set_xticklabels(self._axis1.get_xticks())
-        self._axis1.set_yticklabels(self._axis1.get_yticks())
-        mpl.xticks(rotation=self._x_rotation)
-        if self._fixed_params is None or len(self._fixed_params) > 1 or \
-           idx == self.n_systems - 1:
-            self.finalize_one_page()
-
+    def end_process(self):
+        """Sets legend, saves figures, draws lines and closes pdf if needed."""
+        # Draw vertical lines
+        if self._far_at is not None:
+            for (line, line_trans) in zip(self._far_at, self._trans_far_val):
+                mpl.figure(1)
+                mpl.plot([line_trans, line_trans], [-100.0, 100.0], "--", color="black")
+                if self._eval and self._split:
+                    mpl.figure(2)
+                    x_values = [i for i, _ in self._eval_points[line]]
+                    y_values = [j for _, j in self._eval_points[line]]
+                    sort_indice = sorted(range(len(x_values)), key=x_values.__getitem__)
+                    x_values = [x_values[i] for i in sort_indice]
+                    y_values = [y_values[i] for i in sort_indice]
+                    mpl.plot(x_values, y_values, "--", color="black")
+        # Only for plots
+        if self._end_setup_plot:
+            for i in range(self._nb_figs):
+                fig = mpl.figure(i + 1)
+                if self._disp_legend:
+                    mpl.legend(loc=self._legend_loc)
+                self._pdf_page.savefig(fig)
+        # Do not close PDF when running multiple commands
+        if "PdfPages" in self._ctx.meta and (
+            "closef" not in self._ctx.meta or self._ctx.meta['closef']
+        ):
+            self._pdf_page.close()
 
 class Epsc3D(Epsc):
     ''' 3D EPSC plots for vuln'''
+    def __init__(self, ctx, scores, evaluation, func_load, criteria, var_param, **kwargs):
+        super().__init__(ctx, scores, evaluation, func_load, criteria, var_param, **kwargs)
+        if self._nb_subplots != 1:
+            raise ValueError("You cannot plot more than one type of plot (WER or IAPMR).")
 
     def compute(self, idx, input_scores, input_names):
         ''' Implements plots'''
-        licit_dev_neg = input_scores[0][0]
-        licit_dev_pos = input_scores[0][1]
-        licit_eval_neg = input_scores[1][0]
-        licit_eval_pos = input_scores[1][1]
-        spoof_dev_neg = input_scores[2][0]
-        spoof_dev_pos = input_scores[2][1]
-        spoof_eval_neg = input_scores[3][0]
-        spoof_eval_pos = input_scores[3][1]
+        dev_scores = clean_scores(input_scores[0])
+        if self._eval:
+            eval_scores = clean_scores(input_scores[1])
+        else:
+            eval_scores = {'licit_neg':[], 'licit_pos':[], 'spoof':[]}
 
-        title = self._legends[idx] if self._legends is not None else "3D EPSC"
+        default_title = "EPSC 3D: IAPMR" if self._iapmr else "EPSC 3D: WER"
+        title = self._titles[idx] if self._titles else default_title
 
         mpl.rcParams.pop('key', None)
 
-        mpl.gcf().clear()
+        # mpl.gcf().clear()
         mpl.gcf().set_constrained_layout(self._clayout)
 
-        from mpl_toolkits.mplot3d import Axes3D
         from matplotlib import cm
 
         points = self._sampling or 5
 
+        # Compute threshold values on dev
         omega, beta, thrs = error_utils.epsc_thresholds(
-            licit_dev_neg,
-            licit_dev_pos,
-            spoof_dev_neg,
-            spoof_dev_pos,
+            dev_scores['licit_neg'],
+            dev_scores['licit_pos'],
+            [0.0], # TODO check
+            dev_scores['spoof'],
             points=points,
             criteria=self._criteria)
 
+        # Compute errors on eval
         errors = error_utils.all_error_rates(
-            licit_eval_neg, licit_eval_pos, spoof_eval_neg, spoof_eval_pos,
+            eval_scores['licit_neg'], eval_scores['licit_pos'], eval_scores['spoof'], eval_scores['spoof'], # TODO check
             thrs, omega, beta
         )
         # error rates are returned in a list as 2D numpy.ndarrays in
         # the following order: frr, far, IAPMR, far_w, wer_wb, hter_wb
         wer_errors = 100 * errors[2 if self._iapmr else 4]
 
-        ax1 = mpl.gcf().add_subplot(111, projection='3d')
+        if not self._axis1:
+            self._axis1 = mpl.gcf().add_subplot(111, projection='3d')
 
         W, B = np.meshgrid(omega, beta)
 
-        ax1.plot_wireframe(
-            W, B, wer_errors, cmap=cm.coolwarm, antialiased=False
-        )  # surface
+        label = self._legends[idx] if self._legends else f"Sys {idx+1}"
+        self._axis1.plot_wireframe(
+            W, B, wer_errors, color=self._colors[idx], antialiased=False, label=label,
+        )
 
         if self._iapmr:
-            ax1.azim = -30
-            ax1.elev = 50
+            self._axis1.azim = -30
+            self._axis1.elev = 50
 
-        ax1.set_xlabel(self._x_label or r"Weight $\omega$")
-        ax1.set_ylabel(self._y_label or r"Weight $\beta$")
-        ax1.set_zlabel(
+        self._axis1.set_xlabel(self._x_label or r"Weight $\omega$")
+        self._axis1.set_ylabel(self._y_label or r"Weight $\beta$")
+        self._axis1.set_zlabel(
             r"WER$_{\omega,\beta}$ (%)" if self._wer else "IAPMR (%)"
         )
 
         if title.replace(' ', ''):
             mpl.title(title)
 
-        ax1.set_xticklabels(ax1.get_xticks())
-        ax1.set_yticklabels(ax1.get_yticks())
-        ax1.set_zticklabels(ax1.get_zticks())
 
 class BaseVulnDetRoc(measure_figure.PlotBase):
     '''Base for DET and ROC'''
