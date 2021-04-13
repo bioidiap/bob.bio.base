@@ -2,18 +2,228 @@
 
 import click
 import numpy as np
+from tabulate import tabulate
 import matplotlib.pyplot as mpl
 import bob.measure.script.figure as measure_figure
 from bob.measure.utils import get_fta_list, get_thres, remove_nan
 from bob.measure import (
-    frr_threshold, far_threshold, farfrr,
-    ppndf, min_weighted_error_rate_threshold
+    frr_threshold, far_threshold, farfrr, f_score, roc_auc_score,
+    ppndf, min_weighted_error_rate_threshold, precision_recall,
 )
 from bob.measure import plot
 from . import error_utils
 import logging
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
+
+
+def clean_scores(input_scores):
+    """Returns a dict with each scores groups cleaned
+
+    Parameters
+    ----------
+    input_scores: dict
+
+    Returns
+    -------
+    clean_scores: dict
+    """
+    clean_scores = {}
+    for key, scores in input_scores.items():
+        clean_scores[key], _, _ = remove_nan(scores)
+    return clean_scores
+
+def far_for_threshold(scores, threshold):
+    """Returns the ratio of scores over the threshold value
+
+    Corresponds to FAR for negative scores, and 1-FRR for positive scores.
+    """
+    return (scores >= threshold).sum() / len(scores)
+
+def frr_for_threshold(scores, threshold):
+    """Returns the ratio of scores over the threshold value
+
+    Corresponds to FRR for positive scores, and 1-FAR for negative scores.
+    """
+    return (scores < threshold).sum() / len(scores)
+
+
+class Metrics(measure_figure.Metrics):
+    """ Compute metrics from score files
+
+    Attributes
+    ----------
+
+    names: dict {str:str}
+        pairs of metrics keys and corresponding row titles to display.
+    """
+
+    def __init__(
+        self,
+        ctx,
+        scores,
+        evaluation,
+        func_load,
+        names={
+            "fta": "Licit Failure to Acquire",
+            "fmr": "Licit False Match Rate",
+            "fnmr": "Licit False Non Match Rate",
+            "far": "Licit False Accept Rate",
+            "frr": "Licit False Reject Rate",
+            "hter": "Licit Half Total Error Rate",
+            "iapmr": "Attack Presentation Match Rate",
+        },
+        **kwargs,
+    ):
+        super(Metrics, self).__init__(ctx, scores, evaluation, func_load, names, **kwargs)
+
+    def _get_all_metrics(self, idx, input_scores, input_names):
+        """ Compute all metrics for dev and eval scores"""
+        # Parse input and remove/count failed samples (NaN)
+        dev_neg, dev_neg_na, dev_neg_count = remove_nan(input_scores[0]['licit_neg'])
+        dev_pos, dev_pos_na, dev_pos_count = remove_nan(input_scores[0]['licit_pos'])
+        dev_spoof, dev_spoof_na, dev_spoof_count = remove_nan(input_scores[0]['spoof'])
+        dev_fta = (dev_neg_na + dev_pos_na + dev_spoof_na) / (dev_neg_count + dev_pos_count + dev_spoof_count)
+        if self._eval:
+            eval_neg, eval_neg_na, eval_neg_count = remove_nan(input_scores[1]['licit_neg'])
+            eval_pos, eval_pos_na, eval_pos_count = remove_nan(input_scores[1]['licit_pos'])
+            eval_spoof, eval_spoof_na, eval_spoof_count = remove_nan(input_scores[1]['spoof'])
+            eval_fta = (eval_neg_na + eval_pos_na + eval_spoof_na) / (eval_neg_count + eval_pos_count + eval_spoof_count)
+        dev_file = input_names[0]
+
+        # Compute threshold on dev set
+        threshold = (
+            self.get_thres(self._criterion, dev_neg, dev_pos, self._far)
+            if self._thres is None
+            else self._thres[idx]
+        )
+
+        title = self._legends[idx] if self._legends is not None else None
+        if self._thres is None:
+            far_str = ""
+            if self._criterion == "far" and self._far is not None:
+                far_str = str(self._far)
+            click.echo(
+                f"[Min. criterion: {self._criterion.upper()} {far_str}] "
+                f"Threshold on Development set `{title or dev_file}`: {threshold:e}",
+                file=self.log_file,
+            )
+        else:
+            click.echo(
+                "[Min. criterion: user provided] Threshold on "
+                f"Development set `{dev_file or title}`: {threshold:e}",
+                file=self.log_file,
+            )
+
+        res = []
+        res.append(self._strings(self._numbers(dev_neg, dev_pos, dev_spoof, threshold, dev_fta)))
+
+        if self._eval:
+            # computes statistics for the eval set based on the threshold a
+            # priori computed on the dev set
+            res.append(
+                self._strings(self._numbers(eval_neg, eval_pos, eval_spoof, threshold, eval_fta))
+            )
+        else:
+            res.append(None)
+
+        return res
+
+    def _numbers(self, neg, pos, spoof, threshold, fta):
+        """Computes each metric value
+        """
+        # fpr and fnr
+        fmr, fnmr = farfrr(neg, pos, threshold)
+        hter = (fmr + fnmr) / 2.0
+        far = fmr * (1 - fta)
+        frr = fta + fnmr * (1 - fta)
+
+        ni = neg.shape[0]  # number of impostors
+        fm = int(round(fmr * ni))  # number of false accepts
+        nc = pos.shape[0]  # number of clients
+        fnm = int(round(fnmr * nc))  # number of false rejects
+
+        # precision and recall
+        precision, recall = precision_recall(neg, pos, threshold)
+
+        # f_score
+        f1_score = f_score(neg, pos, threshold, 1)
+
+        # AUC ROC
+        auc = roc_auc_score(neg, pos)
+        auc_log = roc_auc_score(neg, pos, log_scale=True)
+
+        # IAPMR at threshold
+        iapmr = far_for_threshold(spoof, threshold)
+        spoof_total = len(spoof)
+        spoof_match = int(round(iapmr * spoof_total))
+
+        return {
+            "fta": fta,
+            "fmr": fmr,
+            "fnmr": fnmr,
+            "hter": hter,
+            "far": far,
+            "frr": frr,
+            "fm": fm,
+            "ni": ni,
+            "fnm": fnm,
+            "nc": nc,
+            "precision": precision,
+            "recall": recall,
+            "f1_score": f1_score,
+            "auc": auc,
+            "auc_log": auc_log,
+            "iapmr": iapmr,
+            "spoof_match": spoof_match,
+            "spoof_total": spoof_total,
+        }
+
+    def _strings(self, metrics):
+        """Formats the metrics values into strings
+        """
+        return {
+            "fta": f"{100 * metrics['fta']:.{self._decimal}f}%",
+            "fmr": f"{100 * metrics['fmr']:.{self._decimal}f}% ({metrics['fm']}/{metrics['ni']})",
+            "fnmr": f"{100 * metrics['fnmr']:.{self._decimal}f}% ({metrics['fnm']}/{metrics['nc']})",
+            "far": f"{100 * metrics['far']:.{self._decimal}f}%",
+            "frr": f"{100 * metrics['frr']:.{self._decimal}f}%",
+            "hter": f"{100 * metrics['hter']:.{self._decimal}f}%",
+            "precision": f"{metrics['precision']:.{self._decimal}f}",
+            "recall": f"{metrics['recall']:.{self._decimal}f}",
+            "f1_score": f"{metrics['f1_score']:.{self._decimal}f}",
+            "auc": f"{metrics['auc']:.{self._decimal}f}",
+            "auc_log": f"{metrics['auc_log']:.{self._decimal}f}",
+            "iapmr": f"{100 * metrics['iapmr']:.{self._decimal}f}% ({metrics['spoof_match']}/{metrics['spoof_total']})",
+        }
+
+    def compute(self, idx, input_scores, input_names):
+        """ Compute metrics thresholds and tables for given system inputs
+        """
+        # Title and headers
+        title = self._legends[idx] if self._legends is not None else None
+        headers = ["" or title, "Dev. %s" % input_names[0]]
+        if self._eval and input_scores[1] is not None:
+            headers.append("eval % s" % input_names[1])
+
+        # Tables rows
+        all_metrics = self._get_all_metrics(idx, input_scores, input_names)
+        headers = [" " or title, "Development"]
+
+        rows = []
+        for key, name in self.names.items():
+            if key not in all_metrics[0]:
+                logger.warning(f"{key} not present in metrics.")
+            rows.append([name, all_metrics[0].get(key,"N/A")])
+
+        if self._eval:
+            # computes statistics for the eval set based on the threshold a
+            # priori
+            headers.append("Evaluation")
+            for row, key in zip(rows, self.names.keys()):
+                row.append(all_metrics[1].get(key,"N/A"))
+
+        click.echo(tabulate(rows, headers, self._tablefmt), file=self.log_file)
 
 
 def _iapmr_dot(threshold, iapmr, real_data, **kwargs):
@@ -190,7 +400,7 @@ class Epc(VulnPlot):
 
         mpl.gcf().clear()
         mpl.grid()
-        LOGGER.info("EPC using %s", '%s-%s' % (input_names[0], input_names[1]))
+        logger.info(f"EPC using {input_names[0]} and {input_names[1]}")
         plot.epc(
             licit_dev_neg, licit_dev_pos, licit_eval_neg, licit_eval_pos,
             self._points,
@@ -214,8 +424,7 @@ class Epc(VulnPlot):
                     100. * error_utils.calc_pass_rate(k, spoof_eval_neg)
                 )
 
-            LOGGER.info("IAPMR in EPC plot using %s",
-                        '%s-%s' % (input_names[0], input_names[1]))
+            logger.info(f"IAPMR in EPC plot using {input_names[0]}, {input_names[1]}")
             mpl.plot(
                 thres, mix_prob_y, label=self._label('IAPMR (spoof)', idx), color='C3'
             )
@@ -659,8 +868,7 @@ class RocVuln(BaseVulnDetRoc):
         best_legend = 'lower right' if self._semilogx else 'upper right'
         self._legend_loc = self._legend_loc or best_legend
 
-    def _plot(self, x, y, points, **kwargs):
-        LOGGER.info("Plot ROC")
+        logger.info("Plotting ROC")
         plot.roc(
             x, y,
             npoints=self._points,
@@ -702,11 +910,7 @@ class FmrIapmr(VulnPlot):
             iapmr_list.append(farfrr(spoof_eval_neg, licit_eval_pos, thr)[0])
             # re-calculate fmr since threshold might give a different result
             # for fmr.
-            fmr_list[i] = farfrr(licit_eval_neg, licit_eval_pos, thr)[0]
-        label = self._legends[idx] if self._legends is not None else \
-            ('curve %d' % (idx + 1))
-        LOGGER.info("Plot FmrIapmr using: %s/%s",
-                    input_names[1], input_names[3])
+        logger.info(f"Plot FmrIapmr using: {input_names[1]}")
         if self._semilogx:
             mpl.semilogx(fmr_list, iapmr_list, label=label)
         else:

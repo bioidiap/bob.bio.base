@@ -96,16 +96,29 @@ def gen(outdir, mean_gen, mean_zei, mean_pa, **kwargs):
                        os.path.join(outdir, 'scores-eval.csv'))
 
 
-@click.command()
-@common_options.scores_argument(min_arg=2, nargs=-1)
-@common_options.output_plot_file_option(default_out='roc.pdf')
-@common_options.legends_option()
-@common_options.no_legend_option()
-@common_options.legend_loc_option(dflt='upper-right')
-@common_options.title_option()
-@common_options.const_layout_option()
-@common_options.style_option()
-@common_options.figsize_option(dflt=None)
+@common_options.metrics_command(
+  docstring="""Extracts different statistical values from scores distributions
+
+  Prints a table that contains different metrics to assess the performance of a
+  biometric system against zero-effort impostor and presentation attacks.
+
+  The CSV score files must contain an `attack-type` column, in addition to the
+  "regular" biometric scores columns (`bio_ref_reference_id`,
+  `probe_reference_id`, and `score`).
+
+  Examples:
+
+      $ bob vuln metrics -v scores-dev.csv
+
+      $ bob vuln metrics -v -e scores-{dev,eval}.csv
+  """
+)
+@common_options.cost_option()
+def metrics(ctx, scores, evaluation, **kwargs):
+  process = figure.Metrics(ctx, scores, evaluation, split_csv_vuln)
+  process.run()
+
+
 @common_options.min_far_option()
 @common_options.axes_val_option()
 @verbosity_option()

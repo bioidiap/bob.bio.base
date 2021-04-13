@@ -152,6 +152,7 @@ setup(
 
        # Vulnerability analysis commands
       'bob.vuln.cli':[
+        'metrics           = bob.bio.base.script.vuln_commands:metrics',
         'hist              = bob.bio.base.script.vuln_commands:hist',
         'det               = bob.bio.base.script.vuln_commands:det',
         'roc               = bob.bio.base.script.vuln_commands:roc',
