@@ -429,27 +429,15 @@ class Epc(measure_figure.PlotBase):
                 color="C3",
             )
 
-            # prob_ax.set_yticklabels(prob_ax.get_yticks())
             prob_ax.tick_params(axis="y", colors="C3")
             prob_ax.yaxis.label.set_color("C3")
             prob_ax.spines["right"].set_color("C3")
-            # ylabels = prob_ax.get_yticks()
-            # prob_ax.yaxis.set_ticklabels(["%.0f" % val for val in ylabels])
             prob_ax.set_ylabel("IAPMR (%)", color="C3")
-            # self._y_label = self._y_label or 'IAPMR (%)'
             prob_ax.set_axisbelow(True)
             ax1.yaxis.label.set_color("C0")
             ax1.tick_params(axis="y", colors="C0")
             ax1.spines["left"].set_color("C0")
             mpl.sca(ax1)
-
-        # title = self._legends[idx] if self._legends is not None else self._title
-        # if title.replace(' ', ''):
-        #     mpl.title(title)
-        # legends for all axes
-        # self.plot_legend()
-        # mpl.xticks(rotation=self._x_rotation)
-        # self._pdf_page.savefig(mpl.gcf())
 
 
 class Epsc(measure_figure.GridSubplot):

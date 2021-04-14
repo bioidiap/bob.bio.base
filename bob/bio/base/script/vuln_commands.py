@@ -173,18 +173,18 @@ def gen(outdir, mean_gen, mean_zei, mean_pa, **kwargs):
 @common_options.metrics_command(
     docstring="""Extracts different statistical values from scores distributions
 
-  Prints a table that contains different metrics to assess the performance of a
-  biometric system against zero-effort impostor and presentation attacks.
+    Prints a table that contains different metrics to assess the performance of a
+    biometric system against zero-effort impostor and presentation attacks.
 
-  The CSV score files must contain an `attack-type` column, in addition to the
-  "regular" biometric scores columns (`bio_ref_reference_id`,
-  `probe_reference_id`, and `score`).
+    The CSV score files must contain an `attack-type` column, in addition to the
+    "regular" biometric scores columns (`bio_ref_reference_id`,
+    `probe_reference_id`, and `score`).
 
-  Examples:
+    Examples:
 
-      $ bob vuln metrics -v scores-dev.csv
+        $ bob vuln metrics -v scores-dev.csv
 
-      $ bob vuln metrics -v -e scores-{dev,eval}.csv
+        $ bob vuln metrics -v -e scores-{dev,eval}.csv
   """
 )
 @common_options.cost_option()
@@ -196,22 +196,22 @@ def metrics(ctx, scores, evaluation, **kwargs):
 @vuln_plot_options(
     docstring="""Plots the ROC for vulnerability analysis
 
-  You need to provide 1 or 2 (with `--eval`) score
-  files for each vulnerability system in this order:
+    You need to provide 1 or 2 (with `--eval`) score
+    files for each vulnerability system in this order:
 
-  \b
-  * dev scores
-  * [eval scores]
+    \b
+    * dev scores
+    * [eval scores]
 
-  The CSV score files must contain an `attack-type` column, in addition to the
-  "regular" biometric scores columns (`bio_ref_reference_id`,
-  `probe_reference_id`, and `score`).
+    The CSV score files must contain an `attack-type` column, in addition to the
+    "regular" biometric scores columns (`bio_ref_reference_id`,
+    `probe_reference_id`, and `score`).
 
-  Examples:
+    Examples:
 
-      $ bob vuln roc -v -o roc.pdf scores.csv
+        $ bob vuln roc -v -o roc.pdf scores.csv
 
-      $ bob vuln roc -v -e scores-{dev,eval}.csv
+        $ bob vuln roc -v -e scores-{dev,eval}.csv
   """,
     plot_output_default="vuln_roc.pdf",
 )
@@ -234,25 +234,25 @@ def roc(ctx, scores, evaluation, real_data, **kwargs):
 @vuln_plot_options(
     docstring="""Plots the DET for vulnerability analysis
 
-  You need to provide 1 or 2 (with `--eval`) score
-  files for each vulnerability system in this order:
+    You need to provide 1 or 2 (with `--eval`) score
+    files for each vulnerability system in this order:
 
-  \b
-  * dev scores
-  * [eval scores]
+    \b
+    * dev scores
+    * [eval scores]
 
-  The CSV score files must contain an `attack-type` column, in addition to the
-  "regular" biometric scores columns (`bio_ref_reference_id`,
-  `probe_reference_id`, and `score`).
+    The CSV score files must contain an `attack-type` column, in addition to the
+    "regular" biometric scores columns (`bio_ref_reference_id`,
+    `probe_reference_id`, and `score`).
 
-  See :ref:`bob.bio.base.vulnerability` in the documentation for a guide on
-  vulnerability analysis.
+    See :ref:`bob.bio.base.vulnerability` in the documentation for a guide on
+    vulnerability analysis.
 
-  Examples:
+    Examples:
 
-      $ bob vuln det -v -o det.pdf scores.csv
+        $ bob vuln det -v -o det.pdf scores.csv
 
-      $ bob vuln det -v -e scores-{dev,eval}.csv
+        $ bob vuln det -v -e scores-{dev,eval}.csv
   """,
     plot_output_default="vuln_det.pdf",
     legend_loc_default="best",
@@ -274,27 +274,28 @@ def det(ctx, scores, evaluation, real_data, **kwargs):
 @vuln_plot_options(
     docstring="""Plots the EPC for vulnerability analysis
 
-  You need to provide 2 score files for each vulnerability system in this order:
+    You need to provide 2 score files for each vulnerability system in this order:
 
-  \b
-  * dev scores
-  * eval scores
+    \b
+    * dev scores
+    * eval scores
 
-  The CSV score files must contain an `attack-type` column, in addition to the
-  "regular" biometric scores columns (`bio_ref_reference_id`,
-  `probe_reference_id`, and `score`).
+    The CSV score files must contain an `attack-type` column, in addition to the
+    "regular" biometric scores columns (`bio_ref_reference_id`,
+    `probe_reference_id`, and `score`).
 
-  See :ref:`bob.bio.base.vulnerability` in the documentation for a guide on
-  vulnerability analysis.
+    See :ref:`bob.bio.base.vulnerability` in the documentation for a guide on
+    vulnerability analysis.
 
-  Examples:
+    Examples:
 
-      $ bob vuln epc -v scores-dev.csv scores-eval.csv
+        $ bob vuln epc -v scores-dev.csv scores-eval.csv
 
-      $ bob vuln epc -v -o epc.pdf scores-{dev,eval}.csv
+        $ bob vuln epc -v -o epc.pdf scores-{dev,eval}.csv
   """,
     plot_output_default="vuln_epc.pdf",
     force_eval=True,
+    legend_loc_default="upper-center",
 )
 @common_options.bool_option(
     "iapmr", "I", "Whether to plot the IAPMR related lines or not.", True
@@ -307,31 +308,31 @@ def epc(ctx, scores, **kwargs):
 @vuln_plot_options(
     docstring="""Plots the EPSC for vulnerability analysis
 
-  Plots the Expected Performance Spoofing Curve.
+    Plots the Expected Performance Spoofing Curve.
 
-  Note that when using 3D plots with option ``--three-d``, you cannot plot
-  both WER and IAPMR on the same figure (which is possible in 2D).
+    Note that when using 3D plots with option ``--three-d``, you cannot plot
+    both WER and IAPMR on the same figure (which is possible in 2D).
 
-  You need to provide 2 score files for each vulnerability system in this order:
+    You need to provide 2 score files for each vulnerability system in this order:
 
-  \b
-  * dev scores
-  * eval scores
+    \b
+    * dev scores
+    * eval scores
 
-  The CSV score files must contain an `attack-type` column, in addition to the
-  "regular" biometric scores columns (`bio_ref_reference_id`,
-  `probe_reference_id`, and `score`).
+    The CSV score files must contain an `attack-type` column, in addition to the
+    "regular" biometric scores columns (`bio_ref_reference_id`,
+    `probe_reference_id`, and `score`).
 
-  See :ref:`bob.bio.base.vulnerability` in the documentation for a guide on
-  vulnerability analysis.
+    See :ref:`bob.bio.base.vulnerability` in the documentation for a guide on
+    vulnerability analysis.
 
-  Examples:
+    Examples:
 
-      $ bob vuln epsc -v scores-dev.csv scores-eval.csv
+        $ bob vuln epsc -v scores-dev.csv scores-eval.csv
 
-      $ bob vuln epsc -v -o epsc.pdf scores-{dev,eval}.csv
+        $ bob vuln epsc -v -o epsc.pdf scores-{dev,eval}.csv
 
-      $ bob vuln epsc -v -D -o epsc_3D.pdf scores-{dev,eval}.csv
+        $ bob vuln epsc -v -D -o epsc_3D.pdf scores-{dev,eval}.csv
   """,
     plot_output_default="vuln_epc.pdf",
     force_eval=True,
@@ -399,32 +400,32 @@ def epsc(ctx, scores, criteria, var_param, three_d, sampling, **kwargs):
 @vuln_plot_options(
     docstring="""Vulnerability analysis score distribution histograms.
 
-  Plots the histogram of score distributions. You need to provide 1 or 2 score
-  files for each biometric system in this order:
+    Plots the histogram of score distributions. You need to provide 1 or 2 score
+    files for each biometric system in this order:
 
-  \b
-  * development scores
-  * [evaluation scores]
+    \b
+    * development scores
+    * [evaluation scores]
 
-  When evaluation scores are provided, you must use the ``--eval`` option.
+    When evaluation scores are provided, you must use the ``--eval`` option.
 
-  The CSV score files must contain an `attack-type` column, in addition to the
-  "regular" biometric scores columns (`bio_ref_reference_id`,
-  `probe_reference_id`, and `score`).
+    The CSV score files must contain an `attack-type` column, in addition to the
+    "regular" biometric scores columns (`bio_ref_reference_id`,
+    `probe_reference_id`, and `score`).
 
-  See :ref:`bob.bio.base.vulnerability` in the documentation for a guide on
-  vulnerability analysis.
+    See :ref:`bob.bio.base.vulnerability` in the documentation for a guide on
+    vulnerability analysis.
 
-  When eval-scores are given, eval-scores histograms are displayed with the
-  threshold line computed from dev-scores.
+    When eval-scores are given, eval-scores histograms are displayed with the
+    threshold line computed from dev-scores.
 
-  Examples:
+    Examples:
 
-      $ bob vuln hist -v -o hist.pdf results/scores-dev.csv
+        $ bob vuln hist -v -o hist.pdf results/scores-dev.csv
 
-      $ bob vuln hist -e -v results/scores-dev.csv results/scores-eval.csv
+        $ bob vuln hist -e -v results/scores-dev.csv results/scores-eval.csv
 
-      $ bob vuln hist -e -v results/scores-{dev,eval}.csv
+        $ bob vuln hist -e -v results/scores-{dev,eval}.csv
   """,
     plot_output_default="vuln_hist.pdf",
 )
@@ -480,22 +481,22 @@ def hist(ctx, scores, evaluation, **kwargs):
 @vuln_plot_options(
     docstring="""Plots the FMR vs IAPMR for vulnerability analysis
 
-  You need to provide 1 or 2 (with `--eval`) score
-  files for each vulnerability system in this order:
+    You need to provide 1 or 2 (with `--eval`) score
+    files for each vulnerability system in this order:
 
-  \b
-  * dev scores
-  * [eval scores]
+    \b
+    * dev scores
+    * [eval scores]
 
-  The CSV score files must contain an `attack-type` column, in addition to the
-  "regular" biometric scores columns (`bio_ref_reference_id`,
-  `probe_reference_id`, and `score`).
+    The CSV score files must contain an `attack-type` column, in addition to the
+    "regular" biometric scores columns (`bio_ref_reference_id`,
+    `probe_reference_id`, and `score`).
 
-  Examples:
+    Examples:
 
-      $ bob vuln fmr_iapmr -v -o fmr_iapmr.pdf scores.csv
+        $ bob vuln fmr_iapmr -v -o fmr_iapmr.pdf scores.csv
 
-      $ bob vuln fmr_iapmr -v -e scores-{dev,eval}.csv
+        $ bob vuln fmr_iapmr -v -e scores-{dev,eval}.csv
   """,
     plot_output_default="vuln_roc.pdf",
     force_eval=True,
