@@ -33,20 +33,6 @@ def clean_scores(input_scores):
         clean_scores[key], _, _ = remove_nan(scores)
     return clean_scores
 
-def far_for_threshold(scores, threshold):
-    """Returns the ratio of scores over the threshold value
-
-    Corresponds to FAR for negative scores, and 1-FRR for positive scores.
-    """
-    return (scores >= threshold).sum() / len(scores)
-
-def frr_for_threshold(scores, threshold):
-    """Returns the ratio of scores over the threshold value
-
-    Corresponds to FRR for positive scores, and 1-FAR for negative scores.
-    """
-    return (scores < threshold).sum() / len(scores)
-
 
 class Metrics(measure_figure.Metrics):
     """ Compute metrics from score files
@@ -154,7 +140,7 @@ class Metrics(measure_figure.Metrics):
         auc_log = roc_auc_score(neg, pos, log_scale=True)
 
         # IAPMR at threshold
-        iapmr = far_for_threshold(spoof, threshold)
+        iapmr, _ = farfrr(spoof, [0.0], threshold)
         spoof_total = len(spoof)
         spoof_match = int(round(iapmr * spoof_total))
 
@@ -323,7 +309,7 @@ class HistVuln(measure_figure.Hist):
 
         if 'iapmr_line' not in self._ctx.meta or self._ctx.meta['iapmr_line']:
             # Plot iapmr_line (accepted PA vs threshold)
-            iapmr = far_for_threshold(spoof, threshold)
+            iapmr, _ = farfrr(spoof, [0.0], threshold)
             ax2 = mpl.twinx()
             # we never want grid lines on axis 2
             ax2.grid(False)
@@ -703,7 +689,7 @@ class BaseVulnDetRoc(measure_figure.PlotBase):
                     neg=dev_scores['licit_neg'],
                     pos=dev_scores['licit_pos'],
                 )
-                fnmr_at_dev_threshold = frr_for_threshold(dev_scores['licit_pos'], dev_threshold)
+                _, fnmr_at_dev_threshold = farfrr([0.0], dev_scores['licit_pos'], dev_threshold)
             fnmrs_dev = self._fnmrs_at or [fnmr_at_dev_threshold]
             self._draw_fnmrs(idx, dev_scores, fnmrs_dev)
 
@@ -727,7 +713,7 @@ class BaseVulnDetRoc(measure_figure.PlotBase):
             )
             if not self._fnmrs_at:
                 logger.info("printing fnmr at dev eer threshold for eval")
-                fnmr_at_dev_threshold = frr_for_threshold(eval_scores['licit_pos'], dev_threshold)
+                _, fnmr_at_dev_threshold = farfrr([0.0], eval_scores['licit_pos'], dev_threshold)
             fnmrs_dev = self._fnmrs_at or [fnmr_at_dev_threshold]
             self._draw_fnmrs(idx, eval_scores, fnmrs_dev, True)
 
@@ -753,7 +739,7 @@ class BaseVulnDetRoc(measure_figure.PlotBase):
                     neg=dev_scores['licit_neg'],
                     pos=dev_scores['licit_pos'],
                 )
-                fnmr_at_dev_threshold = frr_for_threshold(dev_scores['licit_pos'], dev_threshold)
+                _, fnmr_at_dev_threshold = farfrr([0.0], dev_scores['licit_pos'], dev_threshold)
             fnmrs_dev = self._fnmrs_at or [fnmr_at_dev_threshold]
             self._draw_fnmrs(idx, dev_scores, fnmrs_dev)
 
@@ -1036,10 +1022,10 @@ class FmrIapmr(measure_figure.PlotBase):
         iapmr_list = []
         for i, fmr in enumerate(fmr_list):
             thr = far_threshold(dev_scores['licit_neg'], dev_scores['licit_pos'], fmr)
-            iapmr_list.append(far_for_threshold(eval_scores['spoof'], thr))
+            iapmr_list.append(farfrr(eval_scores['spoof'], [0.0], thr)[0])
             # re-calculate fmr since threshold might give a different result
             # for fmr.
-            fmr_list[i] = far_for_threshold(eval_scores['licit_neg'], thr)
+            fmr_list[i], _ = farfrr(eval_scores['licit_neg'], [0.0], thr)
         label = self._legends[idx] if self._legends is not None else f'system {idx+1}'
         logger.info(f"Plot FmrIapmr using: {input_names[1]}")
         if self._semilogx:
