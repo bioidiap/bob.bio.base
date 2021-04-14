@@ -43,7 +43,7 @@ def weighted_neg_error_rate_criteria(data, weight, thres, beta=0.5, criteria="ee
       parameter will be overriden and not considered if the selected criteria
       is 'min-hter'.
       - criteria - 'eer', 'wer' or 'min-hter' criteria for decision threshold
-  """
+    """
 
     licit_neg = data[0]
     licit_pos = data[1]
@@ -75,10 +75,10 @@ def weighted_neg_error_rate_criteria(data, weight, thres, beta=0.5, criteria="ee
 def epsc_weights(licit_neg, licit_pos, spoof_neg, spoof_pos, points=100):
     """Returns the weights for EPSC
 
-  Keyword arguments:
+    Keyword arguments:
 
-    - points - number of points to calculate EPSC
-  """
+      - points - number of points to calculate EPSC
+    """
     step_size = 1 / float(points)
     weights = numpy.array([(i * step_size) for i in range(points + 1)])
     return weights
@@ -86,26 +86,26 @@ def epsc_weights(licit_neg, licit_pos, spoof_neg, spoof_pos, points=100):
 
 def recursive_thr_search(data, span_min, span_max, weight, beta=0.5, criteria="eer"):
     """Recursive search for the optimal threshold given a criteria. It
-    evaluates the full range of thresholds at 100 points, and computes the one
-    which optimizes the threshold. In the next search iteration, it examines
-    the region around the point that optimizes the threshold. The procedure
-    stops when the search range is smaller then 1e-10.
+      evaluates the full range of thresholds at 100 points, and computes the one
+      which optimizes the threshold. In the next search iteration, it examines
+      the region around the point that optimizes the threshold. The procedure
+      stops when the search range is smaller then 1e-10.
 
-  Keyword arguments:
-    - data - the development data used to determine the threshold. List on 4
-    numpy.arrays containing: negatives (licit), positives (licit), negatives
-    (spoof), positivies (spoof)
-    - span_min - the minimum of the search range
-    - span_max - the maximum of the search range
-    - weight - the weight parameter balancing between impostors and spoofing
-    attacks
-    - beta - the weight parameter balancing between real accesses and all the
-    negative samples (impostors and spoofing attacks). Note that methods called
-    within this function will override this parameter and not considered if the
-    selected criteria is 'min-hter'.
-    - criteria - the decision threshold criteria ('eer' for EER, 'wer' for
-    Minimum WER or 'min-hter' for Minimum HTER criteria).
-  """
+    Keyword arguments:
+      - data - the development data used to determine the threshold. List on 4
+      numpy.arrays containing: negatives (licit), positives (licit), negatives
+      (spoof), positivies (spoof)
+      - span_min - the minimum of the search range
+      - span_max - the maximum of the search range
+      - weight - the weight parameter balancing between impostors and spoofing
+      attacks
+      - beta - the weight parameter balancing between real accesses and all the
+      negative samples (impostors and spoofing attacks). Note that methods called
+      within this function will override this parameter and not considered if the
+      selected criteria is 'min-hter'.
+      - criteria - the decision threshold criteria ('eer' for EER, 'wer' for
+      Minimum WER or 'min-hter' for Minimum HTER criteria).
+    """
 
     quit_thr = 1e-10
     steps = 100
@@ -135,25 +135,25 @@ def weighted_negatives_threshold(
     licit_neg, licit_pos, spoof_neg, spoof_pos, weight, beta=0.5, criteria="eer"
 ):
     """Calculates the threshold for achieving the given criteria between the
-    FAR_w and the FRR, given the single value for the weight parameter
-    balancing between impostors and spoofing attacks and a single value for the
-    parameter beta balancing between the real accesses and the negatives
-    (impostors and spoofing attacks)
+      FAR_w and the FRR, given the single value for the weight parameter
+      balancing between impostors and spoofing attacks and a single value for the
+      parameter beta balancing between the real accesses and the negatives
+      (impostors and spoofing attacks)
 
-  Keyword parameters:
-    - licit_neg - numpy.array of scores for the negatives (licit scenario)
-    - licit_pos - numpy.array of scores for the positives (licit scenario)
-    - spoof_neg - numpy.array of scores for the negatives (spoof scenario)
-    - spoof_pos - numpy.array of scores for the positives (spoof scenario)
-    - weight - the weight parameter balancing between impostors and spoofing
-    attacks
-    - beta - the weight parameter balancing between real accesses and all the
-    negative samples (impostors and spoofing attacks). Note that methods called
-    within this function will override this parameter and not considered if the
-    selected criteria is 'min-hter'.
-    - criteria - the decision threshold criteria ('eer' for EER, 'wer' for
-    Minimum WER or 'min-hter' for Minimum HTER criteria).
-  """
+    Keyword parameters:
+      - licit_neg - numpy.array of scores for the negatives (licit scenario)
+      - licit_pos - numpy.array of scores for the positives (licit scenario)
+      - spoof_neg - numpy.array of scores for the negatives (spoof scenario)
+      - spoof_pos - numpy.array of scores for the positives (spoof scenario)
+      - weight - the weight parameter balancing between impostors and spoofing
+      attacks
+      - beta - the weight parameter balancing between real accesses and all the
+      negative samples (impostors and spoofing attacks). Note that methods called
+      within this function will override this parameter and not considered if the
+      selected criteria is 'min-hter'.
+      - criteria - the decision threshold criteria ('eer' for EER, 'wer' for
+      Minimum WER or 'min-hter' for Minimum HTER criteria).
+    """
     span_min = min(
         numpy.append(licit_neg, spoof_neg)
     )  # the min of the span where we will search for the threshold
@@ -180,27 +180,27 @@ def epsc_thresholds(
     beta=None,
 ):
     """Calculates the optimal thresholds for EPSC, for a range of the weight
-    parameter balancing between impostors and spoofing attacks, and for a range
-    of the beta parameter balancing between real accesses and all the negatives
-    (impostors and spoofing attacks)
+      parameter balancing between impostors and spoofing attacks, and for a range
+      of the beta parameter balancing between real accesses and all the negatives
+      (impostors and spoofing attacks)
 
-  Keyword arguments:
+    Keyword arguments:
 
-    - licit_neg - numpy.array of scores for the negatives (licit scenario)
-    - licit_pos - numpy.array of scores for the positives (licit scenario)
-    - spoof_neg - numpy.array of scores for the negatives (spoof scenario)
-    - spoof_pos - numpy.array of scores for the positives (spoof scenario)
-    - points - number of points to calculate EPSC
-    - criteria - the decision threshold criteria ('eer', 'wer' or 'min-hter')
-    - omega - the value of the parameter omega, balancing between impostors and
-    spoofing attacks. If None, it is going to span the full range [0,1].
-    Otherwise, can be set to a fixed value or a list of values.
-    - beta - the value of the parameter beta, balancing between real accesses
-    and all the negatives (zero-effort impostors and spoofing attacks). If
-    None, it is going to span the full range [0,1]. Otherwise, can be set to a
-    fixed value or a list of values.
+      - licit_neg - numpy.array of scores for the negatives (licit scenario)
+      - licit_pos - numpy.array of scores for the positives (licit scenario)
+      - spoof_neg - numpy.array of scores for the negatives (spoof scenario)
+      - spoof_pos - numpy.array of scores for the positives (spoof scenario)
+      - points - number of points to calculate EPSC
+      - criteria - the decision threshold criteria ('eer', 'wer' or 'min-hter')
+      - omega - the value of the parameter omega, balancing between impostors and
+      spoofing attacks. If None, it is going to span the full range [0,1].
+      Otherwise, can be set to a fixed value or a list of values.
+      - beta - the value of the parameter beta, balancing between real accesses
+      and all the negatives (zero-effort impostors and spoofing attacks). If
+      None, it is going to span the full range [0,1]. Otherwise, can be set to a
+      fixed value or a list of values.
 
-  """
+    """
     step_size = 1 / float(points)
 
     if omega is None:
@@ -243,12 +243,12 @@ def epsc_thresholds(
 def weighted_err(error_1, error_2, weight):
     """Calculates the weighted error rate between the two input parameters
 
-  Keyword arguments:
-    - error_1 - the first input error rate (FAR for zero effort impostors
-    usually)
-    - error_2 - the second input error rate (SFAR)
-    - weight - the given weight
-  """
+    Keyword arguments:
+      - error_1 - the first input error rate (FAR for zero effort impostors
+      usually)
+      - error_2 - the second input error rate (SFAR)
+      - weight - the given weight
+    """
     return (1 - weight) * error_1 + weight * error_2
 
 
@@ -256,22 +256,22 @@ def error_rates_at_weight(
     licit_neg, licit_pos, spoof_neg, spoof_pos, omega, threshold, beta=0.5
 ):
     """Calculates several error rates: FRR, FAR (zero-effort impostors), SFAR,
-    FAR_w, HTER_w for a given value of w. It returns the calculated threshold
-    as a last argument
+        FAR_w, HTER_w for a given value of w. It returns the calculated threshold
+        as a last argument
 
-  Keyword arguments:
+      Keyword arguments:
 
-    - licit_neg - numpy.array of scores for the negatives (licit scenario)
-    - licit_pos - numpy.array of scores for the positives (licit scenario)
-    - spoof_neg - numpy.array of scores for the negatives (spoof scenario)
-    - spoof_pos - numpy.array of scores for the positives (spoof scenario)
-    - threshold - the given threshold
-    - omega - the omega parameter balancing between impostors and spoofing
-    attacks
-    - beta - the weight parameter balancing between real accesses and all the
+        - licit_neg - numpy.array of scores for the negatives (licit scenario)
+        - licit_pos - numpy.array of scores for the positives (licit scenario)
+        - spoof_neg - numpy.array of scores for the negatives (spoof scenario)
+        - spoof_pos - numpy.array of scores for the positives (spoof scenario)
+        - threshold - the given threshold
+        - omega - the omega parameter balancing between impostors and spoofing
+        attacks
+        - beta - the weight parameter balancing between real accesses and all the
 
-negative samples (impostors and spoofing attacks).
-  """
+    negative samples (impostors and spoofing attacks).
+    """
 
     farfrr_licit = farfrr(
         licit_neg, licit_pos, threshold
@@ -445,7 +445,7 @@ def calc_aue(
     - criteria - the decision threshold criteria ('eer', 'wer' or 'min-hter')
     - var_param - name of the parameter which is varied on the abscissa
     ('omega' or 'beta')
-  """
+    """
 
     from scipy import integrate
 
