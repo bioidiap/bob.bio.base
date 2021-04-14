@@ -346,11 +346,7 @@ class HistVuln(measure_figure.Hist):
             ax2 = mpl.twinx()
             # we never want grid lines on axis 2
             ax2.grid(False)
-            real_data = (
-                True
-                if "real_data" not in self._ctx.meta
-                else self._ctx.meta["real_data"]
-            )
+            real_data = self._ctx.meta.get("real_data", True)
             _iapmr_plot(spoof, threshold, iapmr, real_data=real_data)
             n = idx % self._step_print
             col = n % self._ncols

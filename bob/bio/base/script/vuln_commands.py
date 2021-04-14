@@ -46,6 +46,7 @@ def vuln_plot_options(
         @common_options.titles_option()
         @common_options.legends_option()
         @common_options.no_legend_option()
+        @common_options.legend_ncols_option()
         @common_options.legend_loc_option(dflt=legend_loc_default)
         @common_options.output_plot_file_option(default_out=plot_output_default)
         @common_options.lines_at_option(dflt=" ")
