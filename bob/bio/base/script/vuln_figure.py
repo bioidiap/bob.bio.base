@@ -473,8 +473,8 @@ class Epsc(measure_figure.GridSubplot):
                 omega, beta, thrs = error_utils.epsc_thresholds(
                     dev_scores['licit_neg'],
                     dev_scores['licit_pos'],
-                    [0.0], # TODO check
                     dev_scores['spoof'],
+                    dev_scores['spoof'], # is ignored
                     points=points,
                     criteria=self._criteria,
                     beta=fp)
@@ -482,15 +482,15 @@ class Epsc(measure_figure.GridSubplot):
                 omega, beta, thrs = error_utils.epsc_thresholds(
                     dev_scores['licit_neg'],
                     dev_scores['licit_pos'],
-                    [0.0], # TODO check
                     dev_scores['spoof'],
+                    dev_scores['spoof'], # is ignored
                     points=points,
                     criteria=self._criteria,
                     omega=fp
                 )
 
             errors = error_utils.all_error_rates(
-                eval_scores['licit_neg'], eval_scores['licit_pos'], eval_scores['spoof'], # TODO check
+                eval_scores['licit_neg'], eval_scores['licit_pos'], eval_scores['spoof'],
                 eval_scores['spoof'], thrs, omega, beta
             )  # error rates are returned in a list in the
             # following order: frr, far, IAPMR, far_w, wer_w
@@ -607,14 +607,14 @@ class Epsc3D(Epsc):
         omega, beta, thrs = error_utils.epsc_thresholds(
             dev_scores['licit_neg'],
             dev_scores['licit_pos'],
-            [0.0], # TODO check
             dev_scores['spoof'],
+            dev_scores['spoof'], # is ignored
             points=points,
             criteria=self._criteria)
 
         # Compute errors on eval
         errors = error_utils.all_error_rates(
-            eval_scores['licit_neg'], eval_scores['licit_pos'], eval_scores['spoof'], eval_scores['spoof'], # TODO check
+            eval_scores['licit_neg'], eval_scores['licit_pos'], eval_scores['spoof'], eval_scores['spoof'],
             thrs, omega, beta
         )
         # error rates are returned in a list as 2D numpy.ndarrays in
