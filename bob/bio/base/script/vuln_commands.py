@@ -255,8 +255,9 @@ def roc(ctx, scores, evaluation, real_data, **kwargs):
         $ bob vuln det -v -e scores-{dev,eval}.csv
   """,
     plot_output_default="vuln_det.pdf",
-    legend_loc_default="best",
+    legend_loc_default="upper-right",
     axes_lim_default="0.01,95,0.01,95",
+    figsize_default="6,4",
 )
 @click.option(
     "--real-data/--no-real-data",
