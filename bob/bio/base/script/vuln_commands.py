@@ -4,16 +4,17 @@
 import os
 import csv
 import numpy
+import logging
 import functools
 import click
 from click.types import FLOAT
 from bob.measure.script import common_options
-from bob.core import random, log
+from bob.core import random
 from bob.io.base import create_directories_safe
 from bob.bio.base.score.load import split_csv_vuln
 from . import vuln_figure as figure
 
-logger = log.setup(__name__)
+logger = logging.getLogger(__name__)
 
 
 def vuln_plot_options(
@@ -23,6 +24,7 @@ def vuln_plot_options(
     axes_lim_default=None,
     figsize_default="4,3",
     force_eval=False,
+    x_label_rotation_default=0,
 ):
     def custom_options_command(func):
         func.__doc__ = docstring
@@ -51,7 +53,7 @@ def vuln_plot_options(
         @common_options.output_plot_file_option(default_out=plot_output_default)
         @common_options.lines_at_option(dflt=" ")
         @common_options.axes_val_option(dflt=axes_lim_default)
-        @common_options.x_rotation_option()
+        @common_options.x_rotation_option(dflt=x_label_rotation_default)
         @common_options.x_label_option()
         @common_options.y_label_option()
         @common_options.points_curve_option()
@@ -70,6 +72,16 @@ def vuln_plot_options(
 
     return custom_options_command
 
+def real_data_option(**kwargs):
+    """Option to choose if input data is real or generated"""
+    return common_options.bool_option(
+        name="real-data",
+        short_name="R",
+        desc="If False, will annotate the plots hypothetically, instead "
+        "of with real data values of the calculated error rates.",
+        dflt=True,
+        **kwargs,
+    )
 
 def fnmr_at_option(dflt=" ", **kwargs):
     """Get option to draw const FNMR lines"""
@@ -219,13 +231,7 @@ def metrics(ctx, scores, evaluation, **kwargs):
 @common_options.tpr_option(dflt=True)
 @common_options.semilogx_option(dflt=True)
 @fnmr_at_option()
-@click.option(
-    "--real-data/--no-real-data",
-    default=True,
-    show_default=True,
-    help="If False, will annotate the plots hypothetically, instead "
-    "of with real data values of the calculated error rates.",
-)
+@real_data_option()
 def roc(ctx, scores, evaluation, real_data, **kwargs):
     process = figure.RocVuln(ctx, scores, evaluation, split_csv_vuln, real_data, False)
     process.run()
@@ -258,14 +264,9 @@ def roc(ctx, scores, evaluation, real_data, **kwargs):
     legend_loc_default="upper-right",
     axes_lim_default="0.01,95,0.01,95",
     figsize_default="6,4",
+    x_label_rotation_default=45,
 )
-@click.option(
-    "--real-data/--no-real-data",
-    default=True,
-    show_default=True,
-    help="If False, will annotate the plots hypothetically, instead "
-    "of with real data values of the calculated error rates.",
-)
+@real_data_option()
 @fnmr_at_option()
 def det(ctx, scores, evaluation, real_data, **kwargs):
     process = figure.DetVuln(ctx, scores, evaluation, split_csv_vuln, real_data, False)
@@ -337,7 +338,7 @@ def epc(ctx, scores, **kwargs):
   """,
     plot_output_default="vuln_epc.pdf",
     force_eval=True,
-    figsize_default="8,4",
+    figsize_default="5,3",
 )
 @common_options.bool_option(
     "wer", "w", "Whether to plot the WER related lines or not.", True
@@ -436,45 +437,10 @@ def epsc(ctx, scores, criteria, var_param, three_d, sampling, **kwargs):
 @common_options.bool_option(
     "iapmr-line", "I", "Whether to plot the IAPMR related lines or not.", True
 )
-@common_options.bool_option(
-    "real-data",
-    "R",
-    "If False, will annotate the plots hypothetically, instead "
-    "of with real data values of the calculated error rates.",
-    True,
-)
+@real_data_option()
 @common_options.subplot_option()
 @common_options.criterion_option()
 def hist(ctx, scores, evaluation, **kwargs):
-    """Vulnerability analysis scores distributions.
-
-    Plots the histogram of score distributions. You need to provide 1 or 2 score
-    files for each biometric system in this order:
-
-    \b
-    * development scores
-    * [evaluation scores]
-
-    When evaluation scores are provided, you must use the ``--eval`` option.
-
-    The CSV score files must contain an `attack-type` column, in addition to the
-    "regular" biometric scores columns (`bio_ref_reference_id`,
-    `probe_reference_id`, and `score`).
-
-    See :ref:`bob.bio.base.vulnerability` in the documentation for a guide on
-    vulnerability analysis.
-
-    When eval-scores are given, eval-scores histograms are displayed with the
-    threshold line computed from dev-scores.
-
-    Examples:
-
-        $ bob vuln hist -v -o hist.pdf results/scores-dev.csv
-
-        $ bob vuln hist -e -v results/scores-dev.csv results/scores-eval.csv
-
-        $ bob vuln hist -e -v results/scores-{dev,eval}.csv
-    """
     process = figure.HistVuln(ctx, scores, evaluation, split_csv_vuln)
     process.run()
 
@@ -502,54 +468,21 @@ def hist(ctx, scores, evaluation, **kwargs):
     plot_output_default="vuln_roc.pdf",
     force_eval=True,
 )
-@common_options.axes_val_option()
 @common_options.semilogx_option()
 def fmr_iapmr(ctx, scores, **kwargs):
     process = figure.FmrIapmr(ctx, scores, True, split_csv_vuln)
     process.run()
 
 
-SCORE_FORMAT = (
-    "Files must be in CSV format, with the `bio_ref_reference_id`, "
-    "`probe_references_id`, `score`, and `attack_type` columns."
-)
-CRITERIA = (
-    "eer",
-    "min-hter",
-    "far",
-    "bpcer5000",
-    "bpcer2000",
-    "bpcer1000",
-    "bpcer500",
-    "bpcer200",
-    "bpcer100",
-    "bpcer50",
-    "bpcer20",
-    "bpcer10",
-    "bpcer5",
-    "bpcer2",
-    "bpcer1",
-    "apcer5000",
-    "apcer2000",
-    "apcer1000",
-    "apcer500",
-    "apcer200",
-    "apcer100",
-    "apcer50",
-    "apcer20",
-    "apcer10",
-    "apcer5",
-    "apcer2",
-    "apcer1",
-)
-
-
 @common_options.evaluate_command(
     common_options.EVALUATE_HELP.format(
-        score_format=SCORE_FORMAT,
+        score_format=(
+            "Files must be in CSV format, with the `bio_ref_reference_id`, "
+            "`probe_references_id`, `score`, and `attack_type` columns."
+        ),
         command="bob vuln evaluate",
     ),
-    criteria=CRITERIA,
+    criteria=("eer", "min-hter", "far"),
 )
 def evaluate(ctx, scores, evaluation, **kwargs):
     # open_mode is always 'write' in this command.
