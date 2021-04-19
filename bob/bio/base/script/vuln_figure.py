@@ -367,7 +367,7 @@ class Epc(measure_figure.PlotBase):
 
     def __init__(self, ctx, scores, evaluation, func_load):
         super(Epc, self).__init__(ctx, scores, evaluation, func_load)
-        self._iapmr = True if "iapmr" not in self._ctx.meta else self._ctx.meta["iapmr"]
+        self._iapmr = self._ctx.meta.get("iapmr", True)
         self._titles = self._titles or ["EPC and IAPMR" if self._iapmr else "EPC"]
         self._x_label = self._x_label or "Weight $\\beta$"
         self._y_label = self._y_label or "HTER (%)"
@@ -405,9 +405,6 @@ class Epc(measure_figure.PlotBase):
         mpl.ylabel(self._y_label)
         if self._iapmr:
             ax1 = mpl.gca()
-            # Fix legend
-            iapmr_curve_label = self._label("IAPMR (spoof)", idx)
-            # ax1.plot([0], [0], color="C3", label=iapmr_curve_label)
             mpl.gca().set_axisbelow(True)
             prob_ax = mpl.gca().twinx()
             step = 1.0 / float(self._points)
@@ -429,7 +426,7 @@ class Epc(measure_figure.PlotBase):
             mpl.plot(
                 thres,
                 mix_prob_y,
-                label=iapmr_curve_label,
+                label=self._label("IAPMR (spoof)", idx),
                 color="C3",
             )
 
@@ -546,10 +543,10 @@ class Epsc(measure_figure.GridSubplot):
                     else None
                 )
                 display = set_title.replace(" ", "") if set_title is not None else True
-                wer_title = set_title or "EPSC: WER vs $\\beta$ and $\\omega$"
+                wer_title = set_title or "EPSC"
                 if display:
                     self._axis1.set_title(wer_title)
-                base = f"({legend}) " if legend.strip() else "WER, "
+                base = f"({legend}) " if legend.strip() else ""
                 if self._var_param == "omega":
                     label = f"{base}$\\beta={fp:.1f}$"
                     self._axis1.plot(
@@ -585,10 +582,10 @@ class Epsc(measure_figure.GridSubplot):
                     else None
                 )
                 display = set_title.replace(" ", "") if set_title is not None else True
-                iapmr_title = set_title or "EPSC: IAPMR vs $\\beta$ and $\\omega$"
+                iapmr_title = set_title or "EPSC"
                 if display:
                     self._axis2.set_title(iapmr_title)
-                base = f"({legend}) " if legend.strip() else "IAPMR, "
+                base = f"({legend}) " if legend.strip() else ""
                 if self._var_param == "omega":
                     label = f"{base} $\\beta={fp:.1f}$"
                     self._axis2.plot(
@@ -615,32 +612,15 @@ class Epsc(measure_figure.GridSubplot):
                 self._axis2.legend(loc=self._legend_loc)
 
     def end_process(self):
-        """Sets legend, saves figures, draws lines and closes pdf if needed."""
-        # Draw vertical lines
-        if self._far_at is not None:
-            for (line, line_trans) in zip(self._far_at, self._trans_far_val):
-                mpl.figure(1)
-                mpl.plot([line_trans, line_trans], [-100.0, 100.0], "--", color="black")
-                if self._eval and self._split:
-                    mpl.figure(2)
-                    x_values = [i for i, _ in self._eval_points[line]]
-                    y_values = [j for _, j in self._eval_points[line]]
-                    sort_indice = sorted(range(len(x_values)), key=x_values.__getitem__)
-                    x_values = [x_values[i] for i in sort_indice]
-                    y_values = [y_values[i] for i in sort_indice]
-                    mpl.plot(x_values, y_values, "--", color="black")
-        # Only for plots
+        """Sets the legend."""
         if self._end_setup_plot:
             for i in range(self._nb_figs):
                 fig = mpl.figure(i + 1)
                 if self._disp_legend:
                     mpl.legend(loc=self._legend_loc)
                 self._pdf_page.savefig(fig)
-        # Do not close PDF when running multiple commands
-        if "PdfPages" in self._ctx.meta and (
-            "closef" not in self._ctx.meta or self._ctx.meta["closef"]
-        ):
-            self._pdf_page.close()
+        self._end_setup_plot = False
+        super().end_process()
 
 
 class Epsc3D(Epsc):
@@ -661,7 +641,7 @@ class Epsc3D(Epsc):
         else:
             eval_scores = {"licit_neg": [], "licit_pos": [], "spoof": []}
 
-        default_title = "EPSC 3D: IAPMR" if self._iapmr else "EPSC 3D: WER"
+        default_title = "EPSC 3D"
         title = self._titles[idx] if self._titles else default_title
 
         mpl.rcParams.pop("key", None)
@@ -886,13 +866,6 @@ class DetVuln(BaseVulnDetRoc):
         )
         if not self._no_spoof and s is not None:
             ax1 = mpl.gca()
-            ax1.plot(
-                [0],
-                [0],
-                linestyle=":",
-                color="C3",
-                label="Spoof " + kwargs.get("label"),
-            )
             ax2 = ax1.twiny()
             ax2.set_xlabel("IAPMR (%)", color="C3")
             ax2.tick_params(
