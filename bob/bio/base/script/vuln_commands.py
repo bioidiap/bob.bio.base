@@ -138,6 +138,7 @@ def write_scores_to_file(neg_licit, pos_licit, spoof, filename):
     create_directories_safe(os.path.dirname(filename))
     with open(filename, "wt") as f:
         csv_writer = csv.writer(f)
+        # Write the header
         csv_writer.writerow(
             [
                 "bio_ref_reference_id",
@@ -148,9 +149,9 @@ def write_scores_to_file(neg_licit, pos_licit, spoof, filename):
             ]
         )
         for score in neg_licit:
-            csv_writer.writerow(["x", "y", "0", "licit", score])
+            csv_writer.writerow(["x", "y", "0", None, score])
         for score in pos_licit:
-            csv_writer.writerow(["x", "x", "0", "licit", score])
+            csv_writer.writerow(["x", "x", "0", None, score])
         for score in spoof:
             csv_writer.writerow(["x", "y", "0", "pai", score])
 
