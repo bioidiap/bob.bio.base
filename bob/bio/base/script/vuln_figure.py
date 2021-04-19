@@ -946,7 +946,8 @@ class DetVuln(BaseVulnDetRoc):
                 color=self._colors[idx],
             )  # FAR point, licit scenario
             # Spoof
-            if farfrr_spoof_det[0] > self._axlim[0] and farfrr_spoof_det[0] < self._axlim[1]:
+            axlim = self._axlim or [0.01,99,0.1,99]
+            if farfrr_spoof_det[0] > axlim[0] and farfrr_spoof_det[0] < axlim[1]:
                 mpl.annotate(
                     xy=(farfrr_spoof_det[0], farfrr_spoof_det[1]),
                     text=label_spoof,
