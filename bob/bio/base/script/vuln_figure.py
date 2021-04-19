@@ -928,9 +928,10 @@ class DetVuln(BaseVulnDetRoc):
                 label_licit = "FMR=%.2f%%" % (farfrr_licit[0] * 100)
                 label_spoof = "IAPMR=%.2f%%" % (farfrr_spoof[0] * 100)
 
-            # Annotations of the points
+            # Annotations and drawing of the points
             text_x_offset = 2
             text_y_offset = 5
+            # Licit
             mpl.annotate(
                 xy=(farfrr_licit_det[0], farfrr_licit_det[1]),
                 text=label_licit,
@@ -938,26 +939,29 @@ class DetVuln(BaseVulnDetRoc):
                 textcoords="offset points",
                 fontsize="small",
             )
-            mpl.annotate(
-                xy=(farfrr_spoof_det[0], farfrr_spoof_det[1]),
-                text=label_spoof,
-                xytext=(text_x_offset, text_y_offset),
-                textcoords="offset points",
-                fontsize="small",
-            )
-            # Drawing the points
             mpl.plot(
                 farfrr_licit_det[0],
                 farfrr_licit_det[1],
                 "o",
                 color=self._colors[idx],
             )  # FAR point, licit scenario
-            mpl.plot(
-                farfrr_spoof_det[0],
-                farfrr_spoof_det[1],
-                "o",
-                color="C3",
-            )  # FAR point, spoof scenario
+            # Spoof
+            if farfrr_spoof_det[0] > self._axlim[0] and farfrr_spoof_det[0] < self._axlim[1]:
+                mpl.annotate(
+                    xy=(farfrr_spoof_det[0], farfrr_spoof_det[1]),
+                    text=label_spoof,
+                    xytext=(text_x_offset, text_y_offset),
+                    textcoords="offset points",
+                    fontsize="small",
+                )
+                mpl.plot(
+                    farfrr_spoof_det[0],
+                    farfrr_spoof_det[1],
+                    "o",
+                    color="C3",
+                )  # FAR point, spoof scenario
+            else:
+                logger.info(f"The IAPMR for an FNMR of {line} is outside the plot.")
 
 
 class RocVuln(BaseVulnDetRoc):
