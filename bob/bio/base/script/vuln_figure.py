@@ -646,11 +646,6 @@ class Epsc3D(Epsc):
 
         mpl.rcParams.pop("key", None)
 
-        # mpl.gcf().clear()
-        mpl.gcf().set_constrained_layout(self._clayout)
-
-        from matplotlib import cm
-
         points = self._sampling or 5
 
         # Compute threshold values on dev

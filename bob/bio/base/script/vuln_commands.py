@@ -62,6 +62,7 @@ def vuln_plot_options(
         @common_options.style_option()
         @common_options.linestyles_option()
         @common_options.alpha_option()
+        @common_options.title_option()
         @common_options.verbosity_option()
         @click.pass_context
         @functools.wraps(func)
