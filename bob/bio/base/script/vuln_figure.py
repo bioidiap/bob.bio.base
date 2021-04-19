@@ -453,7 +453,6 @@ class Epsc(measure_figure.GridSubplot):
         self._var_param = var_param or "omega"
         self._fixed_params = ctx.meta.get("fixed_params", [0.5])
         self._nb_subplots = 2 if (self._wer and self._iapmr) else 1
-        self._titles = ctx.meta.get("titles", [])
         if len(self._titles) < self._nb_figs * self._nb_subplots:
             self._titles = [v for v in self._titles for _ in range(self._nb_subplots)]
         self._eval = True  # always eval data with EPSC
