@@ -290,7 +290,7 @@ class HistVuln(measure_figure.Hist):
             neg[0], n=1, label="Zero-effort impostors", alpha=0.8, color="C0"
         )
         self._density_hist(
-            pos[1],
+            neg[1],
             n=2,
             label="Presentation attack",
             alpha=0.4,
@@ -323,18 +323,22 @@ class HistVuln(measure_figure.Hist):
         )
         return (
             [
-                dev_scores["licit_neg"],
+                dev_scores["licit_neg"], dev_scores["spoof"],
             ],
-            [dev_scores["licit_pos"], dev_scores["spoof"]],
             [
-                eval_scores["licit_neg"],
+                dev_scores["licit_pos"]
             ],
-            [eval_scores["licit_pos"], eval_scores["spoof"]],
+            [
+                eval_scores["licit_neg"], eval_scores["spoof"],
+            ],
+            [
+                eval_scores["licit_pos"],
+            ],
             threshold,
         )
 
     def _lines(self, threshold, label, neg, pos, idx, **kwargs):
-        spoof = pos[1]
+        spoof = neg[1]
         neg = neg[0]
         pos = pos[0]
         # plot EER treshold vertical line
@@ -403,7 +407,7 @@ class Epc(measure_figure.PlotBase):
             ax1 = mpl.gca()
             # Fix legend
             iapmr_curve_label = self._label("IAPMR (spoof)", idx)
-            ax1.plot([0], [0], color="C3", label=iapmr_curve_label)
+            # ax1.plot([0], [0], color="C3", label=iapmr_curve_label)
             mpl.gca().set_axisbelow(True)
             prob_ax = mpl.gca().twinx()
             step = 1.0 / float(self._points)
@@ -504,7 +508,7 @@ class Epsc(measure_figure.GridSubplot):
                     dev_scores["licit_neg"],
                     dev_scores["licit_pos"],
                     dev_scores["spoof"],
-                    dev_scores["spoof"],  # is ignored
+                    dev_scores["licit_pos"],
                     points=points,
                     criteria=self._criteria,
                     beta=fp,
@@ -514,7 +518,7 @@ class Epsc(measure_figure.GridSubplot):
                     dev_scores["licit_neg"],
                     dev_scores["licit_pos"],
                     dev_scores["spoof"],
-                    dev_scores["spoof"],  # is ignored
+                    dev_scores["licit_pos"],
                     points=points,
                     criteria=self._criteria,
                     omega=fp,
@@ -524,7 +528,7 @@ class Epsc(measure_figure.GridSubplot):
                 eval_scores["licit_neg"],
                 eval_scores["licit_pos"],
                 eval_scores["spoof"],
-                eval_scores["spoof"],
+                eval_scores["licit_pos"],
                 thrs,
                 omega,
                 beta,
@@ -674,7 +678,7 @@ class Epsc3D(Epsc):
             dev_scores["licit_neg"],
             dev_scores["licit_pos"],
             dev_scores["spoof"],
-            dev_scores["spoof"],  # is ignored
+            dev_scores["licit_pos"],
             points=points,
             criteria=self._criteria,
         )
@@ -684,7 +688,7 @@ class Epsc3D(Epsc):
             eval_scores["licit_neg"],
             eval_scores["licit_pos"],
             eval_scores["spoof"],
-            eval_scores["spoof"],
+            eval_scores["licit_pos"],
             thrs,
             omega,
             beta,
@@ -891,10 +895,12 @@ class DetVuln(BaseVulnDetRoc):
             )
             ax2 = ax1.twiny()
             ax2.set_xlabel("IAPMR (%)", color="C3")
-            mpl.xticks(rotation=self._x_rotation)
             ax2.tick_params(
                 axis="x", colors="C3", labelrotation=self._x_rotation, labelcolor="C3"
             )
+            # Prevent tick labels overlap
+            ax2.tick_params(axis="both", which="major", labelsize="x-small")
+            ax1.tick_params(axis="both", which="major", labelsize="x-small")
             ax2.spines["top"].set_color("C3")
             plot.det(
                 s,
@@ -929,6 +935,7 @@ class DetVuln(BaseVulnDetRoc):
             )
 
             if not self._real_data:
+                # Takes specified FNMR value as EER
                 mpl.axhline(
                     y=farfrr_licit_det[1],
                     xmin=axlim[2],
@@ -954,19 +961,35 @@ class DetVuln(BaseVulnDetRoc):
                 label_licit = "FMR=%.2f%%" % (farfrr_licit[0] * 100)
                 label_spoof = "IAPMR=%.2f%%" % (farfrr_spoof[0] * 100)
 
+            # Annotations of the points
+            text_x_offset = 2
+            text_y_offset = 5
+            mpl.annotate(
+                xy=(farfrr_licit_det[0], farfrr_licit_det[1]),
+                text=label_licit,
+                xytext=(text_x_offset, text_y_offset),
+                textcoords="offset points",
+                fontsize="small",
+            )
+            mpl.annotate(
+                xy=(farfrr_spoof_det[0], farfrr_spoof_det[1]),
+                text=label_spoof,
+                xytext=(text_x_offset, text_y_offset),
+                textcoords="offset points",
+                fontsize="small",
+            )
+            # Drawing the points
             mpl.plot(
                 farfrr_licit_det[0],
                 farfrr_licit_det[1],
                 "o",
                 color=self._colors[idx],
-                label=label_licit,
             )  # FAR point, licit scenario
             mpl.plot(
                 farfrr_spoof_det[0],
                 farfrr_spoof_det[1],
                 "o",
                 color="C3",
-                label=label_spoof,
             )  # FAR point, spoof scenario
 
 
