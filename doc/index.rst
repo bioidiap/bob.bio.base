@@ -86,6 +86,7 @@ Users Guide
    vanilla_biometrics_score_normalization
    annotators
    legacy
+   vulnerability_analysis
 
 
 
