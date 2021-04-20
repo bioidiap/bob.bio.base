@@ -962,7 +962,7 @@ class DetVuln(BaseVulnDetRoc):
                     color="C3",
                 )  # FAR point, spoof scenario
             else:
-                logger.info(f"The IAPMR for an FNMR of {line} is outside the plot.")
+                logger.warning(f"The IAPMR for an FNMR of {line} is outside the plot.")
 
 
 class RocVuln(BaseVulnDetRoc):
