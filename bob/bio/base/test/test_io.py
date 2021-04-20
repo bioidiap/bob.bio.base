@@ -58,6 +58,15 @@ def test_load_scores():
                                             normal_scores) for i in range(cols[variant]))
 
 
+def test_split_vuln_scores():
+  """Tests that vulnerability score files are loaded correctly"""
+  score_file = pkg_resources.resource_filename('bob.bio.base.test', 'data/vuln/scores-dev.csv')
+  split_scores = score.split_csv_vuln(score_file)
+  assert all(key in split_scores for key in ("licit_neg", "licit_pos", "spoof"))
+  assert all(isinstance(scores, numpy.ndarray) for scores in split_scores.values())
+  assert all(len(scores) == 5000 for scores in split_scores.values())
+
+
 def test_split_scores():
   # This function tests the IO functionality of loading score files in
   # different ways
