@@ -45,7 +45,6 @@ def vuln_plot_options(
         @click.command()
         @common_options.scores_argument(min_arg=1, force_eval=force_eval, nargs=-1)
         @eval_if_not_forced(force_eval)
-        @common_options.titles_option()
         @common_options.legends_option()
         @common_options.no_legend_option()
         @common_options.legend_ncols_option()
@@ -62,7 +61,6 @@ def vuln_plot_options(
         @common_options.style_option()
         @common_options.linestyles_option()
         @common_options.alpha_option()
-        @common_options.title_option()
         @common_options.verbosity_option()
         @click.pass_context
         @functools.wraps(func)
@@ -229,6 +227,7 @@ def metrics(ctx, scores, evaluation, **kwargs):
   """,
     plot_output_default="vuln_roc.pdf",
 )
+@common_options.title_option()
 @common_options.min_far_option()
 @common_options.tpr_option(dflt=True)
 @common_options.semilogx_option(dflt=True)
@@ -268,6 +267,7 @@ def roc(ctx, scores, evaluation, real_data, **kwargs):
     figsize_default="6,4",
     x_label_rotation_default=45,
 )
+@common_options.title_option()
 @real_data_option()
 @fnmr_at_option()
 def det(ctx, scores, evaluation, real_data, **kwargs):
@@ -301,6 +301,7 @@ def det(ctx, scores, evaluation, real_data, **kwargs):
     force_eval=True,
     legend_loc_default="upper-center",
 )
+@common_options.title_option()
 @common_options.bool_option(
     "iapmr", "I", "Whether to plot the IAPMR related lines or not.", True
 )
@@ -342,6 +343,7 @@ def epc(ctx, scores, **kwargs):
     force_eval=True,
     figsize_default="5,3",
 )
+@common_options.titles_option()
 @common_options.bool_option(
     "wer", "w", "Whether to plot the WER related lines or not.", True
 )
@@ -433,6 +435,7 @@ def epsc(ctx, scores, criteria, var_param, three_d, sampling, **kwargs):
   """,
     plot_output_default="vuln_hist.pdf",
 )
+@common_options.titles_option()
 @common_options.n_bins_option()
 @common_options.thresholds_option()
 @common_options.print_filenames_option(dflt=False)
@@ -470,6 +473,7 @@ def hist(ctx, scores, evaluation, **kwargs):
     plot_output_default="vuln_roc.pdf",
     force_eval=True,
 )
+@common_options.title_option()
 @common_options.semilogx_option()
 def fmr_iapmr(ctx, scores, **kwargs):
     process = figure.FmrIapmr(ctx, scores, True, split_csv_vuln)
