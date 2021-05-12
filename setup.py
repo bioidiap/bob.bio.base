@@ -133,7 +133,6 @@ setup(
         'dir               = bob.bio.base.script.commands:dir',
         'gen               = bob.bio.base.script.gen:gen',
         'evaluate          = bob.bio.base.script.commands:evaluate',
-        'baseline          = bob.bio.base.script.baseline:baseline',
         'sort              = bob.bio.base.script.sort:sort',
         'pipelines         = bob.bio.base.script.pipelines:pipelines',
         'compare-samples   = bob.bio.base.script.compare_samples:compare_samples',

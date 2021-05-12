@@ -36,7 +36,7 @@ def resources(command_line_parameters = None):
     print (bob.bio.base.list_resources('annotator', **kwargs))
 
   if 'p' in args.types or 'pipeline' in args.types:
-    print ("\nList of registered baseline:")
+    print ("\nList of registered pipelines:")
     print (bob.bio.base.list_resources('pipeline', **kwargs))
 
   print()

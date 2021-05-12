@@ -30,7 +30,6 @@ valid_keywords = (
     "grid",
     "config",
     "annotator",
-    "baseline",
     "pipeline",
 )
 
@@ -344,7 +343,7 @@ def get_resource_filename(resource_name, group):
     ----------
         resource_name: str
             Name of the resource to be searched
-        
+
         group: str
             Entry point group
 
