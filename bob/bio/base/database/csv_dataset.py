@@ -423,12 +423,12 @@ class CSVDataset(Database):
             valid_groups.append("dev")
         if self.eval_enroll_csv and self.eval_probe_csv:
             valid_groups.append("eval")
-        groups = check_parameters_for_validity(
+        groups = list(check_parameters_for_validity(
             parameters=groups,
             parameter_description="groups",
             valid_parameters=valid_groups,
             default_parameters=valid_groups,
-        )
+        ))
 
         samples = []
 
