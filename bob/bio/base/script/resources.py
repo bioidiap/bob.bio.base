@@ -9,8 +9,8 @@ def resources(command_line_parameters = None):
   import argparse
   parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument("--types", '-t', nargs = '+',
-                      choices = ('d', 'database', 'an', 'annotator', 'p', 'pipeline'),
-                      default = ('d', 'an', 'b'),
+                      choices = ('d', 'database', 'an', 'annotator', 'p', 'pipeline', 'c', 'config'),
+                      default = ('d', 'an', 'b', 'c'),
                       help = "Select the resource types that should be listed.")
 
   parser.add_argument("--details", '-d', action='store_true', help = "Prints the complete configuration for all resources")
@@ -38,6 +38,10 @@ def resources(command_line_parameters = None):
   if 'p' in args.types or 'pipeline' in args.types:
     print ("\nList of registered pipelines:")
     print (bob.bio.base.list_resources('pipeline', **kwargs))
+
+  if 'c' in args.types or 'config' in args.types:
+    print ("\nList of registered configs:")
+    print (bob.bio.base.list_resources('config', **kwargs))
 
   print()
 
