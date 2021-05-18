@@ -79,7 +79,6 @@ Users Guide
 .. toctree::
    :maxdepth: 2
 
-   installation
    biometrics_intro
    vanilla_biometrics_intro
    vanilla_biometrics_features
