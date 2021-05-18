@@ -3,8 +3,7 @@
 
 
 from abc import ABCMeta, abstractmethod
-from bob.pipelines.sample import SAMPLE_DATA_ATTRS, Sample, SampleSet, DelayedSample
-import functools
+from bob.pipelines.sample import Sample, SampleSet
 import numpy as np
 import os
 import logging
@@ -266,22 +265,24 @@ class BioAlgorithm(metaclass=ABCMeta):
         pass
 
     def score_multiple_biometric_references(self, biometric_references, data):
-        """
-        It handles the score computation of one probe against multiple biometric references
-        This method is called if `allow_scoring_multiple_references` is set to true
+        """Score one probe against multiple biometric references (models).
+        This method is called if `allow_scoring_multiple_references` is set to true.
+        You may want to override this method to improve the performance of computations.
 
         Parameters
         ----------
+        biometric_references : list
+            List of biometric references (models) to be scored
+            [description]
+        data
+            Data used for the creation of ONE biometric probe.
 
-            biometric_references: list
-                List of biometric references to be scored
-            data:
-                Data used for the creation of ONE BIOMETRIC REFERENCE
-
+        Returns
+        -------
+        list
+            A list of scores for the comparison of the probe against multiple models.
         """
-        raise NotImplementedError(
-            "Your BioAlgorithm implementation should implement score_multiple_biometric_references."
-        )
+        return [self.score(model, data) for model in biometric_references]
 
 
 class Database(metaclass=ABCMeta):

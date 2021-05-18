@@ -138,7 +138,7 @@ The following file structure and file naming must be followed, for the class to 
       |    +-- train_world.csv
       |
       +-- dev
-      |   |     
+      |   |
       |   +-- for_models.csv
       |   +-- for_probes.csv
       |
@@ -216,8 +216,8 @@ To use the cross-validation database interface, use the following:
         test_size=0.8,
         samples_for_enrollment=1,
         csv_to_sample_loader=CSVToSampleLoader(
-            data_loader=bob.io.base.load, 
-            dataset_original_directory="", 
+            data_loader=bob.io.base.load,
+            dataset_original_directory="",
             extension="",
             metadata_loader=AnnotationsLoader()
         ),
@@ -309,18 +309,18 @@ Checkpointing experiments
 Checkpoints are a useful tool that allows an experiment to prevent computing data multiple times by saving the results of each step so it can be retrieved later.
 It can be used when an experiment fails in a later stage, preventing the computation of the stages coming before it, in case the experiment is restarted.
 
-The checkpoints are files created on disk that contain the result of a sample of data passed through a :py:class:`Transformer` or :py:class:`BiometricAlgorithm`.
+The checkpoints are files created on disk that contain the result of a sample of data passed through a Transformer or :py:class:`BiometricAlgorithm`.
 When running, if the system finds a checkpoint file for its current processing step, it will load the results directly from the disk, instead of computing it again.
 
-To enable the checkpointing of a :py:class:`Transformer` or :py:class:`BiometricAlgorithm`, a :py:class:`~bob.pipelines.CheckpointWrapper` is available.
-This class takes a :py:class:`Transformer` as input and returns the same :py:class:`Transformer` with the ability to automatically create checkpoint files.
+To enable the checkpointing of a Transformer or :py:class:`BiometricAlgorithm`, a :py:class:`~bob.pipelines.CheckpointWrapper` is available.
+This class takes a Transformer as input and returns the same Transformer with the ability to automatically create checkpoint files.
 The :py:class:`~bob.pipelines.CheckpointWrapper` class is available in the :py:mod:`bob.pipelines`.
 
 The ``-c`` option (``--checkpoint``) is a command-line option that automatically wraps every steps of the pipeline with checkpointing::
 
 $ bob bio pipelines vanilla-biometrics -d <database> -p <pipeline> -c -o <output_dir>
 
-When doing so, the output of each :py:class:`Transformer` of the pipeline will be saved to the disk in the ``<output_dir>`` folder specified with the ``-o`` (``--output``) option.
+When doing so, the output of each Transformer of the pipeline will be saved to the disk in the ``<output_dir>`` folder specified with the ``-o`` (``--output``) option.
 
 
 .. WARNING::
@@ -344,7 +344,7 @@ Diagnostic and monitoring tools are also available to watch progress and debug.
 Using Dask with vanilla-biometrics
 ----------------------------------
 
-To run an experiment with Dask, a :py:class:`bob.pipelines.DaskWrapper` class is available that takes any :py:class:`Transformer` or :py:class:`BiometricAlgorithm` and outputs a *dasked* version of it.
+To run an experiment with Dask, a :py:class:`bob.pipelines.DaskWrapper` class is available that takes any Transformer or :py:class:`BiometricAlgorithm` and outputs a *dasked* version of it.
 
 You can easily benefit from Dask by using the ``-l`` (``--dask-client``) option like so::
 

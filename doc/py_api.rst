@@ -48,7 +48,7 @@ Assembling the pipeline
 
 .. autosummary::
 
-  bob.bio.base.script.vanilla_biometrics.vanilla_biometrics
+  bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline
 
 
 Building Pipelines from Legacy constructs

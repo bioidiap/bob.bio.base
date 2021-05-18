@@ -12,7 +12,7 @@ The transition to the pipeline concept changed the way data goes from the raw sa
 However, a set of tools was implemented to support the older bob implementations (designated as *legacy*) of database, preprocessor, extractor, and algorithms.
 
 
-This adaptation consists of wrapper classes that take a legacy bob class as input and constructs a :py:class:`Transformer` or :py:class:`BiometricAlgorithm` out of it.
+This adaptation consists of wrapper classes that take a legacy bob class as input and constructs a Transformer or :py:class:`BiometricAlgorithm` out of it.
 
 
 .. WARNING::
@@ -183,11 +183,11 @@ This example shows the creation of the Mobio database interface in the bob.pipel
 Legacy Preprocessor wrapper
 ---------------------------
 
-The :py:class:`~bob.bio.base.transformer.PreprocessorTransformer` wrapper takes a :py:class`bob.bio.base.preprocessor` from the old :py:mod:`bob.bio.base` as input and creates a :py:class:`Transformer` out of it.
+The :py:class:`~bob.bio.base.transformer.PreprocessorTransformer` wrapper takes a :py:class`bob.bio.base.preprocessor` from the old :py:mod:`bob.bio.base` as input and creates a Transformer out of it.
 The :py:meth:`~bob.bio.base.preprocessor.__call__` method of the :py:class`~bob.bio.base.preprocessor` class is called when the :py:meth:`Transformer.transform` method is called.
 
 
-This example shows how to create a :py:class:`Transformer` out of a legacy preprocessor (FaceCrop, from bob.bio.face):
+This example shows how to create a Transformer out of a legacy preprocessor (FaceCrop, from bob.bio.face):
 
 .. code-block:: python
 
@@ -211,7 +211,7 @@ Legacy Extractor wrapper
 A similar wrapper is available for the legacy :py:mod:`bob.bio.base` Extractor. It is the :py:class:`~bob.bio.base.transformer.ExtractorTransformer`.
 It maps the :py:meth:`Transformer.transform` method to the :py:meth:`~bob.bio.base.extractor.__call__` of the legacy Extractor.
 
-Here is an example showing how to create a :py:class:`Transformer` from a legacy Extractor (Linearize, from bob.bio.base):
+Here is an example showing how to create a Transformer from a legacy Extractor (Linearize, from bob.bio.base):
 
 .. code-block:: python
 
@@ -225,12 +225,12 @@ Here is an example showing how to create a :py:class:`Transformer` from a legacy
 Legacy Algorithm wrappers
 -------------------------
 
-Lastly, :py:class:`~bob.bio.base.transformer.AlgorithmTransformer` and :py:class:`~bob.bio.base.pipelines.vanilla_biometrics.legacy.BioAlgorithmLegacy` are available to map correctly a legacy Algorithm to a :py:class:`Transformer` and a :py:class:`BioAlgorithm`.
+Lastly, :py:class:`~bob.bio.base.transformer.AlgorithmTransformer` and :py:class:`~bob.bio.base.pipelines.vanilla_biometrics.legacy.BioAlgorithmLegacy` are available to map correctly a legacy Algorithm to a Transformer and a :py:class:`BioAlgorithm`.
 
-Those two adaptors are needed as the legacy Algorithm could consist of a projector that could be trainable (with methods :py:meth:`~bob.bio.base.algorithm.Algorithm.project` and :py:meth:`~bob.bio.base.algorithm.Algorithm.train_projector`), which correspond to a :py:class:`Transformer` in the new API.
+Those two adaptors are needed as the legacy Algorithm could consist of a projector that could be trainable (with methods :py:meth:`~bob.bio.base.algorithm.Algorithm.project` and :py:meth:`~bob.bio.base.algorithm.Algorithm.train_projector`), which correspond to a Transformer in the new API.
 The enrollment and scoring of the legacy algorithm were done using the :py:meth:`~bob.bio.base.algorithm.Algorithm.enroll` and :py:meth:`~bob.bio.base.algorithm.Algorithm.score` methods, which can be mapped to the same methods in a :py:class:`BioAlgorithm`.
 
-Here is an example showing how to create the :py:class:`Transformer` out of a bob.bio.base Algorithm (:py:class:`~bob.bio.base.Distance`):
+Here is an example showing how to create the Transformer out of a bob.bio.base Algorithm (:py:class:`~bob.bio.base.Distance`):
 
 .. code-block:: python
 

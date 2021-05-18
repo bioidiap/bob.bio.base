@@ -10,7 +10,7 @@ def resources(command_line_parameters = None):
   parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument("--types", '-t', nargs = '+',
                       choices = ('d', 'database', 'an', 'annotator', 'p', 'pipeline', 'c', 'config'),
-                      default = ('d', 'an', 'b', 'c'),
+                      default = ('d', 'an', 'p', 'c'),
                       help = "Select the resource types that should be listed.")
 
   parser.add_argument("--details", '-d', action='store_true', help = "Prints the complete configuration for all resources")
@@ -28,19 +28,19 @@ def resources(command_line_parameters = None):
 
 
   if 'd' in args.types or 'database' in args.types:
-    print ("\nList of registered databases:")
+    print ("\nList of registered databases (can be used after the --database option):")
     print (bob.bio.base.list_resources('database', **kwargs))
 
   if 'an' in args.types or 'annotator' in args.types:
-    print ("\nList of registered annotators:")
+    print ("\nList of registered annotators (can be used after the --annotator option):")
     print (bob.bio.base.list_resources('annotator', **kwargs))
 
   if 'p' in args.types or 'pipeline' in args.types:
-    print ("\nList of registered pipelines:")
+    print ("\nList of registered pipelines (can be used after the --pipeline option):")
     print (bob.bio.base.list_resources('pipeline', **kwargs))
 
   if 'c' in args.types or 'config' in args.types:
-    print ("\nList of registered configs:")
+    print ("\nList of registered configs. Configs may contain multiple resources and they also allow chain loading (see bob.extension docs on chain loading). Configs are used as arguments to commands such as vanilla-biometrics):")
     print (bob.bio.base.list_resources('config', **kwargs))
 
   print()
