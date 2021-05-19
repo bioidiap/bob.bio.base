@@ -125,39 +125,33 @@ class DatabaseConnector(Database):
         self.memory_demanding = memory_demanding
 
     def background_model_samples(self):
-        """Returns :py:class:`Sample`'s to train a background model (group
+        """Returns :any:`bob.pipelines.Sample`'s to train a background model (group
         ``world``).
-
 
         Returns
         -------
-
-            samples : list
-                List of samples conforming the pipeline API for background
-                model training.  See, e.g., :py:func:`.pipelines.first`.
-
+        samples : list
+            List of samples conforming the pipeline API for background
+            model training.
         """
         objects = self.database.training_files()
         return [_biofile_to_delayed_sample(k, self.database) for k in objects]
 
     def references(self, group="dev"):
-        """Returns :py:class:`Reference`'s to enroll biometric references
+        """Returns references to enroll biometric references
 
 
         Parameters
         ----------
-
-            group : :py:class:`str`, optional
-                A ``group`` to be plugged at
-                :py:meth:`bob.db.base.Database.objects`
+        group : :py:class:`str`, optional
+            A ``group`` to be plugged at ``database.objects``
 
 
         Returns
         -------
-
-            references : list
-                List of samples conforming the pipeline API for the creation of
-                biometric references.  See, e.g., :py:func:`.pipelines.first`.
+        references : list
+            List of samples conforming the pipeline API for the creation of
+            biometric references.  See, e.g., :py:func:`.pipelines.first`.
 
         """
 
@@ -179,24 +173,20 @@ class DatabaseConnector(Database):
         return retval
 
     def probes(self, group="dev"):
-        """Returns :py:class:`Probe`'s to score biometric references
+        """Returns probes to score biometric references
 
 
         Parameters
         ----------
-
-            group : str
-                A ``group`` to be plugged at
-                :py:meth:`bob.db.base.Database.objects`
+        group : str
+            A ``group`` to be plugged at ``database.objects``
 
 
         Returns
         -------
-
-            probes : list
-                List of samples conforming the pipeline API for the creation of
-                biometric probes.  See, e.g., :py:func:`.pipelines.first`.
-
+        probes : list
+            List of samples conforming the pipeline API for the creation of
+            biometric probes.
         """
 
         probes = dict()

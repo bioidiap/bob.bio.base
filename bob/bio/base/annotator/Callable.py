@@ -7,7 +7,7 @@ class Callable(Annotator):
 
     Attributes
     ----------
-    callable : callable
+    callable
         A callable with the following signature:
         ``annotations = callable(sample, **kwargs)`` that takes numpy array and
         returns annotations in dictionary format for that biometric sample.

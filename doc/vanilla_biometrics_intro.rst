@@ -46,7 +46,7 @@ It's composed of:
   :py:class:`sklearn.base.BaseEstimator` and
   :py:class:`sklearn.base.TransformerMixin`. A Transformer can be trained if
   needed and applies one or several transformations on an input sample. It must
-  implement a :py:meth:`Transformer.transform` and a :py:meth:`Transformer.fit`
+  implement a ``Transformer.transform`` and a :py:meth:`Transformer.fit`
   method. Multiple transformers can be chained together, each working on the
   output of the previous one.
 
@@ -66,7 +66,7 @@ Transformer
 
 Following the structure of
 `pipelines of scikit-learn <https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html>`__,
-a Transformer is a class that must implement a :py:meth:`Transformer.transform`
+a Transformer is a class that must implement a ``Transformer.transform``
 and a :py:meth:`Transformer.fit` method. This class represents a simple
 operation that can be applied to data, like preprocessing of a sample or
 extraction of a feature vector from data.

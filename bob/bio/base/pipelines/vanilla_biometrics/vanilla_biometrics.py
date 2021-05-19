@@ -57,10 +57,10 @@ def execute_vanilla_biometrics(
     Parameters
     ----------
 
-    pipeline: Instance of :py:class:`~bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`
+    pipeline: Instance of :py:class:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`
         A constructed vanilla-biometrics pipeline.
 
-    database: Instance of :py:class:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_class.Database`
+    database: Instance of :py:class:`bob.bio.base.pipelines.vanilla_biometrics.abstract_class.Database`
         A database interface instance
 
     dask_client: instance of :py:class:`dask.distributed.Client` or ``None``
@@ -175,10 +175,10 @@ def execute_vanilla_biometrics_ztnorm(
     Parameters
     ----------
 
-    pipeline: Instance of :py:class:`~bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`
+    pipeline: Instance of :py:class:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`
         A constructed vanilla-biometrics pipeline.
 
-    database: Instance of :py:class:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_class.Database`
+    database: Instance of :py:class:`bob.bio.base.pipelines.vanilla_biometrics.abstract_class.Database`
         A database interface instance
 
     dask_client: instance of :py:class:`dask.distributed.Client` or ``None``

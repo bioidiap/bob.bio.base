@@ -21,7 +21,6 @@ import logging
 logger = logging.getLogger("bob.bio.base")
 
 
-#: Keywords for which resources are defined.
 valid_keywords = (
     "database",
     "preprocessor",
@@ -32,6 +31,7 @@ valid_keywords = (
     "annotator",
     "pipeline",
 )
+"""Keywords for which resources are defined."""
 
 
 def _collect_config(paths):
@@ -60,9 +60,7 @@ def _collect_config(paths):
 
 
 def read_config_file(filenames, keyword=None):
-    """read_config_file(filenames, keyword = None) -> config
-
-  Use this function to read the given configuration file.
+    """Use this function to read the given configuration file.
   If a keyword is specified, only the configuration according to this keyword is returned.
   Otherwise a dictionary of the configurations read from the configuration file is returned.
 
@@ -118,9 +116,7 @@ def load_resource(
     package_prefix="bob.bio.",
     preferred_package=None,
 ):
-    """load_resource(resource, keyword, imports = ['bob.bio.base'], package_prefix='bob.bio.', preferred_package = None) -> resource
-
-  Loads the given resource that is registered with the given keyword.
+    """Loads the given resource that is registered with the given keyword.
   The resource can be:
 
   1. a resource as defined in the setup.py
@@ -133,7 +129,7 @@ def load_resource(
     Any string interpretable as a resource (see above).
 
   keyword : str
-    A valid resource keyword, can be one of :py:attr:`valid_keywords`.
+    A valid resource keyword, can be one of :any:`bob.bio.base.utils.resources.valid_keywords`.
 
   imports : [str]
     A list of strings defining which modules to import, when constructing new objects (option 3).
@@ -233,7 +229,7 @@ def extensions(keywords=valid_keywords, package_prefix="bob.bio."):
 
   keywords : [str]
     A list of keywords to load entry points for.
-    Defaults to all :py:attr:`valid_keywords`.
+    Defaults to all :any:`bob.bio.base.utils.resources.valid_keywords`.
 
   package_prefix : str
     Package namespace, in which we search for entry points, e.g., ``bob.bio``.

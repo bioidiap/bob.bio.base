@@ -11,9 +11,9 @@ import os
 class AlgorithmTransformer(TransformerMixin, BaseEstimator):
     """Class that wraps :py:class:`bob.bio.base.algorithm.Algorithm`
 
-    :any:`LegacyAlgorithmMixin.fit` maps to :py:meth:`bob.bio.base.algorithm.Algorithm.train_projector`
+    :any:`AlgorithmTransformer.fit` maps to :py:meth:`bob.bio.base.algorithm.Algorithm.train_projector`
 
-    :any:`LegacyAlgorithmMixin.transform` maps :py:meth:`bob.bio.base.algorithm.Algorithm.project`
+    :any:`AlgorithmTransformer.transform` maps :py:meth:`bob.bio.base.algorithm.Algorithm.project`
 
     Example
     -------
@@ -26,8 +26,8 @@ class AlgorithmTransformer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-      instance: object
-         An instance of bob.bio.base.algorithm.Algorithm
+    instance: object
+        An instance of bob.bio.base.algorithm.Algorithm
 
     """
 
