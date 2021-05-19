@@ -13,6 +13,10 @@ Vanilla Biometrics: Introduction to biometric recognition in practice
 
     conda install bob.bio.base bob.bio.face bob.db.atnt
 
+  Also note that almost all ``bob.db.*`` packages are deprecated and they should
+  not be installed. The ``bob.bio.face`` package contains the implementation of
+  all face biometric databases. Same is true for other ``bob.bio`` packages.
+
 To run biometric experiments, we provide a generic CLI command called ``bob bio pipelines``.
 Such CLI command is an entry-point to several pipelines implemented in this package.
 Curently only one pipeline is implemented which is ``vanilla-biometrics``.
