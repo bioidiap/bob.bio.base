@@ -260,7 +260,7 @@ class DatabaseConnector(Database):
         return grps
 
     def protocols(self):
-        return self.protocols()
+        return self.database.protocols()
 
 
 class BioAlgorithmLegacy(BioAlgorithm):
