@@ -3,7 +3,7 @@
 
 
 import os
-from bob.pipelines import Sample, DelayedSample, SampleSet
+from bob.pipelines import DelayedSample, SampleSet
 from bob.db.base.utils import check_parameters_for_validity
 import csv
 import bob.io.base
@@ -13,7 +13,7 @@ import itertools
 import logging
 import bob.db.base
 from bob.bio.base.pipelines.vanilla_biometrics.abstract_classes import Database
-from bob.extension.download import search_file
+from bob.extension.download import search_file, list_dir
 from bob.pipelines.sample_loaders import CSVToSampleLoader
 
 
@@ -228,18 +228,31 @@ class CSVDataset(Database):
 
     def __init__(
         self,
+        *,
+        name,
+        protocol,
         dataset_protocol_path,
-        protocol_name,
-        csv_to_sample_loader=CSVToSampleLoaderBiometrics(
-            data_loader=bob.io.base.load, dataset_original_directory="", extension="",
-        ),
+        csv_to_sample_loader=None,
         is_sparse=False,
         fetch_probes=True,
+        allow_scoring_with_all_biometric_references=False,
+        **kwargs,
     ):
+        super().__init__(
+            name=name,
+            protocol=protocol,
+            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+            **kwargs,
+        )
         self.dataset_protocol_path = dataset_protocol_path
         self.is_sparse = is_sparse
         self.fetch_probes = fetch_probes
-        self.protocol_name = protocol_name
+        if csv_to_sample_loader is None:
+            csv_to_sample_loader = CSVToSampleLoaderBiometrics(
+                data_loader=bob.io.base.load,
+                dataset_original_directory="",
+                extension="",
+            )
 
         def get_paths():
 
@@ -250,16 +263,16 @@ class CSVDataset(Database):
             train_csv = search_file(
                 dataset_protocol_path,
                 [
-                    os.path.join(protocol_name, "norm", "train_world.lst"),
-                    os.path.join(protocol_name, "norm", "train_world.csv"),
+                    os.path.join(protocol, "norm", "train_world.lst"),
+                    os.path.join(protocol, "norm", "train_world.csv"),
                 ],
             )
 
             dev_enroll_csv = search_file(
                 dataset_protocol_path,
                 [
-                    os.path.join(protocol_name, "dev", "for_models.lst"),
-                    os.path.join(protocol_name, "dev", "for_models.csv"),
+                    os.path.join(protocol, "dev", "for_models.lst"),
+                    os.path.join(protocol, "dev", "for_models.csv"),
                 ],
             )
 
@@ -267,24 +280,24 @@ class CSVDataset(Database):
             dev_probe_csv = search_file(
                 dataset_protocol_path,
                 [
-                    os.path.join(protocol_name, "dev", legacy_probe),
-                    os.path.join(protocol_name, "dev", "for_probes.csv"),
+                    os.path.join(protocol, "dev", legacy_probe),
+                    os.path.join(protocol, "dev", "for_probes.csv"),
                 ],
             )
 
             eval_enroll_csv = search_file(
                 dataset_protocol_path,
                 [
-                    os.path.join(protocol_name, "eval", "for_models.lst"),
-                    os.path.join(protocol_name, "eval", "for_models.csv"),
+                    os.path.join(protocol, "eval", "for_models.lst"),
+                    os.path.join(protocol, "eval", "for_models.csv"),
                 ],
             )
 
             eval_probe_csv = search_file(
                 dataset_protocol_path,
                 [
-                    os.path.join(protocol_name, "eval", legacy_probe),
-                    os.path.join(protocol_name, "eval", "for_probes.csv"),
+                    os.path.join(protocol, "eval", legacy_probe),
+                    os.path.join(protocol, "eval", "for_probes.csv"),
                 ],
             )
 
@@ -378,7 +391,9 @@ class CSVDataset(Database):
                 )
 
         sample_sets = convert_samples_to_samplesets(
-            samples, group_by_reference_id=group_by_reference_id, references=references,
+            samples,
+            group_by_reference_id=group_by_reference_id,
+            references=references,
         )
 
         self.cache[cache_key] = sample_sets
@@ -423,12 +438,14 @@ class CSVDataset(Database):
             valid_groups.append("dev")
         if self.eval_enroll_csv and self.eval_probe_csv:
             valid_groups.append("eval")
-        groups = list(check_parameters_for_validity(
-            parameters=groups,
-            parameter_description="groups",
-            valid_parameters=valid_groups,
-            default_parameters=valid_groups,
-        ))
+        groups = list(
+            check_parameters_for_validity(
+                parameters=groups,
+                parameter_description="groups",
+                valid_parameters=valid_groups,
+                default_parameters=valid_groups,
+            )
+        )
 
         samples = []
 
@@ -467,8 +484,11 @@ class CSVDataset(Database):
 
         return groups
 
+    def protocols(self):
+        return list_dir(self.dataset_protocol_path, folders=True, files=False)
 
-class CSVDatasetZTNorm(Database):
+
+class CSVDatasetZTNorm(CSVDataset):
     """
     Generic filelist dataset for :any:`bob.bio.base.pipelines.vanilla_biometrics.ZTNormPipeline` pipelines.
     Check :any:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
@@ -498,61 +518,41 @@ class CSVDatasetZTNorm(Database):
 
     """
 
-    def __init__(self, database):
-        self.database = database
-        self.cache = self.database.cache
-        self.csv_to_sample_loader = self.database.csv_to_sample_loader
-        self.protocol_name = self.database.protocol_name
-        self.dataset_protocol_path = self.database.dataset_protocol_path
-        self._get_samplesets = self.database._get_samplesets
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-        ## create_cache
+        # create_cache
         self.cache["znorm_csv"] = None
         self.cache["tnorm_csv"] = None
 
         znorm_csv = search_file(
             self.dataset_protocol_path,
             [
-                os.path.join(self.protocol_name, "norm", "for_znorm.lst"),
-                os.path.join(self.protocol_name, "norm", "for_znorm.csv"),
+                os.path.join(self.protocol, "norm", "for_znorm.lst"),
+                os.path.join(self.protocol, "norm", "for_znorm.csv"),
             ],
         )
 
         tnorm_csv = search_file(
             self.dataset_protocol_path,
             [
-                os.path.join(self.protocol_name, "norm", "for_tnorm.lst"),
-                os.path.join(self.protocol_name, "norm", "for_tnorm.csv"),
+                os.path.join(self.protocol, "norm", "for_tnorm.lst"),
+                os.path.join(self.protocol, "norm", "for_tnorm.csv"),
             ],
         )
 
         if znorm_csv is None:
             raise ValueError(
-                f"The file `for_znorm.lst` is required and it was not found in `{self.protocol_name}/norm` "
+                f"The file `for_znorm.lst` is required and it was not found in `{self.protocol}/norm` "
             )
 
         if tnorm_csv is None:
             raise ValueError(
-                f"The file `for_tnorm.csv` is required and it was not found `{self.protocol_name}/norm`"
+                f"The file `for_tnorm.csv` is required and it was not found `{self.protocol}/norm`"
             )
 
-        self.database.znorm_csv = znorm_csv
-        self.database.tnorm_csv = tnorm_csv
-
-    def background_model_samples(self):
-        return self.database.background_model_samples()
-
-    def references(self, group="dev"):
-        return self.database.references(group=group)
-
-    def probes(self, group="dev"):
-        return self.database.probes(group=group)
-
-    def all_samples(self, groups=None):
-        return self.database.all_samples(groups=groups)
-
-    def groups(self):
-        return self.database.groups()
+        self.znorm_csv = znorm_csv
+        self.tnorm_csv = tnorm_csv
 
     def zprobes(self, group="dev", proportion=1.0):
 
@@ -583,7 +583,9 @@ class CSVDatasetZTNorm(Database):
 
         cache_key = "tnorm_csv"
         samplesets = self._get_samplesets(
-            group="dev", cache_key=cache_key, group_by_reference_id=True,
+            group="dev",
+            cache_key=cache_key,
+            group_by_reference_id=True,
         )
 
         treferences = samplesets[: int(len(samplesets) * proportion)]
@@ -591,7 +593,7 @@ class CSVDatasetZTNorm(Database):
         return treferences
 
 
-class CSVDatasetCrossValidation:
+class CSVDatasetCrossValidation(Database):
     """
     Generic filelist dataset for :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` pipeline that
     handles **CROSS VALIDATION**.
@@ -636,14 +638,30 @@ class CSVDatasetCrossValidation:
 
     def __init__(
         self,
+        *,
+        name,
+        protocol="Default",
         csv_file_name="metadata.csv",
         random_state=0,
         test_size=0.8,
         samples_for_enrollment=1,
-        csv_to_sample_loader=CSVToSampleLoaderBiometrics(
-            data_loader=bob.io.base.load, dataset_original_directory="", extension=""
-        ),
+        csv_to_sample_loader=None,
+        allow_scoring_with_all_biometric_references=True,
+        **kwargs,
     ):
+        super().__init__(
+            name=name,
+            protocol=protocol,
+            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+            **kwargs,
+        )
+        if csv_to_sample_loader is None:
+            csv_to_sample_loader = CSVToSampleLoaderBiometrics(
+                data_loader=bob.io.base.load,
+                dataset_original_directory="",
+                extension="",
+            )
+
         def get_dict_cache():
             cache = dict()
             cache["train"] = None
@@ -758,6 +776,12 @@ class CSVDatasetCrossValidation:
             samples = samples + [s for s_set in self.references(group) for s in s_set]
             samples = samples + [s for s_set in self.probes(group) for s in s_set]
         return samples
+
+    def groups(self):
+        return list(("train", "dev"))
+
+    def protocols(self):
+        return list((self.protocol,))
 
 
 def group_samples_by_reference_id(samples):

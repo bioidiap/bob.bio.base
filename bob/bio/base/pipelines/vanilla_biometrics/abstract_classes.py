@@ -287,11 +287,26 @@ class BioAlgorithm(metaclass=ABCMeta):
 
 class Database(metaclass=ABCMeta):
     """Base class for Vanilla Biometric pipeline"""
-    def __init__(self, name, protocol, allow_scoring_with_all_biometric_references, **kwargs) -> None:
+
+    def __init__(
+        self,
+        name,
+        protocol,
+        allow_scoring_with_all_biometric_references=False,
+        annotation_type="eyes-center",
+        fixed_positions=None,
+        memory_demanding=False,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.name = name
         self.protocol = protocol
-        self.allow_scoring_with_all_biometric_references = allow_scoring_with_all_biometric_references
+        self.allow_scoring_with_all_biometric_references = (
+            allow_scoring_with_all_biometric_references
+        )
+        self.annotation_type = annotation_type
+        self.fixed_positions = fixed_positions
+        self.memory_demanding = memory_demanding
 
     @abstractmethod
     def background_model_samples(self):

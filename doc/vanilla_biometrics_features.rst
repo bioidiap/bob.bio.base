@@ -156,16 +156,16 @@ The following file structure and file naming must be followed, for the class to 
 - The ``train.csv`` file (as shown in ``my_protocol_2``) is optional and contains the information of the *world* set.
 - The ``eval_enroll.csv`` and ``eval_probe.csv`` files (as shown in ``my_protocol_2``) are optional and contain the information of the *eval* set.
 
-In this example, ``my_dataset`` would be the base path given to the ``dataset_protocol_path`` parameter of :py:class:`bob.bio.base.database.CSVDataset`, and ``my_protocol_1`` the ``protocol_name`` parameter:
+In this example, ``my_dataset_csv_folder`` would be the base path given to the ``dataset_protocol_path`` parameter of :py:class:`bob.bio.base.database.CSVDataset`, and ``my_protocol_1`` the ``protocol`` parameter:
 
 .. code-block:: python
 
     from bob.bio.base.database import CSVDataset, AnnotationsLoader
+    import bob.io.image
 
     # Define a loading function called for each sample with its path
     def my_load_function(full_path):
         # Example with image samples
-        import bob.io.image
         return bob.io.image.load(full_path)
 
     # Create a loader that takes the root of the dataset and a loader function
@@ -177,7 +177,12 @@ In this example, ``my_dataset`` would be the base path given to the ``dataset_pr
     )
 
     # Create the CSV interface
-    database = CSVDataset("my_dataset", "my_protocol_1", csv_to_sample_loader=my_sample_loader)
+    database = CSVDataset(
+      name="my_dataset",
+      dataset_protocol_path="my_dataset_csv_folder",
+      protocol="my_protocol_1",
+      csv_to_sample_loader=my_sample_loader
+    )
 
 This will create a database interface with:
 
@@ -219,6 +224,8 @@ To use the cross-validation database interface, use the following:
     from bob.bio.base.database import CSVDatasetCrossValidation
 
     database = CSVDatasetCrossValidation(
+        name="my_cross_validation_dataset",
+        protocol="Default",
         csv_file_name="your_dataset_name.csv",
         test_size=0.8,
         samples_for_enrollment=1,
@@ -269,8 +276,9 @@ Here is a code snippet of a simple database interface:
 .. code-block:: python
 
     from bob.pipelines import Sample, SampleSet
+    from bob.bio.base.pipelines.vanilla_biometrics import Database
 
-    class CustomDatabase:
+    class CustomDatabase(Database):
         def background_model_samples(self):
             train_samples = []
             for a_sample in dataset_train_subjects:
@@ -302,14 +310,22 @@ Here is a code snippet of a simple database interface:
                 all_samples.append( Sample(data=a_sample.data, key=a_sample.sample_id) )
             return all_samples
 
-        allow_scoring_with_all_biometric_references = True
+        def groups(self):
+            return list(("train", "dev", "eval"))
+
+        def protocols(self):
+            return list(("protocol_1", "protocol_2"))
 
     database = CustomDatabase()
 
 .. note::
 
-  For optimization reasons, an ``allow_scoring_with_all_biometric_references`` flag can be set in the database interface to allow scoring with all biometric references.
-  This will be much faster when your algorithm allows vectorization of operations, but not all protocols allow such a feature.
+  For optimization reasons, an ``allow_scoring_with_all_biometric_references``
+  flag can be set in the database interface (see
+  :any:`bob.bio.base.pipelines.vanilla_biometrics.Database`) to allow scoring
+  with all biometric references. This will be much faster when your algorithm
+  allows vectorization of operations, but not all protocols allow such a
+  feature.
 
   - When this flag is ``True``, the algorithm will compare a probe sample and generate the scores against **every** model of the set returned by the ``references`` method.
   - Otherwise (flag is ``False``), the scoring algorithm will only compare a probe to the given ``bob.pipelines.SampleSet.references` attribute of its :py:class:`bob.pipelines.SampleSet``.

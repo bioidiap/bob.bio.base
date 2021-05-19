@@ -62,7 +62,11 @@ def check_all_true(list_of_something, something):
 
 def test_csv_file_list_dev_only():
 
-    dataset = CSVDataset(example_dir, "protocol_only_dev")
+    dataset = CSVDataset(
+        name="test",
+        dataset_protocol_path=example_dir,
+        protocol="protocol_only_dev",
+    )
     assert len(dataset.background_model_samples()) == 8
     assert check_all_true(dataset.background_model_samples(), DelayedSample)
 
@@ -75,7 +79,11 @@ def test_csv_file_list_dev_only():
 
 def test_csv_file_list_dev_only_metadata():
 
-    dataset = CSVDataset(example_dir, "protocol_only_dev_metadata")
+    dataset = CSVDataset(
+        name="test",
+        dataset_protocol_path=example_dir,
+        protocol="protocol_only_dev_metadata",
+    )
     assert len(dataset.background_model_samples()) == 8
 
     assert check_all_true(dataset.background_model_samples(), DelayedSample)
@@ -108,8 +116,9 @@ def test_csv_file_list_dev_eval():
 
     def run(filename):
         dataset = CSVDataset(
-            filename,
-            "protocol_dev_eval",
+            name="test",
+            dataset_protocol_path=filename,
+            protocol="protocol_dev_eval",
             csv_to_sample_loader=make_pipeline(
                 CSVToSampleLoaderBiometrics(
                     data_loader=bob.io.base.load,
@@ -163,9 +172,10 @@ def test_csv_file_list_dev_eval_score_norm():
     )
 
     def run(filename):
-        dataset = CSVDataset(
-            filename,
-            "protocol_dev_eval",
+        znorm_dataset = CSVDatasetZTNorm(
+            name="test",
+            dataset_protocol_path=filename,
+            protocol="protocol_dev_eval",
             csv_to_sample_loader=make_pipeline(
                 CSVToSampleLoaderBiometrics(
                     data_loader=bob.io.base.load,
@@ -179,8 +189,6 @@ def test_csv_file_list_dev_eval_score_norm():
                 ),
             ),
         )
-
-        znorm_dataset = CSVDatasetZTNorm(dataset)
 
         assert len(znorm_dataset.background_model_samples()) == 8
         assert check_all_true(znorm_dataset.background_model_samples(), DelayedSample)
@@ -228,8 +236,9 @@ def test_csv_file_list_dev_eval_sparse():
     )
 
     dataset = CSVDataset(
-        example_dir,
-        "protocol_dev_eval_sparse",
+        name="test",
+        dataset_protocol_path=example_dir,
+        protocol="protocol_dev_eval_sparse",
         csv_to_sample_loader=make_pipeline(
             CSVToSampleLoaderBiometrics(
                 data_loader=bob.io.base.load,
@@ -288,10 +297,13 @@ def test_csv_file_list_dev_eval_sparse():
 def test_lst_file_list_dev_eval():
 
     dataset = CSVDataset(
-        legacy_example_dir,
-        "",
+        name="test",
+        dataset_protocol_path=legacy_example_dir,
+        protocol="",
         csv_to_sample_loader=LSTToSampleLoader(
-            data_loader=bob.io.base.load, dataset_original_directory="", extension="",
+            data_loader=bob.io.base.load,
+            dataset_original_directory="",
+            extension="",
         ),
     )
 
@@ -323,10 +335,13 @@ def test_lst_file_list_dev_eval():
 def test_lst_file_list_dev_eval_sparse():
 
     dataset = CSVDataset(
-        legacy_example_dir,
-        "",
+        name="test",
+        dataset_protocol_path=legacy_example_dir,
+        protocol="",
         csv_to_sample_loader=LSTToSampleLoader(
-            data_loader=bob.io.base.load, dataset_original_directory="", extension="",
+            data_loader=bob.io.base.load,
+            dataset_original_directory="",
+            extension="",
         ),
         is_sparse=True,
     )
@@ -359,10 +374,13 @@ def test_lst_file_list_dev_eval_sparse():
 def test_lst_file_list_dev_sparse_filelist2():
 
     dataset = CSVDataset(
-        legacy2_example_dir,
-        "",
+        name="test",
+        dataset_protocol_path=legacy2_example_dir,
+        protocol="",
         csv_to_sample_loader=LSTToSampleLoader(
-            data_loader=bob.io.base.load, dataset_original_directory="", extension="",
+            data_loader=bob.io.base.load,
+            dataset_original_directory="",
+            extension="",
         ),
         is_sparse=True,
     )
@@ -376,7 +394,9 @@ def test_lst_file_list_dev_sparse_filelist2():
 
 def test_csv_file_list_atnt():
 
-    dataset = CSVDataset(atnt_protocol_path, "idiap_protocol")
+    dataset = CSVDataset(
+        name="test", dataset_protocol_path=atnt_protocol_path, protocol="idiap_protocol"
+    )
     assert len(dataset.background_model_samples()) == 200
     assert len(dataset.references()) == 20
     assert len(dataset.probes()) == 100
@@ -394,6 +414,7 @@ def data_loader(path):
 def test_csv_cross_validation_atnt():
 
     dataset = CSVDatasetCrossValidation(
+        name="test",
         csv_file_name=atnt_protocol_path_cross_validation,
         random_state=0,
         test_size=0.8,
@@ -420,15 +441,18 @@ def run_experiment(dataset):
     vanilla_biometrics_pipeline = VanillaBiometricsPipeline(transformer, Distance())
 
     return vanilla_biometrics_pipeline(
-        dataset.background_model_samples(), dataset.references(), dataset.probes(),
+        dataset.background_model_samples(),
+        dataset.references(),
+        dataset.probes(),
     )
 
 
 def test_atnt_experiment():
 
     dataset = CSVDataset(
+        name="test",
         dataset_protocol_path=atnt_protocol_path,
-        protocol_name="idiap_protocol",
+        protocol="idiap_protocol",
         csv_to_sample_loader=CSVToSampleLoaderBiometrics(
             data_loader=data_loader,
             dataset_original_directory=atnt_database_directory(),
@@ -449,6 +473,7 @@ def test_atnt_experiment_cross_validation():
 
     def run_cross_validation_experiment(test_size=0.9):
         dataset = CSVDatasetCrossValidation(
+            name="test",
             csv_file_name=atnt_protocol_path_cross_validation,
             random_state=0,
             test_size=test_size,
@@ -563,63 +588,189 @@ def test_query_protocol():
     )  # 5 groups (dev, eval, world, optional_world_1, optional_world_2)
 
     assert len(db.client_ids()) == 6  # 6 client ids for world, dev and eval
-    assert len(db.client_ids(groups="world",)) == 2  # 2 client ids for world
     assert (
-        len(db.client_ids(groups="optional_world_1",)) == 2
+        len(
+            db.client_ids(
+                groups="world",
+            )
+        )
+        == 2
+    )  # 2 client ids for world
+    assert (
+        len(
+            db.client_ids(
+                groups="optional_world_1",
+            )
+        )
+        == 2
     )  # 2 client ids for optional world 1
     assert (
-        len(db.client_ids(groups="optional_world_2",)) == 2
+        len(
+            db.client_ids(
+                groups="optional_world_2",
+            )
+        )
+        == 2
     )  # 2 client ids for optional world 2
-    assert len(db.client_ids(groups="dev",)) == 2  # 2 client ids for dev
-    assert len(db.client_ids(groups="eval",)) == 2  # 2 client ids for eval
+    assert (
+        len(
+            db.client_ids(
+                groups="dev",
+            )
+        )
+        == 2
+    )  # 2 client ids for dev
+    assert (
+        len(
+            db.client_ids(
+                groups="eval",
+            )
+        )
+        == 2
+    )  # 2 client ids for eval
 
     assert len(db.tclient_ids()) == 2  # 2 client ids for T-Norm score normalization
     assert len(db.zclient_ids()) == 2  # 2 client ids for Z-Norm score normalization
 
     assert len(db.model_ids_with_protocol()) == 6  # 6 model ids for world, dev and eval
     assert (
-        len(db.model_ids_with_protocol(groups="world",)) == 2
+        len(
+            db.model_ids_with_protocol(
+                groups="world",
+            )
+        )
+        == 2
     )  # 2 model ids for world
     assert (
-        len(db.model_ids_with_protocol(groups="optional_world_1",)) == 2
+        len(
+            db.model_ids_with_protocol(
+                groups="optional_world_1",
+            )
+        )
+        == 2
     )  # 2 model ids for optional world 1
     assert (
-        len(db.model_ids_with_protocol(groups="optional_world_2",)) == 2
+        len(
+            db.model_ids_with_protocol(
+                groups="optional_world_2",
+            )
+        )
+        == 2
     )  # 2 model ids for optional world 2
-    assert len(db.model_ids_with_protocol(groups="dev",)) == 2  # 2 model ids for dev
-    assert len(db.model_ids_with_protocol(groups="eval",)) == 2  # 2 model ids for eval
+    assert (
+        len(
+            db.model_ids_with_protocol(
+                groups="dev",
+            )
+        )
+        == 2
+    )  # 2 model ids for dev
+    assert (
+        len(
+            db.model_ids_with_protocol(
+                groups="eval",
+            )
+        )
+        == 2
+    )  # 2 model ids for eval
 
     assert (
         len(db.tmodel_ids_with_protocol()) == 2
     )  # 2 model ids for T-Norm score normalization
 
-    assert len(db.objects(groups="world",)) == 8  # 8 samples in the world set
+    assert (
+        len(
+            db.objects(
+                groups="world",
+            )
+        )
+        == 8
+    )  # 8 samples in the world set
 
     assert (
-        len(db.objects(groups="dev", purposes="enroll",)) == 8
+        len(
+            db.objects(
+                groups="dev",
+                purposes="enroll",
+            )
+        )
+        == 8
     )  # 8 samples for enrollment in the dev set
     assert (
-        len(db.objects(groups="dev", purposes="enroll", model_ids="3",)) == 4
+        len(
+            db.objects(
+                groups="dev",
+                purposes="enroll",
+                model_ids="3",
+            )
+        )
+        == 4
     )  # 4 samples for to enroll model '3' in the dev set
     assert (
-        len(db.objects(groups="dev", purposes="enroll", model_ids="7",)) == 0
+        len(
+            db.objects(
+                groups="dev",
+                purposes="enroll",
+                model_ids="7",
+            )
+        )
+        == 0
     )  # 0 samples for enrolling model '7' (it is a T-Norm model)
     assert (
-        len(db.objects(groups="dev", purposes="probe",)) == 8
+        len(
+            db.objects(
+                groups="dev",
+                purposes="probe",
+            )
+        )
+        == 8
     )  # 8 samples as probes in the dev set
     assert (
-        len(db.objects(groups="dev", purposes="probe", classes="client",)) == 8
+        len(
+            db.objects(
+                groups="dev",
+                purposes="probe",
+                classes="client",
+            )
+        )
+        == 8
     )  # 8 samples as client probes in the dev set
     assert (
-        len(db.objects(groups="dev", purposes="probe", classes="impostor",)) == 4
+        len(
+            db.objects(
+                groups="dev",
+                purposes="probe",
+                classes="impostor",
+            )
+        )
+        == 4
     )  # 4 samples as impostor probes in the dev set
 
-    assert len(db.tobjects(groups="dev",)) == 8  # 8 samples for enrolling T-norm models
     assert (
-        len(db.tobjects(groups="dev", model_ids="7",)) == 4
+        len(
+            db.tobjects(
+                groups="dev",
+            )
+        )
+        == 8
+    )  # 8 samples for enrolling T-norm models
+    assert (
+        len(
+            db.tobjects(
+                groups="dev",
+                model_ids="7",
+            )
+        )
+        == 4
     )  # 4 samples for enrolling T-norm model '7'
     assert (
-        len(db.tobjects(groups="dev", model_ids="3",)) == 0
+        len(
+            db.tobjects(
+                groups="dev",
+                model_ids="3",
+            )
+        )
+        == 0
     )  # 0 samples for enrolling T-norm model '3' (no T-Norm model)
     assert len(db.zobjects(groups="dev")) == 8  # 8 samples for Z-norm impostor accesses
 
@@ -743,4 +894,3 @@ def test_driver_api():
         )
         == 0
     )
-
