@@ -64,13 +64,10 @@ class Distance(BioAlgorithm):
         return self.factor * self.distance_function(biometric_reference, data)
 
     def score_multiple_biometric_references(self, biometric_references, data):
-        if data is None:
-            # The pipeline failed for the probe sample
-            return [None] * len(biometric_references)
-        else:
-            data = data.flatten()
-            references_stacked = numpy.vstack(biometric_references)
-            scores = self.factor * cdist(
-                references_stacked, data.reshape(1, -1), self.distance_function
-            )
-            return list(scores.flatten())
+        data = data.flatten()
+        references_stacked = numpy.vstack(biometric_references)
+        scores = self.factor * cdist(
+            references_stacked, data.reshape(1, -1), self.distance_function
+        )
+
+        return list(scores.flatten())

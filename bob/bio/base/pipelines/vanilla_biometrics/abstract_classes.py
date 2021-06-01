@@ -7,6 +7,9 @@ from bob.pipelines.sample import SAMPLE_DATA_ATTRS, Sample, SampleSet, DelayedSa
 import functools
 import numpy as np
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def average_scores(scores):
@@ -66,8 +69,14 @@ class BioAlgorithm(metaclass=ABCMeta):
         # Unpack the sampleset
         data = [s.data for s in sampleset.samples]
 
+        valid_data = [d for d in data if d is not None]
+        if len(data) != len(valid_data):
+            logger.warning(
+                f"Removed {len(data)-len(valid_data)} invalid samples during enrollment."
+            )
+
         # Enroll
-        return Sample(self.enroll(data), parent=sampleset)
+        return Sample(self.enroll(valid_data), parent=sampleset)
 
     @abstractmethod
     def enroll(self, data):
@@ -150,13 +159,19 @@ class BioAlgorithm(metaclass=ABCMeta):
                     self.stacked_biometric_references = [
                         ref.data for ref in biometric_references
                     ]
-                scores = self.score_multiple_biometric_references(
-                    self.stacked_biometric_references, probe_sample.data
-                )
+                if probe_sample.data is None:
+                    # Probe processing has failed. Mark invalid scores for FTA count
+                    scores = [None] * len(self.stacked_biometric_references)
+                else:
+                    scores = self.score_multiple_biometric_references(
+                        self.stacked_biometric_references, probe_sample.data
+                    )
                 total_scores.append(scores)
 
             # Reducing them
-            total_scores = self.score_reduction_operation(total_scores)
+            total_scores = self.score_reduction_operation(
+                np.array(total_scores, dtype=np.float)
+            )
 
             # Wrapping the scores in samples
             for ref, score in zip(biometric_references, total_scores):
@@ -195,9 +210,13 @@ class BioAlgorithm(metaclass=ABCMeta):
                         "Something is probably wrong with your database interface."
                     )
 
-                scores = self.score_multiple_biometric_references(
-                    references, probe_sample.data
-                )
+                if probe_sample.data is None:
+                    # Probe processing has failed
+                    scores = [None] * len(self.stacked_biometric_references)
+                else:
+                    scores = self.score_multiple_biometric_references(
+                        references, probe_sample.data
+                    )
 
                 total_scores.append(scores)
 
