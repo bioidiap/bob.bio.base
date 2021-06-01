@@ -137,8 +137,7 @@ class BioAlgorithm(metaclass=ABCMeta):
         biometric_references,
         allow_scoring_with_all_biometric_references,
     ):
-        """Given one sampleset for probing, compute the scores and returns a sample set with the scores
-        """
+        """Given one sampleset for probing, compute the scores and returns a sample set with the scores"""
         scores_biometric_references = []
         if allow_scoring_with_all_biometric_references:
             # Optimized scoring
@@ -173,7 +172,7 @@ class BioAlgorithm(metaclass=ABCMeta):
 
             def cache_references(probe_refererences):
                 """
-                Stack referecences in a dictionary
+                Stack references in a dictionary
                 """
                 for r in biometric_references:
                     if (
@@ -202,7 +201,9 @@ class BioAlgorithm(metaclass=ABCMeta):
 
                 total_scores.append(scores)
 
-            total_scores = self.score_reduction_operation(np.array(total_scores))
+            total_scores = self.score_reduction_operation(
+                np.array(total_scores, dtype=np.float)
+            )
 
             for ref, score in zip(
                 [
@@ -261,8 +262,7 @@ class BioAlgorithm(metaclass=ABCMeta):
 
 
 class Database(metaclass=ABCMeta):
-    """Base class for Vanilla Biometric pipeline
-    """
+    """Base class for Vanilla Biometric pipeline"""
 
     @abstractmethod
     def background_model_samples(self):
