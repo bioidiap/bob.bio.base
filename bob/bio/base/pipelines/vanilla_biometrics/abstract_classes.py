@@ -71,8 +71,12 @@ class BioAlgorithm(metaclass=ABCMeta):
 
         valid_data = [d for d in data if d is not None]
         if len(data) != len(valid_data):
-            logger.warning(
-                f"Removed {len(data)-len(valid_data)} invalid samples during enrollment."
+            logger.info(
+                f"Removed {len(data)-len(valid_data)} invalid enrollment samples."
+            )
+        if not valid_data:
+            raise ValueError(
+                f"None of the enrollment samples were valid for {sampleset}."
             )
 
         # Enroll
