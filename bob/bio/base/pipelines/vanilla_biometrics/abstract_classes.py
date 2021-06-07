@@ -293,7 +293,7 @@ class Database(metaclass=ABCMeta):
         name,
         protocol,
         allow_scoring_with_all_biometric_references=False,
-        annotation_type="eyes-center",
+        annotation_type=None,
         fixed_positions=None,
         memory_demanding=False,
         **kwargs,
