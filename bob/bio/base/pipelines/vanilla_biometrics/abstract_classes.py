@@ -7,6 +7,9 @@ from bob.pipelines.sample import SAMPLE_DATA_ATTRS, Sample, SampleSet, DelayedSa
 import functools
 import numpy as np
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def average_scores(scores):
@@ -66,8 +69,18 @@ class BioAlgorithm(metaclass=ABCMeta):
         # Unpack the sampleset
         data = [s.data for s in sampleset.samples]
 
+        valid_data = [d for d in data if d is not None]
+        if len(data) != len(valid_data):
+            logger.warning(
+                f"Removed {len(data)-len(valid_data)} invalid enrollment samples."
+            )
+        if not valid_data:
+            raise ValueError(
+                f"None of the enrollment samples were valid for {sampleset}."
+            )
+
         # Enroll
-        return Sample(self.enroll(data), parent=sampleset)
+        return Sample(self.enroll(valid_data), parent=sampleset)
 
     @abstractmethod
     def enroll(self, data):
@@ -137,8 +150,7 @@ class BioAlgorithm(metaclass=ABCMeta):
         biometric_references,
         allow_scoring_with_all_biometric_references,
     ):
-        """Given one sampleset for probing, compute the scores and returns a sample set with the scores
-        """
+        """Given one sampleset for probing, compute the scores and returns a sample set with the scores"""
         scores_biometric_references = []
         if allow_scoring_with_all_biometric_references:
             # Optimized scoring
@@ -151,13 +163,19 @@ class BioAlgorithm(metaclass=ABCMeta):
                     self.stacked_biometric_references = [
                         ref.data for ref in biometric_references
                     ]
-                scores = self.score_multiple_biometric_references(
-                    self.stacked_biometric_references, probe_sample.data
-                )
+                if probe_sample.data is None:
+                    # Probe processing has failed. Mark invalid scores for FTA count
+                    scores = [None] * len(self.stacked_biometric_references)
+                else:
+                    scores = self.score_multiple_biometric_references(
+                        self.stacked_biometric_references, probe_sample.data
+                    )
                 total_scores.append(scores)
 
             # Reducing them
-            total_scores = self.score_reduction_operation(total_scores)
+            total_scores = self.score_reduction_operation(
+                np.array(total_scores, dtype=np.float)
+            )
 
             # Wrapping the scores in samples
             for ref, score in zip(biometric_references, total_scores):
@@ -173,7 +191,7 @@ class BioAlgorithm(metaclass=ABCMeta):
 
             def cache_references(probe_refererences):
                 """
-                Stack referecences in a dictionary
+                Stack references in a dictionary
                 """
                 for r in biometric_references:
                     if (
@@ -196,13 +214,19 @@ class BioAlgorithm(metaclass=ABCMeta):
                         "Something is probably wrong with your database interface."
                     )
 
-                scores = self.score_multiple_biometric_references(
-                    references, probe_sample.data
-                )
+                if probe_sample.data is None:
+                    # Probe processing has failed
+                    scores = [None] * len(self.stacked_biometric_references)
+                else:
+                    scores = self.score_multiple_biometric_references(
+                        references, probe_sample.data
+                    )
 
                 total_scores.append(scores)
 
-            total_scores = self.score_reduction_operation(np.array(total_scores))
+            total_scores = self.score_reduction_operation(
+                np.array(total_scores, dtype=np.float)
+            )
 
             for ref, score in zip(
                 [
@@ -261,8 +285,7 @@ class BioAlgorithm(metaclass=ABCMeta):
 
 
 class Database(metaclass=ABCMeta):
-    """Base class for Vanilla Biometric pipeline
-    """
+    """Base class for Vanilla Biometric pipeline"""
 
     @abstractmethod
     def background_model_samples(self):

@@ -27,10 +27,20 @@ import bob.pipelines as mario
 import uuid
 import shutil
 import itertools
+from nose.tools import raises
 
 
 class DummyDatabase:
-    def __init__(self, delayed=False, n_references=10, n_probes=10, dim=10, one_d=True):
+    def __init__(
+        self,
+        delayed=False,
+        n_references=10,
+        n_probes=10,
+        dim=10,
+        one_d=True,
+        some_fta=False,
+        all_fta=False,
+    ):
         self.delayed = delayed
         self.dim = dim
         self.n_references = n_references
@@ -38,6 +48,8 @@ class DummyDatabase:
         self.one_d = one_d
         self.gender_choices = ["M", "F"]
         self.metadata_1_choices = ["A", "B", "C"]
+        self.contains_fta = some_fta
+        self.all_samples_fta = all_fta
 
     def _create_random_1dsamples(self, n_samples, offset, dim):
         return [
@@ -80,11 +92,17 @@ class DummyDatabase:
         ]
 
         offset = 0
-        for s in sample_set:
+        for i, s in enumerate(sample_set):
             if self.one_d:
                 s.samples = self._create_random_1dsamples(n_samples, offset, self.dim)
             else:
                 s.samples = self._create_random_2dsamples(n_samples, offset, self.dim)
+            if self.contains_fta and i % 2:
+                for sample in s.samples[::2]:
+                    sample.data = None
+            if self.all_samples_fta:
+                for sample in s.samples:
+                    sample.data = None
 
             offset += n_samples
             pass
@@ -375,3 +393,43 @@ def test_checkpoint_bioalg_as_bioalg():
         run_pipeline(True)  # Checking if the checkpointng works
         shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
+
+
+def _run_with_failure(allow_scoring_with_all_biometric_references, sporadic_fail):
+
+    with tempfile.TemporaryDirectory() as dir_name:
+
+        database = DummyDatabase(some_fta=sporadic_fail, all_fta=not sporadic_fail)
+
+        transformer = _make_transformer(dir_name)
+
+        biometric_algorithm = Distance()
+
+        vanilla_biometrics_pipeline = VanillaBiometricsPipeline(
+            transformer,
+            biometric_algorithm,
+            None,
+        )
+
+        scores = vanilla_biometrics_pipeline(
+            database.background_model_samples(),
+            database.references(),
+            database.probes(),
+            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+        )
+
+        assert len(scores) == 10
+        for sample_scores in scores:
+            assert len(sample_scores) == 10
+            for score in sample_scores:
+                assert isinstance(score.data, float)
+
+
+def test_database_sporadic_failure():
+    _run_with_failure(False, sporadic_fail=True)
+    _run_with_failure(True, sporadic_fail=True)
+
+
+@raises(ValueError)
+def test_database_full_failure():
+    _run_with_failure(False, sporadic_fail=False)
