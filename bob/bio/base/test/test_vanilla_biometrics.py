@@ -2,7 +2,6 @@
 # vim: set fileencoding=utf-8 :
 # @author: Tiago de Freitas Pereira <tiago.pereira@idiap.ch>
 
-from posixpath import dirname
 from bob.pipelines import Sample, SampleSet, DelayedSample
 import os
 import numpy as np
