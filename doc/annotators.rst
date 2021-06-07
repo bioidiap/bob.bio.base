@@ -16,17 +16,15 @@ a command-line script:
     $ bob bio annotate --help
 
 This script accepts two main parameters a database object that inherits from
-:any:`bob.bio.base.database.BioDatabase` and an annotator object that inherits
-from :any:`bob.bio.base.annotator.Annotator`. Please see the help message of
-the script for more information.
+:any:`bob.bio.base.pipelines.vanilla_biometrics.Database` and an annotator
+object that inherits from :any:`bob.bio.base.annotator.Annotator`. Please see
+the help message of the script for more information.
 
-The script can also be run in parallel using :ref:`gridtk`:
+The script can also be run in parallel using Dask:
 
 .. code-block:: sh
 
-    $ jman submit --array 64 -- bob bio annotate /path/to/config.py --array 64
-
-The number that is given to the ``--array`` options should match.
+    $ bob bio annotate /path/to/config.py --dask-client sge
 
 You can find the list of readily available annotator configurations using the
 ``resources.py`` command:

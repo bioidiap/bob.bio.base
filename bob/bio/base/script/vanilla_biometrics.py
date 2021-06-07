@@ -197,7 +197,7 @@ def vanilla_biometrics(
 
     .. Note::
         Refrain from calling this function directly from a script. Prefer
-        :py:func:`~bob.bio.base.pipelines.vanilla_biometrics.execute_vanilla_biometrics`
+        :py:func:`bob.bio.base.pipelines.vanilla_biometrics.execute_vanilla_biometrics`
         instead.
 
     """

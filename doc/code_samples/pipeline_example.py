@@ -1,55 +1,51 @@
-import numpy
+import numpy as np
+from bob.bio.base.pipelines.vanilla_biometrics import BioAlgorithm
+from bob.bio.base.pipelines.vanilla_biometrics import VanillaBiometricsPipeline
+from bob.pipelines import wrap
+from sklearn.decomposition import PCA
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.utils import check_array
 
-## Implementation of a Transformer
+## Transformers
+pca = PCA(n_components=0.95)
 
-from sklearn.base import TransformerMixin, BaseEstimator
+# the images are in shape of Nx112x92, we want to flatten to Nx10304 them so we can train a PCA on them.
+# A similar implementation is available in:
+# from bob.pipelines.transformers import Linearize
+def flatten(images):
+    images = check_array(images, allow_nd=True)
+    new_shape = [images.shape[0], -1]
+    return np.reshape(images, new_shape)
 
-class CustomTransformer(TransformerMixin, BaseEstimator):
-    def transform(self, X):
-        transformed_X = X
-        return transformed_X
+flatten_transformer = FunctionTransformer(flatten, validate=False)
 
-    def fit(self, X, y=None):
-        return self
+# Chain the Transformers together
+transformer = make_pipeline(flatten_transformer, pca)
 
+# All transformers must be sample transformers
+transformer = wrap(["sample"], transformer)
 
 ## Implementation of the BioAlgorithm
-
-from bob.bio.base.pipelines.vanilla_biometrics.abstract_classes import BioAlgorithm
-
-class CustomDistance(BioAlgorithm):
+# A better implementation is available in:
+# from bob.bio.base.pipelines.vanilla_biometrics import Distance
+class EuclideanDistance(BioAlgorithm):
     def enroll(self, enroll_features):
-        model = numpy.mean(enroll_features, axis=0)
+        model = np.mean(enroll_features, axis=0)
         return model
 
     def score(self, model, probe):
-        distance = 1/numpy.linalg.norm(model-probe)
-        return distance
+        similarity = 1/np.linalg.norm(model-probe)
+        # you should always return a similarity score
+        return similarity
+
+bio_algorithm = EuclideanDistance()
 
 
 ## Creation of the pipeline
-
-from sklearn.pipeline import make_pipeline
-from bob.pipelines import wrap
-from bob.bio.base.pipelines.vanilla_biometrics import VanillaBiometricsPipeline
-
-# Instantiate the Transformers
-my_transformer = CustomTransformer()
-
-# Chain the Transformers together
-transformer = make_pipeline(
-    wrap(["sample"], my_transformer),
-    # Add more transformers here if needed
-)
-
-# Instantiate the BioAlgorithm
-bio_algorithm = CustomDistance()
-
-# Assemble the Vanilla Biometric pipeline and execute
+# `pipeline` will be used by the `bob bio pipelines vanilla-biometrics` command
 pipeline = VanillaBiometricsPipeline(transformer, bio_algorithm)
 
-# Prevent the need to implement a `score_multiple_biometric_references` method
-database.allow_scoring_with_all_biometric_references = False
-
-
-# `pipeline` will be used by the `bob bio pipelines` command
+# you can also specify the other options in this file:
+database = "atnt"
+output = "results"

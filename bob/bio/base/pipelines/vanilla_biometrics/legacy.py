@@ -60,7 +60,9 @@ def get_temp_directory(sub_dir):
 def _biofile_to_delayed_sample(biofile, database):
     return DelayedSample(
         load=functools.partial(
-            biofile.load, database.original_directory, database.original_extension,
+            biofile.load,
+            database.original_directory,
+            database.original_extension,
         ),
         reference_id=str(biofile.client_id),
         key=biofile.path,
@@ -116,48 +118,45 @@ class DatabaseConnector(Database):
         memory_demanding=False,
         **kwargs,
     ):
-        self.database = database
-        self.allow_scoring_with_all_biometric_references = (
-            allow_scoring_with_all_biometric_references
+        super().__init__(
+            name=database.name,
+            protocol=database.protocol,
+            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+            annotation_type=annotation_type,
+            fixed_positions=fixed_positions,
+            memory_demanding=memory_demanding,
+            **kwargs,
         )
-        self.annotation_type = annotation_type
-        self.fixed_positions = fixed_positions
-        self.memory_demanding = memory_demanding
+        self.database = database
 
     def background_model_samples(self):
-        """Returns :py:class:`Sample`'s to train a background model (group
+        """Returns :any:`bob.pipelines.Sample`'s to train a background model (group
         ``world``).
-
 
         Returns
         -------
-
-            samples : list
-                List of samples conforming the pipeline API for background
-                model training.  See, e.g., :py:func:`.pipelines.first`.
-
+        samples : list
+            List of samples conforming the pipeline API for background
+            model training.
         """
         objects = self.database.training_files()
         return [_biofile_to_delayed_sample(k, self.database) for k in objects]
 
     def references(self, group="dev"):
-        """Returns :py:class:`Reference`'s to enroll biometric references
+        """Returns references to enroll biometric references
 
 
         Parameters
         ----------
-
-            group : :py:class:`str`, optional
-                A ``group`` to be plugged at
-                :py:meth:`bob.db.base.Database.objects`
+        group : :py:class:`str`, optional
+            A ``group`` to be plugged at ``database.objects``
 
 
         Returns
         -------
-
-            references : list
-                List of samples conforming the pipeline API for the creation of
-                biometric references.  See, e.g., :py:func:`.pipelines.first`.
+        references : list
+            List of samples conforming the pipeline API for the creation of
+            biometric references.  See, e.g., :py:func:`.pipelines.first`.
 
         """
 
@@ -179,24 +178,20 @@ class DatabaseConnector(Database):
         return retval
 
     def probes(self, group="dev"):
-        """Returns :py:class:`Probe`'s to score biometric references
+        """Returns probes to score biometric references
 
 
         Parameters
         ----------
-
-            group : str
-                A ``group`` to be plugged at
-                :py:meth:`bob.db.base.Database.objects`
+        group : str
+            A ``group`` to be plugged at ``database.objects``
 
 
         Returns
         -------
-
-            probes : list
-                List of samples conforming the pipeline API for the creation of
-                biometric probes.  See, e.g., :py:func:`.pipelines.first`.
-
+        probes : list
+            List of samples conforming the pipeline API for the creation of
+            biometric probes.
         """
 
         probes = dict()
@@ -255,6 +250,18 @@ class DatabaseConnector(Database):
         objects = self.database.all_files(groups=low_level_groups)
         return [_biofile_to_delayed_sample(k, self.database) for k in objects]
 
+    def groups(self):
+        grps = self.database.groups()
+        grps = convert_names_to_highlevel(
+            names=grps,
+            low_level_names=["world", "dev", "eval"],
+            high_level_names=["train", "dev", "eval"],
+        )
+        return grps
+
+    def protocols(self):
+        return self.database.protocols()
+
 
 class BioAlgorithmLegacy(BioAlgorithm):
     """Biometric Algorithm that handles :py:class:`bob.bio.base.algorithm.Algorithm`
@@ -281,7 +288,12 @@ class BioAlgorithmLegacy(BioAlgorithm):
     """
 
     def __init__(
-        self, instance, base_dir, force=False, projector_file=None, **kwargs,
+        self,
+        instance,
+        base_dir,
+        force=False,
+        projector_file=None,
+        **kwargs,
     ):
         super().__init__(**kwargs)
 

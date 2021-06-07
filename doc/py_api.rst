@@ -12,10 +12,10 @@ Database
 
 .. autosummary::
 
-  bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.Database
-  bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.Database.background_model_samples
-  bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.Database.references
-  bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.Database.probes
+  bob.bio.base.pipelines.vanilla_biometrics.Database
+  bob.bio.base.pipelines.vanilla_biometrics.Database.background_model_samples
+  bob.bio.base.pipelines.vanilla_biometrics.Database.references
+  bob.bio.base.pipelines.vanilla_biometrics.Database.probes
 
 Database implementations
 ........................
@@ -30,25 +30,25 @@ Biometric Algorithm
 
 .. autosummary::
 
-  bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm
-  bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm.score
-  bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm.enroll
+  bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm
+  bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm.score
+  bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm.enroll
 
 Writing Scores
 ~~~~~~~~~~~~~~
 
 .. autosummary::
 
-  bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.ScoreWriter
-  bob.bio.base.pipelines.vanilla_biometrics.score_writers.FourColumnsScoreWriter
-  bob.bio.base.pipelines.vanilla_biometrics.score_writers.CSVScoreWriter
+  bob.bio.base.pipelines.vanilla_biometrics.ScoreWriter
+  bob.bio.base.pipelines.vanilla_biometrics.FourColumnsScoreWriter
+  bob.bio.base.pipelines.vanilla_biometrics.CSVScoreWriter
 
 Assembling the pipeline
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
 
-  bob.bio.base.script.vanilla_biometrics.vanilla_biometrics
+  bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline
 
 
 Building Pipelines from Legacy constructs
@@ -59,23 +59,23 @@ Creating Database interfaces from legacy
 
 .. autosummary::
 
-  bob.bio.base.pipelines.vanilla_biometrics.legacy.DatabaseConnector
+  bob.bio.base.pipelines.vanilla_biometrics.DatabaseConnector
 
 Creating Transformers from legacy constructs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
 
-  bob.bio.base.transformers.preprocessor.PreprocessorTransformer
-  bob.bio.base.transformers.extractor.ExtractorTransformer
-  bob.bio.base.transformers.algorithm.AlgorithmTransformer
+  bob.bio.base.transformers.PreprocessorTransformer
+  bob.bio.base.transformers.ExtractorTransformer
+  bob.bio.base.transformers.AlgorithmTransformer
 
 Creating BioAlgorithms from legacy Algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
 
-  bob.bio.base.pipelines.vanilla_biometrics.legacy.BioAlgorithmLegacy
+  bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithmLegacy
 
 
 
@@ -113,11 +113,11 @@ Functions dealing with resources
 
 .. autosummary::
 
-  bob.bio.base.load_resource
-  bob.bio.base.read_config_file
-  bob.bio.base.resource_keys
-  bob.bio.base.extensions
-  bob.bio.base.valid_keywords
+  bob.bio.base.utils.resources.load_resource
+  bob.bio.base.utils.resources.read_config_file
+  bob.bio.base.utils.resources.resource_keys
+  bob.bio.base.utils.resources.extensions
+  bob.bio.base.utils.resources.valid_keywords
 
 
 Miscellaneous functions
@@ -192,6 +192,9 @@ Details
 .. automodule:: bob.bio.base.script.figure
 .. automodule:: bob.bio.base.script.commands
 .. automodule:: bob.bio.base.script.gen
+.. automodule:: bob.bio.base.utils
+.. automodule:: bob.bio.base.utils.resources
+.. automodule:: bob.bio.base.utils.io
 
 
 

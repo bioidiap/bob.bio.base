@@ -7,18 +7,15 @@ from . import split_X_by_y
 
 
 class ExtractorTransformer(TransformerMixin, BaseEstimator):
-    """
-    Scikit learn transformer for :py:class:`bob.bio.base.extractor.Extractor`.
+    """Scikit learn transformer for :py:class:`bob.bio.base.extractor.Extractor`.
 
     Parameters
     ----------
+    instance: object
+        An instance of :py:class:`bob.bio.base.extractor.Extractor`
 
-      instance: object
-         An instance of :py:class:`bob.bio.base.extractor.Extractor`
-
-      model_path: ``str``
-         Model path in case :any:`bob.bio.base.extractor.Extractor.requires_training` is equal to true
-
+    model_path: ``str``
+        Model path in case ``instance.requires_training`` is equal to ``True``.
     """
 
     def __init__(

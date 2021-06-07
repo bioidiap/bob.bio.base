@@ -21,8 +21,10 @@ It is the starting point of each sub-pipelines of vanilla-biometrics: Train, Enr
 
 .. note::
 
-  Since the bob packages do not include the samples' data directly, the database interfaces need to be set up so that a path to the data is configurable.
-  The interface only knows the file structure from that path and loads the data at runtime.
+  Since the bob packages do not include the actual data, the database interfaces
+  need to be set up so that a path to the data is configurable. The interface
+  only knows the file structure from that path and loads the data at runtime.
+  Consult the documentation of each database to learn how to do this.
 
 Groups of subjects are defined for the different parts of a biometric experiment.
 
@@ -43,22 +45,22 @@ Those set are then used in the experiment's pipeline:
 Using a database interface
 --------------------------
 
-A series of ``bob.db`` interfaces already exist (find a list `here <https://pypi.org/search/?q=bob.db>`__). When such package is installed, you can list their resource names with::
+You may list the currently available databases (and pipelines) using the following command::
 
-$ resources.py -t d
+  $ resources.py --type config
 
 You can use such a dataset with the following command (example with the AT&T dataset)::
 
-$ bob bio pipelines vanilla-biometrics -d atnt -p <pipeline_name>
+$ bob bio pipelines vanilla-biometrics atnt <pipeline_name>
 
 For more exotic datasets, you can simply pass your custom database file (defining a ``database`` object) to the vanilla-biometric pipeline::
 
-$ bob bio pipelines vanilla-biometrics -d my_database.py -p <pipeline_name>
+$ bob bio pipelines vanilla-biometrics my_database.py <pipeline_name>
 
 The ``database`` object defined in ``my_database.py`` is an instance of either:
 
-- A :py:class:`~bob.bio.base.database.CSVDataset` (see :ref:`here <bob.bio.base.database.csv_file_interface>`),
-- A :py:class:`~bob.bio.base.database.CSVDatasetCrossValidation` (see :ref:`here <bob.bio.base.database.csv_cross_validation>`),
+- A :py:class:`bob.bio.base.database.CSVDataset` (see :ref:`here <bob.bio.base.database.csv_file_interface>`),
+- A :py:class:`bob.bio.base.database.CSVDatasetCrossValidation` (see :ref:`here <bob.bio.base.database.csv_cross_validation>`),
 - Your implementation of a :ref:`Database Interface <bob.bio.base.database.interface_class>`,
 - A :ref:`legacy Database connector <bob.bio.base.legacy.database_connector>`.
 
@@ -73,9 +75,12 @@ This method is less complete and less flexible than implementing a :ref:`full in
 
 Protocol definition is possible and a set of CSV files (at least ``dev_enroll.csv`` and ``dev_probe.csv``) in a folder must be created for each protocol.
 
-The interface is created with :py:class:`~bob.bio.base.database.CSVDataset`.
-This class takes as input the base directory and the protocol sub-directory of the :ref:`CSV file structure <bob.bio.base.database.csv_file_structure>`, and finally, a ``csv_to_sample_loader`` that will load a sample data from a CSV row read from the CSV files.
-This csv_to_sample_loader needs to know the dataset base path and the extension of the dataset files.
+The interface is created with :py:class:`bob.bio.base.database.CSVDataset`.
+This class takes as input the base directory and the protocol sub-directory of
+the :ref:`CSV file structure <bob.bio.base.database.csv_file_structure>`, and
+finally, a ``csv_to_sample_loader`` that will load a sample data from a CSV row
+read from the CSV files. This ``csv_to_sample_loader`` needs to know the dataset
+base path and the extension of the dataset files.
 
 File format
 ^^^^^^^^^^^
@@ -138,7 +143,7 @@ The following file structure and file naming must be followed, for the class to 
       |    +-- train_world.csv
       |
       +-- dev
-      |   |     
+      |   |
       |   +-- for_models.csv
       |   +-- for_probes.csv
       |
@@ -151,16 +156,16 @@ The following file structure and file naming must be followed, for the class to 
 - The ``train.csv`` file (as shown in ``my_protocol_2``) is optional and contains the information of the *world* set.
 - The ``eval_enroll.csv`` and ``eval_probe.csv`` files (as shown in ``my_protocol_2``) are optional and contain the information of the *eval* set.
 
-In this example, ``my_dataset`` would be the base path given to the ``dataset_protocol_path`` parameter of :py:class:`~bob.bio.base.database.CSVDataset`, and ``my_protocol_1`` the ``protocol_name`` parameter:
+In this example, ``my_dataset_csv_folder`` would be the base path given to the ``dataset_protocol_path`` parameter of :py:class:`bob.bio.base.database.CSVDataset`, and ``my_protocol_1`` the ``protocol`` parameter:
 
 .. code-block:: python
 
     from bob.bio.base.database import CSVDataset, AnnotationsLoader
+    import bob.io.image
 
     # Define a loading function called for each sample with its path
     def my_load_function(full_path):
         # Example with image samples
-        import bob.io.image
         return bob.io.image.load(full_path)
 
     # Create a loader that takes the root of the dataset and a loader function
@@ -172,24 +177,31 @@ In this example, ``my_dataset`` would be the base path given to the ``dataset_pr
     )
 
     # Create the CSV interface
-    database = CSVDataset("my_dataset", "my_protocol_1", csv_to_sample_loader=my_sample_loader)
+    database = CSVDataset(
+      name="my_dataset",
+      dataset_protocol_path="my_dataset_csv_folder",
+      protocol="my_protocol_1",
+      csv_to_sample_loader=my_sample_loader
+    )
 
 This will create a database interface with:
 
-- The elements in ``train_world.csv`` returned by :py:meth:`~bob.db.base.Database.background_model_samples`,
-- The elements in ``for_models.csv`` returned by :py:meth:`~bob.db.base.Database.references`,
-- The elements in ``for_probes.csv`` returned by :py:meth:`~bob.db.base.Database.probes`.
+- The elements in ``train_world.csv`` returned by :py:meth:`bob.bio.base.database.CSVDataset.background_model_samples`,
+- The elements in ``for_models.csv`` returned by :py:meth:`bob.bio.base.database.CSVDataset.references`,
+- The elements in ``for_probes.csv`` returned by :py:meth:`bob.bio.base.database.CSVDataset.probes`.
 
-An aggregation of all of the above is available with the :py:meth:`~bob.db.base.Database.all_samples` method, which returns all the samples of the protocol.
+An aggregation of all of the above is available with the
+:py:meth:`bob.bio.base.database.CSVDataset.all_samples` method, which returns
+all the samples of the protocol.
 
 .. _bob.bio.base.database.csv_cross_validation:
 
 CSV file Cross-validation Database interface
 --------------------------------------------
 
-The :py:class:`~bob.bio.base.database.CSVDatasetCrossValidation` takes only one CSV file of identities and creates the necessary sets pseudo-randomly.
+The :py:class:`bob.bio.base.database.CSVDatasetCrossValidation` takes only one CSV file of identities and creates the necessary sets pseudo-randomly.
 
-The format of the CSV file is the same as in :py:class:`~bob.bio.base.database.CSVDataset`, comma separated with a header:
+The format of the CSV file is the same as in :py:class:`bob.bio.base.database.CSVDataset`, comma separated with a header:
 
 .. code-block:: text
 
@@ -212,12 +224,14 @@ To use the cross-validation database interface, use the following:
     from bob.bio.base.database import CSVDatasetCrossValidation
 
     database = CSVDatasetCrossValidation(
+        name="my_cross_validation_dataset",
+        protocol="Default",
         csv_file_name="your_dataset_name.csv",
         test_size=0.8,
         samples_for_enrollment=1,
         csv_to_sample_loader=CSVToSampleLoader(
-            data_loader=bob.io.base.load, 
-            dataset_original_directory="", 
+            data_loader=bob.io.base.load,
+            dataset_original_directory="",
             extension="",
             metadata_loader=AnnotationsLoader()
         ),
@@ -232,24 +246,39 @@ Although most of the experiments will be satisfied with the CSV or cross-validat
 
 When a vanilla-biometrics pipeline requests data from that class, it will call the following methods, which need to be implemented for each dataset:
 
-  - :py:meth:`~bob.db.base.Database.background_model_samples`: Provides a list of :py:class:`~bob.pipelines.Sample` objects that are used for training of the :py:class:`Transformers`.
-    Each :py:class:`~bob.pipelines.Sample` must contain at least the attributes :py:attr:`~bob.pipelines.Sample.key` and :py:attr:`~bob.pipelines.Sample.subject`, as well as the :py:attr:`~bob.pipelines.Sample.data` of the sample.
-  - :py:meth:`~bob.db.base.Database.references`: Provides a list of :py:class:`~bob.pipelines.SampleSet` that are used for enrollment of the models.
-    The group (*dev* or *eval*) can be given as parameter to specify which set must be used.
-    Each :py:class:`~bob.pipelines.SampleSet` must contain a :py:attr:`~bob.pipelines.SampleSet.subject` attribute and a list of :py:attr:`~bob.pipelines.Sample` containing at least the :py:attr:`~bob.pipelines.Sample.key` attribute as well as the :py:attr:`~bob.pipelines.Sample.data` of the sample.
-  - :py:meth:`~bob.db.base.Database.probes`: Returns a list of :py:class:`~bob.pipelines.SampleSet` that are used for scoring against a previously enrolled model.
-    The group parameter (*dev* or *eval*) can be given to specify from which set of individuals the data comes.
-    Each :py:class:`~bob.pipelines.SampleSet` must contain a :py:attr:`~bob.pipelines.SampleSet.subject`, a :py:attr:`~bob.pipelines.SampleSet.references` list, and a list of :py:attr:`~bob.pipelines.Sample` containing at least the :py:attr:`~bob.pipelines.Sample.key` attribute as well as the :py:attr:`~bob.pipelines.Sample.data` of the sample.
+  - :py:meth:`bob.bio.base.pipelines.vanilla_biometrics.Database.background_model_samples`:
+    Provides a list of :py:class:`bob.pipelines.Sample` objects that are used for
+    training of the Transformers.
+    Each :py:class:`bob.pipelines.Sample` must contain at least the attributes
+    ``bob.pipelines.Sample.key`` and
+    ``bob.pipelines.Sample.subject``, as well as the
+    ``bob.pipelines.Sample.data`` of the sample.
+  - :py:meth:`bob.bio.base.pipelines.vanilla_biometrics.Database.references`: Provides a list of :py:class:`bob.pipelines.SampleSet` that are used for enrollment of the models.
+    The group (*dev* or *eval*) can be given as parameter to specify which set
+    must be used. Each :py:class:`bob.pipelines.SampleSet` must contain a
+    ``bob.pipelines.SampleSet.subject`` attribute and a list of
+    ``bob.pipelines.Sample`` containing at least the
+    ``bob.pipelines.Sample.key`` attribute as well as the
+    ``bob.pipelines.Sample.data`` of the sample.
+  - :py:meth:`bob.bio.base.pipelines.vanilla_biometrics.Database.probes`: Returns a list of :py:class:`bob.pipelines.SampleSet` that are used for scoring against a previously enrolled model.
+    The group parameter (*dev* or *eval*) can be given to specify from which set
+    of individuals the data comes. Each :py:class:`bob.pipelines.SampleSet`
+    must contain a ``bob.pipelines.SampleSet.subject``, a
+    ``bob.pipelines.SampleSet.references`` list, and a list of
+    ``bob.pipelines.Sample`` containing at least the
+    ``bob.pipelines.Sample.key`` attribute as well as the
+    ``bob.pipelines.Sample.data`` of the sample.
 
-Furthermore, the :py:meth:`~bob.db.base.Database.all_samples` method must return a list of all the existing samples in the dataset. This functionality is used for annotating a whole dataset.
+Furthermore, the :py:meth:`bob.bio.base.pipelines.vanilla_biometrics.Database.all_samples` method must return a list of all the existing samples in the dataset. This functionality is used for annotating a whole dataset.
 
 Here is a code snippet of a simple database interface:
 
 .. code-block:: python
 
     from bob.pipelines import Sample, SampleSet
+    from bob.bio.base.pipelines.vanilla_biometrics import Database
 
-    class CustomDatabase:
+    class CustomDatabase(Database):
         def background_model_samples(self):
             train_samples = []
             for a_sample in dataset_train_subjects:
@@ -281,26 +310,36 @@ Here is a code snippet of a simple database interface:
                 all_samples.append( Sample(data=a_sample.data, key=a_sample.sample_id) )
             return all_samples
 
-        allow_scoring_with_all_biometric_references = True
+        def groups(self):
+            return list(("train", "dev", "eval"))
+
+        def protocols(self):
+            return list(("protocol_1", "protocol_2"))
 
     database = CustomDatabase()
 
 .. note::
 
-  For optimization reasons, an ``allow_scoring_with_all_biometric_references`` flag can be set in the database interface to allow scoring with all biometric references.
-  This will be much faster when your algorithm allows vectorization of operations, but not all protocols allow such a feature.
+  For optimization reasons, an ``allow_scoring_with_all_biometric_references``
+  flag can be set in the database interface (see
+  :any:`bob.bio.base.pipelines.vanilla_biometrics.Database`) to allow scoring
+  with all biometric references. This will be much faster when your algorithm
+  allows vectorization of operations, but not all protocols allow such a
+  feature.
 
-  - When this flag is ``True``, the algorithm will compare a probe sample and generate the scores against **every** model of the set returned by the :py:meth:`references` method.
-  - Otherwise (flag is ``False``), the scoring algorithm will only compare a probe to the given :py:attr:`~bob.pipelines.SampleSet.references` attribute of its :py:class:`~bob.pipelines.SampleSet`.
+  - When this flag is ``True``, the algorithm will compare a probe sample and generate the scores against **every** model of the set returned by the ``references`` method.
+  - Otherwise (flag is ``False``), the scoring algorithm will only compare a probe to the given ``bob.pipelines.SampleSet.references` attribute of its :py:class:`bob.pipelines.SampleSet``.
 
 
 Delayed samples
 ^^^^^^^^^^^^^^^
 
-To work with datasets too big to fit entirely in memory, the :py:class:`~bob.pipelines.DelayedSample` was introduced.
+To work with datasets too big to fit entirely in memory, the :py:class:`bob.pipelines.DelayedSample` was introduced.
 
-The functionality is the same as a :py:class:`~bob.pipelines.Sample`, but instead of storing the data as an attribute directly, a :py:meth:`~bob.pipelines.DelayedSample.load` method is used that can be set to any function loading one sample of data.
-When data is needed, the load function is called and the sample data is returned.
+The functionality is the same as a :py:class:`bob.pipelines.Sample`, but instead
+of storing the data as an attribute directly, a ``load`` funciton is used that
+can be set to any function loading one sample of data. When data is needed, the
+load function is called and the sample data is returned.
 
 
 Checkpointing experiments
@@ -309,27 +348,31 @@ Checkpointing experiments
 Checkpoints are a useful tool that allows an experiment to prevent computing data multiple times by saving the results of each step so it can be retrieved later.
 It can be used when an experiment fails in a later stage, preventing the computation of the stages coming before it, in case the experiment is restarted.
 
-The checkpoints are files created on disk that contain the result of a sample of data passed through a :py:class:`Transformer` or :py:class:`BiometricAlgorithm`.
+The checkpoints are files created on disk that contain the result of a sample of data passed through a Transformer or :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`.
 When running, if the system finds a checkpoint file for its current processing step, it will load the results directly from the disk, instead of computing it again.
 
-To enable the checkpointing of a :py:class:`Transformer` or :py:class:`BiometricAlgorithm`, a :py:class:`~bob.pipelines.CheckpointWrapper` is available.
-This class takes a :py:class:`Transformer` as input and returns the same :py:class:`Transformer` with the ability to automatically create checkpoint files.
-The :py:class:`~bob.pipelines.CheckpointWrapper` class is available in the :py:mod:`bob.pipelines`.
+To enable the checkpointing of a Transformer or :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`, a :py:class:`bob.pipelines.CheckpointWrapper` is available.
+This class takes a Transformer as input and returns the same Transformer with the ability to automatically create checkpoint files.
+The :py:class:`bob.pipelines.CheckpointWrapper` class is available in the :py:mod:`bob.pipelines`.
 
-The ``-c`` option (``--checkpoint``) is a command-line option that automatically wraps every steps of the pipeline with checkpointing::
+The ``--checkpoint`` option is a command-line option that automatically wraps every steps of the pipeline with checkpointing::
 
-$ bob bio pipelines vanilla-biometrics -d <database> -p <pipeline> -c -o <output_dir>
+$ bob bio pipelines vanilla-biometrics <database> <pipeline> --checkpoint --output <output_dir>
 
-When doing so, the output of each :py:class:`Transformer` of the pipeline will be saved to the disk in the ``<output_dir>`` folder specified with the ``-o`` (``--output``) option.
+When doing so, the output of each Transformer of the pipeline will be saved to the disk in the ``<output_dir>`` folder specified with the ``--output`` option.
 
 
 .. WARNING::
 
-  You have to be careful when using checkpoints: If you modify an early step of an experiment, the created checkpoints are not valid anymore, but the system has no way of knowing that.
+  You have to be careful when using checkpoints: If you modify an early step of
+  an experiment, the created checkpoints are not valid anymore, but the system
+  has no way of knowing that.
 
   **You** have to take care of removing invalid checkpoints files.
 
-  When changing the pipeline or the dataset of an experiment, you should change the output folder (``-o``) accordingly. Otherwise, the system could try to load a checkpoint of an older experiment, or samples from another dataset.
+  When changing the pipeline or the dataset of an experiment, you should change
+  the output folder (``--output``) accordingly. Otherwise, the system could try to
+  load a checkpoint of an older experiment, or samples from another dataset.
 
 
 Scaling up with Dask
@@ -344,11 +387,11 @@ Diagnostic and monitoring tools are also available to watch progress and debug.
 Using Dask with vanilla-biometrics
 ----------------------------------
 
-To run an experiment with Dask, a :py:class:`bob.pipelines.DaskWrapper` class is available that takes any :py:class:`Transformer` or :py:class:`BiometricAlgorithm` and outputs a *dasked* version of it.
+To run an experiment with Dask, a :py:class:`bob.pipelines.DaskWrapper` class is available that takes any Transformer or :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm` and outputs a *dasked* version of it.
 
-You can easily benefit from Dask by using the ``-l`` (``--dask-client``) option like so::
+You can easily benefit from Dask by using the ``--dask-client`` option like so::
 
-$ bob bio pipelines vanilla-biometrics -d <database> -p <pipeline> -l <client-config>
+$ bob bio pipelines vanilla-biometrics <database> <pipeline> --dask-client <client-config>
 
 where ``<client-config>`` is your own dask client configuration file, or a resource from ``bob.pipelines.distributed``:
 
@@ -407,11 +450,11 @@ Writing scores in a customized manner
 
 The results of the Vanilla-Biometrics pipelines are scores that can be analyzed.
 To do so, the best way is to store them on disk so that a utility like ``bob bio metrics`` or ``bob bio roc`` can retrieve them.
-However, many formats could be used to store those score files, so :py:class:`ScoreWriter` was defined.
+However, many formats could be used to store those score files, so :any:`bob.bio.base.pipelines.vanilla_biometrics.ScoreWriter` was defined.
 
-A :py:class:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.ScoreWriter` must implement a :py:meth:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.ScoreWriter.write` method that receives a list of :py:class:`~bob.pipelines.SampleSet` that contains scores as well as metadata (subject identity, sample path, etc.).
+A :py:class:`bob.bio.base.pipelines.vanilla_biometrics.ScoreWriter` must implement a :py:meth:`bob.bio.base.pipelines.vanilla_biometrics.ScoreWriter.write` method that receives a list of :py:class:`bob.pipelines.SampleSet` that contains scores as well as metadata (subject identity, sample path, etc.).
 
-Common :py:class:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.ScoreWriter` are available by default:
+Common :py:class:`bob.bio.base.pipelines.vanilla_biometrics.ScoreWriter` are available by default:
 
 - A CSV format ScoreWriter
 - A four columns format ScoreWriter
@@ -420,20 +463,22 @@ Common :py:class:`~bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.Sc
 Using a Score Writer
 --------------------
 
-By default (omitting the ``-m`` option), vanilla-biometrics will use the four-column format ScoreWriter.
+By default (omitting the ``--write-metadata-scores`` option), vanilla-biometrics will use the four-column format ScoreWriter.
 
-To indicate to a vanilla-biometrics pipeline to use the CSV ScoreWriter instead of the default four-column ScoreWriter, you can pass the ``-m`` (``--write-metadata-scores``) option like so::
+To indicate to a vanilla-biometrics pipeline to use the CSV ScoreWriter instead
+of the default four-column ScoreWriter, you can pass the
+``--write-metadata-scores`` option like so::
 
-$ bob bio pipelines vanilla-biometrics -m -d <database> -p <pipeline> -o <output_dir>
+  $ bob bio pipelines vanilla-biometrics --write-metadata-scores <database> <pipeline> --output <output_dir>
 
 
 CSV Score Writer
 ----------------
 
-A :py:class:`~bob.bio.base.pipelines.vanilla_biometrics.CSVScoreWriter` is available, creating a Comma Separated Values (CSV) file with all the available metadata of the dataset as well as the score of each comparison.
-It is more complete than the :py:class:`~bob.bio.base.pipelines.vanilla_biometrics.FourColumnsScoreWriter` and allows analysis of scores according to sample metadata (useful to analyze bias due to e.g. age or gender).
+A :py:class:`bob.bio.base.pipelines.vanilla_biometrics.CSVScoreWriter` is available, creating a Comma Separated Values (CSV) file with all the available metadata of the dataset as well as the score of each comparison.
+It is more complete than the :py:class:`bob.bio.base.pipelines.vanilla_biometrics.FourColumnsScoreWriter` and allows analysis of scores according to sample metadata (useful to analyze bias due to e.g. age or gender).
 
-The default :py:class:`~bob.bio.base.pipelines.vanilla_biometrics.CSVScoreWriter` will write a *probe* subject and key, a *biometric reference* subject, the score resulting from the comparison of that *probe* against the *reference*, as well as all the fields set in :py:class:`~bob.pipelines.SampleSet` by the :ref:`database interface<bob.bio.base.database_interface>`, for the *references* and the *probes*.
+The default :py:class:`bob.bio.base.pipelines.vanilla_biometrics.CSVScoreWriter` will write a *probe* subject and key, a *biometric reference* subject, the score resulting from the comparison of that *probe* against the *reference*, as well as all the fields set in :py:class:`bob.pipelines.SampleSet` by the :ref:`database interface<bob.bio.base.database_interface>`, for the *references* and the *probes*.
 
 A header is present, to identify the metadata, and the values are comma separated.
 Here is a short example of such file format with metadata on the ``age`` and ``gender`` of the subject:
@@ -450,13 +495,13 @@ Here is a short example of such file format with metadata on the ``age`` and ``g
 Four Columns Score Writer
 -------------------------
 
-:py:class:`~bob.bio.base.pipelines.vanilla_biometrics.FourColumnsScoreWriter` is the default score file format used by bob.
+:py:class:`bob.bio.base.pipelines.vanilla_biometrics.FourColumnsScoreWriter` is the default score file format used by bob.
 It consists of a text file with four columns separated by spaces and no header.
 Each row represents a comparison between a *probe* and a *model*, and the similarity score resulting from that comparison.
 The four columns are, in order:
 
-1) **Reference ID**: The identity of the *reference* or *model* used for that comparison (field ``subject`` in :py:class:`~bob.pipelines.SampleSet` of the ``references`` set).
-2) **Probe ID**: The identity of the *probe* used for that comparison (field ``subject`` in :py:class:`~bob.pipelines.SampleSet` of the ``probes`` set).
+1) **Reference ID**: The identity of the *reference* or *model* used for that comparison (field ``subject`` in :py:class:`bob.pipelines.SampleSet` of the ``references`` set).
+2) **Probe ID**: The identity of the *probe* used for that comparison (field ``subject`` in :py:class:`bob.pipelines.SampleSet` of the ``probes`` set).
 3) **Probe key**: A unique identifier (often a file path) for the sample used as *probe* for that comparison.
 4) **Score**: The similarity score of that comparison.
 
@@ -509,7 +554,7 @@ min.HTER) on a development set and apply it on an evaluation set, just do:
 
 .. note::
 
-  When evaluation scores are provided, the ``-e`` (``--eval``) option must be passed.
+  When evaluation scores are provided, the ``--eval`` option must be passed.
   See ``metrics --help`` for further options.
 
   The ``scores-{dev,eval}`` brace expansion expands the path to every element
@@ -542,7 +587,7 @@ For example, to generate a CMC curve from development and evaluation datasets:
 
 .. code-block:: sh
 
-  $ bob bio cmc -e -v --output 'my_cmc.pdf' dev-1.txt eval-1.txt dev-2.txt eval-2.txt
+  $ bob bio cmc -v --eval --output 'my_cmc.pdf' dev-1.txt eval-1.txt dev-2.txt eval-2.txt
 
 where ``my_cmc.pdf`` will contain CMC curves for the two experiments represented
 by their respective *dev* and *eval* scores-file.
@@ -551,7 +596,7 @@ by their respective *dev* and *eval* scores-file.
 
   By default, ``det``, ``roc``, ``cmc``, and ``dir`` plot development and
   evaluation curves on different plots. You can forcefully gather everything in
-  the same plot using the ``-ns`` (``--no-split``) option.
+  the same plot using the ``--no-split`` option.
 
 .. note::
 
@@ -567,12 +612,10 @@ plots for a list of experiments. It generates two ``metrics`` outputs with EER,
 HTER, minDCF criteria, along with ``roc``, ``det``, ``epc``, and ``hist`` plots
 for each experiment. For example::
 
-.. code-block:: sh
-
-  $ bob bio evaluate -e -v -l 'my_metrics.txt' -o 'my_plots.pdf' {sys1,sys2}/{dev,eval}
+  $ bob bio evaluate -v --eval --log 'my_metrics.txt' --output 'my_plots.pdf' {sys1,sys2}/{dev,eval}
 
 will output metrics and plots for the two experiments (dev and eval pairs) in
-`my_metrics.txt` and `my_plots.pdf`, respectively.
+``my_metrics.txt`` and ``my_plots.pdf``, respectively.
 
 
 

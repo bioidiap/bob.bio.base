@@ -3,8 +3,7 @@
 
 
 from abc import ABCMeta, abstractmethod
-from bob.pipelines.sample import SAMPLE_DATA_ATTRS, Sample, SampleSet, DelayedSample
-import functools
+from bob.pipelines.sample import Sample, SampleSet
 import numpy as np
 import os
 import logging
@@ -52,7 +51,7 @@ class BioAlgorithm(metaclass=ABCMeta):
         Parameters
         ----------
             biometric_references : list
-                A list of :py:class:`SampleSet` objects to be used for
+                A list of :any:`bob.pipelines.SampleSet` objects to be used for
                 creating biometric references.  The sets must be identified
                 with a unique id and a path, for eventual checkpointing.
         """
@@ -108,11 +107,11 @@ class BioAlgorithm(metaclass=ABCMeta):
         ----------
 
             probes : list
-                A list of :py:class:`SampleSet` objects to be used for
+                A list of :any:`bob.pipelines.SampleSet` objects to be used for
                 scoring the input references
 
             biometric_references : list
-                A list of :py:class:`Sample` objects to be used for
+                A list of :any:`bob.pipelines.Sample` objects to be used for
                 scoring the input probes, must have an ``id`` attribute that
                 will be used to cross-reference which probes need to be scored.
 
@@ -266,30 +265,52 @@ class BioAlgorithm(metaclass=ABCMeta):
         pass
 
     def score_multiple_biometric_references(self, biometric_references, data):
-        """
-        It handles the score computation of one probe against multiple biometric references
-        This method is called if `allow_scoring_multiple_references` is set to true
+        """Score one probe against multiple biometric references (models).
+        This method is called if `allow_scoring_multiple_references` is set to true.
+        You may want to override this method to improve the performance of computations.
 
         Parameters
         ----------
+        biometric_references : list
+            List of biometric references (models) to be scored
+            [description]
+        data
+            Data used for the creation of ONE biometric probe.
 
-            biometric_references: list
-                List of biometric references to be scored
-            data:
-                Data used for the creation of ONE BIOMETRIC REFERENCE
-
+        Returns
+        -------
+        list
+            A list of scores for the comparison of the probe against multiple models.
         """
-        raise NotImplementedError(
-            "Your BioAlgorithm implementation should implement score_multiple_biometric_references."
-        )
+        return [self.score(model, data) for model in biometric_references]
 
 
 class Database(metaclass=ABCMeta):
     """Base class for Vanilla Biometric pipeline"""
 
+    def __init__(
+        self,
+        name,
+        protocol,
+        allow_scoring_with_all_biometric_references=False,
+        annotation_type=None,
+        fixed_positions=None,
+        memory_demanding=False,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.name = name
+        self.protocol = protocol
+        self.allow_scoring_with_all_biometric_references = (
+            allow_scoring_with_all_biometric_references
+        )
+        self.annotation_type = annotation_type
+        self.fixed_positions = fixed_positions
+        self.memory_demanding = memory_demanding
+
     @abstractmethod
     def background_model_samples(self):
-        """Returns :py:class:`Sample`'s to train a background model
+        """Returns :any:`bob.pipelines.Sample`'s to train a background model
 
 
         Returns
@@ -302,7 +323,7 @@ class Database(metaclass=ABCMeta):
 
     @abstractmethod
     def references(self, group="dev"):
-        """Returns :py:class:`Reference`'s to enroll biometric references
+        """Returns references to enroll biometric references
 
 
         Parameters
@@ -321,7 +342,7 @@ class Database(metaclass=ABCMeta):
 
     @abstractmethod
     def probes(self, group):
-        """Returns :py:class:`Probe`'s to score biometric references
+        """Returns probes to score biometric references
 
 
         Parameters
@@ -355,7 +376,12 @@ class Database(metaclass=ABCMeta):
         """
         pass
 
+    @abstractmethod
     def groups(self):
+        pass
+
+    @abstractmethod
+    def protocols(self):
         pass
 
     def reference_ids(self, group):
@@ -365,7 +391,7 @@ class Database(metaclass=ABCMeta):
 class ScoreWriter(metaclass=ABCMeta):
     """
     Defines base methods to read, write scores and concatenate scores
-    for :py:class:`BioAlgorithm`
+    for :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`
     """
 
     def __init__(self, path, extension=".txt"):

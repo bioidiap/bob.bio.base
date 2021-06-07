@@ -6,16 +6,12 @@ from bob.bio.base.preprocessor import Preprocessor
 
 
 class PreprocessorTransformer(TransformerMixin, BaseEstimator):
-    """
-    Scikit learn transformer for :py:class:`bob.bio.base.preprocessor.Preprocessor`.
+    """Scikit learn transformer for :py:class:`bob.bio.base.preprocessor.Preprocessor`.
 
     Parameters
     ----------
-
-      instance: object
-         An instance of `bob.bio.base.preprocessor.Preprocessor`
-
-
+    instance: object
+        An instance of `bob.bio.base.preprocessor.Preprocessor`
     """
 
     def __init__(

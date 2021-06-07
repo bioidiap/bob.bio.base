@@ -90,7 +90,7 @@ class Algorithm (object):
       **kwargs                            # parameters from the derived class that should be reported in the __str__() function
   ):
 
-    
+
     warnings.warn("`bob.bio.base.algorithm.Algorithm` will be deprecated in 01/01/2021. "\
                   "Please, implement your biometric algorithm using `bob.pipelines` (https://gitlab.idiap.ch/bob/bob.pipelines).", DeprecationWarning)
 
@@ -197,9 +197,9 @@ class Algorithm (object):
     """score_for_multiple_models(models, probe) -> score
 
     This function computes the score between the given model list and the given probe.
-    In this base class implementation, it computes the scores for each model using the :py:meth:`score` method,
+    In this base class implementation, it computes the scores for each model using the ``score`` method,
     and fuses the scores using the fusion method specified in the constructor of this class.
-    Usually this function is called from derived class :py:meth:`score` functions.
+    Usually this function is called from derived class ``score`` functions.
 
     **Parameters:**
 
@@ -227,7 +227,7 @@ class Algorithm (object):
     """score_for_multiple_probes(model, probes) -> score
 
     This function computes the score between the given model and the given probe files.
-    In this base class implementation, it computes the scores for each probe file using the :py:meth:`score` method,
+    In this base class implementation, it computes the scores for each probe file using the ``score`` method,
     and fuses the scores using the fusion method specified in the constructor of this class.
 
     **Parameters:**
@@ -312,7 +312,7 @@ class Algorithm (object):
     **Parameters:**
 
     model : object
-      A model as returned by the :py:meth:`enroll` function, which should be written.
+      A model as returned by the ``enroll`` function, which should be written.
 
     model_file : str or :py:class:`bob.io.base.HDF5File`
       The file open for writing, or the file name to write to.
