@@ -234,9 +234,11 @@ class CSVDataset(Database):
             data_loader=bob.io.base.load, dataset_original_directory="", extension="",
         ),
         is_sparse=False,
+        fetch_probes=True,
     ):
         self.dataset_protocol_path = dataset_protocol_path
         self.is_sparse = is_sparse
+        self.fetch_probes = fetch_probes
         self.protocol_name = protocol_name
 
         def get_paths():
@@ -397,7 +399,7 @@ class CSVDataset(Database):
             group=group,
             cache_key=cache_key,
             group_by_reference_id=False,
-            fetching_probes=True,
+            fetching_probes=self.fetch_probes,
             is_sparse=self.is_sparse,
         )
 
