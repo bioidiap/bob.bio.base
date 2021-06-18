@@ -149,8 +149,8 @@ def split_csv_writer(filename, as_pandas_data_frame=False):
     -------
 
       array: negatives, 1D float array containing the list of scores, for which
-        the ``claimed_id`` and the ``real_id`` are different
-        (see :py:func:`four_column`)
+        the fields of the ``bio_ref_subject_id`` and ``probe_subject_id`` columns are
+        different. (see :ref:`bob.bio.base.`vanilla_biometrics_advanced_features`)
 
       array: positives, 1D float array containing the list of scores, for which
         the ``claimed_id`` and the ``real_id`` are identical
