@@ -10,10 +10,14 @@ import csv
 import tarfile
 import os
 import sys
-
+import pandas as pd
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def iscsv(filename):
+    return os.path.splitext(filename)[1] == ".csv"
 
 
 def open_file(filename, mode="rt"):
@@ -130,6 +134,37 @@ def split_four_column(filename):
 
     score_lines = four_column(filename)
     return _split_scores(score_lines, 1)
+
+
+def split_csv_writer(filename, as_pandas_data_frame=False):
+    """Loads a score set that was written with :any:`bob.bio.base.pipelines.CSVScoreWriter`
+    Parameters:
+
+      filename (:py:class:`str`, ``file-like``): The file object that will be
+        opened with :py:func:`open_file` containing the scores.
+
+    Returns:
+
+      array: negatives, 1D float array containing the list of scores, for which
+        the ``claimed_id`` and the ``real_id`` are different
+        (see :py:func:`four_column`)
+
+      array: positives, 1D float array containing the list of scores, for which
+        the ``claimed_id`` and the ``real_id`` are identical
+        (see :py:func:`four_column`)
+
+    """
+    df = pd.read_csv(filename)
+
+    # Removing wrong headers
+    genuines = df[df.probe_subject_id == df.bio_ref_subject_id]
+
+    impostors = df[df.probe_subject_id != df.bio_ref_subject_id]
+
+    if as_pandas_data_frame:
+        return impostors, genuines
+    else:
+        return impostors["score"].to_numpy(), genuines["score"].to_numpy()
 
 
 def cmc_four_column(filename):
@@ -358,7 +393,9 @@ def cmc(filename, ncolumns=None):
     ``negative`` and ``positive`` scores for one probe of the database.
 
     """
-    ncolumns = _estimate_score_file_format(filename, ncolumns)
+
+    ncolumns = 4 if iscsv(filename) else _estimate_score_file_format(filename, ncolumns)
+
     if ncolumns == 4:
         return cmc_four_column(filename)
     else:
@@ -544,17 +581,27 @@ def _iterate_score_file(filename):
 
     The last element of the line (which is the score) will be transformed to float, the other elements will be str
     """
-    opened = open_file(filename, "rb")
-    if sys.version_info.major > 2:
-        import io
+    if iscsv(filename):
+        df = pd.read_csv(filename)
+        for _, row in df.iterrows():
+            yield [
+                row.bio_ref_subject_id,
+                row.probe_subject_id,
+                row.probe_key,
+                row.score,
+            ]
+    else:
+        opened = open_file(filename, "rb")
+        if sys.version_info.major > 2:
+            import io
 
-        if not isinstance(opened, io.TextIOWrapper):
-            opened = io.TextIOWrapper(opened, newline="")
+            if not isinstance(opened, io.TextIOWrapper):
+                opened = io.TextIOWrapper(opened, newline="")
 
-    reader = csv.reader(opened, delimiter=" ")
-    for splits in reader:
-        splits[-1] = float(splits[-1])
-        yield splits
+        reader = csv.reader(opened, delimiter=" ")
+        for splits in reader:
+            splits[-1] = float(splits[-1])
+            yield splits
 
 
 def _iterate_csv_score_file(filename):
@@ -593,6 +640,7 @@ def _split_cmc_scores(
     if probe_name_index is None:
         probe_name_index = real_id_index + 1
     # extract positives and negatives
+
     pos_dict = {}
     neg_dict = {}
     # read four column list
@@ -643,8 +691,8 @@ def split_csv_vuln(filename):
     """
     logger.debug(f"Loading CSV score file: '{filename}'")
     split_scores = {"licit_neg": [], "licit_pos": [], "spoof": []}
-    for row in  _iterate_csv_score_file(filename):
-        if not row["probe_attack_type"]: # licit
+    for row in _iterate_csv_score_file(filename):
+        if not row["probe_attack_type"]:  # licit
             if row["probe_reference_id"] == row["bio_ref_reference_id"]:
                 split_scores["licit_pos"].append(row["score"])
             else:

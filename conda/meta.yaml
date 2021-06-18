@@ -33,6 +33,7 @@ requirements:
     - bob.sp
     - bob.pipelines
     - tabulate
+    - pandas
     - scipy {{ scipy }}
     - six {{ six }}
   run:
