@@ -595,11 +595,9 @@ def _iterate_score_file(filename):
             ]
     else:
         opened = open_file(filename, "rb")
-        if sys.version_info.major > 2:
-            import io
-
-            if not isinstance(opened, io.TextIOWrapper):
-                opened = io.TextIOWrapper(opened, newline="")
+        import io
+        if not isinstance(opened, io.TextIOWrapper):
+            opened = io.TextIOWrapper(opened, newline="")
 
         reader = csv.reader(opened, delimiter=" ")
         for splits in reader:
