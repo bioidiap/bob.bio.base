@@ -137,13 +137,16 @@ def split_four_column(filename):
 
 
 def split_csv_writer(filename, as_pandas_data_frame=False):
-    """Loads a score set that was written with :any:`bob.bio.base.pipelines.CSVScoreWriter`
-    Parameters:
+    """Loads a score set that was written with :any:`bob.bio.base.pipelines.vanilla_biometrics.CSVScoreWriter`
+
+    Parameters
+    ----------
 
       filename (:py:class:`str`, ``file-like``): The file object that will be
         opened with :py:func:`open_file` containing the scores.
 
-    Returns:
+    Returns
+    -------
 
       array: negatives, 1D float array containing the list of scores, for which
         the ``claimed_id`` and the ``real_id`` are different
