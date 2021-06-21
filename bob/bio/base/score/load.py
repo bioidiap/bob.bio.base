@@ -5,14 +5,14 @@
 """A set of utilities to load score files with different formats.
 """
 
-import numpy
 import csv
-import tarfile
-import os
-import sys
-import pandas as pd
 import logging
+import os
+import tarfile
 from pathlib import Path
+
+import numpy
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +137,38 @@ def split_four_column(filename):
     return _split_scores(score_lines, 1)
 
 
-def split_csv_writer(filename, as_pandas_data_frame=False):
+def get_dataframe(filename):
+    """Loads a score set that was written with :any:`bob.bio.base.pipelines.vanilla_biometrics.CSVScoreWriter`
+
+    Returns the pandas dataframe for each type
+
+    Parameters
+    ----------
+
+      filename (:py:class:`str`, ``file-like``): The file object that will be
+        opened with :py:func:`open_file` containing the scores.
+
+    Returns
+    -------
+
+      dataframe: negatives, contains the list of scores (and metadata) for which
+        the fields of the ``bio_ref_subject_id`` and ``probe_subject_id`` columns are
+        different. (see :ref:`bob.bio.base.vanilla_biometrics_advanced_features`)
+
+      dataframe: positives, contains the list of scores (and metadata) for which
+        the fields of the ``bio_ref_subject_id`` and ``probe_subject_id`` columns are
+        identical. (see :ref:`bob.bio.base.vanilla_biometrics_advanced_features`)
+
+    """
+    df = pd.read_csv(filename)
+
+    genuines = df[df.probe_subject_id == df.bio_ref_subject_id]
+    impostors = df[df.probe_subject_id != df.bio_ref_subject_id]
+
+    return impostors, genuines
+
+
+def split_csv_writer(filename):
     """Loads a score set that was written with :any:`bob.bio.base.pipelines.vanilla_biometrics.CSVScoreWriter`
 
     Parameters
@@ -158,17 +189,17 @@ def split_csv_writer(filename, as_pandas_data_frame=False):
         identical. (see :ref:`bob.bio.base.vanilla_biometrics_advanced_features`)
 
     """
-    df = pd.read_csv(filename)
+    genuines, impostors = [], []
+    for row in _iterate_csv_score_file(filename):
+        if row["probe_subject_id"] == row["bio_ref_subject_id"]:
+            genuines.append(row["score"])
+        else:
+            impostors.append(row["score"])
 
-    # Removing wrong headers
-    genuines = df[df.probe_subject_id == df.bio_ref_subject_id]
-
-    impostors = df[df.probe_subject_id != df.bio_ref_subject_id]
-
-    if as_pandas_data_frame:
-        return impostors, genuines
-    else:
-        return impostors["score"].to_numpy(), genuines["score"].to_numpy()
+    return (
+        numpy.array(impostors, dtype=numpy.float64),
+        numpy.array(genuines, dtype=numpy.float64),
+    )
 
 
 def cmc_four_column(filename):
@@ -586,13 +617,12 @@ def _iterate_score_file(filename):
     The last element of the line (which is the score) will be transformed to float, the other elements will be str
     """
     if iscsv(filename):
-        df = pd.read_csv(filename)
-        for _, row in df.iterrows():
+        for row in _iterate_csv_score_file(filename):
             yield [
-                row.bio_ref_subject_id,
-                row.probe_subject_id,
-                row.probe_key,
-                row.score,
+                row["bio_ref_subject_id"],
+                row["probe_subject_id"],
+                row["probe_key"],
+                row["score"],
             ]
     else:
         opened = open_file(filename, "rb")
