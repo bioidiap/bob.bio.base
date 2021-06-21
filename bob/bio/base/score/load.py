@@ -12,12 +12,13 @@ import os
 import sys
 import pandas as pd
 import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 
 def iscsv(filename):
-    return os.path.splitext(filename)[1] == ".csv"
+    return ".csv" in Path(filename).suffixes
 
 
 def open_file(filename, mode="rt"):
