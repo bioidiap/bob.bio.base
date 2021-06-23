@@ -460,16 +460,15 @@ Common :py:class:`bob.bio.base.pipelines.vanilla_biometrics.ScoreWriter` are ava
 - A four columns format ScoreWriter
 
 
-Using a Score Writer
+Using a specific Score Writer
 --------------------
 
-By default (omitting the ``--write-metadata-scores`` option), vanilla-biometrics will use the four-column format ScoreWriter.
+By default, vanilla-biometrics will use the CSV format ScoreWriter.
 
-To indicate to a vanilla-biometrics pipeline to use the CSV ScoreWriter instead
-of the default four-column ScoreWriter, you can pass the
-``--write-metadata-scores`` option like so::
+To indicate to a vanilla-biometrics pipeline to use the four-columns ScoreWriter instead
+of the default CSV ScoreWriter, you can pass the ``--write-column-scores`` option like so::
 
-  $ bob bio pipelines vanilla-biometrics --write-metadata-scores <database> <pipeline> --output <output_dir>
+  $ bob bio pipelines vanilla-biometrics --write-column-scores <database> <pipeline> --output <output_dir>
 
 
 CSV Score Writer
@@ -495,7 +494,7 @@ Here is a short example of such file format with metadata on the ``age`` and ``g
 Four Columns Score Writer
 -------------------------
 
-:py:class:`bob.bio.base.pipelines.vanilla_biometrics.FourColumnsScoreWriter` is the default score file format used by bob.
+:py:class:`bob.bio.base.pipelines.vanilla_biometrics.FourColumnsScoreWriter` is the old score file format used by bob.
 It consists of a text file with four columns separated by spaces and no header.
 Each row represents a comparison between a *probe* and a *model*, and the similarity score resulting from that comparison.
 The four columns are, in order:
