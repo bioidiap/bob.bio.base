@@ -12,7 +12,7 @@ import tarfile
 from pathlib import Path
 
 import numpy
-import pandas as pd
+import dask.dataframe
 
 logger = logging.getLogger(__name__)
 
@@ -137,10 +137,10 @@ def split_four_column(filename):
     return _split_scores(score_lines, 1)
 
 
-def get_dataframe(filename):
+def get_split_dataframe(filename):
     """Loads a score set that was written with :any:`bob.bio.base.pipelines.vanilla_biometrics.CSVScoreWriter`
 
-    Returns the pandas dataframe for each type
+    Returns two dataframes, split between positives and negatives.
 
     Parameters
     ----------
@@ -160,12 +160,12 @@ def get_dataframe(filename):
         identical. (see :ref:`bob.bio.base.vanilla_biometrics_advanced_features`)
 
     """
-    df = pd.read_csv(filename)
+    df = dask.dataframe.read_csv(filename)
 
     genuines = df[df.probe_subject_id == df.bio_ref_subject_id]
     impostors = df[df.probe_subject_id != df.bio_ref_subject_id]
 
-    return impostors, genuines
+    return impostors.compute(), genuines.compute()
 
 
 def split_csv_writer(filename):
@@ -189,16 +189,14 @@ def split_csv_writer(filename):
         identical. (see :ref:`bob.bio.base.vanilla_biometrics_advanced_features`)
 
     """
-    genuines, impostors = [], []
-    for row in _iterate_csv_score_file(filename):
-        if row["probe_subject_id"] == row["bio_ref_subject_id"]:
-            genuines.append(row["score"])
-        else:
-            impostors.append(row["score"])
+    df = dask.dataframe.read_csv(filename)
+
+    genuines = df[df.probe_subject_id == df.bio_ref_subject_id]
+    impostors = df[df.probe_subject_id != df.bio_ref_subject_id]
 
     return (
-        numpy.array(impostors, dtype=numpy.float64),
-        numpy.array(genuines, dtype=numpy.float64),
+        impostors["score"].to_dask_array().compute(),
+        genuines["score"].to_dask_array().compute(),
     )
 
 
