@@ -461,7 +461,7 @@ Common :py:class:`bob.bio.base.pipelines.vanilla_biometrics.ScoreWriter` are ava
 
 
 Using a specific Score Writer
---------------------
+-----------------------------
 
 By default, vanilla-biometrics will use the CSV format ScoreWriter.
 
