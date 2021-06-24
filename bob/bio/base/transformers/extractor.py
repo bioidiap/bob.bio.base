@@ -59,4 +59,7 @@ class ExtractorTransformer(TransformerMixin, BaseEstimator):
         return {
             "stateless": not self.instance.requires_training,
             "requires_fit": self.instance.requires_training,
+            "bob_features_save_fn": self.instance.write_feature,
+            "bob_features_load_fn": self.instance.read_feature,
         }
+

@@ -78,4 +78,6 @@ class AlgorithmTransformer(TransformerMixin, BaseEstimator):
         return {
             "stateless": not self.instance.requires_projector_training,
             "requires_fit": self.instance.requires_projector_training,
+            "bob_features_save_fn": self.instance.write_feature,
+            "bob_features_load_fn": self.instance.read_feature,
         }
