@@ -320,36 +320,10 @@ def checkpoint_vanilla_biometrics(
 
     for i, name, estimator in sk_pipeline._iter():
 
-        # If they are legacy objects, we need to hook their load/save functions
-        save_func = None
-        load_func = None
-
-        if not isinstance(estimator, SampleWrapper):
-            raise ValueError(
-                f"{estimator} needs to be the type `SampleWrapper` to be checkpointed"
-            )
-
-        if isinstance(estimator.estimator, PreprocessorTransformer):
-            save_func = estimator.estimator.instance.write_data
-            load_func = estimator.estimator.instance.read_data
-        elif any(
-            [
-                isinstance(estimator.estimator, ExtractorTransformer),
-                isinstance(estimator.estimator, AlgorithmTransformer),
-            ]
-        ):
-            save_func = estimator.estimator.instance.write_feature
-            load_func = estimator.estimator.instance.read_feature
-            estimator.estimator.projector_file = os.path.join(
-                bio_ref_scores_dir, "Projector.hdf5"
-            )
-
         wraped_estimator = bob.pipelines.wrap(
             ["checkpoint"],
             estimator,
             features_dir=os.path.join(base_dir, name),
-            load_func=load_func,
-            save_func=save_func,
             hash_fn=hash_fn,
         )
 
