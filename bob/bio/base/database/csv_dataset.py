@@ -151,6 +151,98 @@ class CSVToSampleLoaderBiometrics(CSVToSampleLoader):
         )
 
 
+class CSVToSampleLoaderVulnerability(CSVToSampleLoaderBiometrics):
+    """
+    Class that converts the lines of a CSV file like the one below to
+    :any:`bob.pipelines.DelayedSample` or :any:`bob.pipelines.SampleSet` for the
+    vulnerability analysis framework.
+
+    .. code-block:: text
+
+       PATH,REFERENCE_ID, ATTACK_TYPE
+       path_1,reference_id_1,
+       path_2,reference_id_2, spoof
+       path_3,reference_id_3,
+       path_4,reference_id_4, spoof
+       path_i,reference_id_j, attack
+       ...
+
+    This loader creates probe samples with a ``references`` fields so that the attacks
+    probes are only compares against the model targeted by the attack. The zero-effort
+    impostor probes are compared against all the models.
+
+    This requires the database's ``fetch_probes`` argument to be set to ``False``.
+
+    Parameters
+    ----------
+
+        data_loader:
+            A python function that takes a path (as str), to load the sample in
+            question.
+
+        dataset_original_directory: str
+            Path where the raw data is stored
+
+        extension: str
+            Raw data file extension
+
+    """
+
+    def __init__(
+        self,
+        data_loader,
+        dataset_original_directory="",
+        extension="",
+        reference_id_equal_subject_id=True,
+    ):
+        super().__init__(
+            data_loader=data_loader,
+            extension=extension,
+            dataset_original_directory=dataset_original_directory,
+            reference_id_equal_subject_id=reference_id_equal_subject_id,
+        )
+        self.all_references = []
+
+    def convert_row_to_sample(self, row, header):
+        fields = {str(h).lower(): r for h, r in zip(header, row)}
+
+        if fields["reference_id"] not in self.all_references:
+            self.all_references.append(fields["reference_id"])
+
+        if self.reference_id_equal_subject_id:
+            fields["subject_id"] = fields["reference_id"]
+        else:
+            if "subject_id" not in fields:
+                raise ValueError(f"`subject_id` not available in {header}")
+
+        # If an attack, only compare to own reference
+        probe_references = []
+        if fields.get("attack_type", None) is None:
+            probe_references.extend(self.all_references)
+        else:
+            probe_references.append(fields["reference_id"])
+
+        # Fields that will not be added to the Sample
+        fields_to_ignore = {
+            "id",
+        }
+
+        kwargs = {k: fields[k] for k in fields.keys() - fields_to_ignore}
+
+        return DelayedSample(
+            functools.partial(
+                self.data_loader,
+                os.path.join(
+                    self.dataset_original_directory, fields["path"] + self.extension
+                ),
+            ),
+            key=fields["path"],
+            reference_id=fields["reference_id"],
+            references=probe_references,
+            **kwargs,
+        )
+
+
 class CSVDataset(Database):
     """
     Generic filelist dataset for :any:` bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` pipeline.

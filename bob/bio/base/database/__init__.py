@@ -1,6 +1,7 @@
 from .csv_dataset import (
     CSVDataset,
     CSVToSampleLoaderBiometrics,
+    CSVToSampleLoaderVulnerability,
     CSVDatasetCrossValidation,
     LSTToSampleLoader,
     CSVDatasetZTNorm,
