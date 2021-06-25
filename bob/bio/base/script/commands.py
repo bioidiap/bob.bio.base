@@ -1,7 +1,8 @@
-''' Click commands for ``bob.bio.base`` '''
+""" Click commands for ``bob.bio.base`` """
 
 import click
 from . import figure as bio_figure
+from bob.bio.base.score import iscsv
 import bob.measure.script.figure as measure_figure
 from ..score import load
 from bob.measure.script import common_options
@@ -11,92 +12,118 @@ from bob.extension.scripts.click_helper import verbosity_option
 SCORE_FORMAT = (
     "Files must be 4- or 5- columns format, see "
     ":py:func:`bob.bio.base.score.load.four_column` and "
-    ":py:func:`bob.bio.base.score.load.five_column` for details.")
-CRITERIA = ('eer', 'min-hter', 'far', 'mindcf', 'cllr', 'rr')
+    ":py:func:`bob.bio.base.score.load.five_column` for details."
+)
+CRITERIA = ("eer", "min-hter", "far", "mindcf", "cllr", "rr")
 
 
 def rank_option(**kwargs):
-    '''Get option for rank parameter'''
+    """Get option for rank parameter"""
+
     def custom_rank_option(func):
         def callback(ctx, param, value):
             value = 1 if value < 0 else value
-            ctx.meta['rank'] = value
+            ctx.meta["rank"] = value
             return value
+
         return click.option(
-            '-rk', '--rank', type=click.INT, default=1,
-            help='Provide rank for the command',
-            callback=callback, show_default=True, **kwargs)(func)
+            "-rk",
+            "--rank",
+            type=click.INT,
+            default=1,
+            help="Provide rank for the command",
+            callback=callback,
+            show_default=True,
+            **kwargs
+        )(func)
+
     return custom_rank_option
 
 
-@common_options.metrics_command(common_options.METRICS_HELP.format(
-    names='FtA, FAR, FRR, FMR, FMNR, HTER',
-    criteria=CRITERIA, score_format=SCORE_FORMAT,
-    hter_note='Note that FAR = FMR * (1 - FtA), FRR = FtA + FMNR * (1 - FtA) '
-    'and HTER = (FMR + FMNR) / 2',
-    command='bob bio metrics'), criteria=CRITERIA)
+@common_options.metrics_command(
+    common_options.METRICS_HELP.format(
+        names="FtA, FAR, FRR, FMR, FMNR, HTER",
+        criteria=CRITERIA,
+        score_format=SCORE_FORMAT,
+        hter_note="Note that FAR = FMR * (1 - FtA), FRR = FtA + FMNR * (1 - FtA) "
+        "and HTER = (FMR + FMNR) / 2",
+        command="bob bio metrics",
+    ),
+    criteria=CRITERIA,
+)
 @common_options.cost_option()
 def metrics(ctx, scores, evaluation, **kwargs):
-    if 'criterion' in ctx.meta and ctx.meta['criterion'] == 'rr':
+    if "criterion" in ctx.meta and ctx.meta["criterion"] == "rr":
         process = bio_figure.Metrics(ctx, scores, evaluation, load.cmc)
     else:
-        process = bio_figure.Metrics(ctx, scores, evaluation, load.split)
+        func = load.split_csv_writer if iscsv(scores[0]) else load.split
+        process = bio_figure.Metrics(ctx, scores, evaluation, func)
     process.run()
 
 
 @common_options.roc_command(
-    common_options.ROC_HELP.format(
-        score_format=SCORE_FORMAT, command='bob bio roc'))
+    common_options.ROC_HELP.format(score_format=SCORE_FORMAT, command="bob bio roc")
+)
 def roc(ctx, scores, evaluation, **kargs):
-    process = bio_figure.Roc(ctx, scores, evaluation, load.split)
+    func = load.split_csv_writer if iscsv(scores[0]) else load.split
+    process = bio_figure.Roc(ctx, scores, evaluation, func)
     process.run()
 
 
 @common_options.det_command(
-    common_options.DET_HELP.format(
-        score_format=SCORE_FORMAT, command='bob bio det'))
+    common_options.DET_HELP.format(score_format=SCORE_FORMAT, command="bob bio det")
+)
 def det(ctx, scores, evaluation, **kargs):
-    process = bio_figure.Det(ctx, scores, evaluation, load.split)
+    func = load.split_csv_writer if iscsv(scores[0]) else load.split
+    process = bio_figure.Det(ctx, scores, evaluation, func)
     process.run()
 
 
 @common_options.epc_command(
-    common_options.EPC_HELP.format(
-        score_format=SCORE_FORMAT, command='bob bio epc'))
+    common_options.EPC_HELP.format(score_format=SCORE_FORMAT, command="bob bio epc")
+)
 def epc(ctx, scores, **kargs):
-    process = measure_figure.Epc(ctx, scores, True, load.split)
+    func = load.split_csv_writer if iscsv(scores[0]) else load.split
+    process = measure_figure.Epc(ctx, scores, True, func)
     process.run()
 
 
 @common_options.hist_command(
-    common_options.HIST_HELP.format(
-        score_format=SCORE_FORMAT, command='bob bio hist'))
+    common_options.HIST_HELP.format(score_format=SCORE_FORMAT, command="bob bio hist")
+)
 def hist(ctx, scores, evaluation, **kwargs):
-    process = bio_figure.Hist(ctx, scores, evaluation, load.split)
+    func = load.split_csv_writer if iscsv(scores[0]) else load.split
+    process = bio_figure.Hist(ctx, scores, evaluation, func)
     process.run()
 
 
 @common_options.evaluate_command(
     common_options.EVALUATE_HELP.format(
-        score_format=SCORE_FORMAT, command='bob bio evaluate'),
-    criteria=CRITERIA)
+        score_format=SCORE_FORMAT, command="bob bio evaluate"
+    ),
+    criteria=CRITERIA,
+)
 @common_options.cost_option()
 def evaluate(ctx, scores, evaluation, **kwargs):
     common_options.evaluate_flow(
-        ctx, scores, evaluation, metrics, roc, det, epc, hist, **kwargs)
+        ctx, scores, evaluation, metrics, roc, det, epc, hist, **kwargs
+    )
 
 
 @common_options.multi_metrics_command(
     common_options.MULTI_METRICS_HELP.format(
-        names='FtA, FAR, FRR, FMR, FMNR, HTER',
-        criteria=CRITERIA, score_format=SCORE_FORMAT,
-        command='bob bio multi-metrics'),
-    criteria=CRITERIA)
+        names="FtA, FAR, FRR, FMR, FMNR, HTER",
+        criteria=CRITERIA,
+        score_format=SCORE_FORMAT,
+        command="bob bio multi-metrics",
+    ),
+    criteria=CRITERIA,
+)
 def multi_metrics(ctx, scores, evaluation, protocols_number, **kwargs):
-  ctx.meta['min_arg'] = protocols_number * (2 if evaluation else 1)
-  process = bio_figure.MultiMetrics(
-      ctx, scores, evaluation, load.split)
-  process.run()
+    func = load.split_csv_writer if iscsv(scores[0]) else load.split
+    ctx.meta["min_arg"] = protocols_number * (2 if evaluation else 1)
+    process = bio_figure.MultiMetrics(ctx, scores, evaluation, func)
+    process.run()
 
 
 @click.command()
@@ -104,7 +131,7 @@ def multi_metrics(ctx, scores, evaluation, protocols_number, **kwargs):
 @common_options.titles_option()
 @common_options.legends_option()
 @common_options.sep_dev_eval_option()
-@common_options.output_plot_file_option(default_out='cmc.pdf')
+@common_options.output_plot_file_option(default_out="cmc.pdf")
 @common_options.eval_option()
 @common_options.semilogx_option(True)
 @common_options.axes_val_option(dflt=None)
@@ -147,7 +174,7 @@ def cmc(ctx, scores, evaluation, **kargs):
 @common_options.titles_option()
 @common_options.legends_option()
 @common_options.sep_dev_eval_option()
-@common_options.output_plot_file_option(default_out='dir.pdf')
+@common_options.output_plot_file_option(default_out="dir.pdf")
 @common_options.eval_option()
 @common_options.semilogx_option(True)
 @common_options.axes_val_option(dflt=None)

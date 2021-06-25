@@ -7,6 +7,7 @@ import click
 from bob.extension.scripts.click_helper import verbosity_option
 from bob.io.base import create_directories_safe
 from bob.measure.script import common_options
+import csv
 
 logger = logging.getLogger(__name__)
 
@@ -62,9 +63,11 @@ def write_scores_to_file(
     n_probes_per_subject=5,
     n_unknown_subjects=0,
     neg_unknown=None,
+    to_csv=True,
     five_col=False,
+    metadata={"meta0": "data0", "meta1": "data1"},
 ):
-    """ Writes score distributions
+    """Writes score distributions
 
     Parameters
     ----------
@@ -82,6 +85,8 @@ def write_scores_to_file(
         The number of unknown (no registered model) subjects
     neg_unknown: None or list
         The of unknown subjects scores
+    to_csv: bool
+        Use the CSV format, else the legacy 4 or 5 columns format.
     five_col : bool
         If 5-colum format, else 4-column
     """
@@ -92,13 +97,24 @@ def write_scores_to_file(
     logger.debug("Writing scores to files.")
 
     with open(filename, "wt") as f:
+        if to_csv:
+            csv_writer = csv.writer(f)
+            csv_writer.writerow(
+                ["bio_ref_subject_id", "probe_subject_id", "key", "score"]
+                + list(metadata.keys())
+            )
         # Generate one line per probe (unless "--force-count" specified)
         logger.debug("Writing positive scores.")
         for i, score in enumerate(pos):
             s_name = s_subjects[int(i / n_probes_per_subject) % n_subjects]
             s_five = " " if not five_col else " d" + s_name + " "
             probe_id = "%s_%d" % (s_name, i % n_probes_per_subject)
-            f.write("%s%s%s %s %f\n" % (s_name, s_five, s_name, probe_id, score))
+            if to_csv:
+                csv_writer.writerow(
+                    [s_name, s_name, probe_id, score] + list(metadata.values())
+                )
+            else:
+                f.write("%s%s%s %s %f\n" % (s_name, s_five, s_name, probe_id, score))
 
         # Generate one line per probe against each ref (unless "--force-count" specified)
         logger.debug("Writing negative scores.")
@@ -109,7 +125,12 @@ def write_scores_to_file(
             probe = impostors[int(i / n_probes_per_subject) % n_impostors]
             s_five = " " if not five_col else " d" + ref
             probe_id = "%s_%d" % (probe, i % n_probes_per_subject)
-            f.write("%s%s%s %s %f\n" % (ref, s_five, probe, probe_id, score))
+            if to_csv:
+                csv_writer.writerow(
+                    [ref, probe, probe_id, score] + list(metadata.values())
+                )
+            else:
+                f.write("%s%s%s %s %f\n" % (ref, s_five, probe, probe_id, score))
 
         logger.debug("Writing unknown scores.")
         if neg_unknown is not None:
@@ -123,14 +144,19 @@ def write_scores_to_file(
                 ]
                 s_five = " " if not five_col else " d" + ref + " "
                 probe_id = "%s_%d" % (probe, i % n_probes_per_subject)
-                f.write("%s%s%s %s %f\n" % (ref, s_five, probe, probe_id, score))
+                if to_csv:
+                    csv_writer.writerow(
+                        [ref, probe, probe_id, score] + list(metadata.values())
+                    )
+                else:
+                    f.write("%s%s%s %s %f\n" % (ref, s_five, probe, probe_id, score))
 
 
 @click.command(
     epilog="""
 Scores generation examples:
 
-Output 'scores-dev' and 'scores-eval' in a new folder 'generated_scores/':
+Output 'scores-dev.csv' and 'scores-eval.csv' in a new folder 'generated_scores/':
 
   $ bob bio gen ./generated_scores
 
@@ -152,7 +178,7 @@ Change the mean and standard deviation of the scores distributions:
 
 You can observe the distributions histograms in a pdf file with:
 
-  $ bob bio hist -e ./generated_scores/scores-{dev,eval} -o hist_gen.pdf
+  $ bob bio hist -e ./generated_scores/scores-{dev,eval}.csv -o hist_gen.pdf
 """
 )
 @click.argument("outdir")
@@ -243,6 +269,7 @@ You can observe the distributions histograms in a pdf file with:
     show_default=True,
     help="Number of Unknown verifications (number of lines in the file)",
 )
+@click.option("--csv/--legacy", default=True, show_default=True)
 @click.option("--five-col/--four-col", default=False, show_default=True)
 @verbosity_option()
 def gen(
@@ -254,6 +281,7 @@ def gen(
     sigma_positive,
     sigma_negative,
     n_unknown_subjects,
+    csv,
     five_col,
     force_count,
     n_pos,
@@ -324,21 +352,23 @@ def gen(
     write_scores_to_file(
         neg_dev,
         pos_dev,
-        os.path.join(outdir, "scores-dev"),
+        os.path.join(outdir, "scores-dev.csv"),
         n_subjects,
         n_probes_per_subject,
         n_unknown_subjects,
         neg_unknown,
+        csv,
         five_col,
     )
 
     write_scores_to_file(
         neg_eval,
         pos_eval,
-        os.path.join(outdir, "scores-eval"),
+        os.path.join(outdir, "scores-eval.csv"),
         n_subjects,
         n_probes_per_subject,
         n_unknown_subjects,
         neg_unknown,
+        csv,
         five_col,
     )
