@@ -70,13 +70,13 @@ The ``database`` object defined in ``my_database.py`` is an instance of either:
 CSV file Database interface
 ---------------------------
 
-The easiest way to create a database interface is to use the CSV file interface.
+The easiest way to create a database interface is to use the CSV file interface, or ``CSVDataset``.
 This method is less complete and less flexible than implementing a :ref:`full interface class <bob.bio.base.database.interface_class>` but is sufficient for most use cases.
 
 Protocol definition is possible and a set of CSV files (at least ``dev_enroll.csv`` and ``dev_probe.csv``) in a folder must be created for each protocol.
 
 The interface is created with :py:class:`bob.bio.base.database.CSVDataset`.
-This class takes as input the base directory and the protocol sub-directory of
+This class takes as input the **base directory** and the **protocol** sub-directory of
 the :ref:`CSV file structure <bob.bio.base.database.csv_file_structure>`, and
 finally, a ``csv_to_sample_loader`` that will load a sample data from a CSV row
 read from the CSV files. This ``csv_to_sample_loader`` needs to know the dataset
@@ -89,17 +89,45 @@ You must provide a series of *comma separated values* (CSV) files containing at 
 
 .. code-block:: text
 
-  PATH,REFERENCE_ID
-  data/model11_session1_sample1,1
-  data/model11_session1_sample2,1
-  data/model11_session1_sample3,1
-  data/model11_session2_sample1,1
-  data/model12_session1_sample1,2
-  data/model12_session1_sample2,2
-  data/model12_session1_sample3,2
-  data/model12_session2_sample1,2
+  PATH,                           REFERENCE_ID
+  data/model11_session1_sample1,  1
+  data/model11_session1_sample2,  1
+  data/model11_session1_sample3,  1
+  data/model11_session2_sample1,  1
+  data/model12_session1_sample1,  2
+  data/model12_session1_sample2,  2
+  data/model12_session1_sample3,  2
+  data/model12_session2_sample1,  2
+  ...
 
 The required columns in each file are the path to a sample (header: ``PATH``, relative to the dataset root) and a unique identifier for the individual represented by the sample (header: ``REFERENCE_ID``).
+
+Sparse comparisons
+..................
+
+when using a dataset needing specific comparison between *probes* and *references*, and
+not the default behavior of the ``CSVDataset`` to compare each *probe* against every
+*reference*, you can provide a CSV file in the following form:
+
+.. code-block:: text
+
+  PATH,                  REFERENCE_ID, COMPARE_REFERENCE_ID
+  data/model11_sample1,  1,            1
+  data/model11_sample2,  1,            1
+  data/model11_sample3,  1,            1
+  data/model11_sample1,  1,            2
+  data/model11_sample2,  1,            2
+  data/model11_sample3,  1,            2
+  data/model12_sample1,  2,            1
+  data/model12_sample2,  2,            1
+  data/model12_sample3,  2,            1
+  data/model12_sample1,  2,            2
+  data/model12_sample2,  2,            2
+  data/model12_sample3,  2,            2
+  ...
+
+In this case, the ``is_sparse`` parameter of the ``CSVDataset`` should be set to
+``True``, to indicate that every row correspond to one comparison.
 
 Metadata
 ........
@@ -108,15 +136,16 @@ This interface allows metadata to be shipped with the samples. To do so, simply 
 
 .. code-block:: text
 
-  PATH,REFERENCE_ID,MY_METADATA_1,METADATA_2
-  data/model11_session1_sample1,1,F,10
-  data/model11_session1_sample2,1,F,10
-  data/model11_session1_sample3,1,F,10
-  data/model11_session2_sample1,1,F,10
-  data/model12_session1_sample1,2,M,30
-  data/model12_session1_sample2,2,M,30
-  data/model12_session1_sample3,2,M,30
-  data/model12_session2_sample1,2,M,30
+  PATH,                           REFERENCE_ID, MY_METADATA_1,  METADATA_2
+  data/model11_session1_sample1,  1,            F,              10
+  data/model11_session1_sample2,  1,            F,              10
+  data/model11_session1_sample3,  1,            F,              10
+  data/model11_session2_sample1,  1,            F,              10
+  data/model12_session1_sample1,  2,            M,              30
+  data/model12_session1_sample2,  2,            M,              30
+  data/model12_session1_sample3,  2,            M,              30
+  data/model12_session2_sample1,  2,            M,              30
+  ...
 
 .. _bob.bio.base.database.csv_file_structure:
 
@@ -152,9 +181,9 @@ The following file structure and file naming must be followed, for the class to 
            +-- for_models.csv
            +-- for_probes.csv
 
-- The minimal required files are the ``dev_enroll.csv`` and ``dev_probe.csv``, containing the sample paths and subjects of the *dev* set.
+- The minimal required files are the ``dev/for_models.csv`` and ``dev/for_probes.csv``, containing the sample paths and subjects of the *dev* set.
 - The ``train.csv`` file (as shown in ``my_protocol_2``) is optional and contains the information of the *world* set.
-- The ``eval_enroll.csv`` and ``eval_probe.csv`` files (as shown in ``my_protocol_2``) are optional and contain the information of the *eval* set.
+- The ``eval/for_models.csv`` and ``eval/for_probes.csv`` files (as shown in ``my_protocol_2``) are optional and contain the information of the *eval* set.
 
 In this example, ``my_dataset_csv_folder`` would be the base path given to the ``dataset_protocol_path`` parameter of :py:class:`bob.bio.base.database.CSVDataset`, and ``my_protocol_1`` the ``protocol`` parameter:
 
@@ -337,9 +366,37 @@ Delayed samples
 To work with datasets too big to fit entirely in memory, the :py:class:`bob.pipelines.DelayedSample` was introduced.
 
 The functionality is the same as a :py:class:`bob.pipelines.Sample`, but instead
-of storing the data as an attribute directly, a ``load`` funciton is used that
+of storing the data as an attribute directly, a ``load`` function is used that
 can be set to any function loading one sample of data. When data is needed, the
 load function is called and the sample data is returned.
+
+Delayed attributes
+..................
+
+A similar behavior exists for other attributes of the ``DelayedSample`` than the one
+changed by ``load``. At creation of the ``DelayedSample``, a ``delayed_attributes``
+parameter can be passed in the form of a ``dict`` containing the name of the attribute
+to load, and the function to load it. The attribute will then only be populated (by
+calling the related function) when it is read for the first time.
+
+.. code-block:: python
+
+  from bob.pipelines import DelayedSample
+
+  def load_sample():
+      return "my data"
+
+  def load_attr():
+      return "my annotations"
+
+  my_sample = DelayedSample(
+      load=load_sample,
+      delayed_attributes={
+          "annotations":load_attr,
+      },
+  )
+
+  print(my_sample.annotations) # load_attr is called here
 
 
 Checkpointing experiments
