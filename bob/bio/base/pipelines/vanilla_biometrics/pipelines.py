@@ -29,16 +29,16 @@ class VanillaBiometricsPipeline(object):
     This is the backbone of most biometric recognition systems.
     It implements three subpipelines and they are the following:
 
-     - :py:class:`VanillaBiometrics.train_background_model`: Initializes or trains your transformer.
-        It will run :py:meth:`sklearn.base.BaseEstimator.fit`
+     - :py:meth:`VanillaBiometricsPipeline.train_background_model`: Initializes or trains your transformer.
+        It will run :py:meth:`sklearn.pipeline.Pipeline.fit`
 
-     - :py:class:`VanillaBiometrics.create_biometric_reference`: Creates biometric references
-        It will run :py:meth:`sklearn.base.BaseEstimator.transform` followed by a sequence of
-        :py:meth:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm.enroll`
+     - :py:meth:`VanillaBiometricsPipeline.create_biometric_reference`: Creates biometric references
+        It will run :py:meth:`sklearn.pipeline.Pipeline.transform` followed by a sequence of
+        :py:meth:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm.enroll`
 
-     - :py:class:`VanillaBiometrics.compute_scores`: Computes scores
-        It will run :py:meth:`sklearn.base.BaseEstimator.transform` followed by a sequence of
-        :py:meth:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm.score`
+     - :py:meth:`VanillaBiometricsPipeline.compute_scores`: Computes scores
+        It will run :py:meth:`sklearn.pipeline.Pipeline.transform` followed by a sequence of
+        :py:meth:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm.score`
 
 
     Example
@@ -69,7 +69,7 @@ class VanillaBiometricsPipeline(object):
       transformer: :py:class`sklearn.pipeline.Pipeline` or a `sklearn.base.BaseEstimator`
         Transformer that will preprocess your data
 
-      biometric_algorithm: :py:class:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm`
+      biometric_algorithm: :py:class:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`
         Biometrics algorithm object that implements the methods `enroll` and `score` methods
 
       score_writer: :any:`bob.bio.base.pipelines.vanilla_biometrics.ScoreWriter`

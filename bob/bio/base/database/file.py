@@ -64,11 +64,11 @@ class BioFile(bob.db.base.File, _ReprMixin):
         Parameters
         ----------
 
-        original_directory: str (optional)
+        original_directory: str or None
             The path to the root of the dataset structure.
             If `None`, will try to use `self.original_directory`.
 
-        original_extension: str (optional)
+        original_extension: str or None
             The filename extension of every files in the dataset.
             If `None`, will try to use `self.original_extension`.
 

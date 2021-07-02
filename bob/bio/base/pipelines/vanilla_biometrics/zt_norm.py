@@ -69,7 +69,7 @@ class ZTNormPipeline(object):
            This is also called as adaptative T-Norm (https://ieeexplore.ieee.org/document/1415220) or 
            Top-Norm (https://ieeexplore.ieee.org/document/4013533)
 
-        adaptive_score_descending_sort bool
+        adaptive_score_descending_sort: bool
             It true, during the Top-norm statistics computations, sort the scores in descending order
 
 
@@ -294,7 +294,7 @@ class ZTNorm(object):
            This is also called as adaptative T-Norm (https://ieeexplore.ieee.org/document/1415220) or 
            Top-Norm (https://ieeexplore.ieee.org/document/4013533)
 
-        adaptive_score_descending_sort bool
+        adaptive_score_descending_sort: bool
             It true, during the Top-norm statistics computations, sort the scores in descending order
 
     """

@@ -123,11 +123,11 @@ def split_four_column(filename):
 
     Returns:
 
-      array: negatives, 1D float array containing the list of scores, for which
+      numpy.ndarray: negatives, 1D float array containing the list of scores, for which
         the ``claimed_id`` and the ``real_id`` are different
         (see :py:func:`four_column`)
 
-      array: positives, 1D float array containing the list of scores, for which
+      numpy.ndarray: positives, 1D float array containing the list of scores, for which
         the ``claimed_id`` and the ``real_id`` are identical
         (see :py:func:`four_column`)
 
@@ -180,11 +180,11 @@ def split_csv_writer(filename):
     Returns
     -------
 
-      array: negatives, 1D float array containing the list of scores, for which
+      numpy.ndarray: negatives, 1D float array containing the list of scores, for which
         the fields of the ``bio_ref_subject_id`` and ``probe_subject_id`` columns are
         different. (see :ref:`bob.bio.base.vanilla_biometrics_advanced_features`)
 
-      array: positives, 1D float array containing the list of scores, for which
+      numpy.ndarray: positives, 1D float array containing the list of scores, for which
         the fields of the ``bio_ref_subject_id`` and ``probe_subject_id`` columns are
         identical. (see :ref:`bob.bio.base.vanilla_biometrics_advanced_features`)
 
@@ -290,11 +290,11 @@ def split_five_column(filename):
 
     Returns:
 
-      array: negatives, 1D float array containing the list of scores, for which
+      numpy.ndarray: negatives, 1D float array containing the list of scores, for which
         the ``claimed_id`` and the ``real_id`` are different
         (see :py:func:`four_column`)
 
-      array: positives, 1D float array containing the list of scores, for which
+      numpy.ndarray: positives, 1D float array containing the list of scores, for which
         the ``claimed_id`` and the ``real_id`` are identical
         (see :py:func:`four_column`)
 
@@ -456,7 +456,7 @@ def load_score(filename, ncolumns=None, minimal=False, **kwargs):
 
     Returns:
 
-      array: An array which contains not only the actual scores but also the
+      numpy.ndarray: An array which contains not only the actual scores but also the
       ``claimed_id``, ``real_id``, ``test_label`` and ``['model_label']``
 
     """
@@ -717,7 +717,7 @@ def split_csv_vuln(filename):
     Returns
     -------
 
-    split_scores: dict of str: numpy.ndarray
+    split_scores: dict[str, numpy.ndarray]
         The licit negative and positive, and spoof scores for probes.
     """
     logger.debug(f"Loading CSV score file: '{filename}'")

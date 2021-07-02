@@ -19,7 +19,8 @@ def pickle_compress(path, obj, attempts=5):
        obj:
           Object to be saved
 
-       attempts: Serialization attempts
+       attempts: int
+          Serialization attempts
 
     """
     for i in range(attempts):

@@ -103,7 +103,7 @@ class CSVToSampleLoaderBiometrics(CSVToSampleLoader):
     Parameters
     ----------
 
-        data_loader:
+        data_loader: Callable
             A python function that can be called parameterlessly, to load the
             sample in question from whatever medium
 
@@ -216,7 +216,7 @@ class CSVDataset(Database):
         dataset_path: str
           Absolute path or a tarball of the dataset protocol description.
 
-        protocol_na,e: str
+        protocol_name: str
           The name of the protocol
 
         csv_to_sample_loader: `bob.pipelines.sample_loaders.CSVToSampleLoader`

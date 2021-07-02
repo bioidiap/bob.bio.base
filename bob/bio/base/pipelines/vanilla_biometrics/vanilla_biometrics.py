@@ -60,15 +60,15 @@ def execute_vanilla_biometrics(
     pipeline: Instance of :py:class:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`
         A constructed vanilla-biometrics pipeline.
 
-    database: Instance of :py:class:`bob.bio.base.pipelines.vanilla_biometrics.abstract_class.Database`
+    database: Instance of :py:class:`bob.bio.base.pipelines.vanilla_biometrics.Database`
         A database interface instance
 
-    dask_client: instance of :py:class:`dask.distributed.Client` or ``None``
+    dask_client: instance of :py:class:`distributed.Client` or None
         A Dask client instance used to run the experiment in parallel on multiple
         machines, or locally.
         Basic configs can be found in ``bob.pipelines.config.distributed``.
 
-    groups: list of str
+    groups: list[str]
         Groups of the dataset that will be requested from the database interface.
 
     output: str
@@ -178,13 +178,13 @@ def execute_vanilla_biometrics_ztnorm(
     pipeline: Instance of :py:class:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`
         A constructed vanilla-biometrics pipeline.
 
-    database: Instance of :py:class:`bob.bio.base.pipelines.vanilla_biometrics.abstract_class.Database`
+    database: Instance of :py:class:`bob.bio.base.pipelines.vanilla_biometrics.Database`
         A database interface instance
 
-    dask_client: instance of :py:class:`dask.distributed.Client` or ``None``
+    dask_client: instance of :py:class:`distributed.Client` or ``None``
         A Dask client instance used to run the experiment in parallel on multiple machines, or locally. Basic configs can be found in ``bob.pipelines.config.distributed``.
 
-    groups: list of str
+    groups: list[str]
         Groups of the dataset that will be requested from the database interface.
 
     output: str
