@@ -234,7 +234,6 @@ class CSVDataset(Database):
         dataset_protocol_path,
         csv_to_sample_loader=None,
         is_sparse=False,
-        fetch_probes=True,
         allow_scoring_with_all_biometric_references=False,
         **kwargs,
     ):
@@ -246,7 +245,6 @@ class CSVDataset(Database):
         )
         self.dataset_protocol_path = dataset_protocol_path
         self.is_sparse = is_sparse
-        self.fetch_probes = fetch_probes
         if csv_to_sample_loader is None:
             csv_to_sample_loader = CSVToSampleLoaderBiometrics(
                 data_loader=bob.io.base.load,
@@ -414,7 +412,7 @@ class CSVDataset(Database):
             group=group,
             cache_key=cache_key,
             group_by_reference_id=False,
-            fetching_probes=self.fetch_probes,
+            fetching_probes=True,
             is_sparse=self.is_sparse,
         )
 
@@ -566,7 +564,6 @@ class CSVDatasetZTNorm(CSVDataset):
             group=group,
             cache_key=cache_key,
             group_by_reference_id=False,
-            fetching_probes=True,
             is_sparse=False,
         )
 
