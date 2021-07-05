@@ -564,6 +564,7 @@ class CSVDatasetZTNorm(CSVDataset):
             group=group,
             cache_key=cache_key,
             group_by_reference_id=False,
+            fetching_probes=True,
             is_sparse=False,
         )
 
