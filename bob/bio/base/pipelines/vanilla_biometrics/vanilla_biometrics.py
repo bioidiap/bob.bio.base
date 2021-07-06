@@ -108,8 +108,10 @@ def execute_vanilla_biometrics(
         probes = database.probes(group=group)
 
         # If there's no data to be processed, continue
-        if len(biometric_references)==0 or len(probes)==0:
-            logger.warning(f"Current dataset ({database}) does not have `{group}` set. The experiment will not be executed.")
+        if len(biometric_references) == 0 or len(probes) == 0:
+            logger.warning(
+                f"Current dataset ({database}) does not have `{group}` set. The experiment will not be executed."
+            )
             continue
 
         if dask_client is not None and not isinstance_nested(
@@ -250,10 +252,11 @@ def execute_vanilla_biometrics_ztnorm(
         probes = database.probes(group=group)
 
         # If there's no data to be processed, continue
-        if len(biometric_references)==0 or len(probes)==0:
-            logger.warning(f"Current dataset ({database}) does not have `{group}` set. The experiment will not be executed.")
+        if len(biometric_references) == 0 or len(probes) == 0:
+            logger.warning(
+                f"Current dataset ({database}) does not have `{group}` set. The experiment will not be executed."
+            )
             continue
-
 
         if dask_client is not None and not isinstance_nested(
             pipeline.biometric_algorithm, "biometric_algorithm", BioAlgorithmDaskWrapper
@@ -310,7 +313,7 @@ def execute_vanilla_biometrics_ztnorm(
         # Running RAW_SCORES
 
         raw_scores = post_process_scores(
-            pipeline, raw_scores, _build_filename(score_file_name, "raw_scores")
+            pipeline, raw_scores, _build_filename(score_file_name, "raw_scores.csv")
         )
         _ = compute_scores(raw_scores, dask_client)
 
@@ -318,7 +321,7 @@ def execute_vanilla_biometrics_ztnorm(
         z_normed_scores = post_process_scores(
             pipeline,
             z_normed_scores,
-            _build_filename(score_file_name, "z_normed_scores"),
+            _build_filename(score_file_name, "z_normed_scores.csv"),
         )
         _ = compute_scores(z_normed_scores, dask_client)
 
@@ -326,7 +329,7 @@ def execute_vanilla_biometrics_ztnorm(
         t_normed_scores = post_process_scores(
             pipeline,
             t_normed_scores,
-            _build_filename(score_file_name, "t_normed_scores"),
+            _build_filename(score_file_name, "t_normed_scores.csv"),
         )
         _ = compute_scores(t_normed_scores, dask_client)
 
@@ -334,7 +337,7 @@ def execute_vanilla_biometrics_ztnorm(
         s_normed_scores = post_process_scores(
             pipeline,
             s_normed_scores,
-            _build_filename(score_file_name, "s_normed_scores"),
+            _build_filename(score_file_name, "s_normed_scores.csv"),
         )
         _ = compute_scores(s_normed_scores, dask_client)
 
@@ -342,6 +345,6 @@ def execute_vanilla_biometrics_ztnorm(
         zt_normed_scores = post_process_scores(
             pipeline,
             zt_normed_scores,
-            _build_filename(score_file_name, "zt_normed_scores"),
+            _build_filename(score_file_name, "zt_normed_scores.csv"),
         )
         _ = compute_scores(zt_normed_scores, dask_client)
