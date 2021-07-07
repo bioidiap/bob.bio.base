@@ -165,7 +165,7 @@ def get_split_dataframe(filename):
     genuines = df[df.probe_subject_id == df.bio_ref_subject_id]
     impostors = df[df.probe_subject_id != df.bio_ref_subject_id]
 
-    return impostors.compute(), genuines.compute()
+    return impostors, genuines
 
 
 def split_csv_writer(filename):
