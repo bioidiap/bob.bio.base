@@ -57,16 +57,14 @@ def get_temp_directory(sub_dir):
         return os.path.join(tempfile.TemporaryDirectory().name, sub_dir)
 
 
-def _biofile_to_delayed_sample(biofile, database):
+def _biofile_to_delayed_sample(biofile, database, purpose="probe"):
     return DelayedSample(
         load=functools.partial(
-            biofile.load,
-            database.original_directory,
-            database.original_extension,
+            biofile.load, database.original_directory, database.original_extension,
         ),
         reference_id=str(biofile.client_id),
-        key=biofile.path,
-        path=biofile.path,
+        key=f"{biofile.path}{purpose}",
+        path=f"{biofile.path}{purpose}",
         delayed_attributes=dict(
             annotations=functools.partial(database.annotations, biofile)
         ),
@@ -107,6 +105,10 @@ class DatabaseConnector(Database):
     memory_demanding: bool
         Sinalizes that a database has some memory demanding components.
         It might be useful for future processing
+
+    append_purpose: bool
+        If True, `sample.key` will be appended with the purpose of the sample (world, probe, or bio-ref).
+
     """
 
     def __init__(
@@ -116,6 +118,7 @@ class DatabaseConnector(Database):
         annotation_type="eyes-center",
         fixed_positions=None,
         memory_demanding=False,
+        append_purpose=False,
         **kwargs,
     ):
         super().__init__(
@@ -127,6 +130,7 @@ class DatabaseConnector(Database):
             memory_demanding=memory_demanding,
             **kwargs,
         )
+        self.append_purpose = append_purpose
         self.database = database
 
     def background_model_samples(self):
@@ -140,7 +144,12 @@ class DatabaseConnector(Database):
             model training.
         """
         objects = self.database.training_files()
-        return [_biofile_to_delayed_sample(k, self.database) for k in objects]
+        return [
+            _biofile_to_delayed_sample(
+                k, self.database, purpose="world" if self.append_purpose else ""
+            )
+            for k in objects
+        ]
 
     def references(self, group="dev"):
         """Returns references to enroll biometric references
@@ -167,7 +176,14 @@ class DatabaseConnector(Database):
 
             retval.append(
                 SampleSet(
-                    [_biofile_to_delayed_sample(k, self.database) for k in objects],
+                    [
+                        _biofile_to_delayed_sample(
+                            k,
+                            self.database,
+                            purpose="bio-ref" if self.append_purpose else "",
+                        )
+                        for k in objects
+                    ],
                     key=str(m),
                     path=str(m),
                     reference_id=(str(m)),
@@ -204,7 +220,13 @@ class DatabaseConnector(Database):
             for o in objects:
                 if o.id not in probes:
                     probes[o.id] = SampleSet(
-                        [_biofile_to_delayed_sample(o, self.database)],
+                        [
+                            _biofile_to_delayed_sample(
+                                o,
+                                self.database,
+                                purpose="probe" if self.append_purpose else "",
+                            )
+                        ],
                         key=str(o.path),
                         path=o.path,
                         reference_id=str(m),
@@ -248,7 +270,12 @@ class DatabaseConnector(Database):
             high_level_names=["train", "dev", "eval"],
         )
         objects = self.database.all_files(groups=low_level_groups)
-        return [_biofile_to_delayed_sample(k, self.database) for k in objects]
+        return [
+            _biofile_to_delayed_sample(
+                k, self.database, "all" if self.append_purpose else ""
+            )
+            for k in objects
+        ]
 
     def groups(self):
         grps = self.database.groups()
@@ -288,12 +315,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
     """
 
     def __init__(
-        self,
-        instance,
-        base_dir,
-        force=False,
-        projector_file=None,
-        **kwargs,
+        self, instance, base_dir, force=False, projector_file=None, **kwargs,
     ):
         super().__init__(**kwargs)
 
