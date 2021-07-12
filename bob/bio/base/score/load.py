@@ -168,7 +168,7 @@ def get_split_dataframe(filename):
     return impostors, genuines
 
 
-def split_csv_writer(filename):
+def split_csv_scores(filename):
     """Loads a score set that was written with :any:`bob.bio.base.pipelines.vanilla_biometrics.CSVScoreWriter`
 
     Parameters
@@ -335,9 +335,7 @@ def cmc_five_column(filename):
 
 
 def scores(filename, ncolumns=None):
-    """scores(filename, ncolumns=None) -> tuple
-
-    Loads the scores from the given score file and yield its lines.
+    """Loads the scores from the given score file and yield its lines.
     Depending on the score file format, four or five elements are yielded, see
     :py:func:`bob.bio.base.score.load.four_column` and
     :py:func:`bob.bio.base.score.load.five_column` for details.
