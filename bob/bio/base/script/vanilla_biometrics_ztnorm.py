@@ -106,10 +106,10 @@ It is possible to do it via configuration file
     cls=ResourceOption,
 )
 @click.option(
-    "--write-metadata-scores",
-    "-m",
-    is_flag=True,
-    help="If set, all the scores will be written with all its metadata",
+    "--write-metadata-scores/--write-column-scores",
+    "-m/-nm",
+    default=True,
+    help="If set, all the scores will be written with all their metadata using the `CSVScoreWriter`",
     cls=ResourceOption,
 )
 @click.option(

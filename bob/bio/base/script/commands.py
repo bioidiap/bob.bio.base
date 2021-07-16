@@ -56,7 +56,7 @@ def metrics(ctx, scores, evaluation, **kwargs):
     if "criterion" in ctx.meta and ctx.meta["criterion"] == "rr":
         process = bio_figure.Metrics(ctx, scores, evaluation, load.cmc)
     else:
-        func = load.split_csv_writer if iscsv(scores[0]) else load.split
+        func = load.split_csv_scores if iscsv(scores[0]) else load.split
         process = bio_figure.Metrics(ctx, scores, evaluation, func)
     process.run()
 
@@ -65,7 +65,7 @@ def metrics(ctx, scores, evaluation, **kwargs):
     common_options.ROC_HELP.format(score_format=SCORE_FORMAT, command="bob bio roc")
 )
 def roc(ctx, scores, evaluation, **kargs):
-    func = load.split_csv_writer if iscsv(scores[0]) else load.split
+    func = load.split_csv_scores if iscsv(scores[0]) else load.split
     process = bio_figure.Roc(ctx, scores, evaluation, func)
     process.run()
 
@@ -74,7 +74,7 @@ def roc(ctx, scores, evaluation, **kargs):
     common_options.DET_HELP.format(score_format=SCORE_FORMAT, command="bob bio det")
 )
 def det(ctx, scores, evaluation, **kargs):
-    func = load.split_csv_writer if iscsv(scores[0]) else load.split
+    func = load.split_csv_scores if iscsv(scores[0]) else load.split
     process = bio_figure.Det(ctx, scores, evaluation, func)
     process.run()
 
@@ -83,7 +83,7 @@ def det(ctx, scores, evaluation, **kargs):
     common_options.EPC_HELP.format(score_format=SCORE_FORMAT, command="bob bio epc")
 )
 def epc(ctx, scores, **kargs):
-    func = load.split_csv_writer if iscsv(scores[0]) else load.split
+    func = load.split_csv_scores if iscsv(scores[0]) else load.split
     process = measure_figure.Epc(ctx, scores, True, func)
     process.run()
 
@@ -92,7 +92,7 @@ def epc(ctx, scores, **kargs):
     common_options.HIST_HELP.format(score_format=SCORE_FORMAT, command="bob bio hist")
 )
 def hist(ctx, scores, evaluation, **kwargs):
-    func = load.split_csv_writer if iscsv(scores[0]) else load.split
+    func = load.split_csv_scores if iscsv(scores[0]) else load.split
     process = bio_figure.Hist(ctx, scores, evaluation, func)
     process.run()
 
@@ -120,7 +120,7 @@ def evaluate(ctx, scores, evaluation, **kwargs):
     criteria=CRITERIA,
 )
 def multi_metrics(ctx, scores, evaluation, protocols_number, **kwargs):
-    func = load.split_csv_writer if iscsv(scores[0]) else load.split
+    func = load.split_csv_scores if iscsv(scores[0]) else load.split
     ctx.meta["min_arg"] = protocols_number * (2 if evaluation else 1)
     process = bio_figure.MultiMetrics(ctx, scores, evaluation, func)
     process.run()
