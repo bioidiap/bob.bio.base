@@ -386,6 +386,9 @@ def split(filename, ncolumns=None, sort=False):
         This array contains the list of scores, for which the ``claimed_id`` and
         the ``real_id`` are identical (see :py:func:`four_column`)
     """
+    if iscsv(filename):
+        return split_csv_scores(filename)
+
     ncolumns = _estimate_score_file_format(filename, ncolumns)
     if ncolumns == 4:
         neg, pos = split_four_column(filename)
