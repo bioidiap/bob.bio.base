@@ -35,7 +35,7 @@ class BioAlgorithm(metaclass=ABCMeta):
 
     def __init__(self, score_reduction_operation=average_scores, **kwargs):
         self.stacked_biometric_references = None
-        self.score_reduction_operation = average_scores
+        self.score_reduction_operation = score_reduction_operation
 
     def clear_caches(self):
         """
