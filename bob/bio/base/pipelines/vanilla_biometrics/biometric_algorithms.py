@@ -1,6 +1,6 @@
 import scipy.spatial.distance
 from sklearn.utils.validation import check_array
-import numpy
+import numpy as np
 from .abstract_classes import BioAlgorithm
 from scipy.spatial.distance import cdist
 import os
@@ -15,6 +15,22 @@ class Distance(BioAlgorithm):
         super().__init__(**kwargs)
         self.distance_function = distance_function
         self.factor = factor
+
+    def _make_2d(self, X):
+        """
+        This function will make sure that the inputs are ndim=2 before enrollment and scoring.
+        
+        For instance, when the source is `VideoLikeContainer` the input of `enroll:enroll_features` and  `score:probes` are
+        [`VideoLikeContainer`, ....].
+        The concatenation of them makes and array of `ZxNxD`. Hence we need to stack them in `Z`.
+
+        """
+        if X.ndim == 3:
+            return np.vstack(X)
+        elif X.ndim == 1:
+            return np.expand_dims(X, axis=0)
+        else:
+            return X
 
     def enroll(self, enroll_features):
         """enroll(enroll_features) -> model
@@ -34,9 +50,15 @@ class Distance(BioAlgorithm):
           The enrolled model.
         """
 
-        enroll_features = check_array(enroll_features, allow_nd=True)
+        enroll_features = check_array(enroll_features, allow_nd=True, ensure_2d=True)
 
-        return numpy.mean(enroll_features, axis=0)
+        enroll_features = self._make_2d(enroll_features)
+
+        # This avoids some possible mistakes in the feature extraction
+        # That dumps vectors in the format `Nx1xd`
+        assert enroll_features.ndim == 2
+
+        return np.mean(enroll_features, axis=0)
 
     def score(self, biometric_reference, data):
         """score(model, probe) -> float
@@ -57,17 +79,31 @@ class Distance(BioAlgorithm):
 
         ``score`` : float
           A similarity value between ``model`` and ``probe``
+        
         """
 
-        data = data.flatten()
+        # We have to do this `check_array` because we can
+        # have other array formats that are not necessarily numpy arrays but extensions of it
+        data = check_array(data, allow_nd=True, ensure_2d=False)
+
+        data = self._make_2d(data)
+
+        assert data.ndim == 2
+
         # return the negative distance (as a similarity measure)
         return self.factor * self.distance_function(biometric_reference, data)
 
     def score_multiple_biometric_references(self, biometric_references, data):
-        data = data.flatten()
-        references_stacked = numpy.vstack(biometric_references)
-        scores = self.factor * cdist(
-            references_stacked, data.reshape(1, -1), self.distance_function
-        )
 
-        return list(scores.flatten())
+        # We have to do this `check_array` because we can
+        # have other array formats that are not necessarily numpy arrays but extensions of it
+        data = check_array(data, allow_nd=True, ensure_2d=False)
+
+        data = self._make_2d(data)
+
+        assert data.ndim == 2
+
+        references_stacked = np.vstack(biometric_references)
+        scores = self.factor * cdist(references_stacked, data, self.distance_function)
+
+        return scores
