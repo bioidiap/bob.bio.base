@@ -14,9 +14,22 @@ logger = logging.getLogger(__name__)
 def average_scores(scores):
     """
     Given a :any:`numpy.ndarray` coming from multiple probes,
-    average them
+    average them.
+
+    This function needs to handle the 2 cases.
+    The first case is when one Sample (not a `SampleSet`) points to one score
+    The second case is when one Sample points to several scores (while dealing with `VideoLikeContainer`)
+
     """
-    return np.mean(scores, axis=0)
+
+    ## axis=0 points to each sample in a sampleset
+    ## axis=1 points to the score w.r.t each biometric reference
+    ## axis=2 points to each individual score of a sample (in image-based cases is one score per sample,
+    # and in video-based cases can be multiple scores)
+
+    # First we have to average w.r.t tp individual samples, than between samples
+
+    return np.mean(np.array([np.mean(x, axis=1) for x in scores]), axis=0)
 
 
 class BioAlgorithm(metaclass=ABCMeta):
@@ -164,7 +177,7 @@ class BioAlgorithm(metaclass=ABCMeta):
                     ]
                 if probe_sample.data is None:
                     # Probe processing has failed. Mark invalid scores for FTA count
-                    scores = [None] * len(self.stacked_biometric_references)
+                    scores = [[None]] * len(self.stacked_biometric_references)
                 else:
                     scores = self.score_multiple_biometric_references(
                         self.stacked_biometric_references, probe_sample.data
@@ -215,7 +228,7 @@ class BioAlgorithm(metaclass=ABCMeta):
 
                 if probe_sample.data is None:
                     # Probe processing has failed
-                    scores = [None] * len(self.stacked_biometric_references)
+                    scores = [[None]] * len(self.stacked_biometric_references)
                 else:
                     scores = self.score_multiple_biometric_references(
                         references, probe_sample.data

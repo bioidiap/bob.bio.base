@@ -21,6 +21,7 @@ from .abstract_classes import BioAlgorithm
 from .abstract_classes import Database
 import tempfile
 from . import pickle_compress, uncompress_unpickle
+import numpy as np
 
 logger = logging.getLogger("bob.bio.base")
 
@@ -370,10 +371,16 @@ class BioAlgorithmLegacy(BioAlgorithm):
         scores = self.instance.score(biometric_reference, data)
         if isinstance(scores, list):
             scores = self.instance.probe_fusion_function(scores)
+
         return scores
 
     def score_multiple_biometric_references(self, biometric_references, data, **kwargs):
         scores = self.instance.score_for_multiple_models(biometric_references, data)
+
+        # Preparing the 3d scoring format
+        # look: https://gitlab.idiap.ch/bob/bob.bio.base/-/merge_requests/264
+        scores = np.expand_dims(scores, axis=1)
+
         return scores
 
     def write_biometric_reference(self, sample, path):
