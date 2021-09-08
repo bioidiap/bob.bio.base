@@ -7,7 +7,6 @@ import functools
 import logging
 import os
 
-import joblib
 from bob.bio.base.algorithm import Algorithm
 from bob.pipelines import DelayedSample
 from bob.pipelines import DelayedSampleSet
@@ -21,6 +20,7 @@ import pickle
 from .abstract_classes import BioAlgorithm
 from .abstract_classes import Database
 import tempfile
+from . import pickle_compress, uncompress_unpickle
 
 logger = logging.getLogger("bob.bio.base")
 
@@ -337,7 +337,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
         self.score_dir = os.path.join(base_dir, "scores")
         self.force = force
         self._base_dir = base_dir
-        self._score_extension = ".joblib"
+        self._score_extension = ".pickle.gz"
 
     @property
     def base_dir(self):
@@ -403,18 +403,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
         return delayed_enrolled_sample
 
     def write_scores(self, samples, path):
-        try:
-            final_path = os.path.dirname(path)
-            os.makedirs(final_path, exist_ok=True)
-        except NotADirectoryError:
-            # If it cannot make the directory, saves in /tmp/
-            # This is useful and necessary for some
-            # very specific types of baselines (ROC)
-            final_path = "/tmp/" + os.path.dirname(path)
-            os.makedirs(final_path, exist_ok=True)
-            path = "/tmp/" + path
-        open(path, "wb").write(pickle.dumps(samples))
-        joblib.dump(samples, path, compress=4)
+        pickle_compress(path, samples)
 
     def _score_sample_set(
         self,
@@ -423,12 +412,7 @@ class BioAlgorithmLegacy(BioAlgorithm):
         allow_scoring_with_all_biometric_references=False,
     ):
         def _load(path):
-            # return pickle.loads(open(path, "rb").read())
-            if os.path.exists(path):
-                return joblib.load(path)
-            else:
-                # If doesn't exists. the cached sample might be at /tmp
-                return joblib.load("/tmp/" + path)
+            return uncompress_unpickle(path)
 
         def _make_name(sampleset, biometric_references):
             # The score file name is composed by sampleset key and the
