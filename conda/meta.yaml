@@ -32,16 +32,17 @@ requirements:
     - bob.measure
     - bob.sp
     - bob.pipelines
-    - tabulate
-    - pandas
+    - tabulate {{ tabulate }}
+    - pandas {{ pandas }}
     - scipy {{ scipy }}
     - six {{ six }}
   run:
     - python
     - setuptools
-    - scipy
-    - bob.pipelines
-    - six
+    - {{ pin_compatible('tabulate') }}
+    - {{ pin_compatible('pandas') }}
+    - {{ pin_compatible('scipy') }}
+    - {{ pin_compatible('six') }}
 
 test:
   imports:
@@ -67,7 +68,6 @@ test:
     - conda inspect linkages -p $PREFIX {{ name }}  # [not win]
     - conda inspect objects -p $PREFIX {{ name }}  # [osx]
   requires:
-    - bob-devel {{ bob_devel }}.*
     - nose
     - coverage
     - sphinx
