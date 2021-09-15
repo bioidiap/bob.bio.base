@@ -387,14 +387,14 @@ def split(filename, ncolumns=None, sort=False):
         the ``real_id`` are identical (see :py:func:`four_column`)
     """
     if iscsv(filename):
-        return split_csv_scores(filename)
-
-    ncolumns = _estimate_score_file_format(filename, ncolumns)
-    if ncolumns == 4:
-        neg, pos = split_four_column(filename)
+        neg, pos = split_csv_scores(filename)
     else:
-        assert ncolumns == 5
-        neg, pos = split_five_column(filename)
+        ncolumns = _estimate_score_file_format(filename, ncolumns)
+        if ncolumns == 4:
+            neg, pos = split_four_column(filename)
+        else:
+            assert ncolumns == 5
+            neg, pos = split_five_column(filename)
 
     if sort:
         neg.sort()
