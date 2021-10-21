@@ -87,8 +87,8 @@ class Dir(measure_figure.PlotBase):
         self._semilogx = ctx.meta.get("semilogx", True)
         self._rank = ctx.meta.get("rank", 1)
         self._titles = self._titles or ["DIR curve"] * 2
-        self._x_label = self._x_label or "False Alarm Rate"
-        self._y_label = self._y_label or "DIR"
+        self._x_label = self._x_label or "False Positive Identification Rate"
+        self._y_label = self._y_label or "True Positive Identification Rate"
 
     def compute(self, idx, input_scores, input_names):
         """ Plot DIR for dev and eval data using
