@@ -355,11 +355,13 @@ To enable the checkpointing of a Transformer or :any:`bob.bio.base.pipelines.van
 This class takes a Transformer as input and returns the same Transformer with the ability to automatically create checkpoint files.
 The :py:class:`bob.pipelines.CheckpointWrapper` class is available in the :py:mod:`bob.pipelines`.
 
-The ``--checkpoint`` option is a command-line option that automatically wraps every steps of the pipeline with checkpointing::
+The ``--checkpoint`` option is a command-line option that automatically wraps every steps of the pipeline with checkpointing.
+If set, the ``--checkpoint-dir`` sets the path for such a checkpoints::
 
-$ bob bio pipelines vanilla-biometrics <database> <pipeline> --checkpoint --output <output_dir>
+$ bob bio pipelines vanilla-biometrics <database> <pipeline> --checkpoint --output <output_dir> --checkpoint-dir <checkpoint_dir>
 
-When doing so, the output of each Transformer of the pipeline will be saved to the disk in the ``<output_dir>`` folder specified with the ``--output`` option.
+When doing so, the output of each Transformer of the pipeline will be saved to the disk in the ``<checkpoint_dir>`` folder specified with the ``--checkpoint-dir`` option.
+Output scores will be saved on ``<output_dir>``.
 
 
 .. WARNING::
@@ -371,7 +373,7 @@ When doing so, the output of each Transformer of the pipeline will be saved to t
   **You** have to take care of removing invalid checkpoints files.
 
   When changing the pipeline or the dataset of an experiment, you should change
-  the output folder (``--output``) accordingly. Otherwise, the system could try to
+  the output folder (``--checkpoint-dir``) accordingly. Otherwise, the system could try to
   load a checkpoint of an older experiment, or samples from another dataset.
 
 

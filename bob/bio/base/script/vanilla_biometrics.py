@@ -96,7 +96,7 @@ It is possible to do it via configuration file
     "--output",
     show_default=True,
     default="results",
-    help="Name of output directory where output scores will be saved. In case --checkpoint is set, checkpoints will be saved in this directory.",
+    help="Name of output directory where output scores will be saved.",
     cls=ResourceOption,
 )
 @click.option(
@@ -111,6 +111,14 @@ It is possible to do it via configuration file
     "-c",
     is_flag=True,
     help="If set, it will checkpoint all steps of the pipeline. Checkpoints will be saved in `--output`.",
+    cls=ResourceOption,
+)
+@click.option(
+    "-c",
+    "--checkpoint-dir",
+    show_default=True,
+    default=None,
+    help="Name of output directory where the checkpoints will be saved. In case --checkpoint is set, checkpoints will be saved in this directory.",
     cls=ResourceOption,
 )
 @click.option(
@@ -142,6 +150,7 @@ def vanilla_biometrics(
     output,
     write_metadata_scores,
     checkpoint,
+    checkpoint_dir,
     dask_partition_size,
     dask_n_workers,
     **kwargs,
@@ -212,6 +221,7 @@ def vanilla_biometrics(
         checkpoint,
         dask_partition_size,
         dask_n_workers,
+        checkpoint_dir=checkpoint_dir,
         **kwargs,
     )
 
