@@ -42,6 +42,7 @@ def execute_vanilla_biometrics(
     checkpoint,
     dask_partition_size,
     dask_n_workers,
+    checkpoint_dir=None,
     **kwargs,
 ):
     """
@@ -72,26 +73,39 @@ def execute_vanilla_biometrics(
         Groups of the dataset that will be requested from the database interface.
 
     output: str
-        Path where the results and checkpoints will be saved to.
+        Path where the scores will be saved.
 
     write_metadata_scores: bool
         Use the CSVScoreWriter instead of the FourColumnScoreWriter when True.
 
     checkpoint: bool
         Whether checkpoint files will be created for every step of the pipelines.
+
+    checkpoint_dir: str
+        If `checkpoint` is set, this path will be used to save the checkpoints.
+        If `None`, the content of `output` will be used.
     """
     if not os.path.exists(output):
         os.makedirs(output, exist_ok=True)
 
+    # Setting the `checkpoint_dir`
+    if checkpoint_dir is None:
+        checkpoint_dir = output
+    else:
+        os.makedirs(checkpoint_dir, exist_ok=True)
+
+    # Scores are written on `output`
     if write_metadata_scores:
         pipeline.score_writer = CSVScoreWriter(os.path.join(output, "./tmp"))
     else:
         pipeline.score_writer = FourColumnsScoreWriter(os.path.join(output, "./tmp"))
 
-    # Check if it's already checkpointed
+    # Checkpoint if it's already checkpointed
     if checkpoint and not is_checkpointed(pipeline):
         hash_fn = database.hash_fn if hasattr(database, "hash_fn") else None
-        pipeline = checkpoint_vanilla_biometrics(pipeline, output, hash_fn=hash_fn)
+        pipeline = checkpoint_vanilla_biometrics(
+            pipeline, checkpoint_dir, hash_fn=hash_fn
+        )
 
     # Load the background model samples only if the transformer requires fitting
     if all([is_estimator_stateless(step) for step in pipeline.transformer]):
@@ -162,6 +176,7 @@ def execute_vanilla_biometrics_ztnorm(
     checkpoint,
     dask_partition_size,
     dask_n_workers,
+    checkpoint_dir=None,
     **kwargs,
 ):
     """
@@ -209,6 +224,10 @@ def execute_vanilla_biometrics_ztnorm(
 
     consider_genuines: float
         If set, will consider genuine scores in the ZT score normalization
+    checkpoint_dir: str
+        If `checkpoint` is set, this path will be used to save the checkpoints.
+        If `None`, the content of `output` will be used.
+
     """
 
     def _merge_references_ztnorm(biometric_references, probes, zprobes, treferences):
@@ -225,6 +244,13 @@ def execute_vanilla_biometrics_ztnorm(
     if not os.path.exists(output):
         os.makedirs(output, exist_ok=True)
 
+    # Setting the `checkpoint_dir`
+    if checkpoint_dir is None:
+        checkpoint_dir = output
+    else:
+        os.makedirs(checkpoint_dir, exist_ok=True)
+
+    # Scores are written on `output`
     if write_metadata_scores:
         pipeline.score_writer = CSVScoreWriter(os.path.join(output, "./tmp"))
     else:
@@ -232,13 +258,13 @@ def execute_vanilla_biometrics_ztnorm(
 
     # Check if it's already checkpointed
     if checkpoint and not is_checkpointed(pipeline):
-        pipeline = checkpoint_vanilla_biometrics(pipeline, output)
+        pipeline = checkpoint_vanilla_biometrics(pipeline, checkpoint_dir)
 
     # Patching the pipeline in case of ZNorm and checkpointing it
     pipeline = ZTNormPipeline(pipeline)
     if checkpoint:
         pipeline.ztnorm_solver = ZTNormCheckpointWrapper(
-            pipeline.ztnorm_solver, os.path.join(output, "normed-scores")
+            pipeline.ztnorm_solver, os.path.join(checkpoint_dir, "normed-scores")
         )
 
     background_model_samples = database.background_model_samples()
