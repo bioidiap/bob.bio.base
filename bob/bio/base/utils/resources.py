@@ -27,6 +27,7 @@ valid_keywords = (
     "extractor",
     "algorithm",
     "grid",
+    "client",
     "config",
     "annotator",
     "pipeline",
