@@ -358,6 +358,22 @@ def checkpoint_vanilla_biometrics(
 
     if isinstance(pipeline.biometric_algorithm, BioAlgorithmLegacy):
         pipeline.biometric_algorithm.base_dir = bio_ref_scores_dir
+
+        # Here we need to check if the LAST transformer is
+        # 1. is instance of CheckpointWrapper
+        # 2. Its estimator is instance of AlgorithmTransformer
+        if (
+            isinstance(pipeline.transformer[-1], CheckpointWrapper)
+            and hasattr(pipeline.transformer[-1].estimator, "estimator")
+            and isinstance(
+                pipeline.transformer[-1].estimator.estimator, AlgorithmTransformer
+            )
+        ):
+
+            pipeline.transformer[
+                -1
+            ].estimator.estimator.projector_file = bio_ref_scores_dir
+
     else:
         pipeline.biometric_algorithm = BioAlgorithmCheckpointWrapper(
             pipeline.biometric_algorithm, base_dir=bio_ref_scores_dir, hash_fn=hash_fn
