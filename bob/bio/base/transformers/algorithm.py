@@ -51,7 +51,7 @@ class AlgorithmTransformer(TransformerMixin, BaseEstimator):
             raise ValueError(f"{instance} needs to be picklable")
 
         self.instance = instance
-        self.projector_file = projector_file
+        self._projector_file = projector_file
         super().__init__(**kwargs)
 
     def fit(self, X, y=None):
@@ -73,6 +73,16 @@ class AlgorithmTransformer(TransformerMixin, BaseEstimator):
                 self.instance.project(data, metadata)
                 for data, metadata in zip(X, metadata)
             ]
+
+    @property
+    def projector_file(self):
+        return self._projector_file
+
+    @projector_file.setter
+    def projector_file(self, v):
+        base_dir = os.path.dirname(v)
+        filename = os.path.basename(self.projector_file)
+        self._projector_file = os.path.join(base_dir, filename)
 
     def _more_tags(self):
         return {
