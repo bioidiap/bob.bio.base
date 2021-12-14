@@ -120,10 +120,10 @@ It is possible to do it via configuration file
     cls=ResourceOption,
 )
 @click.option(
-    "--checkpoint",
-    "-c",
+    "--memory",
+    "-m",
     is_flag=True,
-    help="If set, it will checkpoint all steps of the pipeline. Checkpoints will be saved in `--output`.",
+    help="If set, it will run the experiment keeping all objects on memory with nothing checkpointed. If not set, checkpoints will be saved in `--output`.",
     cls=ResourceOption,
 )
 @click.option(
@@ -156,7 +156,7 @@ def vanilla_biometrics_ztnorm(
     consider_genuines,
     write_metadata_scores,
     ztnorm_cohort_proportion,
-    checkpoint,
+    memory,
     dask_partition_size,
     dask_n_workers,
     **kwargs,
@@ -213,6 +213,8 @@ def vanilla_biometrics_ztnorm(
     """
 
     logger.debug("Executing Vanilla-biometrics ZTNorm")
+
+    checkpoint = not memory
 
     execute_vanilla_biometrics_ztnorm(
         pipeline,
