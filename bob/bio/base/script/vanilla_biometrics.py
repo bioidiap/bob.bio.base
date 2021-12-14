@@ -107,10 +107,10 @@ It is possible to do it via configuration file
     cls=ResourceOption,
 )
 @click.option(
-    "--checkpoint",
-    "-c",
+    "--memory",
+    "-m",
     is_flag=True,
-    help="If set, it will checkpoint all steps of the pipeline. Checkpoints will be saved in `--output`.",
+    help="If set, it will run the experiment keeping all objects on memory with nothing checkpointed. If not set, checkpoints will be saved in `--output`.",
     cls=ResourceOption,
 )
 @click.option(
@@ -149,7 +149,7 @@ def vanilla_biometrics(
     groups,
     output,
     write_metadata_scores,
-    checkpoint,
+    memory,
     checkpoint_dir,
     dask_partition_size,
     dask_n_workers,
@@ -210,7 +210,11 @@ def vanilla_biometrics(
         instead.
 
     """
+
+    checkpoint = not memory
+
     logger.debug("Executing Vanilla-biometrics")
+
     execute_vanilla_biometrics(
         pipeline,
         database,
