@@ -59,12 +59,18 @@ from .wrappers import (
 from .abstract_classes import BioAlgorithm, Database, ScoreWriter
 
 from .zt_norm import ZTNormPipeline, ZTNormDaskWrapper, ZTNormCheckpointWrapper, ZTNorm
+from .score_post_processor import (
+    ZNormScores,
+    ScoreNormalizationPipeline,
+    checkpoint_score_normalization_pipeline,
+    dask_score_normalization_pipeline,
+)
 
 from .legacy import BioAlgorithmLegacy, DatabaseConnector
 
 from .vanilla_biometrics import (
     execute_vanilla_biometrics,
-    execute_vanilla_biometrics_ztnorm,
+    execute_vanilla_biometrics_score_normalization,
 )
 
 
