@@ -25,7 +25,7 @@ import os
 from .score_writers import FourColumnsScoreWriter
 import copy
 import logging
-from .pipelines import check_valid_pipeline
+from .pipelines import check_valid_pipeline, VanillaBiometricsPipeline
 from . import pickle_compress, uncompress_unpickle
 from sklearn.base import TransformerMixin, BaseEstimator
 
@@ -34,7 +34,7 @@ from bob.pipelines.utils import is_estimator_stateless
 logger = logging.getLogger(__name__)
 
 
-class ScoreNormalizationPipeline(object):
+class ScoreNormalizationPipeline(VanillaBiometricsPipeline):
     """
     Apply Z, T or ZT Score normalization on top of VanillaBiometric Pipeline
 
@@ -107,6 +107,7 @@ class ScoreNormalizationPipeline(object):
         )
 
         # Training the score transformer
+
         self.post_processor.fit([post_process_samples, biometric_references])
 
         # Transformer
@@ -194,6 +195,7 @@ class CheckpointPostProcessor(CheckpointWrapper):
         extension=".pkl",
         hash_fn=None,
         attempts=10,
+        force=True,
         **kwargs,
     ):
 
@@ -204,6 +206,7 @@ class CheckpointPostProcessor(CheckpointWrapper):
 
         self.hash_fn = hash_fn
         self.attempts = attempts
+        self.force = force
         if model_path is None and features_dir is None:
             logger.warning(
                 "Both model_path and features_dir are None. "
@@ -218,7 +221,9 @@ class CheckpointPostProcessor(CheckpointWrapper):
         # if the estimator needs to be fitted.
         logger.debug(f"CheckpointPostProcessor.fit")
 
-        if self.model_path is not None and os.path.isfile(self.model_path):
+        if not self.force and (
+            self.model_path is not None and os.path.isfile(self.model_path)
+        ):
             logger.info("Found a checkpoint for model. Loading ...")
             return self.load_model()
 
@@ -317,18 +322,18 @@ class ZNormScores(TransformerMixin, BaseEstimator):
         # IT'S THE MOST READABLE SOLUTION
 
         # Stacking scores by biometric reference
-        self._z_stats = dict()
+        self.z_stats = dict()
         for sset in z_scores:
             for s in sset:
-                if not s.reference_id in self._z_stats:
-                    self._z_stats[s.reference_id] = Sample([], parent=s)
+                if not s.reference_id in self.z_stats:
+                    self.z_stats[s.reference_id] = Sample([], parent=s)
 
-                self._z_stats[s.reference_id].data.append(s.data)
+                self.z_stats[s.reference_id].data.append(s.data)
 
         # Now computing the statistics in place
 
-        for key in self._z_stats:
-            data = self._z_stats[key].data
+        for key in self.z_stats:
+            data = self.z_stats[key].data
 
             ## Selecting the top scores
             if self.top_norm:
@@ -337,12 +342,12 @@ class ZNormScores(TransformerMixin, BaseEstimator):
                 proportion = int(np.floor(len(data) * self.top_norm_score_fraction))
                 data = data[0:proportion]
 
-            self._z_stats[key].mu = np.mean(self._z_stats[key].data)
-            self._z_stats[key].std = np.std(self._z_stats[key].data)
+            self.z_stats[key].mu = np.mean(self.z_stats[key].data)
+            self.z_stats[key].std = np.std(self.z_stats[key].data)
             # self._z_stats[key].std = legacy_std(
             #    self._z_stats[key].mu, self._z_stats[key].data
             # )
-            self._z_stats[key].data = []
+            self.z_stats[key].data = []
 
         return self
 
@@ -356,9 +361,8 @@ class ZNormScores(TransformerMixin, BaseEstimator):
             scores = []
             for no_normed_score in X:
                 score = (
-                    no_normed_score.data
-                    - self._z_stats[no_normed_score.reference_id].mu
-                ) / self._z_stats[no_normed_score.reference_id].std
+                    no_normed_score.data - self.z_stats[no_normed_score.reference_id].mu
+                ) / self.z_stats[no_normed_score.reference_id].std
 
                 z_score = Sample(score, parent=no_normed_score)
                 scores.append(z_score)
