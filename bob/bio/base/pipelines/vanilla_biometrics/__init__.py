@@ -58,9 +58,9 @@ from .wrappers import (
 
 from .abstract_classes import BioAlgorithm, Database, ScoreWriter
 
-from .zt_norm import ZTNormPipeline, ZTNormDaskWrapper, ZTNormCheckpointWrapper, ZTNorm
 from .score_post_processor import (
     ZNormScores,
+    TNormScores,
     ScoreNormalizationPipeline,
     checkpoint_score_normalization_pipeline,
     dask_score_normalization_pipeline,
@@ -103,16 +103,12 @@ __appropriate__(
     dask_vanilla_biometrics,
     checkpoint_vanilla_biometrics,
     is_checkpointed,
-    ZTNormPipeline,
-    ZTNormDaskWrapper,
-    ZTNormCheckpointWrapper,
     BioAlgorithmLegacy,
     DatabaseConnector,
     execute_vanilla_biometrics,
     BioAlgorithm,
     Database,
     ScoreWriter,
-    ZTNorm,
 )
 
 __all__ = [_ for _ in dir() if not _.startswith("_")]

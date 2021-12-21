@@ -8,19 +8,14 @@ Implementation of a pipeline that post process scores
 """
 
 from bob.pipelines import (
-    DelayedSample,
     Sample,
     SampleSet,
-    DelayedSampleSet,
-    DelayedSampleSetCached,
 )
+import bob.bio.base
 
 from bob.pipelines.wrappers import CheckpointWrapper, DaskWrapper
-
+from bob.pipelines.utils import isinstance_nested
 import numpy as np
-import dask
-import functools
-import cloudpickle
 import os
 from .score_writers import FourColumnsScoreWriter
 import copy
@@ -28,6 +23,8 @@ import logging
 from .pipelines import check_valid_pipeline, VanillaBiometricsPipeline
 from . import pickle_compress, uncompress_unpickle
 from sklearn.base import TransformerMixin, BaseEstimator
+import tempfile
+import copy
 
 from bob.pipelines.utils import is_estimator_stateless
 
@@ -69,17 +66,19 @@ class ScoreNormalizationPipeline(VanillaBiometricsPipeline):
     """
 
     def __init__(
-        self,
-        vanilla_biometrics_pipeline,
-        post_processor,
-        score_writer=FourColumnsScoreWriter("./scores.txt"),
+        self, vanilla_biometrics_pipeline, post_processor, score_writer=None,
     ):
+
         self.vanilla_biometrics_pipeline = vanilla_biometrics_pipeline
         self.biometric_algorithm = self.vanilla_biometrics_pipeline.biometric_algorithm
         self.transformer = self.vanilla_biometrics_pipeline.transformer
 
         self.post_processor = post_processor
         self.score_writer = score_writer
+
+        if self.score_writer is None:
+            tempdir = tempfile.TemporaryDirectory()
+            self.score_writer = FourColumnsScoreWriter(tempdir.name)
 
         # TODO: ACTIVATE THAT
         # check_valid_pipeline(self)
@@ -107,11 +106,25 @@ class ScoreNormalizationPipeline(VanillaBiometricsPipeline):
         )
 
         # Training the score transformer
+        if isinstance_nested(
+            self.post_processor, "estimator", ZNormScores
+        ) or isinstance(self.post_processor, ZNormScores):
+            self.post_processor.fit([post_process_samples, biometric_references])
+            # Transformer
+            post_processed_scores = self.post_processor.transform(raw_scores)
 
-        self.post_processor.fit([post_process_samples, biometric_references])
-
-        # Transformer
-        post_processed_scores = self.post_processor.transform(raw_scores)
+        elif isinstance_nested(
+            self.post_processor, "estimator", TNormScores
+        ) or isinstance(self.post_processor, TNormScores):
+            # self.post_processor.fit([post_process_samples, probe_features])
+            self.post_processor.fit([post_process_samples, probe_samples])
+            # Transformer
+            post_processed_scores = self.post_processor.transform(raw_scores)
+        else:
+            logger.warning(
+                f"Invalid post-processor {self.post_processor}. Returning the raw_scores"
+            )
+            post_processed_scores = raw_scores
 
         return raw_scores, post_processed_scores
 
@@ -249,10 +262,12 @@ class CheckpointPostProcessor(CheckpointWrapper):
         return transformed_sample_sets
 
 
-def checkpoint_score_normalization_pipeline(pipeline, base_dir, hash_fn=None):
+def checkpoint_score_normalization_pipeline(
+    pipeline, base_dir, sub_dir="norm", hash_fn=None
+):
 
-    model_path = os.path.join(base_dir, "stats.pkl")
-    features_dir = os.path.join(base_dir, "normed_scores")
+    model_path = os.path.join(base_dir, sub_dir, "stats.pkl")
+    features_dir = os.path.join(base_dir, sub_dir, "normed_scores")
 
     # Checkpointing only the post processor
     pipeline.post_processor = CheckpointPostProcessor(
@@ -288,18 +303,45 @@ class ZNormScores(TransformerMixin, BaseEstimator):
     """
 
     def __init__(
-        self,
-        transformer,
-        scoring_function,
-        top_norm=False,
-        top_norm_score_fraction=0.8,
-        **kwargs,
+        self, pipeline, top_norm=False, top_norm_score_fraction=0.8, **kwargs,
     ):
         super().__init__(**kwargs)
-        self.transformer = transformer
-        self.scoring_function = scoring_function
         self.top_norm_score_fraction = top_norm_score_fraction
         self.top_norm = top_norm
+
+        # Copying the pipeline and possibly chaning the biometric_algoritm paths
+        self.pipeline = copy.deepcopy(pipeline)
+
+        # TODO: I know this is ugly, but I don't want to create on pipeline for every single
+        # normalization strategy
+        if isinstance_nested(
+            self.pipeline,
+            "biometric_algorithm",
+            bob.bio.base.pipelines.vanilla_biometrics.wrappers.BioAlgorithmCheckpointWrapper,
+        ):
+
+            if isinstance_nested(
+                self.pipeline,
+                "biometric_algorithm",
+                bob.bio.base.pipelines.vanilla_biometrics.wrappers.BioAlgorithmDaskWrapper,
+            ):
+                self.pipeline.biometric_algorithm.biometric_algorithm.score_dir = os.path.join(
+                    self.pipeline.biometric_algorithm.biometric_algorithm.score_dir,
+                    "score-norm",
+                )
+                self.pipeline.biometric_algorithm.biometric_algorithm.biometric_reference_dir = os.path.join(
+                    self.pipeline.biometric_algorithm.biometric_algorithm.biometric_reference_dir,
+                    "score-norm",
+                )
+
+            else:
+                self.pipeline.biometric_algorithm.score_dir = os.path.join(
+                    self.pipeline.biometric_algorithm.score_dir, "score-norm"
+                )
+                self.pipeline.biometric_algorithm.biometric_reference_dir = os.path.join(
+                    self.pipeline.biometric_algorithm.biometric_reference_dir,
+                    "score-norm",
+                )
 
     def fit(self, X, y=None):
 
@@ -310,9 +352,9 @@ class ZNormScores(TransformerMixin, BaseEstimator):
         # Compute the ZScores
 
         # Computing the features
-        zprobe_features = self.transformer.transform(zprobe_samples)
+        zprobe_features = self.pipeline.transformer.transform(zprobe_samples)
 
-        z_scores, _ = self.scoring_function(
+        z_scores, _ = self.pipeline.compute_scores(
             zprobe_features,
             biometric_references,
             allow_scoring_with_all_biometric_references=False,
@@ -383,3 +425,151 @@ class ZNormScores(TransformerMixin, BaseEstimator):
 
         return z_normed_scores
 
+
+class TNormScores(TransformerMixin, BaseEstimator):
+    """
+    Apply T-Norm Score normalization on top of VanillaBiometric Pipeline
+
+    Reference bibliography from: A Generative Model for Score Normalization in Speaker Recognition
+    https://arxiv.org/pdf/1709.09868.pdf
+
+
+    Parameters
+    ----------
+
+    """
+
+    def __init__(
+        self, pipeline, top_norm=False, top_norm_score_fraction=0.8, **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.top_norm_score_fraction = top_norm_score_fraction
+        self.top_norm = top_norm
+
+        # Copying the pipeline and possibly chaning the biometric_algoritm paths
+        self.pipeline = copy.deepcopy(pipeline)
+
+        # TODO: I know this is ugly, but I don't want to create on pipeline for every single
+        # normalization strategy
+        if isinstance_nested(
+            self.pipeline,
+            "biometric_algorithm",
+            bob.bio.base.pipelines.vanilla_biometrics.wrappers.BioAlgorithmCheckpointWrapper,
+        ):
+
+            if isinstance_nested(
+                self.pipeline,
+                "biometric_algorithm",
+                bob.bio.base.pipelines.vanilla_biometrics.wrappers.BioAlgorithmDaskWrapper,
+            ):
+                self.pipeline.biometric_algorithm.biometric_algorithm.score_dir = os.path.join(
+                    self.pipeline.biometric_algorithm.biometric_algorithm.score_dir,
+                    "score-norm",
+                )
+                self.pipeline.biometric_algorithm.biometric_algorithm.biometric_reference_dir = os.path.join(
+                    self.pipeline.biometric_algorithm.biometric_algorithm.biometric_reference_dir,
+                    "score-norm",
+                )
+
+            else:
+                self.pipeline.biometric_algorithm.score_dir = os.path.join(
+                    self.pipeline.biometric_algorithm.score_dir, "score-norm"
+                )
+                self.pipeline.biometric_algorithm.biometric_reference_dir = os.path.join(
+                    self.pipeline.biometric_algorithm.biometric_reference_dir,
+                    "score-norm",
+                )
+
+    def fit(self, X, y=None):
+
+        # JUst for the sake of readability
+        treference_samples = X[0]
+
+        # TODO: We need to pass probe samples instead of probe features
+        probe_samples = X[1]  ## Probes to be normalized
+
+        probe_features = self.pipeline.transformer.transform(probe_samples)
+
+        # Creating T-Models
+        treferences = self.pipeline.create_biometric_reference(treference_samples)
+
+        # t_references_ids = [s.reference_id for s in treferences]
+
+        # probes[0].reference_id
+
+        # Scoring the T-Models
+        t_scores = self.pipeline.biometric_algorithm.score_samples(
+            probe_features,
+            treferences,
+            allow_scoring_with_all_biometric_references=True,
+        )
+
+        # t_scores, _ = self.pipeline.compute_scores(
+        #    probes, treferences, allow_scoring_with_all_biometric_references=True,
+        # )
+
+        # TODO: THIS IS SUPER INNEFICIENT, BUT
+        # IT'S THE MOST READABLE SOLUTION
+        # Stacking scores by biometric reference
+        self.t_stats = dict()
+
+        for sset in t_scores:
+
+            self.t_stats[sset.reference_id] = Sample(
+                [s.data for s in sset], parent=sset
+            )
+
+        # Now computing the statistics in place
+        for key in self.t_stats:
+            data = self.t_stats[key].data
+
+            ## Selecting the top scores
+            if self.top_norm:
+                # Sorting in ascending order
+                data = -np.sort(-data)
+                proportion = int(np.floor(len(data) * self.top_norm_score_fraction))
+                data = data[0:proportion]
+
+            self.t_stats[key].mu = np.mean(self.t_stats[key].data)
+            self.t_stats[key].std = np.std(self.t_stats[key].data)
+            # self._z_stats[key].std = legacy_std(
+            #    self._z_stats[key].mu, self._z_stats[key].data
+            # )
+            self.t_stats[key].data = []
+
+        return self
+
+    def transform(self, X):
+
+        if len(X) <= 0:
+            # Nothing to be transformed
+            return []
+
+        def _transform_samples(X, stats):
+            scores = []
+            for no_normed_score in X:
+                score = (no_normed_score.data - stats.mu) / stats.std
+
+                t_score = Sample(score, parent=no_normed_score)
+                scores.append(t_score)
+            return scores
+
+        if isinstance(X[0], SampleSet):
+
+            t_normed_scores = []
+            # Transforming either Samples or SampleSets
+
+            for probe_scores in X:
+
+                stats = self.t_stats[probe_scores.reference_id]
+
+                t_normed_scores.append(
+                    SampleSet(
+                        _transform_samples(probe_scores, stats), parent=probe_scores
+                    )
+                )
+        else:
+            # If it is Samples
+            t_normed_scores = _transform_samples(X)
+
+        return t_normed_scores

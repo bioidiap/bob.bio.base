@@ -21,6 +21,7 @@ from bob.bio.base.pipelines.vanilla_biometrics import (
     Distance,
     VanillaBiometricsPipeline,
     ZNormScores,
+    TNormScores,
     ScoreNormalizationPipeline,
     checkpoint_score_normalization_pipeline,
     dask_score_normalization_pipeline,
@@ -28,6 +29,7 @@ from bob.bio.base.pipelines.vanilla_biometrics import (
     dask_vanilla_biometrics,
     BioAlgorithmLegacy,
     CSVScoreWriter,
+    checkpoint_vanilla_biometrics,
 )
 
 import bob.pipelines as mario
@@ -217,12 +219,14 @@ def test_norm_mechanics():
 
             # Fetching ids
             reference_ids = [r.reference_id for r in biometric_reference_sample_sets]
-            t_reference_ids = [r.reference_id for r in t_reference_sample_sets]
-            ids = reference_ids + t_reference_ids
+            # t_reference_ids = [r.reference_id for r in t_reference_sample_sets]
+            # ids = reference_ids + t_reference_ids
 
-            probe_sample_sets = _create_sample_sets(probes, offset=600, references=ids)
+            probe_sample_sets = _create_sample_sets(
+                probes, offset=600, references=reference_ids
+            )
             z_probe_sample_sets = _create_sample_sets(
-                z_probes, offset=900, references=ids
+                z_probes, offset=900, references=reference_ids
             )
 
             ############
@@ -262,11 +266,8 @@ def test_norm_mechanics():
             ############
             # TESTING Z-NORM
             #############
-
-            z_norm_postprocessor = ZNormScores(
-                transformer=vanilla_pipeline.transformer,
-                scoring_function=vanilla_pipeline.compute_scores,
-            )
+            # """
+            z_norm_postprocessor = ZNormScores(pipeline=vanilla_pipeline)
 
             z_vanilla_pipeline = ScoreNormalizationPipeline(
                 vanilla_pipeline, z_norm_postprocessor
@@ -274,7 +275,7 @@ def test_norm_mechanics():
 
             if with_checkpoint:
                 z_vanilla_pipeline = checkpoint_score_normalization_pipeline(
-                    z_vanilla_pipeline, dir_name
+                    z_vanilla_pipeline, dir_name, sub_dir="znorm"
                 )
 
             if with_dask:
@@ -292,18 +293,52 @@ def test_norm_mechanics():
             z_normed_scores = _dump_scores_from_samples(
                 z_normed_score_samples, shape=(n_probes, n_references)
             )
+
             np.testing.assert_allclose(z_normed_scores, z_normed_scores_ref)
+            # """
+            ############
+            # TESTING T-NORM
+            #############
+
+            t_norm_postprocessor = TNormScores(pipeline=vanilla_pipeline)
+
+            t_vanilla_pipeline = ScoreNormalizationPipeline(
+                vanilla_pipeline, t_norm_postprocessor
+            )
+
+            if with_checkpoint:
+                t_vanilla_pipeline = checkpoint_score_normalization_pipeline(
+                    t_vanilla_pipeline, dir_name, sub_dir="tnorm"
+                )
+
+            if with_dask:
+                t_vanilla_pipeline = dask_score_normalization_pipeline(
+                    t_vanilla_pipeline
+                )
+
+            _, t_normed_score_samples = t_vanilla_pipeline(
+                [],
+                biometric_reference_sample_sets,
+                copy.deepcopy(probe_sample_sets),
+                t_reference_sample_sets,
+            )
+
+            t_normed_scores = _dump_scores_from_samples(
+                t_normed_score_samples, shape=(n_probes, n_references)
+            )
+
+            np.testing.assert_allclose(t_normed_scores, t_normed_scores_ref)
 
     # No dask
     run(False)  # On memory
 
-    # With checkpoing
+    ## With checkpoing
     run(False, with_checkpoint=True)
     run(False, with_checkpoint=True)
     shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
     os.makedirs(dir_name, exist_ok=True)
 
-    # With dask
+    ## With dask
     run(True)  # On memory
     run(True, with_checkpoint=True)
     run(True, with_checkpoint=True)
@@ -321,29 +356,39 @@ def test_znorm_on_memory():
 
             biometric_algorithm = Distance()
 
-            vanilla_biometrics_pipeline = ZTNormPipeline(
-                VanillaBiometricsPipeline(
-                    transformer, biometric_algorithm, score_writer
-                )
+            vanilla_pipeline = VanillaBiometricsPipeline(
+                transformer, biometric_algorithm, score_writer
+            )
+
+            z_norm_postprocessor = ZNormScores(pipeline=vanilla_pipeline)
+
+            z_vanilla_pipeline = ScoreNormalizationPipeline(
+                vanilla_pipeline, z_norm_postprocessor
+            )
+
+            # Checkpointing everything
+
+            vanilla_pipeline = checkpoint_vanilla_biometrics(
+                vanilla_pipeline, base_dir=dir_name
+            )
+
+            z_vanilla_pipeline = checkpoint_score_normalization_pipeline(
+                z_vanilla_pipeline, dir_name, sub_dir="znorm"
             )
 
             if with_dask:
-                vanilla_biometrics_pipeline = dask_vanilla_biometrics(
-                    vanilla_biometrics_pipeline, npartitions=2
+                vanilla_pipeline = dask_vanilla_biometrics(
+                    vanilla_pipeline, npartitions=2
+                )
+                z_vanilla_pipeline = dask_score_normalization_pipeline(
+                    z_vanilla_pipeline
                 )
 
-            (
-                raw_scores,
-                z_scores,
-                t_scores,
-                zt_scores,
-                s_scores,
-            ) = vanilla_biometrics_pipeline(
+            (raw_scores, z_scores) = z_vanilla_pipeline(
                 database.background_model_samples(),
                 database.references(),
                 database.probes(),
                 database.zprobes(),
-                database.treferences(),
                 allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
             )
 
@@ -354,21 +399,22 @@ def test_znorm_on_memory():
 
             if isinstance(score_writer, CSVScoreWriter):
                 raw_scores = _concatenate(
-                    vanilla_biometrics_pipeline,
+                    z_vanilla_pipeline,
                     raw_scores,
                     os.path.join(dir_name, "scores-dev", "raw_scores"),
                 )
                 z_scores = _concatenate(
-                    vanilla_biometrics_pipeline,
+                    z_vanilla_pipeline,
                     z_scores,
                     os.path.join(dir_name, "scores-dev", "z_scores"),
                 )
+                """
                 t_scores = _concatenate(
-                    vanilla_biometrics_pipeline,
+                    z_vanilla_pipeline,
                     t_scores,
                     os.path.join(dir_name, "scores-dev", "t_scores"),
                 )
-
+                
                 zt_scores = _concatenate(
                     vanilla_biometrics_pipeline,
                     zt_scores,
@@ -380,13 +426,14 @@ def test_znorm_on_memory():
                     s_scores,
                     os.path.join(dir_name, "scores-dev", "s_scores"),
                 )
+                """
 
             if with_dask:
                 raw_scores = raw_scores.compute(scheduler="single-threaded")
                 z_scores = z_scores.compute(scheduler="single-threaded")
-                t_scores = t_scores.compute(scheduler="single-threaded")
-                zt_scores = zt_scores.compute(scheduler="single-threaded")
-                s_scores = s_scores.compute(scheduler="single-threaded")
+                # t_scores = t_scores.compute(scheduler="single-threaded")
+                # zt_scores = zt_scores.compute(scheduler="single-threaded")
+                # s_scores = s_scores.compute(scheduler="single-threaded")
 
             if isinstance(score_writer, CSVScoreWriter):
 
@@ -406,6 +453,7 @@ def test_znorm_on_memory():
                     )
                     == 101
                 )
+                """
                 assert (
                     len(
                         open(
@@ -430,13 +478,14 @@ def test_znorm_on_memory():
                     )
                     == 101
                 )
+                """
 
             else:
                 assert len(raw_scores) == 10
                 assert len(z_scores) == 10
-                assert len(t_scores) == 10
-                assert len(zt_scores) == 10
-                assert len(s_scores) == 10
+                # assert len(t_scores) == 10
+                # assert len(zt_scores) == 10
+                # assert len(s_scores) == 10
 
         run_pipeline(False)
         run_pipeline(False)  # Testing checkpoint
@@ -458,3 +507,4 @@ def test_znorm_on_memory():
         run_pipeline(
             True, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
         )
+

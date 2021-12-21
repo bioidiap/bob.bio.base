@@ -158,7 +158,7 @@ It is possible to do it via configuration file
     cls=ResourceOption,
 )
 @click.option(
-    "--score_normalization_type",
+    "--score-normalization-type",
     "-nt",
     type=click.Choice(["znorm", "tnorm"]),
     multiple=False,

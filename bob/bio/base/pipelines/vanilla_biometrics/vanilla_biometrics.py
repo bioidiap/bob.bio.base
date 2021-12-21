@@ -10,8 +10,8 @@ from bob.bio.base.pipelines.vanilla_biometrics import (
     dask_score_normalization_pipeline,
     ScoreNormalizationPipeline,
     ZNormScores,
+    TNormScores,
 )
-from bob.bio.base.pipelines.vanilla_biometrics import ZTNormPipeline
 from bob.bio.base.pipelines.vanilla_biometrics import checkpoint_vanilla_biometrics
 from bob.bio.base.pipelines.vanilla_biometrics import dask_vanilla_biometrics
 from bob.bio.base.pipelines.vanilla_biometrics import is_checkpointed
@@ -269,10 +269,19 @@ def execute_vanilla_biometrics_score_normalization(
     ## PICKING THE TYPE OF POST-PROCESSING
     if score_normalization_type == "znorm":
         post_processor = ZNormScores(
-            transformer=pipeline.transformer,
-            scoring_function=pipeline.compute_scores,
+            pipeline=pipeline,
             top_norm=top_norm,
             top_norm_score_fraction=top_norm_score_fraction,
+        )
+    elif score_normalization_type == "tnorm":
+        post_processor = TNormScores(
+            pipeline=pipeline,
+            top_norm=top_norm,
+            top_norm_score_fraction=top_norm_score_fraction,
+        )
+    else:
+        raise ValueError(
+            f"score_normalization_type {score_normalization_type} is not valid"
         )
 
     pipeline = ScoreNormalizationPipeline(
@@ -295,6 +304,8 @@ def execute_vanilla_biometrics_score_normalization(
 
         if score_normalization_type == "znorm":
             score_normalization_samples = database.zprobes(group=group)
+        elif score_normalization_type == "tnorm":
+            score_normalization_samples = database.treferences()
 
         score_file_name = os.path.join(output, f"scores-{group}")
 
