@@ -180,7 +180,7 @@ def execute_vanilla_biometrics_score_normalization(
     dask_partition_size,
     dask_n_workers,
     checkpoint_dir=None,
-    top_norm=True,
+    top_norm=False,
     top_norm_score_fraction=0.8,
     score_normalization_type="znorm",
     **kwargs,

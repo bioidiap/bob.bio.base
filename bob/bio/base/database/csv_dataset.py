@@ -488,7 +488,7 @@ class CSVDataset(Database):
 
 class CSVDatasetZTNorm(CSVDataset):
     """
-    Generic filelist dataset for :any:`bob.bio.base.pipelines.vanilla_biometrics.ZTNormPipeline` pipelines.
+    Generic filelist dataset for :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` pipelines.
     Check :any:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
     interface.
 

@@ -43,12 +43,13 @@ class ScoreNormalizationPipeline(VanillaBiometricsPipeline):
     -------
        >>> from bob.pipelines.transformers import Linearize
        >>> from sklearn.pipeline import make_pipeline
-       >>> from bob.bio.base.pipelines.vanilla_biometrics import Distance, VanillaBiometricsPipeline, ZTNormPipeline
+       >>> from bob.bio.base.pipelines.vanilla_biometrics import Distance, VanillaBiometricsPipeline, ScoreNormalizationPipeline, ZNormScores
        >>> estimator_1 = Linearize()
        >>> transformer = make_pipeline(estimator_1)
        >>> biometric_algorithm = Distance()
        >>> vanilla_biometrics_pipeline = VanillaBiometricsPipeline(transformer, biometric_algorithm)
-       >>> zt_pipeline = ZTNormPipeline(vanilla_biometrics_pipeline)
+       >>> z_norm_postprocessor = ZNormScores(pipeline=vanilla_biometrics_pipeline)
+       >>> z_pipeline = ScoreNormalizationPipeline(vanilla_biometrics_pipeline, z_norm_postprocessor)       
        >>> zt_pipeline(...) #doctest: +SKIP
 
     Parameters
