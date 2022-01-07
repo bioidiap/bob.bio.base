@@ -24,7 +24,14 @@ from .pipelines import check_valid_pipeline, VanillaBiometricsPipeline
 from . import pickle_compress, uncompress_unpickle
 from sklearn.base import TransformerMixin, BaseEstimator
 import tempfile
-import copy
+from bob.bio.base.score.load import get_split_dataframe
+
+import dask.dataframe
+from scipy.optimize import curve_fit
+from scipy.stats import weibull_min
+from sklearn.linear_model import LogisticRegression
+from scipy.special import expit
+from functools import partial
 
 from bob.pipelines.utils import is_estimator_stateless
 
@@ -49,7 +56,7 @@ class ScoreNormalizationPipeline(VanillaBiometricsPipeline):
        >>> biometric_algorithm = Distance()
        >>> vanilla_biometrics_pipeline = VanillaBiometricsPipeline(transformer, biometric_algorithm)
        >>> z_norm_postprocessor = ZNormScores(pipeline=vanilla_biometrics_pipeline)
-       >>> z_pipeline = ScoreNormalizationPipeline(vanilla_biometrics_pipeline, z_norm_postprocessor)       
+       >>> z_pipeline = ScoreNormalizationPipeline(vanilla_biometrics_pipeline, z_norm_postprocessor)
        >>> zt_pipeline(...) #doctest: +SKIP
 
     Parameters
@@ -60,14 +67,17 @@ class ScoreNormalizationPipeline(VanillaBiometricsPipeline):
 
         post_processor: :py:class`sklearn.pipeline.Pipeline` or a `sklearn.base.BaseEstimator`
             Transformer that will post process the scores
-        
-        score_writer: 
+
+        score_writer:
 
 
     """
 
     def __init__(
-        self, vanilla_biometrics_pipeline, post_processor, score_writer=None,
+        self,
+        vanilla_biometrics_pipeline,
+        post_processor,
+        score_writer=None,
     ):
 
         self.vanilla_biometrics_pipeline = vanilla_biometrics_pipeline
@@ -169,8 +179,8 @@ def copy_learned_attributes(from_estimator, to_estimator):
 class CheckpointPostProcessor(CheckpointWrapper):
     """
     This class creates pickle checkpoints of post-processed scores.
-    
-    
+
+
     .. Note::
        We can't use the `CheckpointWrapper` from bob.pipelines to create these checkpoints.
        Because there, each sample is checkpointed, and here we can have checkpoints for SampleSets
@@ -285,7 +295,9 @@ def checkpoint_score_normalization_pipeline(
 def dask_score_normalization_pipeline(pipeline):
 
     # Checkpointing only the post processor
-    pipeline.post_processor = DaskWrapper(pipeline.post_processor,)
+    pipeline.post_processor = DaskWrapper(
+        pipeline.post_processor,
+    )
 
     return pipeline
 
@@ -304,7 +316,11 @@ class ZNormScores(TransformerMixin, BaseEstimator):
     """
 
     def __init__(
-        self, pipeline, top_norm=False, top_norm_score_fraction=0.8, **kwargs,
+        self,
+        pipeline,
+        top_norm=False,
+        top_norm_score_fraction=0.8,
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.top_norm_score_fraction = top_norm_score_fraction
@@ -326,9 +342,11 @@ class ZNormScores(TransformerMixin, BaseEstimator):
                 "biometric_algorithm",
                 bob.bio.base.pipelines.vanilla_biometrics.wrappers.BioAlgorithmDaskWrapper,
             ):
-                self.pipeline.biometric_algorithm.biometric_algorithm.score_dir = os.path.join(
-                    self.pipeline.biometric_algorithm.biometric_algorithm.score_dir,
-                    "score-norm",
+                self.pipeline.biometric_algorithm.biometric_algorithm.score_dir = (
+                    os.path.join(
+                        self.pipeline.biometric_algorithm.biometric_algorithm.score_dir,
+                        "score-norm",
+                    )
                 )
                 self.pipeline.biometric_algorithm.biometric_algorithm.biometric_reference_dir = os.path.join(
                     self.pipeline.biometric_algorithm.biometric_algorithm.biometric_reference_dir,
@@ -339,9 +357,11 @@ class ZNormScores(TransformerMixin, BaseEstimator):
                 self.pipeline.biometric_algorithm.score_dir = os.path.join(
                     self.pipeline.biometric_algorithm.score_dir, "score-norm"
                 )
-                self.pipeline.biometric_algorithm.biometric_reference_dir = os.path.join(
-                    self.pipeline.biometric_algorithm.biometric_reference_dir,
-                    "score-norm",
+                self.pipeline.biometric_algorithm.biometric_reference_dir = (
+                    os.path.join(
+                        self.pipeline.biometric_algorithm.biometric_reference_dir,
+                        "score-norm",
+                    )
                 )
 
     def fit(self, X, y=None):
@@ -441,7 +461,11 @@ class TNormScores(TransformerMixin, BaseEstimator):
     """
 
     def __init__(
-        self, pipeline, top_norm=False, top_norm_score_fraction=0.8, **kwargs,
+        self,
+        pipeline,
+        top_norm=False,
+        top_norm_score_fraction=0.8,
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.top_norm_score_fraction = top_norm_score_fraction
@@ -463,9 +487,11 @@ class TNormScores(TransformerMixin, BaseEstimator):
                 "biometric_algorithm",
                 bob.bio.base.pipelines.vanilla_biometrics.wrappers.BioAlgorithmDaskWrapper,
             ):
-                self.pipeline.biometric_algorithm.biometric_algorithm.score_dir = os.path.join(
-                    self.pipeline.biometric_algorithm.biometric_algorithm.score_dir,
-                    "score-norm",
+                self.pipeline.biometric_algorithm.biometric_algorithm.score_dir = (
+                    os.path.join(
+                        self.pipeline.biometric_algorithm.biometric_algorithm.score_dir,
+                        "score-norm",
+                    )
                 )
                 self.pipeline.biometric_algorithm.biometric_algorithm.biometric_reference_dir = os.path.join(
                     self.pipeline.biometric_algorithm.biometric_algorithm.biometric_reference_dir,
@@ -476,9 +502,11 @@ class TNormScores(TransformerMixin, BaseEstimator):
                 self.pipeline.biometric_algorithm.score_dir = os.path.join(
                     self.pipeline.biometric_algorithm.score_dir, "score-norm"
                 )
-                self.pipeline.biometric_algorithm.biometric_reference_dir = os.path.join(
-                    self.pipeline.biometric_algorithm.biometric_reference_dir,
-                    "score-norm",
+                self.pipeline.biometric_algorithm.biometric_reference_dir = (
+                    os.path.join(
+                        self.pipeline.biometric_algorithm.biometric_reference_dir,
+                        "score-norm",
+                    )
                 )
 
     def fit(self, X, y=None):
@@ -574,3 +602,245 @@ class TNormScores(TransformerMixin, BaseEstimator):
             t_normed_scores = _transform_samples(X)
 
         return t_normed_scores
+
+
+class LLRCalibration(TransformerMixin, BaseEstimator):
+    """
+    Implements the linear calibration using a logistic function
+    defined in:
+
+    `Mandasari, Miranti Indar, et al. "Score calibration in face recognition." Iet Biometrics 3.4 (2014): 246-256.`
+
+    """
+
+    def fit(self, X, y):
+        self.regressor = LogisticRegression(
+            class_weight="balanced", fit_intercept=True, penalty="l2"
+        )
+        self.regressor.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        def get_sigmoid_score(X, regressor):
+            return expit(X * regressor.coef_ + regressor.intercept_).ravel()
+
+        return get_sigmoid_score(X, self.regressor)
+
+
+class WeibullCalibration(TransformerMixin, BaseEstimator):
+    """
+    Implements the weibull calibration using a pair of Weibull 
+    pdf's defined in:
+
+    `Macarulla Rodriguez, Andrea, Zeno Geradts, and Marcel Worring. "Likelihood Ratios for Deep Neural Networks in Face Comparison." Journal of forensic sciences 65.4 (2020): 1169-1183.`    
+
+    """
+    def fit(self, X, y):
+        def weibull_pdf(x, beta, eta):
+            return weibull_min.pdf(np.abs(x), beta, scale=eta)
+
+        bins = 20
+
+        impostors_X, impostors_Y = np.histogram(X[y == 0], bins=bins, density=True)
+        # averaging the bins
+        impostors_Y = 0.5 * (impostors_Y[1:] + impostors_Y[:-1])
+
+        # Binining genuies and impostors for the fit
+        genuines_X, genuines_Y = np.histogram(X[y == 1], bins=bins, density=True)
+        # averaging the bins
+        genuines_Y = 0.5 * (genuines_Y[1:] + genuines_Y[:-1])
+
+        # Weibull fit for impostor distribution
+        impostors_popt, _ = curve_fit(
+            weibull_pdf, xdata=impostors_X, ydata=impostors_Y, p0=[1.0, 1.0]
+        )
+        impostors_beta, impostors_eta = impostors_popt
+
+        # Fitting weibull for genuines and impostors
+        genuines_popt, _ = curve_fit(
+            weibull_pdf, xdata=genuines_X, ydata=genuines_Y, p0=[1.0, 1.0]
+        )
+        genuines_beta, genuines_eta = genuines_popt
+
+        self.gen_dist = partial(weibull_pdf, beta=genuines_beta, eta=genuines_eta)
+        self.imp_dist = partial(weibull_pdf, beta=impostors_beta, eta=impostors_eta)
+        return self
+
+    def predict_proba(self, X):
+        epsilon = 1e-10
+        return np.log10(self.gen_dist(X) + epsilon) - np.log10(
+            self.imp_dist(X) + epsilon
+        )
+
+
+class CategoricalCalibration(TransformerMixin, BaseEstimator):
+    """
+    Implements an adaptation of the Categorical Calibration defined in:
+
+    `Mandasari, Miranti Indar, et al. "Score calibration in face recognition." Iet Biometrics 3.4 (2014): 246-256.`
+
+    In such a work the calibration is defined as::
+
+      :math:`s = \sum_{i=0}^{N} (\text{calibrator}_i)(X)`
+
+
+    The category calibration is implemented in the tails of the score distributions in this implementation.
+    For the impostor score distribution, the tail is defined between :math:`q_3(x)` and :math:`q3(x)+\alpha * (q3(x)-q1(x))`, where :math:`q_n` represents the quantile and :math:`\alpha` represents an offset.
+    For the genuines score distribution, the tail is defined between :math:`q_1(x)` and :math:`q1(x)-\alpha * (q3(x)-q1(x))`.
+
+    In this implementation one calibrator per category is fitted at training time.
+    At test time, the maximum of the calibrated scores is returned.
+
+
+    Parameters
+    ----------
+        field_name: str
+           Reference field name in the csv score file. E.g. race, gender, ..,
+
+        field_values: list
+           Possible values for `field_name`. E.g ['male', 'female'], ['black', 'white']
+
+        quantile_factor: int
+           Quantile offset factor. Default `1.5`
+
+        fit_estimator: None
+           Estimator used for calibrations. Default to `LLRCalibration`
+
+    """
+
+    def __init__(
+        self,
+        field_name,
+        field_values,
+        quantile_factor=1.5,
+        fit_estimator=None,
+    ):
+        self.field_name = field_name
+        self.field_values = field_values
+        self.quantile_factor = quantile_factor
+
+        if fit_estimator is None:
+            self.fit_estimator = LLRCalibration
+        else:
+            self.fit_estimator = fit_estimator
+
+    def fit(self, input_score_file_name):
+        """
+        Fit the calibrator
+
+        Parameters
+        ----------
+
+           input_score_file_name: str
+              Reference score file used to fit the calibrator (E.g `scores-dev.csv`).
+
+
+        """
+        def impostor_threshold(impostor_scores):
+            """
+            score > Q3 + 1.5*IQR
+            """
+            q1 = np.quantile(impostor_scores, 0.25)
+            q3 = np.quantile(impostor_scores, 0.75)
+
+            if self.quantile_factor is None:
+                return impostor_scores[impostor_scores > q3]
+            else:
+                outlier_zone = q3 + self.quantile_factor * (q3 - q1)
+                return impostor_scores[
+                    (impostor_scores > q3) & (impostor_scores <= outlier_zone)
+                ]
+
+            ### Only outliers
+            # return impostor_scores[impostor_scores>q3+self.quantile_factor*(q3-q1)]
+
+        def genuine_threshold(genuine_scores):
+            """
+            score <= Q3 - 1.5*IQR
+            """
+            q1 = np.quantile(genuine_scores, 0.25)
+            q3 = np.quantile(genuine_scores, 0.75)
+
+            if self.quantile_factor is None:
+                return genuine_scores[genuine_scores < q1]
+            else:
+                outlier_zone = q1 - self.quantile_factor * (q3 - q1)
+                return genuine_scores[
+                    (genuine_scores < q1) & (genuine_scores >= outlier_zone)
+                ]
+
+            ### Only outliers
+            # return genuine_scores[genuine_scores<=q1-self.quantile_factor*(q3-q1)]
+
+        impostors, genuines = get_split_dataframe(input_score_file_name)
+        self._categorical_fitters = []
+
+        def get_sigmoid_score(X, regressor):
+            return expit(X * regressor.coef_ + regressor.intercept_).ravel()
+
+        for value in self.field_values:
+
+            ## Filtering genunines and impostors per group
+            impostors_per_group = (
+                impostors[
+                    (impostors[f"probe_{self.field_name}"] == value)
+                    & (impostors[f"bio_ref_{self.field_name}"] == value)
+                ]["score"]
+                .compute()
+                .to_numpy()
+            )
+            genuines_per_group = (
+                genuines[(genuines[f"probe_{self.field_name}"] == value)]["score"]
+                .compute()
+                .to_numpy()
+            )
+
+            impostors_per_group = impostor_threshold(impostors_per_group)
+            genuines_per_group = genuine_threshold(genuines_per_group)
+
+            # Training the regressor
+            y = np.hstack(
+                (np.zeros(len(impostors_per_group)), np.ones(len(genuines_per_group)))
+            )
+            X = np.expand_dims(
+                np.hstack((impostors_per_group, genuines_per_group)), axis=1
+            )
+            fitter = self.fit_estimator().fit(X, y)
+            self._categorical_fitters.append(fitter)
+
+        return self
+
+    def transform(self, input_scores, calibrated_scores):
+        """
+        Calibrates a score
+
+        Parameters
+        ----------
+
+           input_scores: list
+              Input score files to be calibrated
+              
+           calibrated_files: list
+              Output score files
+           
+        """
+
+        assert isinstance(input_scores, list)
+        assert isinstance(calibrated_scores, list)
+        assert len(calibrated_scores) == len(input_scores)
+
+        for file_name, output_file_name in zip(input_scores, calibrated_scores):
+            # Fetching scores
+            dataframe = dask.dataframe.read_csv(file_name)
+            dataframe = dataframe.compute()
+            X = dataframe["score"].to_numpy()
+
+            calibrated_scores = np.vstack(
+                [fitter.predict_proba(X) for fitter in self._categorical_fitters]
+            ).T
+            calibrated_scores = np.max(calibrated_scores, axis=1)
+            dataframe["score"] = calibrated_scores
+
+            dataframe.to_csv(output_file_name, index=False)
+
+        return calibrated_scores
