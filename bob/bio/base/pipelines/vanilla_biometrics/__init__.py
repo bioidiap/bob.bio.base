@@ -64,6 +64,11 @@ from .score_post_processor import (
     ScoreNormalizationPipeline,
     checkpoint_score_normalization_pipeline,
     dask_score_normalization_pipeline,
+    CategoricalCalibration,
+    WeibullCalibration,
+    LLRCalibration,
+    GammaCalibration
+
 )
 
 from .legacy import BioAlgorithmLegacy, DatabaseConnector
