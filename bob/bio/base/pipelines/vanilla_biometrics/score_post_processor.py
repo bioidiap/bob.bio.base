@@ -637,8 +637,11 @@ class WeibullCalibration(TransformerMixin, BaseEstimator):
     """
 
     def fit(self, X, y):
-        def weibull_pdf(x, c, scale):
+        def weibull_pdf_genuines(x, c, scale):
             return weibull_min.pdf(np.abs(x), c, scale=scale)
+
+        def weibull_pdf_impostors(x, c, scale):
+            return 1 - weibull_min.pdf(np.abs(x), c, scale=scale)
 
         bins = 20
 
@@ -653,24 +656,28 @@ class WeibullCalibration(TransformerMixin, BaseEstimator):
 
         # Weibull fit for impostor distribution
         impostors_popt, _ = curve_fit(
-            weibull_pdf, xdata=impostors_X, ydata=impostors_Y, p0=[1.0, 1.0]
+            weibull_pdf_impostors, xdata=impostors_X, ydata=impostors_Y, p0=[1.0, 1.0]
         )
         impostors_c, impostors_scale = impostors_popt
 
         # Fitting weibull for genuines and impostors
         genuines_popt, _ = curve_fit(
-            weibull_pdf, xdata=genuines_X, ydata=genuines_Y, p0=[1.0, 1.0]
+            weibull_pdf_genuines, xdata=genuines_X, ydata=genuines_Y, p0=[1.0, 1.0]
         )
         genuines_c, genuines_scale = genuines_popt
 
-        self.gen_dist = partial(weibull_pdf, c=genuines_c, scale=genuines_scale)
-        self.imp_dist = partial(weibull_pdf, c=impostors_c, scale=impostors_scale)
+        self.gen_dist = partial(
+            weibull_pdf_genuines, c=genuines_c, scale=genuines_scale
+        )
+        self.imp_dist = partial(
+            weibull_pdf_impostors, c=impostors_c, scale=impostors_scale
+        )
         return self
 
     def predict_proba(self, X):
         epsilon = 1e-10
-        return np.log10(self.gen_dist(X) + epsilon) - np.log10(
-            self.imp_dist(X) + epsilon
+        return +1 * (
+            np.log10(self.gen_dist(X) + epsilon) - np.log10(self.imp_dist(X) + epsilon)
         )
 
 
@@ -682,8 +689,11 @@ class GammaCalibration(TransformerMixin, BaseEstimator):
     """
 
     def fit(self, X, y):
-        def gamma_pdf(x, a, scale):
+        def gamma_pdf_genuines(x, a, scale):
             return gamma.pdf(np.abs(x), a, scale=scale)
+
+        def gamma_pdf_impostors(x, a, scale):
+            return 1 - gamma.pdf(np.abs(x), a, scale=scale)
 
         bins = 20
 
@@ -698,24 +708,26 @@ class GammaCalibration(TransformerMixin, BaseEstimator):
 
         # gamma fit for impostor distribution
         impostors_popt, _ = curve_fit(
-            gamma_pdf, xdata=impostors_X, ydata=impostors_Y, p0=[1.0, 1.0]
+            gamma_pdf_impostors, xdata=impostors_X, ydata=impostors_Y, p0=[1.0, 1.0]
         )
         impostors_a, impostors_scale = impostors_popt
 
         # Fitting weibull for genuines and impostors
         genuines_popt, _ = curve_fit(
-            gamma_pdf, xdata=genuines_X, ydata=genuines_Y, p0=[1.0, 1.0]
+            gamma_pdf_genuines, xdata=genuines_X, ydata=genuines_Y, p0=[1.0, 1.0]
         )
         genuines_a, genuines_scale = genuines_popt
 
-        self.gen_dist = partial(gamma_pdf, a=genuines_a, scale=genuines_scale)
-        self.imp_dist = partial(gamma_pdf, a=impostors_a, scale=impostors_scale)
+        self.gen_dist = partial(gamma_pdf_genuines, a=genuines_a, scale=genuines_scale)
+        self.imp_dist = partial(
+            gamma_pdf_impostors, a=impostors_a, scale=impostors_scale
+        )
         return self
 
     def predict_proba(self, X):
         epsilon = 1e-10
-        return np.log10(self.gen_dist(X) + epsilon) - np.log10(
-            self.imp_dist(X) + epsilon
+        return +1 * (
+            np.log10(self.gen_dist(X) + epsilon) - np.log10(self.imp_dist(X) + epsilon)
         )
 
 
@@ -726,7 +738,6 @@ class CategoricalCalibration(TransformerMixin, BaseEstimator):
     `Mandasari, Miranti Indar, et al. "Score calibration in face recognition." Iet Biometrics 3.4 (2014): 246-256.`
 
     In such a work the calibration is defined as::
-
       :math:`s = \sum_{i=0}^{N} (\text{calibrator}_i)(X)`
 
 
@@ -736,6 +747,7 @@ class CategoricalCalibration(TransformerMixin, BaseEstimator):
 
     In this implementation one calibrator per category is fitted at training time.
     At test time, the maximum of the calibrated scores is returned.
+
 
 
     Parameters
@@ -748,17 +760,15 @@ class CategoricalCalibration(TransformerMixin, BaseEstimator):
 
         score_selection_method: str
            Method to select the scores for fetting the calibration models.
-           `median-q3`: It will select the scores from the median to q3 from the impostor scores (q1 to median for genuines)
-           `q3-outlier`: It will select the scores from q3 to outlier (q3+1.5*IQD) from the impostor scores (q1 to outlier for genuines)
-           `all`: It will select all the scores.
-            Default to `median-q3`
+             `median-q3`: It will select the scores from the median to q3 from the impostor scores (q1 to median for genuines)
+             `q3-outlier`: It will select the scores from q3 to outlier (q3+1.5*IQD) from the impostor scores (q1 to outlier for genuines)
+             `all`: It will select all the scores. Default to `median-q3`
 
         reduction_function:
            Pointer to a function to reduce the scores. Default to `np.max`
 
         fit_estimator: None
            Estimator used for calibrations. Default to `LLRCalibration`
-
     """
 
     def __init__(
