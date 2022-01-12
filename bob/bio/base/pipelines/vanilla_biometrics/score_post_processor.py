@@ -28,7 +28,7 @@ from bob.bio.base.score.load import get_split_dataframe
 
 import dask.dataframe
 from scipy.optimize import curve_fit
-from scipy.stats import weibull_min, gamma
+from scipy.stats import weibull_min, gamma, beta
 from sklearn.linear_model import LogisticRegression
 from scipy.special import expit
 from functools import partial
@@ -641,7 +641,7 @@ class WeibullCalibration(TransformerMixin, BaseEstimator):
             return weibull_min.pdf(np.abs(x), c, scale=scale)
 
         def weibull_pdf_impostors(x, c, scale):
-            return 1 - weibull_min.pdf(np.abs(x), c, scale=scale)
+            return weibull_min.pdf(np.abs(x), c, scale=scale)
 
         bins = 20
 
@@ -693,9 +693,9 @@ class GammaCalibration(TransformerMixin, BaseEstimator):
             return gamma.pdf(np.abs(x), a, scale=scale)
 
         def gamma_pdf_impostors(x, a, scale):
-            return 1 - gamma.pdf(np.abs(x), a, scale=scale)
+            return gamma.pdf(np.abs(x), a, scale=scale)
 
-        bins = 20
+        bins = 100
 
         impostors_X, impostors_Y = np.histogram(X[y == 0], bins=bins, density=True)
         # averaging the bins
@@ -722,6 +722,51 @@ class GammaCalibration(TransformerMixin, BaseEstimator):
         self.imp_dist = partial(
             gamma_pdf_impostors, a=impostors_a, scale=impostors_scale
         )
+        return self
+
+    def predict_proba(self, X):
+        epsilon = 1e-10
+        return +1 * (
+            np.log10(self.gen_dist(X) + epsilon) - np.log10(self.imp_dist(X) + epsilon)
+        )
+
+
+class BetaCalibration(TransformerMixin, BaseEstimator):
+    """
+    Implements the weibull calibration using a pair of  Beta
+    pdf's defined in:
+
+    """
+
+    def fit(self, X, y):
+        def beta_pdf(x, a, b):
+            return beta.pdf(np.abs(x), a, b)
+
+        bins = 100
+
+        impostors_X, impostors_Y = np.histogram(X[y == 0], bins=bins, density=True)
+        # averaging the bins
+        impostors_Y = 0.5 * (impostors_Y[1:] + impostors_Y[:-1])
+
+        # Binining genuies and impostors for the fit
+        genuines_X, genuines_Y = np.histogram(X[y == 1], bins=bins, density=True)
+        # averaging the bins
+        genuines_Y = 0.5 * (genuines_Y[1:] + genuines_Y[:-1])
+
+        # gamma fit for impostor distribution
+        impostors_popt, _ = curve_fit(
+            beta_pdf, xdata=impostors_X, ydata=impostors_Y, p0=[1, 0.5]
+        )
+        impostors_a, impostors_b = impostors_popt
+
+        # Fitting weibull for genuines and impostors
+        genuines_popt, _ = curve_fit(
+            beta_pdf, xdata=genuines_X, ydata=genuines_Y, p0=[1.0, 0.5]
+        )
+        genuines_a, genuines_b = genuines_popt
+
+        self.gen_dist = partial(beta_pdf, a=genuines_a, b=genuines_b)
+        self.imp_dist = partial(beta_pdf, a=impostors_a, b=impostors_b)
         return self
 
     def predict_proba(self, X):
@@ -762,10 +807,11 @@ class CategoricalCalibration(TransformerMixin, BaseEstimator):
            Method to select the scores for fetting the calibration models.
              `median-q3`: It will select the scores from the median to q3 from the impostor scores (q1 to median for genuines)
              `q3-outlier`: It will select the scores from q3 to outlier (q3+1.5*IQD) from the impostor scores (q1 to outlier for genuines)
+             `q1-median`:
              `all`: It will select all the scores. Default to `median-q3`
 
         reduction_function:
-           Pointer to a function to reduce the scores. Default to `np.max`
+           Pointer to a function to reduce the scores. Default to `np.mean`
 
         fit_estimator: None
            Estimator used for calibrations. Default to `LLRCalibration`
@@ -775,8 +821,8 @@ class CategoricalCalibration(TransformerMixin, BaseEstimator):
         self,
         field_name,
         field_values,
-        score_selection_method="median-q3",
-        reduction_function=np.max,
+        score_selection_method="all",
+        reduction_function=np.mean,
         fit_estimator=None,
     ):
         self.field_name = field_name
@@ -815,6 +861,11 @@ class CategoricalCalibration(TransformerMixin, BaseEstimator):
                 return impostor_scores[
                     (impostor_scores > q3) & (impostor_scores <= outlier_zone)
                 ]
+            elif self.score_selection_method == "q1-median":
+                median = np.median(impostor_scores)
+                return impostor_scores[
+                    (impostor_scores > q1) & (impostor_scores <= median)
+                ]
             elif self.score_selection_method == "median-q3":
                 median = np.median(impostor_scores)
                 return impostor_scores[
@@ -835,6 +886,11 @@ class CategoricalCalibration(TransformerMixin, BaseEstimator):
                 return genuine_scores[
                     (genuine_scores < q1) & (genuine_scores >= outlier_zone)
                 ]
+            elif self.score_selection_method == "q1-median":
+                median = np.median(genuine_scores)
+                return genuine_scores[
+                    (genuine_scores < q3) & (genuine_scores <= median)
+                ]
             elif self.score_selection_method == "median-q3":
                 median = np.median(genuine_scores)
                 return genuine_scores[
@@ -842,17 +898,6 @@ class CategoricalCalibration(TransformerMixin, BaseEstimator):
                 ]
             else:
                 return genuine_scores
-
-            # if self.quantile_factor is None:
-            #    return genuine_scores[genuine_scores < q1]
-            # else:
-            #    outlier_zone = q1 - self.quantile_factor * (q3 - q1)
-            #    return genuine_scores[
-            #        (genuine_scores < q1) & (genuine_scores >= outlier_zone)
-            #    ]
-
-            ### Only outliers
-            # return genuine_scores[genuine_scores<=q1-self.quantile_factor*(q3-q1)]
 
         impostors, genuines = get_split_dataframe(input_score_file_name)
         self._categorical_fitters = []

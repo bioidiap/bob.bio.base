@@ -8,7 +8,7 @@ import os
 
 def pickle_compress(path, obj, attempts=5):
     """
-    Pickle an object, compressed it and save it 
+    Pickle an object, compressed it and save it
 
     Parameters
     ----------
@@ -67,8 +67,8 @@ from .score_post_processor import (
     CategoricalCalibration,
     WeibullCalibration,
     LLRCalibration,
-    GammaCalibration
-
+    GammaCalibration,
+    BetaCalibration,
 )
 
 from .legacy import BioAlgorithmLegacy, DatabaseConnector
@@ -117,4 +117,3 @@ __appropriate__(
 )
 
 __all__ = [_ for _ in dir() if not _.startswith("_")]
-
