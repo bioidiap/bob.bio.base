@@ -20,13 +20,16 @@ from bob.bio.base.test.test_vanilla_biometrics import DummyDatabase, _make_trans
 from bob.bio.base.pipelines.vanilla_biometrics import (
     Distance,
     VanillaBiometricsPipeline,
-    ZTNormPipeline,
-    ZTNormDaskWrapper,
-    ZTNormCheckpointWrapper,
+    ZNormScores,
+    TNormScores,
+    ScoreNormalizationPipeline,
+    checkpoint_score_normalization_pipeline,
+    dask_score_normalization_pipeline,
     BioAlgorithmCheckpointWrapper,
     dask_vanilla_biometrics,
     BioAlgorithmLegacy,
     CSVScoreWriter,
+    checkpoint_vanilla_biometrics,
 )
 
 import bob.pipelines as mario
@@ -42,13 +45,13 @@ def zt_norm_stubs(references, probes, t_references, z_probes):
     def _norm(scores, norm_base_scores, axis=1):
         mu = np.mean(norm_base_scores, axis=axis)
 
-        # old = True
-        # if old:
-        #    std = np.std(norm_base_scores, axis=axis)
-        #    if axis == 1:
-        #        return ((scores.T - mu) / std).T
-        #    else:
-        #        return (scores - mu) / std
+        old = True
+        if old:
+            std = np.std(norm_base_scores, axis=axis)
+            if axis == 1:
+                return ((scores.T - mu) / std).T
+            else:
+                return (scores - mu) / std
 
         if axis == 1:
             std = np.sqrt(
@@ -177,6 +180,7 @@ def test_norm_mechanics():
             ############
             # Prepating stubs
             ############
+
             n_references = 2
             n_probes = 3
             n_t_references = 4
@@ -215,12 +219,14 @@ def test_norm_mechanics():
 
             # Fetching ids
             reference_ids = [r.reference_id for r in biometric_reference_sample_sets]
-            t_reference_ids = [r.reference_id for r in t_reference_sample_sets]
-            ids = reference_ids + t_reference_ids
+            # t_reference_ids = [r.reference_id for r in t_reference_sample_sets]
+            # ids = reference_ids + t_reference_ids
 
-            probe_sample_sets = _create_sample_sets(probes, offset=600, references=ids)
+            probe_sample_sets = _create_sample_sets(
+                probes, offset=600, references=reference_ids
+            )
             z_probe_sample_sets = _create_sample_sets(
-                z_probes, offset=900, references=ids
+                z_probes, offset=900, references=reference_ids
             )
 
             ############
@@ -260,159 +266,79 @@ def test_norm_mechanics():
             ############
             # TESTING Z-NORM
             #############
+            # """
+            z_norm_postprocessor = ZNormScores(pipeline=vanilla_pipeline)
 
-            z_vanilla_pipeline = ZTNormPipeline(
-                vanilla_pipeline, z_norm=True, t_norm=False
+            z_vanilla_pipeline = ScoreNormalizationPipeline(
+                vanilla_pipeline, z_norm_postprocessor
             )
 
             if with_checkpoint:
-                z_vanilla_pipeline.ztnorm_solver = ZTNormCheckpointWrapper(
-                    z_vanilla_pipeline.ztnorm_solver, dir_name
+                z_vanilla_pipeline = checkpoint_score_normalization_pipeline(
+                    z_vanilla_pipeline, dir_name, sub_dir="znorm"
                 )
 
             if with_dask:
-                z_vanilla_pipeline.ztnorm_solver = ZTNormDaskWrapper(
-                    z_vanilla_pipeline.ztnorm_solver
+                z_vanilla_pipeline = dask_score_normalization_pipeline(
+                    z_vanilla_pipeline
                 )
 
-            z_normed_score_samples = z_vanilla_pipeline(
+            _, z_normed_score_samples = z_vanilla_pipeline(
                 [],
                 biometric_reference_sample_sets,
                 copy.deepcopy(probe_sample_sets),
                 z_probe_sample_sets,
-                t_reference_sample_sets,
             )
-
-            if with_dask:
-                z_normed_score_samples = z_normed_score_samples.compute(
-                    scheduler="single-threaded"
-                )
 
             z_normed_scores = _dump_scores_from_samples(
                 z_normed_score_samples, shape=(n_probes, n_references)
             )
-            np.testing.assert_allclose(z_normed_scores, z_normed_scores_ref)
 
+            np.testing.assert_allclose(z_normed_scores, z_normed_scores_ref)
+            # """
             ############
             # TESTING T-NORM
             #############
 
-            t_vanilla_pipeline = ZTNormPipeline(
-                vanilla_pipeline, z_norm=False, t_norm=True,
+            t_norm_postprocessor = TNormScores(pipeline=vanilla_pipeline)
+
+            t_vanilla_pipeline = ScoreNormalizationPipeline(
+                vanilla_pipeline, t_norm_postprocessor
             )
 
             if with_checkpoint:
-                t_vanilla_pipeline.ztnorm_solver = ZTNormCheckpointWrapper(
-                    t_vanilla_pipeline.ztnorm_solver, dir_name
+                t_vanilla_pipeline = checkpoint_score_normalization_pipeline(
+                    t_vanilla_pipeline, dir_name, sub_dir="tnorm"
                 )
 
             if with_dask:
-                t_vanilla_pipeline.ztnorm_solver = ZTNormDaskWrapper(
-                    t_vanilla_pipeline.ztnorm_solver
+                t_vanilla_pipeline = dask_score_normalization_pipeline(
+                    t_vanilla_pipeline
                 )
 
-            t_normed_score_samples = t_vanilla_pipeline(
+            _, t_normed_score_samples = t_vanilla_pipeline(
                 [],
                 biometric_reference_sample_sets,
                 copy.deepcopy(probe_sample_sets),
-                z_probe_sample_sets,
                 t_reference_sample_sets,
             )
-
-            if with_dask:
-                t_normed_score_samples = t_normed_score_samples.compute(
-                    scheduler="single-threaded"
-                )
 
             t_normed_scores = _dump_scores_from_samples(
                 t_normed_score_samples, shape=(n_probes, n_references)
             )
-            assert np.allclose(t_normed_scores, t_normed_scores_ref)
 
-            ############
-            # TESTING ZT-NORM
-            #############
-            zt_vanilla_pipeline = ZTNormPipeline(
-                vanilla_pipeline, z_norm=True, t_norm=True,
-            )
-
-            if with_checkpoint:
-                zt_vanilla_pipeline.ztnorm_solver = ZTNormCheckpointWrapper(
-                    zt_vanilla_pipeline.ztnorm_solver, dir_name
-                )
-
-            if with_dask:
-                zt_vanilla_pipeline.ztnorm_solver = ZTNormDaskWrapper(
-                    zt_vanilla_pipeline.ztnorm_solver
-                )
-
-            (
-                raw_score_samples,
-                z_normed_score_samples,
-                t_normed_score_samples,
-                zt_normed_score_samples,
-                s_normed_score_samples,
-            ) = zt_vanilla_pipeline(
-                [],
-                biometric_reference_sample_sets,
-                copy.deepcopy(probe_sample_sets),
-                z_probe_sample_sets,
-                t_reference_sample_sets,
-            )
-
-            if with_dask:
-                raw_score_samples = raw_score_samples.compute(
-                    scheduler="single-threaded"
-                )
-                z_normed_score_samples = z_normed_score_samples.compute(
-                    scheduler="single-threaded"
-                )
-                t_normed_score_samples = t_normed_score_samples.compute(
-                    scheduler="single-threaded"
-                )
-                zt_normed_score_samples = zt_normed_score_samples.compute(
-                    scheduler="single-threaded"
-                )
-
-                s_normed_score_samples = s_normed_score_samples.compute(
-                    scheduler="single-threaded"
-                )
-
-            raw_scores = _dump_scores_from_samples(
-                raw_score_samples, shape=(n_probes, n_references)
-            )
-            assert np.allclose(raw_scores, raw_scores_ref)
-
-            z_normed_scores = _dump_scores_from_samples(
-                z_normed_score_samples, shape=(n_probes, n_references)
-            )
-            assert np.allclose(t_normed_scores, t_normed_scores_ref)
-
-            t_normed_scores = _dump_scores_from_samples(
-                t_normed_score_samples, shape=(n_probes, n_references)
-            )
-            assert np.allclose(t_normed_scores, t_normed_scores_ref)
-
-            zt_normed_scores = _dump_scores_from_samples(
-                zt_normed_score_samples, shape=(n_probes, n_references)
-            )
-            assert np.allclose(zt_normed_scores, zt_normed_scores_ref)
-
-            s_normed_scores = _dump_scores_from_samples(
-                s_normed_score_samples, shape=(n_probes, n_references)
-            )
-            assert np.allclose(s_normed_scores, s_normed_scores_ref)
+            np.testing.assert_allclose(t_normed_scores, t_normed_scores_ref)
 
     # No dask
     run(False)  # On memory
 
-    # With checkpoing
+    ## With checkpoing
     run(False, with_checkpoint=True)
     run(False, with_checkpoint=True)
     shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
     os.makedirs(dir_name, exist_ok=True)
 
-    # With dask
+    ## With dask
     run(True)  # On memory
     run(True, with_checkpoint=True)
     run(True, with_checkpoint=True)
@@ -430,29 +356,39 @@ def test_znorm_on_memory():
 
             biometric_algorithm = Distance()
 
-            vanilla_biometrics_pipeline = ZTNormPipeline(
-                VanillaBiometricsPipeline(
-                    transformer, biometric_algorithm, score_writer
-                )
+            vanilla_pipeline = VanillaBiometricsPipeline(
+                transformer, biometric_algorithm, score_writer
+            )
+
+            z_norm_postprocessor = ZNormScores(pipeline=vanilla_pipeline)
+
+            z_vanilla_pipeline = ScoreNormalizationPipeline(
+                vanilla_pipeline, z_norm_postprocessor
+            )
+
+            # Checkpointing everything
+
+            vanilla_pipeline = checkpoint_vanilla_biometrics(
+                vanilla_pipeline, base_dir=dir_name
+            )
+
+            z_vanilla_pipeline = checkpoint_score_normalization_pipeline(
+                z_vanilla_pipeline, dir_name, sub_dir="znorm"
             )
 
             if with_dask:
-                vanilla_biometrics_pipeline = dask_vanilla_biometrics(
-                    vanilla_biometrics_pipeline, npartitions=2
+                vanilla_pipeline = dask_vanilla_biometrics(
+                    vanilla_pipeline, npartitions=2
+                )
+                z_vanilla_pipeline = dask_score_normalization_pipeline(
+                    z_vanilla_pipeline
                 )
 
-            (
-                raw_scores,
-                z_scores,
-                t_scores,
-                zt_scores,
-                s_scores,
-            ) = vanilla_biometrics_pipeline(
+            (raw_scores, z_scores) = z_vanilla_pipeline(
                 database.background_model_samples(),
                 database.references(),
                 database.probes(),
                 database.zprobes(),
-                database.treferences(),
                 allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
             )
 
@@ -463,21 +399,22 @@ def test_znorm_on_memory():
 
             if isinstance(score_writer, CSVScoreWriter):
                 raw_scores = _concatenate(
-                    vanilla_biometrics_pipeline,
+                    z_vanilla_pipeline,
                     raw_scores,
                     os.path.join(dir_name, "scores-dev", "raw_scores"),
                 )
                 z_scores = _concatenate(
-                    vanilla_biometrics_pipeline,
+                    z_vanilla_pipeline,
                     z_scores,
                     os.path.join(dir_name, "scores-dev", "z_scores"),
                 )
+                """
                 t_scores = _concatenate(
-                    vanilla_biometrics_pipeline,
+                    z_vanilla_pipeline,
                     t_scores,
                     os.path.join(dir_name, "scores-dev", "t_scores"),
                 )
-
+                
                 zt_scores = _concatenate(
                     vanilla_biometrics_pipeline,
                     zt_scores,
@@ -489,13 +426,14 @@ def test_znorm_on_memory():
                     s_scores,
                     os.path.join(dir_name, "scores-dev", "s_scores"),
                 )
+                """
 
             if with_dask:
                 raw_scores = raw_scores.compute(scheduler="single-threaded")
                 z_scores = z_scores.compute(scheduler="single-threaded")
-                t_scores = t_scores.compute(scheduler="single-threaded")
-                zt_scores = zt_scores.compute(scheduler="single-threaded")
-                s_scores = s_scores.compute(scheduler="single-threaded")
+                # t_scores = t_scores.compute(scheduler="single-threaded")
+                # zt_scores = zt_scores.compute(scheduler="single-threaded")
+                # s_scores = s_scores.compute(scheduler="single-threaded")
 
             if isinstance(score_writer, CSVScoreWriter):
 
@@ -515,6 +453,7 @@ def test_znorm_on_memory():
                     )
                     == 101
                 )
+                """
                 assert (
                     len(
                         open(
@@ -539,13 +478,14 @@ def test_znorm_on_memory():
                     )
                     == 101
                 )
+                """
 
             else:
                 assert len(raw_scores) == 10
                 assert len(z_scores) == 10
-                assert len(t_scores) == 10
-                assert len(zt_scores) == 10
-                assert len(s_scores) == 10
+                # assert len(t_scores) == 10
+                # assert len(zt_scores) == 10
+                # assert len(s_scores) == 10
 
         run_pipeline(False)
         run_pipeline(False)  # Testing checkpoint
@@ -567,3 +507,4 @@ def test_znorm_on_memory():
         run_pipeline(
             True, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
         )
+

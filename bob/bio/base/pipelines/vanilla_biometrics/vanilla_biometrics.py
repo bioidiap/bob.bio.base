@@ -5,8 +5,13 @@ import dask.bag
 from bob.bio.base.pipelines.vanilla_biometrics import BioAlgorithmDaskWrapper
 from bob.bio.base.pipelines.vanilla_biometrics import CSVScoreWriter
 from bob.bio.base.pipelines.vanilla_biometrics import FourColumnsScoreWriter
-from bob.bio.base.pipelines.vanilla_biometrics import ZTNormCheckpointWrapper
-from bob.bio.base.pipelines.vanilla_biometrics import ZTNormPipeline
+from bob.bio.base.pipelines.vanilla_biometrics import (
+    checkpoint_score_normalization_pipeline,
+    dask_score_normalization_pipeline,
+    ScoreNormalizationPipeline,
+    ZNormScores,
+    TNormScores,
+)
 from bob.bio.base.pipelines.vanilla_biometrics import checkpoint_vanilla_biometrics
 from bob.bio.base.pipelines.vanilla_biometrics import dask_vanilla_biometrics
 from bob.bio.base.pipelines.vanilla_biometrics import is_checkpointed
@@ -164,19 +169,20 @@ def execute_vanilla_biometrics(
         _ = compute_scores(post_processed_scores, dask_client)
 
 
-def execute_vanilla_biometrics_ztnorm(
+def execute_vanilla_biometrics_score_normalization(
     pipeline,
     database,
     dask_client,
     groups,
     output,
-    consider_genuines,
     write_metadata_scores,
-    ztnorm_cohort_proportion,
     checkpoint,
     dask_partition_size,
     dask_n_workers,
     checkpoint_dir=None,
+    top_norm=False,
+    top_norm_score_fraction=0.8,
+    score_normalization_type="znorm",
     **kwargs,
 ):
     """
@@ -219,27 +225,27 @@ def execute_vanilla_biometrics_ztnorm(
     dask_n_workers: int
         If using Dask, this option defines the number of workers to start your experiment. Dask automatically scales up/down the number of workers due to the current load of tasks to be solved. Use this option if the current amount of workers set to start an experiment doesn't suit you.
 
-    ztnorm_cohort_proportion: float
+    top_norm: bool
+
+    top_norm_score_fraction: float
         Sets the percentage of samples used for t-norm and z-norm. Sometimes you don't want to use all the t/z samples for normalization
 
-    consider_genuines: float
-        If set, will consider genuine scores in the ZT score normalization
     checkpoint_dir: str
         If `checkpoint` is set, this path will be used to save the checkpoints.
         If `None`, the content of `output` will be used.
 
     """
 
-    def _merge_references_ztnorm(biometric_references, probes, zprobes, treferences):
-        treferences_sub = [t.reference_id for t in treferences]
-        biometric_references_sub = [t.reference_id for t in biometric_references]
-        for i in range(len(probes)):
-            probes[i].references += treferences_sub
+    # def _merge_references_ztnorm(biometric_references, probes, zprobes, treferences):
+    #    treferences_sub = [t.reference_id for t in treferences]
+    #    biometric_references_sub = [t.reference_id for t in biometric_references]
+    #    for i in range(len(probes)):
+    #        probes[i].references += treferences_sub
 
-        for i in range(len(zprobes)):
-            zprobes[i].references = biometric_references_sub + treferences_sub
+    #    for i in range(len(zprobes)):
+    #        zprobes[i].references = biometric_references_sub + treferences_sub
 
-        return probes, zprobes
+    #    return probes, zprobes
 
     if not os.path.exists(output):
         os.makedirs(output, exist_ok=True)
@@ -260,17 +266,46 @@ def execute_vanilla_biometrics_ztnorm(
     if checkpoint and not is_checkpointed(pipeline):
         pipeline = checkpoint_vanilla_biometrics(pipeline, checkpoint_dir)
 
-    # Patching the pipeline in case of ZNorm and checkpointing it
-    pipeline = ZTNormPipeline(pipeline)
+    ## PICKING THE TYPE OF POST-PROCESSING
+    if score_normalization_type == "znorm":
+        post_processor = ZNormScores(
+            pipeline=pipeline,
+            top_norm=top_norm,
+            top_norm_score_fraction=top_norm_score_fraction,
+        )
+    elif score_normalization_type == "tnorm":
+        post_processor = TNormScores(
+            pipeline=pipeline,
+            top_norm=top_norm,
+            top_norm_score_fraction=top_norm_score_fraction,
+        )
+    else:
+        raise ValueError(
+            f"score_normalization_type {score_normalization_type} is not valid"
+        )
+
+    pipeline = ScoreNormalizationPipeline(
+        pipeline, post_processor, CSVScoreWriter(os.path.join(output, "./tmp"))
+    )
+
     if checkpoint:
-        pipeline.ztnorm_solver = ZTNormCheckpointWrapper(
-            pipeline.ztnorm_solver, os.path.join(checkpoint_dir, "normed-scores")
+
+        # checkpoint_score_normalization_pipeline,
+        # dask_score_normalization_pipeline,
+
+        pipeline = checkpoint_score_normalization_pipeline(
+            pipeline, os.path.join(checkpoint_dir, f"{score_normalization_type}-scores")
         )
 
     background_model_samples = database.background_model_samples()
-    zprobes = database.zprobes(proportion=ztnorm_cohort_proportion)
-    treferences = database.treferences(proportion=ztnorm_cohort_proportion)
+
+    # treferences = database.treferences(proportion=ztnorm_cohort_proportion)
     for group in groups:
+
+        if score_normalization_type == "znorm":
+            score_normalization_samples = database.zprobes(group=group)
+        elif score_normalization_type == "tnorm":
+            score_normalization_samples = database.treferences()
 
         score_file_name = os.path.join(output, f"scores-{group}")
 
@@ -309,27 +344,27 @@ def execute_vanilla_biometrics_ztnorm(
             else False
         )
 
-        if consider_genuines:
-            z_probes_cpy = copy.deepcopy(zprobes)
-            zprobes += copy.deepcopy(treferences)
-            treferences += z_probes_cpy
+        # if consider_genuines:
+        #    z_probes_cpy = copy.deepcopy(zprobes)
+        #    zprobes += copy.deepcopy(treferences)
+        #    treferences += z_probes_cpy
 
-        probes, zprobes = _merge_references_ztnorm(
-            biometric_references, probes, zprobes, treferences
-        )
+        # probes, zprobes = _merge_references_ztnorm(
+        # biometric_references, probes, zprobes, treferences
+        # )
 
-        (
-            raw_scores,
-            z_normed_scores,
-            t_normed_scores,
-            zt_normed_scores,
-            s_normed_scores,
-        ) = pipeline(
+        # probes, score_normalization_samples = _merge_references_ztnorm(
+        #    biometric_references,
+        #    probes,
+        #    score_normalization_samples,
+        #    score_normalization_samples,
+        # )
+
+        (raw_scores, score_normed_scores,) = pipeline(
             background_model_samples,
             biometric_references,
             probes,
-            zprobes,
-            treferences,
+            score_normalization_samples,
             allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
         )
 
@@ -344,14 +379,15 @@ def execute_vanilla_biometrics_ztnorm(
         _ = compute_scores(raw_scores, dask_client)
 
         # Z-SCORES
-        z_normed_scores = post_process_scores(
+        score_normed_scores = post_process_scores(
             pipeline,
-            z_normed_scores,
-            _build_filename(score_file_name, "z_normed_scores.csv"),
+            score_normed_scores,
+            _build_filename(score_file_name, f"{score_normalization_type}.csv"),
         )
-        _ = compute_scores(z_normed_scores, dask_client)
+        _ = compute_scores(score_normed_scores, dask_client)
 
         # T-SCORES
+        """
         t_normed_scores = post_process_scores(
             pipeline,
             t_normed_scores,
@@ -374,3 +410,4 @@ def execute_vanilla_biometrics_ztnorm(
             _build_filename(score_file_name, "zt_normed_scores.csv"),
         )
         _ = compute_scores(zt_normed_scores, dask_client)
+        """

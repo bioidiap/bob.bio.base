@@ -8,7 +8,9 @@
 import logging
 
 import click
-from bob.bio.base.pipelines.vanilla_biometrics import execute_vanilla_biometrics_ztnorm
+from bob.bio.base.pipelines.vanilla_biometrics import (
+    execute_vanilla_biometrics_score_normalization,
+)
 from bob.extension.scripts.click_helper import ConfigCommand
 from bob.extension.scripts.click_helper import ResourceOption
 from bob.extension.scripts.click_helper import verbosity_option
@@ -100,23 +102,10 @@ It is possible to do it via configuration file
     cls=ResourceOption,
 )
 @click.option(
-    "--consider-genuines",
-    is_flag=True,
-    help="If set, will consider genuine scores in the ZT score normalization",
-    cls=ResourceOption,
-)
-@click.option(
     "--write-metadata-scores/--write-column-scores",
     "-m/-nm",
     default=True,
     help="If set, all the scores will be written with all their metadata using the `CSVScoreWriter`",
-    cls=ResourceOption,
-)
-@click.option(
-    "--ztnorm-cohort-proportion",
-    default=1.0,
-    type=float,
-    help="Sets the percentage of samples used for t-norm and z-norm. Sometimes you don't want to use all the t/z samples for normalization",
     cls=ResourceOption,
 )
 @click.option(
@@ -146,19 +135,52 @@ It is possible to do it via configuration file
     type=click.INT,
     cls=ResourceOption,
 )
+@click.option(
+    "-c",
+    "--checkpoint-dir",
+    show_default=True,
+    default=None,
+    help="Name of output directory where the checkpoints will be saved. In case --checkpoint is set, checkpoints will be saved in this directory.",
+    cls=ResourceOption,
+)
+@click.option(
+    "--top-norm",
+    "-t",
+    is_flag=True,
+    help="If set, it will do the top-norm.",
+    cls=ResourceOption,
+)
+@click.option(
+    "--top-norm-score-fraction",
+    default=1.0,
+    type=float,
+    help="Sets the percentage of samples used for t-norm and z-norm. Sometimes you don't want to use all the t/z samples for normalization",
+    cls=ResourceOption,
+)
+@click.option(
+    "--score-normalization-type",
+    "-nt",
+    type=click.Choice(["znorm", "tnorm"]),
+    multiple=False,
+    default="znorm",
+    help="Type of normalization",
+    cls=ResourceOption,
+)
 @verbosity_option(cls=ResourceOption)
-def vanilla_biometrics_ztnorm(
+def vanilla_biometrics_score_normalization(
     pipeline,
     database,
     dask_client,
     groups,
     output,
-    consider_genuines,
     write_metadata_scores,
-    ztnorm_cohort_proportion,
     memory,
     dask_partition_size,
     dask_n_workers,
+    checkpoint_dir,
+    top_norm,
+    top_norm_score_fraction,
+    score_normalization_type,
     **kwargs,
 ):
     """Runs the the vanilla-biometrics with ZT-Norm like score normalizations.
@@ -216,18 +238,20 @@ def vanilla_biometrics_ztnorm(
 
     checkpoint = not memory
 
-    execute_vanilla_biometrics_ztnorm(
+    execute_vanilla_biometrics_score_normalization(
         pipeline,
         database,
         dask_client,
         groups,
         output,
-        consider_genuines,
         write_metadata_scores,
-        ztnorm_cohort_proportion,
         checkpoint,
         dask_partition_size,
         dask_n_workers,
+        checkpoint_dir,
+        top_norm,
+        top_norm_score_fraction,
+        score_normalization_type,
     )
 
     logger.info("Experiment finished !")
