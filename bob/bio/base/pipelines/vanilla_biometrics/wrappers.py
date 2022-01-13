@@ -14,7 +14,12 @@ from .abstract_classes import BioAlgorithm
 import bob.pipelines
 import numpy as np
 import h5py
-from .zt_norm import ZTNormPipeline, ZTNormDaskWrapper
+
+# from .zt_norm import ZTNormPipeline, ZTNormDaskWrapper
+from .score_post_processor import (
+    ScoreNormalizationPipeline,
+    dask_score_normalization_pipeline,
+)
 from .legacy import BioAlgorithmLegacy
 from bob.bio.base.transformers import (
     PreprocessorTransformer,
@@ -272,7 +277,7 @@ def dask_vanilla_biometrics(pipeline, npartitions=None, partition_size=None):
        Size of the partition for the initial `dask.bag`
     """
 
-    if isinstance(pipeline, ZTNormPipeline):
+    if isinstance(pipeline, ScoreNormalizationPipeline):
         # Dasking the first part of the pipelines
         pipeline.vanilla_biometrics_pipeline = dask_vanilla_biometrics(
             pipeline.vanilla_biometrics_pipeline,
@@ -284,7 +289,7 @@ def dask_vanilla_biometrics(pipeline, npartitions=None, partition_size=None):
         )
         pipeline.transformer = pipeline.vanilla_biometrics_pipeline.transformer
 
-        pipeline.ztnorm_solver = ZTNormDaskWrapper(pipeline.ztnorm_solver)
+        pipeline = dask_score_normalization_pipeline(pipeline)
 
     else:
 

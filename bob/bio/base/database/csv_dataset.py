@@ -391,9 +391,7 @@ class CSVDataset(Database):
                 )
 
         sample_sets = convert_samples_to_samplesets(
-            samples,
-            group_by_reference_id=group_by_reference_id,
-            references=references,
+            samples, group_by_reference_id=group_by_reference_id, references=references,
         )
 
         self.cache[cache_key] = sample_sets
@@ -490,7 +488,7 @@ class CSVDataset(Database):
 
 class CSVDatasetZTNorm(CSVDataset):
     """
-    Generic filelist dataset for :any:`bob.bio.base.pipelines.vanilla_biometrics.ZTNormPipeline` pipelines.
+    Generic filelist dataset for :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` pipelines.
     Check :any:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
     interface.
 
@@ -522,7 +520,8 @@ class CSVDatasetZTNorm(CSVDataset):
         super().__init__(**kwargs)
 
         # create_cache
-        self.cache["znorm_csv"] = None
+        self.cache["znorm_csv_dev"] = None
+        self.cache["znorm_csv_eval"] = None
         self.cache["tnorm_csv"] = None
 
         znorm_csv = search_file(
@@ -551,7 +550,8 @@ class CSVDatasetZTNorm(CSVDataset):
                 f"The file `for_tnorm.csv` is required and it was not found `{self.protocol}/norm`"
             )
 
-        self.znorm_csv = znorm_csv
+        self.znorm_csv_dev = znorm_csv
+        self.znorm_csv_eval = znorm_csv
         self.tnorm_csv = tnorm_csv
 
     def zprobes(self, group="dev", proportion=1.0):
@@ -561,7 +561,7 @@ class CSVDatasetZTNorm(CSVDataset):
                 f"Invalid proportion value ({proportion}). Values allowed from [0-1]"
             )
 
-        cache_key = "znorm_csv"
+        cache_key = f"znorm_csv_{group}"
         samplesets = self._get_samplesets(
             group=group,
             cache_key=cache_key,
@@ -583,9 +583,7 @@ class CSVDatasetZTNorm(CSVDataset):
 
         cache_key = "tnorm_csv"
         samplesets = self._get_samplesets(
-            group="dev",
-            cache_key=cache_key,
-            group_by_reference_id=True,
+            group="dev", cache_key=cache_key, group_by_reference_id=True,
         )
 
         treferences = samplesets[: int(len(samplesets) * proportion)]
