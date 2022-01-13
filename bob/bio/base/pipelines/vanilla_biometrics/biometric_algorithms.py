@@ -81,6 +81,9 @@ class Distance(BioAlgorithm):
           A similarity value between ``model`` and ``probe``
         
         """
+        import ipdb
+
+        ipdb.set_trace()
 
         # We have to do this `check_array` because we can
         # have other array formats that are not necessarily numpy arrays but extensions of it

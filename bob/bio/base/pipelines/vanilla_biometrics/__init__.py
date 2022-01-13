@@ -8,7 +8,7 @@ import os
 
 def pickle_compress(path, obj, attempts=5):
     """
-    Pickle an object, compressed it and save it 
+    Pickle an object, compressed it and save it
 
     Parameters
     ----------
@@ -58,13 +58,24 @@ from .wrappers import (
 
 from .abstract_classes import BioAlgorithm, Database, ScoreWriter
 
-from .zt_norm import ZTNormPipeline, ZTNormDaskWrapper, ZTNormCheckpointWrapper, ZTNorm
+from .score_post_processor import (
+    ZNormScores,
+    TNormScores,
+    ScoreNormalizationPipeline,
+    checkpoint_score_normalization_pipeline,
+    dask_score_normalization_pipeline,
+    CategoricalCalibration,
+    WeibullCalibration,
+    LLRCalibration,
+    GammaCalibration,
+    BetaCalibration,
+)
 
 from .legacy import BioAlgorithmLegacy, DatabaseConnector
 
 from .vanilla_biometrics import (
     execute_vanilla_biometrics,
-    execute_vanilla_biometrics_ztnorm,
+    execute_vanilla_biometrics_score_normalization,
 )
 
 
@@ -97,17 +108,12 @@ __appropriate__(
     dask_vanilla_biometrics,
     checkpoint_vanilla_biometrics,
     is_checkpointed,
-    ZTNormPipeline,
-    ZTNormDaskWrapper,
-    ZTNormCheckpointWrapper,
     BioAlgorithmLegacy,
     DatabaseConnector,
     execute_vanilla_biometrics,
     BioAlgorithm,
     Database,
     ScoreWriter,
-    ZTNorm,
 )
 
 __all__ = [_ for _ in dir() if not _.startswith("_")]
-
