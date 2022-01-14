@@ -44,10 +44,10 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
     ----------
         biometric_algorithm: :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`
            An implemented :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`
-    
+
         base_dir: str
            Path to store biometric references and scores
-        
+
         extension: str
             File extension
 
@@ -65,7 +65,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
     Examples
     --------
 
-    >>> from bob.bio.base.pipelines.vanilla_biometrics import BioAlgorithmCheckpointWrapper, Distance    
+    >>> from bob.bio.base.pipelines.vanilla_biometrics import BioAlgorithmCheckpointWrapper, Distance
     >>> biometric_algorithm = BioAlgorithmCheckpointWrapper(Distance(), base_dir="./")
     >>> biometric_algorithm.enroll(sample) # doctest: +SKIP
 
@@ -159,8 +159,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         biometric_references,
         allow_scoring_with_all_biometric_references=False,
     ):
-        """Given a sampleset for probing, compute the scores and returns a sample set with the scores
-        """
+        """Given a sampleset for probing, compute the scores and returns a sample set with the scores"""
 
         def _load(path):
             return uncompress_unpickle(path)
@@ -315,7 +314,7 @@ def dask_vanilla_biometrics(pipeline, npartitions=None, partition_size=None):
 
 
 def checkpoint_vanilla_biometrics(
-    pipeline, base_dir, biometric_algorithm_dir=None, hash_fn=None
+    pipeline, base_dir, biometric_algorithm_dir=None, hash_fn=None, force=False
 ):
     """
     Given a :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`, wraps :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` and
@@ -357,6 +356,7 @@ def checkpoint_vanilla_biometrics(
             estimator,
             features_dir=os.path.join(base_dir, name),
             hash_fn=hash_fn,
+            force=force,
         )
 
         sk_pipeline.steps[i] = (name, wraped_estimator)
@@ -381,7 +381,10 @@ def checkpoint_vanilla_biometrics(
 
     else:
         pipeline.biometric_algorithm = BioAlgorithmCheckpointWrapper(
-            pipeline.biometric_algorithm, base_dir=bio_ref_scores_dir, hash_fn=hash_fn
+            pipeline.biometric_algorithm,
+            base_dir=bio_ref_scores_dir,
+            hash_fn=hash_fn,
+            force=force,
         )
 
     return pipeline

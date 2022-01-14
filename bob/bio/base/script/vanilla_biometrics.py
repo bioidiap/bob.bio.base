@@ -54,7 +54,9 @@ It is possible to do it via configuration file
 
 
 @click.command(
-    entry_point_group="bob.bio.config", cls=ConfigCommand, epilog=EPILOG,
+    entry_point_group="bob.bio.config",
+    cls=ConfigCommand,
+    epilog=EPILOG,
 )
 @click.option(
     "--pipeline",
@@ -141,6 +143,13 @@ It is possible to do it via configuration file
     type=click.INT,
     cls=ResourceOption,
 )
+@click.option(
+    "--force",
+    "-f",
+    is_flag=True,
+    help="If set, it will force generate all the checkpoints of an experiment. This option doesn't work if `--memory` is set",
+    cls=ResourceOption,
+)
 @verbosity_option(cls=ResourceOption)
 def vanilla_biometrics(
     pipeline,
@@ -153,6 +162,7 @@ def vanilla_biometrics(
     checkpoint_dir,
     dask_partition_size,
     dask_n_workers,
+    force,
     **kwargs,
 ):
     """Runs the simplest biometrics pipeline.
@@ -226,6 +236,7 @@ def vanilla_biometrics(
         dask_partition_size,
         dask_n_workers,
         checkpoint_dir=checkpoint_dir,
+        force=force,
         **kwargs,
     )
 

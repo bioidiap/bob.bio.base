@@ -48,6 +48,7 @@ def execute_vanilla_biometrics(
     dask_partition_size,
     dask_n_workers,
     checkpoint_dir=None,
+    force=False,
     **kwargs,
 ):
     """
@@ -89,6 +90,9 @@ def execute_vanilla_biometrics(
     checkpoint_dir: str
         If `checkpoint` is set, this path will be used to save the checkpoints.
         If `None`, the content of `output` will be used.
+
+    force: bool
+        If set, it will force generate all the checkpoints of an experiment. This option doesn't work if `--memory` is set
     """
     if not os.path.exists(output):
         os.makedirs(output, exist_ok=True)
@@ -109,7 +113,7 @@ def execute_vanilla_biometrics(
     if checkpoint and not is_checkpointed(pipeline):
         hash_fn = database.hash_fn if hasattr(database, "hash_fn") else None
         pipeline = checkpoint_vanilla_biometrics(
-            pipeline, checkpoint_dir, hash_fn=hash_fn
+            pipeline, checkpoint_dir, hash_fn=hash_fn, force=force
         )
 
     # Load the background model samples only if the transformer requires fitting
@@ -149,7 +153,10 @@ def execute_vanilla_biometrics(
             if dask_partition_size is not None:
                 partition_size = dask_partition_size
 
-            pipeline = dask_vanilla_biometrics(pipeline, partition_size=partition_size,)
+            pipeline = dask_vanilla_biometrics(
+                pipeline,
+                partition_size=partition_size,
+            )
 
         logger.info(f"Running vanilla biometrics for group {group}")
         allow_scoring_with_all_biometric_references = (
@@ -183,6 +190,7 @@ def execute_vanilla_biometrics_score_normalization(
     top_norm=False,
     top_norm_score_fraction=0.8,
     score_normalization_type="znorm",
+    force=False,
     **kwargs,
 ):
     """
@@ -264,7 +272,7 @@ def execute_vanilla_biometrics_score_normalization(
 
     # Check if it's already checkpointed
     if checkpoint and not is_checkpointed(pipeline):
-        pipeline = checkpoint_vanilla_biometrics(pipeline, checkpoint_dir)
+        pipeline = checkpoint_vanilla_biometrics(pipeline, checkpoint_dir, force=force)
 
     ## PICKING THE TYPE OF POST-PROCESSING
     if score_normalization_type == "znorm":
@@ -335,7 +343,10 @@ def execute_vanilla_biometrics_score_normalization(
             if dask_partition_size is not None:
                 partition_size = dask_partition_size
 
-            pipeline = dask_vanilla_biometrics(pipeline, partition_size=partition_size,)
+            pipeline = dask_vanilla_biometrics(
+                pipeline,
+                partition_size=partition_size,
+            )
 
         logger.info(f"Running vanilla biometrics for group {group}")
         allow_scoring_with_all_biometric_references = (
