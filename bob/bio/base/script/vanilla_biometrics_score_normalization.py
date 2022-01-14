@@ -56,7 +56,9 @@ It is possible to do it via configuration file
 
 
 @click.command(
-    entry_point_group="bob.bio.config", cls=ConfigCommand, epilog=EPILOG,
+    entry_point_group="bob.bio.config",
+    cls=ConfigCommand,
+    epilog=EPILOG,
 )
 @click.option(
     "--pipeline",
@@ -166,6 +168,13 @@ It is possible to do it via configuration file
     help="Type of normalization",
     cls=ResourceOption,
 )
+@click.option(
+    "--force",
+    "-f",
+    is_flag=True,
+    help="If set, it will force generate all the checkpoints of an experiment. This option doesn't work if `--memory` is set",
+    cls=ResourceOption,
+)
 @verbosity_option(cls=ResourceOption)
 def vanilla_biometrics_score_normalization(
     pipeline,
@@ -181,6 +190,7 @@ def vanilla_biometrics_score_normalization(
     top_norm,
     top_norm_score_fraction,
     score_normalization_type,
+    force,
     **kwargs,
 ):
     """Runs the the vanilla-biometrics with ZT-Norm like score normalizations.
@@ -252,6 +262,7 @@ def vanilla_biometrics_score_normalization(
         top_norm,
         top_norm_score_fraction,
         score_normalization_type,
+        force,
     )
 
     logger.info("Experiment finished !")
