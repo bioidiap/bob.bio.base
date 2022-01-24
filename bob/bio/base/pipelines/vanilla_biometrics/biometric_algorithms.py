@@ -107,3 +107,38 @@ class Distance(BioAlgorithm):
         scores = self.factor * cdist(references_stacked, data, self.distance_function)
 
         return scores
+
+
+class Distance2(Distance):
+    def __init__(
+        self, distance_function=scipy.spatial.distance.cosine, factor=-1, **kwargs
+    ):
+        super().__init__(**kwargs)
+    
+    def enroll(self, enroll_features):
+        """enroll(enroll_features) -> model
+
+        Enrolls the model by storing all given input vectors.
+
+        Parameters
+        ----------
+
+        ``enroll_features`` : [:py:class:`numpy.ndarray`]
+          The list of projected features to enroll the model from.
+
+        Returns
+        -------
+
+        ``model`` : 2D :py:class:`numpy.ndarray`
+          The enrolled model.
+        """
+
+        enroll_features = check_array(enroll_features, allow_nd=True, ensure_2d=True)
+
+        enroll_features = self._make_2d(enroll_features)
+
+        # This avoids some possible mistakes in the feature extraction
+        # That dumps vectors in the format `Nx1xd`
+        assert enroll_features.ndim == 2
+
+        return enroll_features
