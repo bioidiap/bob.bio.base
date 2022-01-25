@@ -106,7 +106,16 @@ class Distance(BioAlgorithm):
 
         assert data.ndim == 2
 
-        references_stacked = np.vstack(biometric_references)
-        scores = self.factor * cdist(references_stacked, data, self.distance_function)
+        if self.average_on_enroll:
+          references_stacked = np.vstack(biometric_references)
+          scores = self.factor * cdist(references_stacked, data, self.distance_function)
+
+        else:
+          scores = []
+          for reference in biometric_references:
+            references_stacked = np.vstack(reference)
+            scores.append(
+                self.factor * cdist(references_stacked, data, self.distance_function).flatten()
+            )
 
         return scores
