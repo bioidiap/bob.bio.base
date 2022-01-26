@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def average_scores(scores):
+def reduce_scores(scores, fn=np.mean):
     """
     Given a :any:`numpy.ndarray` coming from multiple probes,
     average them.
@@ -29,7 +29,7 @@ def average_scores(scores):
 
     # First we have to average w.r.t tp individual samples, than between samples
 
-    return np.mean(np.array([np.mean(x, axis=1) for x in scores]), axis=0)
+    return fn(np.array([fn(x, axis=1) for x in scores]), axis=0)
 
 
 class BioAlgorithm(metaclass=ABCMeta):
@@ -46,7 +46,7 @@ class BioAlgorithm(metaclass=ABCMeta):
 
     """
 
-    def __init__(self, score_reduction_operation=average_scores, **kwargs):
+    def __init__(self, score_reduction_operation=reduce_scores, **kwargs):
         self.stacked_biometric_references = None
         self.score_reduction_operation = score_reduction_operation
 
