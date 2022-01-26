@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def reduce_scores(scores, fn=np.mean):
+def reduce_scores(scores, fn=np.max):
     """
     Given a :any:`numpy.ndarray` coming from multiple probes,
     average them.
