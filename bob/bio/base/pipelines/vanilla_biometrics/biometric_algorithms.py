@@ -12,6 +12,25 @@ class Distance(BioAlgorithm):
     def __init__(
         self, distance_function=scipy.spatial.distance.cosine, factor=-1, average_on_enroll=True, **kwargs
     ):
+        """
+
+        Parameters
+        ----------
+
+        ``distance_function``: 
+          function to be used to measure the distance of probe and model features.
+        
+        ``factor``: float
+          a coefficient which is multiplied to distance (after distance_function) to find score between probe and model features.
+        
+        ``average_on_enroll``: bool:
+          [this flag is useful when there are multiple samples to be enrolled for each user]
+          If True, the average of (multiple available) features of each user is calculated in the enrollment, and then the score
+            for each probe is calculated comparing "probe" vs "average of reference features".
+          If False, all the available reference features are enrolled for the user, and then the score for each probe is calculated 
+            using the average of scores (score of comparing "probe" vs each of the multiple available reference features for the 
+            enrolled user).
+        """
         super().__init__(**kwargs)
         self.distance_function = distance_function
         self.factor = factor
