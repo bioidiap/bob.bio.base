@@ -34,7 +34,7 @@ class Distance(BioAlgorithm):
         super().__init__(**kwargs)
         self.distance_function = distance_function
         self.factor = factor
-        self.average_on_enroll = average_on_enroll # if True average of features is calculated, if False average of scores is calculated
+        self.average_on_enroll = average_on_enroll
 
     def _make_2d(self, X):
         """
