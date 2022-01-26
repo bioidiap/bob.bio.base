@@ -130,11 +130,9 @@ class Distance(BioAlgorithm):
           scores = self.factor * cdist(references_stacked, data, self.distance_function)
 
         else:
-          scores = []
-          for reference in biometric_references:
-            references_stacked = np.vstack(reference)
-            scores.append(
-                self.factor * cdist(references_stacked, data, self.distance_function).flatten()
-            )
+          scores = [
+            self.factor * cdist(np.vstack(reference), data, self.distance_function).flatten()
+            for reference in biometric_references
+          ]
 
         return scores
