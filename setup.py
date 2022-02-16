@@ -92,9 +92,6 @@ setup(
             "pca               = bob.bio.base.config.algorithm.pca:algorithm",
             "lda               = bob.bio.base.config.algorithm.lda:algorithm",
             "pca+lda           = bob.bio.base.config.algorithm.pca_lda:algorithm",
-            "plda              = bob.bio.base.config.algorithm.plda:algorithm",
-            "pca+plda          = bob.bio.base.config.algorithm.pca_plda:algorithm",
-            "bic               = bob.bio.base.config.algorithm.bic:algorithm",
         ],
         # declare database to bob
         "bob.db": [
