@@ -64,7 +64,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
        to ``bob.io.base.save``.
 
     load_func: callable
-       Pointer to a customized function that loads transformed features from disk.
+       Pointer to a customized function that loads a model from disk.
        If None, will use the ``bob_feature_load_fn`` tag in the estimator, or default
        to ``bob.io.base.load``.
 
@@ -78,6 +78,9 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
         where a single `sample` will be checkpointed.
         This is useful when is desirable file directories with less than a certain
         number of files.
+
+    sample_attribute: str
+        The attribute name of the biometric_reference's data in the Sample objects.
 
 
     Examples
@@ -147,9 +150,9 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
     def write_biometric_reference(self, sample, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         if hasattr(getattr(sample, self.sample_attribute), "save"):
-            sample.data.save(path)
+            getattr(sample, self.sample_attribute).save(path)
         else:
-            return self.save_func(sample.data, path)
+            return self.save_func(getattr(sample, self.sample_attribute), path)
 
     def write_scores(self, samples, path):
         pickle_compress(path, samples)
