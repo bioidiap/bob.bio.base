@@ -26,7 +26,12 @@ from bob.bio.base.transformers import (
     ExtractorTransformer,
     AlgorithmTransformer,
 )
-from bob.pipelines.wrappers import SampleWrapper, CheckpointWrapper
+from bob.pipelines.wrappers import (
+    SampleWrapper,
+    CheckpointWrapper,
+    get_bob_tags,
+    BaseWrapper,
+)
 from bob.pipelines.distributed.sge import SGEMultipleQueuesCluster
 import logging
 from bob.pipelines.utils import isinstance_nested
@@ -37,29 +42,42 @@ from . import pickle_compress, uncompress_unpickle
 logger = logging.getLogger(__name__)
 
 
-class BioAlgorithmCheckpointWrapper(BioAlgorithm):
+class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
     """Wrapper used to checkpoint enrolled and Scoring samples.
 
     Parameters
     ----------
-        biometric_algorithm: :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`
-           An implemented :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`
+    biometric_algorithm: :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`
+       An implemented :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`
 
-        base_dir: str
-           Path to store biometric references and scores
+    base_dir: str
+       Path to store biometric references and scores
 
-        extension: str
-            File extension
+    extension: str
+       Default extension of the transformed features.
+       If None, will use the ``bob_checkpoint_extension`` tag in the estimator, or
+       default to ``.h5``.
 
-        force: bool
-          If True, will recompute scores and biometric references no matter if a file exists
+    save_func : callable
+       Pointer to a customized function that saves a model to the disk.
+       If None, will use the ``bob_feature_save_fn`` tag in the estimator, or default
+       to ``bob.io.base.save``.
 
-        hash_fn
+    load_func: callable
+       Pointer to a customized function that loads transformed features from disk.
+       If None, will use the ``bob_feature_load_fn`` tag in the estimator, or default
+       to ``bob.io.base.load``.
+
+    force: bool
+        If True, will recompute scores and biometric references no matter if a file
+        exists
+
+    hash_fn
         Pointer to a hash function. This hash function maps
         `sample.key` to a hash code and this hash code corresponds a relative directory
         where a single `sample` will be checkpointed.
-        This is useful when is desirable file directories with less than
-        a certain number of files.
+        This is useful when is desirable file directories with less than a certain
+        number of files.
 
 
     Examples
@@ -75,21 +93,30 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         self,
         biometric_algorithm,
         base_dir,
+        extension=None,
+        save_func=None,
+        load_func=None,
         group=None,
         force=False,
         hash_fn=None,
+        sample_attribute=None,
         **kwargs
     ):
         super().__init__(**kwargs)
 
         self.base_dir = base_dir
         self.set_score_references_path(group)
-
+        self.group = group
         self.biometric_algorithm = biometric_algorithm
         self.force = force
         self._biometric_reference_extension = ".hdf5"
         self._score_extension = ".pickle.gz"
         self.hash_fn = hash_fn
+        bob_tags = get_bob_tags(self.biometric_algorithm)
+        self.extension = extension or bob_tags["bob_checkpoint_extension"]
+        self.save_func = save_func or bob_tags["bob_features_save_fn"]
+        self.load_func = load_func or bob_tags["bob_features_load_fn"]
+        self.sample_attribute = sample_attribute or bob_tags["bob_output"]
 
     def clear_caches(self):
         self.biometric_algorithm.clear_caches()
@@ -118,7 +145,11 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         )
 
     def write_biometric_reference(self, sample, path):
-        return bob.io.base.save(sample.data, path, create_directories=True)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        if hasattr(getattr(sample, self.sample_attribute), "save"):
+            sample.data.save(path)
+        else:
+            return self.save_func(sample.data, path)
 
     def write_scores(self, samples, path):
         pickle_compress(path, samples)
@@ -202,7 +233,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm):
         return scored_sample_set
 
 
-class BioAlgorithmDaskWrapper(BioAlgorithm):
+class BioAlgorithmDaskWrapper(BioAlgorithm, BaseWrapper):
     """
     Wrap :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm` to work with DASK
     """
@@ -351,7 +382,7 @@ def checkpoint_vanilla_biometrics(
 
     for i, name, estimator in sk_pipeline._iter():
 
-        wraped_estimator = bob.pipelines.wrap(
+        wrapped_estimator = bob.pipelines.wrap(
             ["checkpoint"],
             estimator,
             features_dir=os.path.join(base_dir, name),
@@ -359,7 +390,7 @@ def checkpoint_vanilla_biometrics(
             force=force,
         )
 
-        sk_pipeline.steps[i] = (name, wraped_estimator)
+        sk_pipeline.steps[i] = (name, wrapped_estimator)
 
     if isinstance(pipeline.biometric_algorithm, BioAlgorithmLegacy):
         pipeline.biometric_algorithm.base_dir = bio_ref_scores_dir
