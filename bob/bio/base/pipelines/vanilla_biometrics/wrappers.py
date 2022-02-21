@@ -115,7 +115,11 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
         self._biometric_reference_extension = ".hdf5"
         self._score_extension = ".pickle.gz"
         self.hash_fn = hash_fn
-        bob_tags = get_bob_tags(self.biometric_algorithm)
+        bob_tags = get_bob_tags(
+            self.biometric_algorithm
+            if hasattr(self.biometric_algorithm, "_get_tags")
+            else None
+        )
         self.extension = extension or bob_tags["bob_checkpoint_extension"]
         self.save_func = save_func or bob_tags["bob_features_save_fn"]
         self.load_func = load_func or bob_tags["bob_features_load_fn"]
