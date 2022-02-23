@@ -42,6 +42,23 @@ from . import pickle_compress, uncompress_unpickle
 logger = logging.getLogger(__name__)
 
 
+def default_save(data, path):
+    return bob.io.base.save(data, path, create_directories=True)
+
+def default_load(path):
+    return bob.io.base.load(path)
+
+def get_vanilla_biometrics_tags(estimator=None, force_tags=None):
+    bob_tags = get_bob_tags(estimator=estimator, force_tags=force_tags)
+    default_tags = {
+        "bob_enrolled_extension": ".h5",
+        "bob_enrolled_save_fn": default_save,
+        "bob_enrolled_load_fn": default_load,
+    }
+    force_tags = force_tags or {}
+    estimator_tags = estimator._get_tags() if estimator is not None else {}
+    return {**bob_tags, **default_tags, **estimator_tags, **force_tags}
+
 class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
     """Wrapper used to checkpoint enrolled and Scoring samples.
 
@@ -53,19 +70,19 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
     base_dir: str
        Path to store biometric references and scores
 
-    extension: str
-       Default extension of the transformed features.
+    enrolled_extension: str
+       Default extension of the enrolled references files.
        If None, will use the ``bob_checkpoint_extension`` tag in the estimator, or
        default to ``.h5``.
 
-    save_func : callable
-       Pointer to a customized function that saves a model to the disk.
-       If None, will use the ``bob_feature_save_fn`` tag in the estimator, or default
+    save_enrolled_func : callable
+       Pointer to a customized function that saves an enrolled reference to the disk.
+       If None, will use the ``bob_enrolled_save_fn`` tag in the estimator, or default
        to ``bob.io.base.save``.
 
-    load_func: callable
-       Pointer to a customized function that loads a model from disk.
-       If None, will use the ``bob_feature_load_fn`` tag in the estimator, or default
+    load_enrolled_func: callable
+       Pointer to a customized function that loads an enrolled reference from disk.
+       If None, will use the ``bob_enrolled_load_fn`` tag in the estimator, or default
        to ``bob.io.base.load``.
 
     force: bool
@@ -97,8 +114,8 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
         biometric_algorithm,
         base_dir,
         extension=None,
-        save_func=None,
-        load_func=None,
+        save_enrolled_func=None,
+        load_enrolled_func=None,
         group=None,
         force=False,
         hash_fn=None,
@@ -115,14 +132,10 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
         self._biometric_reference_extension = ".hdf5"
         self._score_extension = ".pickle.gz"
         self.hash_fn = hash_fn
-        bob_tags = get_bob_tags(
-            self.biometric_algorithm
-            if hasattr(self.biometric_algorithm, "_get_tags")
-            else None
-        )
-        self.extension = extension or bob_tags["bob_checkpoint_extension"]
-        self.save_func = save_func or bob_tags["bob_features_save_fn"]
-        self.load_func = load_func or bob_tags["bob_features_load_fn"]
+        bob_tags = get_vanilla_biometrics_tags(self.biometric_algorithm)
+        self.extension = extension or bob_tags["bob_enrolled_extension"]
+        self.save_enrolled_func = save_enrolled_func or bob_tags["bob_enrolled_save_fn"]
+        self.load_enrolled_func = load_enrolled_func or bob_tags["bob_enrolled_load_fn"]
         self.sample_attribute = sample_attribute or bob_tags["bob_output"]
 
     def clear_caches(self):
@@ -152,11 +165,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
         )
 
     def write_biometric_reference(self, sample, path):
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        if hasattr(getattr(sample, self.sample_attribute), "save"):
-            getattr(sample, self.sample_attribute).save(path)
-        else:
-            return self.save_func(getattr(sample, self.sample_attribute), path)
+        return self.save_enrolled_func(getattr(sample, self.sample_attribute), path)
 
     def write_scores(self, samples, path):
         pickle_compress(path, samples)
@@ -186,7 +195,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
 
         # This seems inefficient, but it's crucial for large datasets
         delayed_enrolled_sample = DelayedSample(
-            functools.partial(bob.io.base.load, path), parent=sampleset
+            functools.partial(self.load_enrolled_func, path), parent=sampleset
         )
 
         return delayed_enrolled_sample

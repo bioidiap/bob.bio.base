@@ -29,6 +29,8 @@ import shutil
 import itertools
 from nose.tools import raises
 
+from h5py import File as HDF5File
+
 
 class DummyDatabase:
     def __init__(
@@ -144,6 +146,29 @@ class DummyDatabase:
     @property
     def allow_scoring_with_all_biometric_references(self):
         return True
+
+
+def _custom_save_function(data, path):
+    base_path, ext = path.rsplit(".", 1)
+    filename = base_path + "_with_custom_f." + ext
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    HDF5File(filename, "w")["data"] = data
+
+
+def _custom_load_function(path):
+    base_path, ext = path.rsplit(".", 1)
+    filename = base_path + "_with_custom_f." + ext
+    assert os.path.isfile(filename)
+    return HDF5File(filename, "r")["data"]
+
+
+class DistanceWithTags(Distance):
+    def _more_tags(self):
+        return {
+            "bob_enrolled_save_fn": _custom_save_function,
+            "bob_enrolled_load_fn": _custom_load_function,
+            "bob_enrolled_extension": ".hdf5",
+        }
 
 
 def _make_transformer(dir_name):
@@ -313,7 +338,7 @@ def test_checkpoint_bioalg_as_transformer():
         )
         run_pipeline(
             False, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
-        )  # Checking if the checkpointng works
+        )  # Checking if the checkpointing works
         shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
@@ -323,7 +348,95 @@ def test_checkpoint_bioalg_as_transformer():
         )
         run_pipeline(
             True, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
-        )  # Checking if the checkpointng works
+        )  # Checking if the checkpointing works
+
+
+def test_checkpoint_bioalg_with_tags():
+
+    with tempfile.TemporaryDirectory() as dir_name:
+
+        def run_pipeline(
+            with_dask, score_writer=None,
+        ):
+            database = DummyDatabase()
+
+            transformer = _make_transformer(dir_name)
+
+            biometric_algorithm = BioAlgorithmCheckpointWrapper(
+                DistanceWithTags(), base_dir=dir_name
+            )
+
+            vanilla_biometrics_pipeline = VanillaBiometricsPipeline(
+                transformer, biometric_algorithm, score_writer
+            )
+
+            if with_dask:
+                vanilla_biometrics_pipeline = dask_vanilla_biometrics(
+                    vanilla_biometrics_pipeline, npartitions=2
+                )
+
+            scores = vanilla_biometrics_pipeline(
+                database.background_model_samples(),
+                database.references(),
+                database.probes(),
+                allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
+            )
+
+            written_scores = vanilla_biometrics_pipeline.write_scores(scores)
+            scores_dev_path = os.path.join(dir_name, "scores-dev")
+            concatenated_scores = vanilla_biometrics_pipeline.post_process(
+                written_scores, scores_dev_path
+            )
+
+            if with_dask:
+                concatenated_scores = concatenated_scores.compute(
+                    scheduler="single-threaded"
+                )
+
+            assert os.path.isfile(dir_name + "/biometric_references/" + database.references()[0].key + "_with_custom_f.hdf5")
+
+        run_pipeline(False)
+        run_pipeline(False)  # Checking if the checkpointing works
+        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        os.makedirs(dir_name, exist_ok=True)
+
+        # Writing scores
+        run_pipeline(
+            False, FourColumnsScoreWriter(os.path.join(dir_name, "final_scores"))
+        )
+        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        os.makedirs(dir_name, exist_ok=True)
+
+        # Dask
+        run_pipeline(True)
+        run_pipeline(True)  # Checking if the checkpointing works
+        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        os.makedirs(dir_name, exist_ok=True)
+
+        # Writing scores
+        run_pipeline(
+            True, FourColumnsScoreWriter(os.path.join(dir_name, "final_scores"))
+        )
+        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        os.makedirs(dir_name, exist_ok=True)
+
+        # CSVWriter
+        run_pipeline(
+            False, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
+        )
+        run_pipeline(
+            False, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
+        )  # Checking if the checkpointing works
+        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        os.makedirs(dir_name, exist_ok=True)
+
+        # CSVWriter + Dask
+        run_pipeline(
+            True, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
+        )
+        run_pipeline(
+            True, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
+        )  # Checking if the checkpointing works
 
 
 def test_checkpoint_bioalg_as_bioalg():
