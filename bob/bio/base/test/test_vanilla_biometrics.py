@@ -305,10 +305,10 @@ def test_checkpoint_bioalg_as_transformer():
                 else:
                     assert (
                         len(open(scores_dev_path).readlines()) == 101
-                    )  # Counting the heade.
+                    )  # Counting the header.
 
         run_pipeline(False)
-        run_pipeline(False)  # Checking if the checkpointng works
+        run_pipeline(False)  # Checking if the checkpointing works
         shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
@@ -321,7 +321,7 @@ def test_checkpoint_bioalg_as_transformer():
 
         # Dask
         run_pipeline(True)
-        run_pipeline(True)  # Checking if the checkpointng works
+        run_pipeline(True)  # Checking if the checkpointing works
         shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
@@ -497,13 +497,13 @@ def test_checkpoint_bioalg_as_bioalg():
                 assert len(open(concatenated_scores).readlines()) == 100
 
         run_pipeline(False)
-        run_pipeline(False)  # Checking if the checkpointng works
+        run_pipeline(False)  # Checking if the checkpointing works
         shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         # Dask
         run_pipeline(True)
-        run_pipeline(True)  # Checking if the checkpointng works
+        run_pipeline(True)  # Checking if the checkpointing works
         shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
