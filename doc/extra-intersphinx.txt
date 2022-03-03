@@ -5,7 +5,6 @@ bob.bio.gmm
 bob.bio.video
 bob.bio.spear
 bob.bio.vein
-bob.learn.linear
 gridtk
 bob.pipelines
 dask

@@ -182,7 +182,7 @@ def vanilla_biometrics(
     ---------------
 
     Training background model.
-    Some biometric algorithms demands the training of background model, for instance, PCA/LDA matrix or a Neural networks.
+    Some biometric algorithms demands the training of background model, for instance a neural network.
 
     \b
     This pipeline runs: `Pipeline.fit(DATA_FOR_FIT)`
