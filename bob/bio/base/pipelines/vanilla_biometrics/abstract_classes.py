@@ -7,6 +7,7 @@ from bob.pipelines.sample import Sample, SampleSet
 import numpy as np
 import os
 import logging
+from sklearn.base import BaseEstimator
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ def reduce_scores(scores, fn=np.max):
     return fn(np.array([fn(x, axis=1) for x in scores]), axis=0)
 
 
-class BioAlgorithm(metaclass=ABCMeta):
+class BioAlgorithm(BaseEstimator, metaclass=ABCMeta):
     """Describes a base biometric comparator for the Vanilla Biometrics Pipeline :ref:`bob.bio.base.biometric_algorithm`.
 
     biometric model enrollment, via ``enroll()`` and scoring, with
