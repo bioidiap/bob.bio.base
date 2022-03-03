@@ -5,7 +5,6 @@ from bob.pipelines import (
     DelayedSampleSet,
     DelayedSampleSetCached,
 )
-import bob.io.base
 import os
 import dask
 import functools
@@ -42,11 +41,15 @@ from . import pickle_compress, uncompress_unpickle
 logger = logging.getLogger(__name__)
 
 
-def default_save(data, path):
-    return bob.io.base.save(data, path, create_directories=True)
+def default_save(data: np.ndarray, path: str):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    f = h5py.File(path, "w")
+    f["data"] = data
+    f.close()
 
-def default_load(path):
-    return bob.io.base.load(path)
+def default_load(path: str) -> np.ndarray:
+    f = h5py.File(path, "r")
+    return f["data"]
 
 def get_vanilla_biometrics_tags(estimator=None, force_tags=None):
     bob_tags = get_bob_tags(estimator=estimator, force_tags=force_tags)
@@ -78,12 +81,12 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
     save_func : callable
        Pointer to a customized function that saves an enrolled reference to the disk.
        If None, will use the ``bob_enrolled_save_fn`` tag in the estimator, or default
-       to ``bob.io.base.save``.
+       to h5py.
 
     load_func: callable
        Pointer to a customized function that loads an enrolled reference from disk.
        If None, will use the ``bob_enrolled_load_fn`` tag in the estimator, or default
-       to ``bob.io.base.load``.
+       to h5py.
 
     force: bool
         If True, will recompute scores and biometric references no matter if a file
@@ -131,7 +134,6 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
         self.load_func = load_func or bob_tags["bob_enrolled_load_fn"]
 
         self._score_extension = ".pickle.gz"
-        self._biometric_reference_extension = self.extension
 
     def clear_caches(self):
         self.biometric_algorithm.clear_caches()
@@ -178,7 +180,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
         path = os.path.join(
             self.biometric_reference_dir,
             hash_dir_name,
-            str(sampleset.key) + self._biometric_reference_extension,
+            str(sampleset.key) + self.extension,
         )
 
         if self.force or not os.path.exists(path):
