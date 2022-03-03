@@ -54,6 +54,7 @@ from .wrappers import (
     dask_vanilla_biometrics,
     checkpoint_vanilla_biometrics,
     is_checkpointed,
+    get_vanilla_biometrics_tags,
 )
 
 from .abstract_classes import BioAlgorithm, Database, ScoreWriter
@@ -108,6 +109,7 @@ __appropriate__(
     dask_vanilla_biometrics,
     checkpoint_vanilla_biometrics,
     is_checkpointed,
+    get_vanilla_biometrics_tags,
     BioAlgorithmLegacy,
     DatabaseConnector,
     execute_vanilla_biometrics,
