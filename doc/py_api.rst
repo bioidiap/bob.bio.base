@@ -99,8 +99,6 @@ Implementations
   bob.bio.base.preprocessor.Filename
   bob.bio.base.extractor.Linearize
   bob.bio.base.algorithm.Distance
-  bob.bio.base.algorithm.PCA
-  bob.bio.base.algorithm.LDA
 
 
 

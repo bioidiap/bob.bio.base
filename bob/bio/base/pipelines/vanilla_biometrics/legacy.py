@@ -310,8 +310,8 @@ class BioAlgorithmLegacy(BioAlgorithm):
     Example
     -------
         >>> from bob.bio.base.pipelines.vanilla_biometrics import BioAlgorithmLegacy
-        >>> from bob.bio.base.algorithm import PCA
-        >>> biometric_algorithm = BioAlgorithmLegacy(PCA(subspace_dimension=0.99), base_dir="./", projector_file="Projector.hdf5")
+        >>> from bob.bio.base.algorithm import Distance
+        >>> biometric_algorithm = BioAlgorithmLegacy(Distance(), base_dir="./", projector_file="Projector.hdf5")
 
     """
 
