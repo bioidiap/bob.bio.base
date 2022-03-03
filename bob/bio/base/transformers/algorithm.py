@@ -18,10 +18,10 @@ class AlgorithmTransformer(TransformerMixin, BaseEstimator):
     Example
     -------
 
-        Wrapping LDA algorithm with functools
+        Wrapping Distance algorithm with functools
         >>> from bob.bio.base.pipelines.vanilla_biometrics import AlgorithmTransformer
-        >>> from bob.bio.base.algorithm import LDA
-        >>> transformer = AlgorithmTransformer(LDA(use_pinv=True, pca_subspace_dimension=0.90)
+        >>> from bob.bio.base.algorithm import Distance
+        >>> transformer = AlgorithmTransformer(Distance)
 
 
     Parameters

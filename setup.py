@@ -89,9 +89,6 @@ setup(
             "distance-euclidean = bob.bio.base.config.algorithm.distance_euclidean:algorithm",
             "distance-cosine   = bob.bio.base.config.algorithm.distance_cosine:algorithm",
             "distance-hamming   = bob.bio.base.config.algorithm.distance_hamming:algorithm",
-            "pca               = bob.bio.base.config.algorithm.pca:algorithm",
-            "lda               = bob.bio.base.config.algorithm.lda:algorithm",
-            "pca+lda           = bob.bio.base.config.algorithm.pca_lda:algorithm",
         ],
         # declare database to bob
         "bob.db": [

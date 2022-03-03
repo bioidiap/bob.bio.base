@@ -1,7 +1,5 @@
 from .Algorithm import Algorithm
 from .Distance import Distance
-from .PCA import PCA
-from .LDA import LDA
 
 # gets sphinx autodoc done right - don't remove it
 def __appropriate__(*args):
@@ -22,8 +20,6 @@ def __appropriate__(*args):
 __appropriate__(
     Algorithm,
     Distance,
-    PCA,
-    LDA,
 )
 
 __all__ = [_ for _ in dir() if not _.startswith("_")]
