@@ -388,23 +388,18 @@ def checkpoint_vanilla_biometrics(
        a certain number of files.
     """
 
-    sk_pipeline = pipeline.transformer
-
     bio_ref_scores_dir = (
         base_dir if biometric_algorithm_dir is None else biometric_algorithm_dir
     )
 
-    for i, name, estimator in sk_pipeline._iter():
-
-        wrapped_estimator = bob.pipelines.wrap(
-            ["checkpoint"],
-            estimator,
-            features_dir=os.path.join(base_dir, name),
-            hash_fn=hash_fn,
-            force=force,
-        )
-
-        sk_pipeline.steps[i] = (name, wrapped_estimator)
+    pipeline.transformer = bob.pipelines.wrap(
+        ["checkpoint"],
+        pipeline.transformer,
+        features_dir=base_dir,
+        model_path=base_dir,
+        hash_fn=hash_fn,
+        force=force,
+    )
 
     if isinstance(pipeline.biometric_algorithm, BioAlgorithmLegacy):
         pipeline.biometric_algorithm.base_dir = bio_ref_scores_dir
