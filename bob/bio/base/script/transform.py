@@ -214,6 +214,8 @@ def transform(
         logger.info(f"Dask wrapping it with partition size {partition_size}")
         transformer = wrap(["dask"], transformer, partition_size=partition_size)
 
-    transformer.transform(samples).compute(scheduler=dask_client)
+    transformer.transform(samples).compute(
+        scheduler="single-threaded" if dask_client is None else dask_client
+    )
 
     logger.info("Transformation finished !")
