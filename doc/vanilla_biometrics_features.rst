@@ -690,7 +690,7 @@ like the example below:
         def _more_tags(self):
             return {"stateless": True, "requires_fit": False}
         
-            def transform(self, X):
+        def transform(self, X):
             # do something
             return X
 
