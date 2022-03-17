@@ -3,12 +3,9 @@
 # Tiago de Freitas Pereira <tiago.pereira@idiap.ch>
 
 
-from ast import In
 import logging
-from sched import scheduler
-
+import numpy as np
 import click
-from bob.bio.base.pipelines.vanilla_biometrics import execute_vanilla_biometrics
 from bob.extension.scripts.click_helper import ConfigCommand
 from bob.extension.scripts.click_helper import ResourceOption
 from bob.extension.scripts.click_helper import verbosity_option
@@ -17,24 +14,19 @@ from bob.pipelines.distributed import VALID_DASK_CLIENT_STRINGS
 
 from bob.pipelines.distributed import dask_get_partition_size
 
-from bob.pipelines.utils import isinstance_nested, is_estimator_wrapped
+from bob.pipelines.utils import is_pipeline_wrapped
 
 logger = logging.getLogger(__name__)
 from bob.pipelines.wrappers import (
     wrap,
-    SampleWrapper,
     CheckpointWrapper,
     DaskWrapper,
 )
 
-
-import bob.io.base
-import bob.io.image
-
-
 EPILOG = """\b
 Command line examples\n
 ---------------------\n
+
 
 Follow below an example on how to extract arcface features from a database:\n
 
@@ -58,16 +50,17 @@ For example, if you desire to customize your transfomer, you can use the followi
 ```py\n
 from sklearn.base import BaseEstimator, TransformerMixin \n
 from sklearn.pipeline import make_pipeline  \n
+from bob.pipelines import wrap \n
 
 class MyTransformer(TransformerMixin, BaseEstimator): \n
     def _more_tags(self): \n
         return {"stateless": True, "requires_fit": False} \n
     
-        def transform(self, X): \n
+    def transform(self, X): \n
         # do something \n
         return X \n
 
-transformer = make_pipeline(MyTransformer()) \n
+transformer = wrap(["sample"],make_pipeline(MyTransformer())) \n
 ```
 
 Then, you can use above configuration file to run the command:
@@ -85,6 +78,7 @@ You can also benefit from `FunctionTransformer` to create a transformer
 ```py \n
 from sklearn.preprocessing import FunctionTransformer \n
 from sklearn.pipeline import make_pipeline \n
+from bob.pipelines import wrap \n
 
 \b
 
@@ -93,7 +87,7 @@ def my_transformer(X): \n
     return X \n
 
 
-transformer = make_pipeline(FunctionTransformer(my_transformer)) \n
+transformer = wrap(["sample"],make_pipeline(FunctionTransformer(my_transformer))) \n
 ```
 
 Then, you can use above configuration file to run the command:\n
@@ -144,17 +138,20 @@ Then, you can use above configuration file to run the command:\n
     cls=ResourceOption,
 )
 @click.option(
-    "-e",
-    "--file-extension",
-    required=True,
-    help="File extension of the output files.",
-    cls=ResourceOption,
-)
-@click.option(
     "--force",
     "-f",
     is_flag=True,
     help="If set, it will force generate all the checkpoints of an experiment. This option doesn't work if `--memory` is set",
+    cls=ResourceOption,
+)
+@click.option(
+    "--dask-partition-size",
+    "-s",
+    help="If using Dask, this option defines the size of each dask.bag.partition."
+    "Use this option if the current heuristic that sets this value doesn't suit your experiment."
+    "(https://docs.dask.org/en/latest/bag-api.html?highlight=partition_size#dask.bag.from_sequence).",
+    default=None,
+    type=click.INT,
     cls=ResourceOption,
 )
 @verbosity_option(cls=ResourceOption)
@@ -163,8 +160,8 @@ def transform(
     database,
     dask_client,
     checkpoint_dir,
-    file_extension,
     force,
+    dask_partition_size,
     **kwargs,
 ):
     """
@@ -176,43 +173,53 @@ def transform(
 
     logger.info(f"Transforming samples from {database}")
 
-    save_func = bob.io.base.save
+    # save_func = bob.io.base.save
 
     # Idiap SETUP. This avoids having directories with more than 1000 files/directories
     hash_fn = database.hash_fn if hasattr(database, "hash_fn") else None
 
-    # Checking if the transformer is Sample wrapped
-    # In this way we can use any transfomer from skimage, or other package
-    # that implements the sklearn API
-    if not is_estimator_wrapped(transformer, SampleWrapper):
-        logger.info(f"Sample wrapping it")
-        transformer = wrap(["sample"], transformer)
-
-    # Checkpoint if it's already checkpointed
-    if not is_estimator_wrapped(transformer, CheckpointWrapper):
+    # If NONE of the items are checkpointed, we checkpoint them all
+    if not any(is_pipeline_wrapped(transformer, CheckpointWrapper)):
         logger.info(f"Checkpointing it")
         transformer = wrap(
             ["checkpoint"],
             transformer,
             features_dir=checkpoint_dir,
-            extension=file_extension,
-            save_func=save_func,
             hash_fn=hash_fn,
             force=force,
+        )
+    else:
+        # If there is only one item that is checkpointed, we don't need to wrap the pipeline
+        logger.warning(
+            f"{transformer}"
+            f"The pipeline contains elements that are already checkpointed."
+            "Hence, we are not checkpointing them again."
         )
 
     # Fetching all samples
     samples = database.all_samples()
 
-    # Dasking it if it's not already dasked
-    if dask_client is not None and not is_estimator_wrapped(transformer, DaskWrapper):
-        partition_size = 200
+    # The number of dasked elements has to be the number of
+    # elements in the pipeline - 1 (the ToDaskBag doesn't count)
+    dasked_elements = is_pipeline_wrapped(transformer, DaskWrapper)
+
+    if any(dasked_elements):
+        logger.warning(
+            f"The pipeline is already dasked, hence, we are not dasking it again."
+        )
+    else:
+
         if not isinstance(dask_client, str):
-            partition_size = dask_get_partition_size(
-                dask_client.cluster, len(samples), lower_bound=200
+            dask_partition_size = (
+                dask_get_partition_size(
+                    dask_client.cluster, len(samples), lower_bound=200
+                )
+                if dask_partition_size is None
+                else dask_partition_size
             )
-        logger.info(f"Dask wrapping it with partition size {partition_size}")
-        transformer = wrap(["dask"], transformer, partition_size=partition_size)
+
+        logger.info(f"Dask wrapping it with partition size {dask_partition_size}")
+        transformer = wrap(["dask"], transformer, partition_size=dask_partition_size)
 
     transformer.transform(samples).compute(
         scheduler="single-threaded" if dask_client is None else dask_client
