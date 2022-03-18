@@ -125,6 +125,7 @@ setup(
         "bob.bio.pipelines.cli": [
             "vanilla-biometrics = bob.bio.base.script.vanilla_biometrics:vanilla_biometrics",
             "vanilla-biometrics-score-normalization = bob.bio.base.script.vanilla_biometrics_score_normalization:vanilla_biometrics_score_normalization",
+            "transform = bob.bio.base.script.transform:transform",
         ],
         # Vulnerability analysis commands
         "bob.vuln.cli": [

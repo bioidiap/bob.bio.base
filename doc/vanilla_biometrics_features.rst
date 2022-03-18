@@ -625,3 +625,138 @@ will output metrics and plots for the two experiments (dev and eval pairs) in
 
 
 .. include:: links.rst
+
+
+Transforming samples
+====================
+
+It is possible to use the a "part" of the vanilla biometrics pipeline to transform the samples in a given dataset.
+This is useful for:
+
+  *  Crop all faces from a dataset
+  *  Extract features using a particular feature extractor
+  *  Preprocess some audio files using a particular pre-processor
+  
+This can be done with the command:
+
+.. code-block:: text
+
+      bob bio pipelines transform --help
+
+      Options:
+        -t, --transformer CUSTOM     A scikit-learn Pipeline containing the set of
+                                    transformations Can be a
+                                    ``bob.bio.transformer`` entry point, a module
+                                    name, or a path to a Python file which contains
+                                    a variable named `transformer`.  [required]
+        -d, --database CUSTOM        Biometric Database connector (class that
+                                    implements the methods:
+                                    `background_model_samples`, `references` and
+                                    `probes`) Can be a ``bob.bio.database`` entry
+                                    point, a module name, or a path to a Python
+                                    file which contains a variable named
+                                    `database`.  [required]
+        -l, --dask-client TEXT       Dask client for the execution of the pipeline.
+                                    Can be a ``dask.client`` entry point, a module
+                                    name, or a path to a Python file which contains
+                                    a variable named `dask_client`.
+        -c, --checkpoint-dir TEXT    Name of output directory where the checkpoints
+                                    will be saved.  [default: ./checkpoints]
+        -e, --file-extension CUSTOM  File extension of the output files.  [required]
+        -f, --force                  If set, it will force generate all the
+                                    checkpoints of an experiment. This option
+                                    doesn't work if `--memory` is set
+        -v, --verbose                Increase the verbosity level from 0 (only error
+                                    messages) to 1 (warnings), 2 (log messages), 3
+                                    (debug information) by adding the --verbose
+                                    option as often as desired (e.g. '-vvv' for
+                                    debug).
+        -H, --dump-config FILENAME   Name of the config file to be generated
+        -?, -h, --help               Show this message and exit.
+
+
+
+.. warning::
+
+  It is assumed that the pipeline is Sample wrapped.
+
+The option `--transformer` accepts a python resource as an argument, but also can accept a regular
+Python file which contains a variable named `transformer` defining the `Pipeline <https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html>`__ 
+like the example below: 
+
+
+.. code-block:: python
+
+
+    from sklearn.base import BaseEstimator, TransformerMixin
+    from sklearn.pipeline import make_pipeline
+    from bob.pipelines import wrap
+
+    class MyTransformer(TransformerMixin, BaseEstimator):
+        def _more_tags(self):
+            return {"stateless": True, "requires_fit": False}
+        
+        def transform(self, X):
+            # do something
+            return X
+
+    transformer = wrap(["sample"], make_pipeline(MyTransformer()))
+
+Then saving this to a file called `my_beautiful_transformer.py` and passing it as an argument `bob bio pipelines transform` command::
+
+  $ bob bio pipelines transform my_database my_beautiful_transformer.py
+
+
+
+.. note::
+
+   It is possible to leverage from Dask by setting the option `--dask-client` the same way it is done with the vanilla-biometrics command
+
+
+If you are skilled on scikit learn, it is possible to leverage from `FunctionTransformer` function and make the above `Transformer` definition
+way simpler as in the example below:
+
+
+.. code-block:: python
+
+    from sklearn.preprocessing import FunctionTransformer 
+    from sklearn.pipeline import make_pipeline
+    from bob.pipelines import wrap
+
+    def my_transformer(X):
+        # do something
+        return X
+
+    transformer = wrap(["sample"], make_pipeline(FunctionTransformer(my_transformer)))
+
+
+
+It is also possible to provide a pipeline that is already checkpointed.
+For instance, this is useful when you and to change the way a pipeline saves a particular transformed output
+or if you want to checkpoint only one part of a pipeline (e.g., you need to save only the features and not preprocessed samples).
+
+
+.. code-block:: python
+
+    from sklearn.preprocessing import FunctionTransformer 
+    from sklearn.pipeline import make_pipeline
+    from bob.pipelines import wrap
+
+    def my_transformer(X):
+        # do something
+        return X
+
+    transformer = wrap(["sample"], make_pipeline(FunctionTransformer(my_transformer)))
+    transformer = wrap(["checkpoint"], transformer,
+                      features_dir=MY_DIR,
+                      extension=MY_EXTENSION,
+                      save_func=SAVE_FUNCTION_YOU_WANT_TO_USE),
+                    )
+
+
+.. warning::
+
+    The order of the transformation matter. For instance, for face recognition experiments to get features
+    properly extracted, you should run the command as::
+
+    $ bob bio pipelines transform my_database my_beautiful_transformer.py
