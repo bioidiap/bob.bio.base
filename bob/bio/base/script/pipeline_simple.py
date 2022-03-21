@@ -97,8 +97,8 @@ It is possible to do it via configuration file
     cls=ResourceOption,
 )
 @click.option(
-    "-o",
     "--output",
+    "-o",
     show_default=True,
     default="results",
     help="Name of output directory where output scores will be saved.",
@@ -106,7 +106,7 @@ It is possible to do it via configuration file
 )
 @click.option(
     "--write-metadata-scores/--write-column-scores",
-    "-m/-nm",
+    "-meta/-nmeta",
     default=True,
     help="If set, all the scores will be written with all their metadata using the `CSVScoreWriter`",
     cls=ResourceOption,
@@ -119,8 +119,8 @@ It is possible to do it via configuration file
     cls=ResourceOption,
 )
 @click.option(
-    "-c",
     "--checkpoint-dir",
+    "-c",
     show_default=True,
     default=None,
     help="Name of output directory where the checkpoints will be saved. In case --checkpoint is set, checkpoints will be saved in this directory.",
@@ -129,7 +129,7 @@ It is possible to do it via configuration file
 @click.option(
     "--dask-partition-size",
     "-s",
-    help="If using Dask, this option defines the size of each dask.bag.partition."
+    help="If using Dask, this option defines the max size of each dask.bag.partition."
     "Use this option if the current heuristic that sets this value doesn't suit your experiment."
     "(https://docs.dask.org/en/latest/bag-api.html?highlight=partition_size#dask.bag.from_sequence).",
     default=None,
@@ -137,8 +137,19 @@ It is possible to do it via configuration file
     cls=ResourceOption,
 )
 @click.option(
-    "--dask-n-workers",
+    "--dask-n-partitions",
     "-n",
+    help="If using Dask, this option defines a fixed number of dask.bag.partition for "
+    "each set of data. Use this option if the current heuristic that sets this value "
+    "doesn't suit your experiment."
+    "(https://docs.dask.org/en/latest/bag-api.html?highlight=partition_size#dask.bag.from_sequence).",
+    default=None,
+    type=click.INT,
+    cls=ResourceOption,
+)
+@click.option(
+    "--dask-n-workers",
+    "-w",
     help="If using Dask, this option defines the number of workers to start your experiment."
     "Dask automatically scales up/down the number of workers due to the current load of tasks to be solved."
     "Use this option if the current amount of workers set to start an experiment doesn't suit you.",
@@ -171,6 +182,7 @@ def pipeline_simple(
     checkpoint_dir,
     dask_partition_size,
     dask_n_workers,
+    dask_n_partitions,
     force,
     no_dask,
     **kwargs,
@@ -246,6 +258,7 @@ def pipeline_simple(
         write_metadata_scores=write_metadata_scores,
         checkpoint=checkpoint,
         dask_partition_size=dask_partition_size,
+        dask_n_partitions=dask_n_partitions,
         dask_n_workers=dask_n_workers,
         checkpoint_dir=checkpoint_dir,
         force=force,
