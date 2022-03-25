@@ -54,7 +54,7 @@ def execute_vanilla_biometrics(
     """
     Function that executes the Vanilla Biometrics pipeline.
 
-    This is called when using the ``bob bio pipelines vanilla-biometrics``
+    This is called when using the ``bob bio pipelines vanilla``
     command.
 
     This is also callable from a script without fear of interrupting the running
@@ -196,8 +196,7 @@ def execute_vanilla_biometrics_score_normalization(
     """
     Function that executes the Vanilla Biometrics pipeline with ZTNorm.
 
-    This is called when using the ``bob bio pipelines vanilla-biometrics-ztnorm``
-    command.
+    This is called when using the ``bob bio pipelines score-norm`` command.
 
     This is also callable from a script without fear of interrupting the running
     Dask instance, allowing chaining multiple experiments while keeping the

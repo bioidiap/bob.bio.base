@@ -40,7 +40,7 @@ This scoring technique is implemented in our API via :py:func:`bob.bio.base.pipe
 
 Currently, the ZNorm is available via the following CLI command ::
 
- $ bob bio pipelines vanilla-biometrics-score-normalization [VANILLA-BIOMETRICS-COMMANDS] --score-normalization-type znorm
+ $ bob bio pipelines score-norm [VANILLA-BIOMETRICS-COMMANDS] --score-normalization-type znorm
 
 
 T-Norm
@@ -69,7 +69,7 @@ This scoring technique is implemented in our API via :py:func:`bob.bio.base.pipe
 
 Currently, the ZNorm is available via the following CLI command ::
 
- $ bob bio pipelines vanilla-biometrics-score-normalization [VANILLA-BIOMETRICS-COMMANDS] --score-normalization-type tnorm
+ $ bob bio pipelines score-norm [VANILLA-BIOMETRICS-COMMANDS] --score-normalization-type tnorm
 
 
 .. note::
@@ -80,7 +80,7 @@ Currently, the ZNorm is available via the following CLI command ::
 
 S-Norm
 ======
-  
+
   .. todo:
     To be implemented
 
@@ -105,12 +105,12 @@ structure:
       |    |
       |    +-- train_world.csv
       |    +-- *for_tnorm.csv*
-      |    +-- *for_znorm.csv* 
+      |    +-- *for_znorm.csv*
       |
       +-- dev
       |   |
       |   +-- for_models.csv
-      |   +-- for_probes.csv      
+      |   +-- for_probes.csv
       |
       +-- eval
            |
@@ -127,11 +127,11 @@ Calibration by group
 ====================
 
   Implements an adaptation of the Categorical Calibration defined in [Mandasari2014]_.
-  
+
 
 .. todo::
      Discuss all the four calibration strategies
 
-    
+
 
 

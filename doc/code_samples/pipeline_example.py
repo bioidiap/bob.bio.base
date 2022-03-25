@@ -43,7 +43,7 @@ bio_algorithm = EuclideanDistance()
 
 
 ## Creation of the pipeline
-# `pipeline` will be used by the `bob bio pipelines vanilla-biometrics` command
+# `pipeline` will be used by the `bob bio pipelines vanilla` command
 pipeline = VanillaBiometricsPipeline(transformer, bio_algorithm)
 
 # you can also specify the other options in this file:

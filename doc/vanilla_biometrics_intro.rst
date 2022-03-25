@@ -31,10 +31,10 @@ the argument ``--pipeline``. A pipeline is an instance of
 Running a biometric experiment with Vanilla Biometrics
 ------------------------------------------------------
 
-A ``bob bio pipelines vanilla-biometrics`` command is available to run Vanilla Biometrics experiments from the shell.
+A ``bob bio pipelines vanilla`` command is available to run Vanilla Biometrics experiments from the shell.
 Its options can be listed with::
 
-$ bob bio pipelines vanilla-biometrics --help
+$ bob bio pipelines vanilla --help
 
 The command accepts a pipeline and a database to run the experiment.
 
@@ -231,7 +231,7 @@ Find below a complete file containing a Transformer, a Biometric Algorithm, and 
 
 To run the simple example above, save that code in a file ``my_pipeline.py`` and enter this command in a terminal::
 
-  $ bob bio pipelines vanilla-biometrics /path/to/my_pipeline.py
+  $ bob bio pipelines vanilla /path/to/my_pipeline.py
 
 .. note::
 
@@ -239,7 +239,7 @@ To run the simple example above, save that code in a file ``my_pipeline.py`` and
   providing the config file as an argument, like the example.
   To create a sample config file, run::
 
-    $ bob bio pipelines vanilla-biometrics -H sample_config.py
+    $ bob bio pipelines vanilla -H sample_config.py
 
 This will create a file ``results/scores-dev`` containing the distance between each pair of *probe* and *reference* sample.
 
@@ -258,11 +258,11 @@ $ resources.py
 
 For example, to test the gabor graph pipeline on the ATNT database, run::
 
-  $ bob bio pipelines vanilla-biometrics -vv atnt gabor_graph
+  $ bob bio pipelines vanilla -vv atnt gabor_graph
 
 The command above is equivalent to the following command::
 
-  $ bob bio pipelines vanilla-biometrics -vv \
+  $ bob bio pipelines vanilla -vv \
     bob.bio.face.config.database.atnt \
     bob.bio.face.config.baseline.gabor_graph
 
@@ -277,6 +277,6 @@ See :ref:`bob.extension.framework` for more information.
 .. note::
 
   Many pipelines depend on the fact that you run them like:
-  ``bob bio pipelines vanilla-biometrics -vv <database> <pipeline>``
+  ``bob bio pipelines vanilla -vv <database> <pipeline>``
   where no ``--database`` and ``--pipeline`` is used **and** the database
   is specified **before** the pipeline.

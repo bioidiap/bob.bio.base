@@ -51,11 +51,11 @@ You may list the currently available databases (and pipelines) using the followi
 
 You can use such a dataset with the following command (example with the AT&T dataset)::
 
-$ bob bio pipelines vanilla-biometrics atnt <pipeline_name>
+$ bob bio pipelines vanilla atnt <pipeline_name>
 
 For more exotic datasets, you can simply pass your custom database file (defining a ``database`` object) to the vanilla-biometric pipeline::
 
-$ bob bio pipelines vanilla-biometrics my_database.py <pipeline_name>
+$ bob bio pipelines vanilla my_database.py <pipeline_name>
 
 The ``database`` object defined in ``my_database.py`` is an instance of either:
 
@@ -358,7 +358,7 @@ The :py:class:`bob.pipelines.CheckpointWrapper` class is available in the :py:mo
 The ``--checkpoint`` option is a command-line option that automatically wraps every steps of the pipeline with checkpointing.
 If set, the ``--checkpoint-dir`` sets the path for such a checkpoints::
 
-$ bob bio pipelines vanilla-biometrics <database> <pipeline> --checkpoint --output <output_dir> --checkpoint-dir <checkpoint_dir>
+$ bob bio pipelines vanilla <database> <pipeline> --checkpoint --output <output_dir> --checkpoint-dir <checkpoint_dir>
 
 When doing so, the output of each Transformer of the pipeline will be saved to the disk in the ``<checkpoint_dir>`` folder specified with the ``--checkpoint-dir`` option.
 Output scores will be saved on ``<output_dir>``.
@@ -393,7 +393,7 @@ To run an experiment with Dask, a :py:class:`bob.pipelines.DaskWrapper` class is
 
 You can easily benefit from Dask by using the ``--dask-client`` option like so::
 
-$ bob bio pipelines vanilla-biometrics <database> <pipeline> --dask-client <client-config>
+$ bob bio pipelines vanilla <database> <pipeline> --dask-client <client-config>
 
 where ``<client-config>`` is your own dask client configuration file, or a resource from ``bob.pipelines.distributed``:
 
@@ -413,7 +413,7 @@ where ``<client-config>`` is your own dask client configuration file, or a resou
 
   $ SETSHELL grid
 
-  Also, since the grid nodes are not allowed to create additional jobs on the grid, you cannot run the main dask client on a job (``qsub -- bob bio pipelines vanilla-biometrics -l sge_...`` will not work).
+  Also, since the grid nodes are not allowed to create additional jobs on the grid, you cannot run the main dask client on a job (``qsub -- bob bio pipelines vanilla -l sge_...`` will not work).
 
 
 Monitoring and diagnostic
@@ -472,7 +472,7 @@ By default, vanilla-biometrics will use the CSV format ScoreWriter.
 To indicate to a vanilla-biometrics pipeline to use the four-columns ScoreWriter instead
 of the default CSV ScoreWriter, you can pass the ``--write-column-scores`` option like so::
 
-  $ bob bio pipelines vanilla-biometrics --write-column-scores <database> <pipeline> --output <output_dir>
+  $ bob bio pipelines vanilla --write-column-scores <database> <pipeline> --output <output_dir>
 
 
 CSV Score Writer
@@ -636,7 +636,7 @@ This is useful for:
   *  Crop all faces from a dataset
   *  Extract features using a particular feature extractor
   *  Preprocess some audio files using a particular pre-processor
-  
+
 This can be done with the command:
 
 .. code-block:: text
@@ -681,8 +681,8 @@ This can be done with the command:
   It is assumed that the pipeline is Sample wrapped.
 
 The option `--transformer` accepts a python resource as an argument, but also can accept a regular
-Python file which contains a variable named `transformer` defining the `Pipeline <https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html>`__ 
-like the example below: 
+Python file which contains a variable named `transformer` defining the `Pipeline <https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html>`__
+like the example below:
 
 
 .. code-block:: python
@@ -695,7 +695,7 @@ like the example below:
     class MyTransformer(TransformerMixin, BaseEstimator):
         def _more_tags(self):
             return {"stateless": True, "requires_fit": False}
-        
+
         def transform(self, X):
             # do something
             return X
@@ -719,7 +719,7 @@ way simpler as in the example below:
 
 .. code-block:: python
 
-    from sklearn.preprocessing import FunctionTransformer 
+    from sklearn.preprocessing import FunctionTransformer
     from sklearn.pipeline import make_pipeline
     from bob.pipelines import wrap
 
@@ -738,7 +738,7 @@ or if you want to checkpoint only one part of a pipeline (e.g., you need to save
 
 .. code-block:: python
 
-    from sklearn.preprocessing import FunctionTransformer 
+    from sklearn.preprocessing import FunctionTransformer
     from sklearn.pipeline import make_pipeline
     from bob.pipelines import wrap
 

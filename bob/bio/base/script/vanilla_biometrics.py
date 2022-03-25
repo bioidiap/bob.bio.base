@@ -24,7 +24,7 @@ EPILOG = """\b
  Command line examples\n
  -----------------------
 
-$ bob pipelines vanilla-biometrics DATABASE PIPELINE -vv
+$ bob bio pipelines vanilla DATABASE PIPELINE -vv
 
  Check out all PIPELINE available by running:
   `resource.py --types pipeline`
@@ -37,7 +37,7 @@ $ bob pipelines vanilla-biometrics DATABASE PIPELINE -vv
 
 It is possible to do it via configuration file
 
- $ bob pipelines vanilla-biometrics -p my_experiment.py -vv
+ $ bob bio pipelines vanilla -p my_experiment.py -vv
 
 
  my_experiment.py must contain the following elements:
@@ -54,6 +54,7 @@ It is possible to do it via configuration file
 
 
 @click.command(
+    name="vanilla",
     entry_point_group="bob.bio.config",
     cls=ConfigCommand,
     epilog=EPILOG,
