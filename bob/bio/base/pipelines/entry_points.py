@@ -211,6 +211,7 @@ def execute_pipeline_simple(
                         "Splitting data according to the number of available workers."
                     )
                     n_jobs = dask_client.cluster.sge_job_spec["default"]["max_jobs"]
+                    logger.debug(f"{n_jobs} partitions will be created.")
                 pipeline = dask_pipeline_simple(pipeline, npartitions=n_jobs)
 
         logger.info(f"Running the PipelineSimple for group {group}")
