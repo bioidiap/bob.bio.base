@@ -5,6 +5,7 @@
 """
 
 import os
+from bob.bio.base.pipelines.pipelines import PipelineSimple
 import bob.io.base
 import bob.io.base.test_utils
 from bob.bio.base.database import (
@@ -18,9 +19,8 @@ import nose.tools
 from bob.pipelines import DelayedSample, SampleSet
 import numpy as np
 from bob.bio.base.test.utils import atnt_database_directory
-from bob.bio.base.pipelines.vanilla_biometrics import (
+from bob.bio.base.pipelines.biometric_algorithms import (
     Distance,
-    VanillaBiometricsPipeline,
 )
 from bob.bio.base.database import FileListBioDatabase
 from sklearn.preprocessing import FunctionTransformer
@@ -438,9 +438,9 @@ def run_experiment(dataset):
     #### Testing it in a real recognition systems
     transformer = wrap(["sample"], make_pipeline(FunctionTransformer(linearize)))
 
-    vanilla_biometrics_pipeline = VanillaBiometricsPipeline(transformer, Distance())
+    pipeline_simple = PipelineSimple(transformer, Distance())
 
-    return vanilla_biometrics_pipeline(
+    return pipeline_simple(
         dataset.background_model_samples(),
         dataset.references(),
         dataset.probes(),

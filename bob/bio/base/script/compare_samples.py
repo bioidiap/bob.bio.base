@@ -14,7 +14,7 @@ from bob.extension.scripts.click_helper import (
 )
 import bob.io.base
 from tabulate import tabulate
-from bob.bio.base.pipelines.vanilla_biometrics import dask_vanilla_biometrics
+from bob.bio.base.pipelines.entry_points import dask_vanilla_biometrics
 from bob.pipelines import SampleSet, DelayedSample
 import functools
 
@@ -59,8 +59,7 @@ EPILOG = """\n
 )
 @verbosity_option()
 def compare_samples(samples, pipeline, dask_client, verbose):
-    """Compare several samples in a All vs All fashion.
-    """
+    """Compare several samples in a All vs All fashion."""
     if len(samples) == 1:
         raise ValueError(
             "It's necessary to have at least two samples for the comparison"

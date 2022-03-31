@@ -20,7 +20,7 @@ import os
 from .score_writers import FourColumnsScoreWriter
 import copy
 import logging
-from .pipelines import check_valid_pipeline, VanillaBiometricsPipeline
+from .pipelines import check_valid_pipeline, PipelineSimple
 from . import pickle_compress, uncompress_unpickle
 from sklearn.base import TransformerMixin, BaseEstimator
 import tempfile
@@ -38,9 +38,9 @@ from bob.pipelines.utils import is_estimator_stateless
 logger = logging.getLogger(__name__)
 
 
-class ScoreNormalizationPipeline(VanillaBiometricsPipeline):
+class PipelineScoreNorm(PipelineSimple):
     """
-    Apply Z, T or ZT Score normalization on top of VanillaBiometric Pipeline
+    Apply Z, T or ZT Score normalization on top of Pimple Pipeline
 
     Reference bibliography from: A Generative Model for Score Normalization in Speaker Recognition
     https://arxiv.org/pdf/1709.09868.pdf
@@ -50,20 +50,20 @@ class ScoreNormalizationPipeline(VanillaBiometricsPipeline):
     -------
        >>> from bob.pipelines.transformers import Linearize
        >>> from sklearn.pipeline import make_pipeline
-       >>> from bob.bio.base.pipelines.vanilla_biometrics import Distance, VanillaBiometricsPipeline, ScoreNormalizationPipeline, ZNormScores
+       >>> from bob.bio.base.pipelines import Distance, PipelineSimple, PipelineScoreNorm, ZNormScores
        >>> estimator_1 = Linearize()
        >>> transformer = make_pipeline(estimator_1)
        >>> biometric_algorithm = Distance()
-       >>> vanilla_biometrics_pipeline = VanillaBiometricsPipeline(transformer, biometric_algorithm)
-       >>> z_norm_postprocessor = ZNormScores(pipeline=vanilla_biometrics_pipeline)
-       >>> z_pipeline = ScoreNormalizationPipeline(vanilla_biometrics_pipeline, z_norm_postprocessor)
+       >>> pipeline_simple = PipelineSimple(transformer, biometric_algorithm)
+       >>> z_norm_postprocessor = ZNormScores(pipeline=pipeline_simple)
+       >>> z_pipeline = PipelineScoreNorm(pipeline_simple, z_norm_postprocessor)
        >>> zt_pipeline(...) #doctest: +SKIP
 
     Parameters
     ----------
 
-        vanilla_biometrics_pipeline: :any:`VanillaBiometricsPipeline`
-          An instance :any:`VanillaBiometricsPipeline` to the wrapped with score normalization
+        pipeline_simple: :any:`PipelineSimple`
+          An instance :any:`PipelineSimple` to the wrapped with score normalization
 
         post_processor: :py:class`sklearn.pipeline.Pipeline` or a `sklearn.base.BaseEstimator`
             Transformer that will post process the scores
@@ -75,14 +75,14 @@ class ScoreNormalizationPipeline(VanillaBiometricsPipeline):
 
     def __init__(
         self,
-        vanilla_biometrics_pipeline,
+        pipeline_simple,
         post_processor,
         score_writer=None,
     ):
 
-        self.vanilla_biometrics_pipeline = vanilla_biometrics_pipeline
-        self.biometric_algorithm = self.vanilla_biometrics_pipeline.biometric_algorithm
-        self.transformer = self.vanilla_biometrics_pipeline.transformer
+        self.pipeline_simple = pipeline_simple
+        self.biometric_algorithm = self.pipeline_simple.biometric_algorithm
+        self.transformer = self.pipeline_simple.transformer
 
         self.post_processor = post_processor
         self.score_writer = score_writer
@@ -140,12 +140,10 @@ class ScoreNormalizationPipeline(VanillaBiometricsPipeline):
         return raw_scores, post_processed_scores
 
     def train_background_model(self, background_model_samples):
-        return self.vanilla_biometrics_pipeline.train_background_model(
-            background_model_samples
-        )
+        return self.pipeline_simple.train_background_model(background_model_samples)
 
     def create_biometric_reference(self, biometric_reference_samples):
-        return self.vanilla_biometrics_pipeline.create_biometric_reference(
+        return self.pipeline_simple.create_biometric_reference(
             biometric_reference_samples
         )
 
@@ -156,17 +154,17 @@ class ScoreNormalizationPipeline(VanillaBiometricsPipeline):
         allow_scoring_with_all_biometric_references=False,
     ):
 
-        return self.vanilla_biometrics_pipeline.compute_scores(
+        return self.pipeline_simple.compute_scores(
             probe_samples,
             biometric_references,
             allow_scoring_with_all_biometric_references,
         )
 
     def write_scores(self, scores):
-        return self.vanilla_biometrics_pipeline.write_scores(scores)
+        return self.pipeline_simple.write_scores(scores)
 
     def post_process(self, score_paths, filename):
-        return self.vanilla_biometrics_pipeline.post_process(score_paths, filename)
+        return self.pipeline_simple.post_process(score_paths, filename)
 
 
 def copy_learned_attributes(from_estimator, to_estimator):
@@ -304,7 +302,7 @@ def dask_score_normalization_pipeline(pipeline):
 
 class ZNormScores(TransformerMixin, BaseEstimator):
     """
-    Apply Z-Norm Score normalization on top of VanillaBiometric Pipeline
+    Apply Z-Norm Score normalization on top of Simple Pipeline
 
     Reference bibliography from: A Generative Model for Score Normalization in Speaker Recognition
     https://arxiv.org/pdf/1709.09868.pdf
@@ -334,13 +332,13 @@ class ZNormScores(TransformerMixin, BaseEstimator):
         if isinstance_nested(
             self.pipeline,
             "biometric_algorithm",
-            bob.bio.base.pipelines.vanilla_biometrics.wrappers.BioAlgorithmCheckpointWrapper,
+            bob.bio.base.pipelines.wrappers.BioAlgorithmCheckpointWrapper,
         ):
 
             if isinstance_nested(
                 self.pipeline,
                 "biometric_algorithm",
-                bob.bio.base.pipelines.vanilla_biometrics.wrappers.BioAlgorithmDaskWrapper,
+                bob.bio.base.pipelines.wrappers.BioAlgorithmDaskWrapper,
             ):
                 self.pipeline.biometric_algorithm.biometric_algorithm.score_dir = (
                     os.path.join(
@@ -449,7 +447,7 @@ class ZNormScores(TransformerMixin, BaseEstimator):
 
 class TNormScores(TransformerMixin, BaseEstimator):
     """
-    Apply T-Norm Score normalization on top of VanillaBiometric Pipeline
+    Apply T-Norm Score normalization on top of Simple Pipeline
 
     Reference bibliography from: A Generative Model for Score Normalization in Speaker Recognition
     https://arxiv.org/pdf/1709.09868.pdf
@@ -479,13 +477,13 @@ class TNormScores(TransformerMixin, BaseEstimator):
         if isinstance_nested(
             self.pipeline,
             "biometric_algorithm",
-            bob.bio.base.pipelines.vanilla_biometrics.wrappers.BioAlgorithmCheckpointWrapper,
+            bob.bio.base.pipelines.wrappers.BioAlgorithmCheckpointWrapper,
         ):
 
             if isinstance_nested(
                 self.pipeline,
                 "biometric_algorithm",
-                bob.bio.base.pipelines.vanilla_biometrics.wrappers.BioAlgorithmDaskWrapper,
+                bob.bio.base.pipelines.wrappers.BioAlgorithmDaskWrapper,
             ):
                 self.pipeline.biometric_algorithm.biometric_algorithm.score_dir = (
                     os.path.join(

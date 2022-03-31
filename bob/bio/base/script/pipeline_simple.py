@@ -8,7 +8,7 @@
 import logging
 
 import click
-from bob.bio.base.pipelines.vanilla_biometrics import execute_vanilla_biometrics
+from bob.bio.base.pipelines.entry_points import execute_pipeline_simple
 from bob.extension.scripts.click_helper import ConfigCommand
 from bob.extension.scripts.click_helper import ResourceOption
 from bob.extension.scripts.click_helper import verbosity_option
@@ -24,7 +24,7 @@ EPILOG = """\b
  Command line examples\n
  -----------------------
 
-$ bob bio pipelines vanilla DATABASE PIPELINE -vv
+$ bob bio pipeline simple DATABASE PIPELINE -vv
 
  Check out all PIPELINE available by running:
   `resource.py --types pipeline`
@@ -37,14 +37,14 @@ $ bob bio pipelines vanilla DATABASE PIPELINE -vv
 
 It is possible to do it via configuration file
 
- $ bob bio pipelines vanilla -p my_experiment.py -vv
+ $ bob bio pipeline simple -p my_experiment.py -vv
 
 
  my_experiment.py must contain the following elements:
 
    >>> transformer = ... # A scikit-learn pipeline\n
    >>> algorithm   = ... # `An BioAlgorithm`\n
-   >>> pipeline = VanillaBiometricsPipeline(transformer,algorithm)\n
+   >>> pipeline = PipelineSimple(transformer,algorithm)\n
    >>> database = .... # Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)"
 
 \b
@@ -54,7 +54,7 @@ It is possible to do it via configuration file
 
 
 @click.command(
-    name="vanilla",
+    name="simple",
     entry_point_group="bob.bio.config",
     cls=ConfigCommand,
     epilog=EPILOG,
@@ -64,7 +64,7 @@ It is possible to do it via configuration file
     "-p",
     required=True,
     entry_point_group="bob.bio.pipeline",
-    help="Vanilla biometrics pipeline composed of a scikit-learn Pipeline and a BioAlgorithm",
+    help="The simplest pipeline possible composed of a scikit-learn Pipeline and a BioAlgorithm",
     cls=ResourceOption,
 )
 @click.option(
@@ -152,7 +152,7 @@ It is possible to do it via configuration file
     cls=ResourceOption,
 )
 @verbosity_option(cls=ResourceOption)
-def vanilla_biometrics(
+def pipeline_simple(
     pipeline,
     database,
     dask_client,
@@ -217,16 +217,16 @@ def vanilla_biometrics(
 
     .. Note::
         Refrain from calling this function directly from a script. Prefer
-        :py:func:`bob.bio.base.pipelines.vanilla_biometrics.execute_vanilla_biometrics`
+        :py:func:`bob.bio.base.pipelines.execute_pipeline_simple`
         instead.
 
     """
 
     checkpoint = not memory
 
-    logger.debug("Executing Vanilla-biometrics")
+    logger.debug("Executing PipelineSimple")
 
-    execute_vanilla_biometrics(
+    execute_pipeline_simple(
         pipeline,
         database,
         dask_client,

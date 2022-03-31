@@ -138,7 +138,7 @@ def split_four_column(filename):
 
 
 def get_split_dataframe(filename):
-    """Loads a score set that was written with :any:`bob.bio.base.pipelines.vanilla_biometrics.CSVScoreWriter`
+    """Loads a score set that was written with :any:`bob.bio.base.pipelines.CSVScoreWriter`
 
     Returns two dataframes, split between positives and negatives.
 
@@ -169,7 +169,7 @@ def get_split_dataframe(filename):
 
 
 def split_csv_scores(filename):
-    """Loads a score set that was written with :any:`bob.bio.base.pipelines.vanilla_biometrics.CSVScoreWriter`
+    """Loads a score set that was written with :any:`bob.bio.base.pipelines.CSVScoreWriter`
 
     Parameters
     ----------

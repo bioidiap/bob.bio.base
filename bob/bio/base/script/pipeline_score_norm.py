@@ -8,9 +8,7 @@
 import logging
 
 import click
-from bob.bio.base.pipelines.vanilla_biometrics import (
-    execute_vanilla_biometrics_score_normalization,
-)
+from bob.bio.base.pipelines.entry_points import execute_pipeline_score_norm
 from bob.extension.scripts.click_helper import ConfigCommand
 from bob.extension.scripts.click_helper import ResourceOption
 from bob.extension.scripts.click_helper import verbosity_option
@@ -26,7 +24,7 @@ EPILOG = """\b
  Command line examples\n
  -----------------------
 
-$ bob pipelines vanilla DATABASE PIPELINE -vv
+$ bob bio pipeline score-norm DATABASE PIPELINE -vv
 
  Check out all PIPELINE available by running:
   `resource.py --types pipeline`
@@ -39,14 +37,14 @@ $ bob pipelines vanilla DATABASE PIPELINE -vv
 
 It is possible to do it via configuration file
 
- $ bob pipelines vanilla -p my_experiment.py -vv
+ $ bob bio pipeline score-norm -p my_experiment.py -vv
 
 
  my_experiment.py must contain the following elements:
 
    >>> transformer = ... # A scikit-learn pipeline\n
    >>> algorithm   = ... # `An BioAlgorithm`\n
-   >>> pipeline = VanillaBiometricsPipeline(transformer,algorithm)\n
+   >>> pipeline = PipelineSimple(transformer,algorithm)\n
    >>> database = .... # Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)"
 
 \b
@@ -66,7 +64,7 @@ It is possible to do it via configuration file
     "-p",
     entry_point_group="bob.bio.pipeline",
     required=True,
-    help="Vanilla biometrics pipeline composed of a scikit-learn Pipeline and a BioAlgorithm",
+    help="PipelineSimple composed of a scikit-learn Pipeline and a BioAlgorithm",
     cls=ResourceOption,
 )
 @click.option(
@@ -177,7 +175,7 @@ It is possible to do it via configuration file
     cls=ResourceOption,
 )
 @verbosity_option(cls=ResourceOption)
-def vanilla_biometrics_score_normalization(
+def pipeline_score_norm(
     pipeline,
     database,
     dask_client,
@@ -194,7 +192,7 @@ def vanilla_biometrics_score_normalization(
     force,
     **kwargs,
 ):
-    """Runs the the vanilla-biometrics with ZT-Norm like score normalizations.
+    """Runs the PipelineSimple with score normalization strategies
 
     Such pipeline consists into two major components.
     The first component consists of a scikit-learn `Pipeline`,
@@ -245,11 +243,11 @@ def vanilla_biometrics_score_normalization(
 
     """
 
-    logger.debug("Executing Vanilla-biometrics ZTNorm")
+    logger.debug("Executing PipelineScoreNorm")
 
     checkpoint = not memory
 
-    execute_vanilla_biometrics_score_normalization(
+    execute_pipeline_score_norm(
         pipeline,
         database,
         dask_client,
