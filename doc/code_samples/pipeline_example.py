@@ -1,6 +1,6 @@
 import numpy as np
-from bob.bio.base.pipelines.entry_points import BioAlgorithm
-from bob.bio.base.pipelines.entry_points import VanillaBiometricsPipeline
+from bob.bio.base.pipelines import BioAlgorithm
+from bob.bio.base.pipelines import PipelineSimple
 from bob.pipelines import wrap
 from sklearn.decomposition import PCA
 from sklearn.pipeline import make_pipeline
@@ -46,7 +46,7 @@ bio_algorithm = EuclideanDistance()
 
 ## Creation of the pipeline
 # `pipeline` will be used by the `bob bio pipelines vanilla` command
-pipeline = VanillaBiometricsPipeline(transformer, bio_algorithm)
+pipeline = PipelineSimple(transformer, bio_algorithm)
 
 # you can also specify the other options in this file:
 database = "atnt"

@@ -80,9 +80,9 @@ Users Guide
    :maxdepth: 2
 
    biometrics_intro
-   vanilla_biometrics_intro
-   vanilla_biometrics_features
-   vanilla_biometrics_score_normalization
+   pipeline_simple_intro
+   pipeline_simple_features
+   pipeline_score_norm
    annotators
    legacy
    vulnerability_analysis

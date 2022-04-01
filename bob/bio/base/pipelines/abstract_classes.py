@@ -405,7 +405,7 @@ class Database(metaclass=ABCMeta):
 class ScoreWriter(metaclass=ABCMeta):
     """
     Defines base methods to read, write scores and concatenate scores
-    for :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`
+    for :any:`bob.bio.base.pipelines.BioAlgorithm`
     """
 
     def __init__(self, path, extension=".txt"):

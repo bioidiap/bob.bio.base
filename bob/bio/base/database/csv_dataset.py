@@ -154,7 +154,7 @@ class CSVToSampleLoaderBiometrics(CSVToSampleLoader):
 class CSVDataset(Database):
     """
     Generic filelist dataset for :any:` bob.bio.base.pipelines.PipelineSimple` pipeline.
-    Check :any:`vanilla_biometrics_features` for more details about the PipelineSimple Dataset
+    Check :any:`pipeline_simple_features` for more details about the PipelineSimple Dataset
     interface.
 
     To create a new dataset, you need to provide a directory structure similar to the one below:
@@ -491,7 +491,7 @@ class CSVDataset(Database):
 class CSVDatasetZTNorm(CSVDataset):
     """
     Generic filelist dataset for :any:`bob.bio.base.pipelines.PipelineSimple` pipelines.
-    Check :any:`vanilla_biometrics_features` for more details about the PipelineSimple Dataset
+    Check :any:`pipeline_simple_features` for more details about the PipelineSimple Dataset
     interface.
 
     This dataset interface takes as in put a :any:`CSVDataset` as input and have two extra methods:
@@ -600,7 +600,7 @@ class CSVDatasetCrossValidation(Database):
     Generic filelist dataset for :any:`bob.bio.base.pipelines.PipelineSimple` pipeline that
     handles **CROSS VALIDATION**.
 
-    Check :any:`vanilla_biometrics_features` for more details about the PipelineSimple Dataset
+    Check :any:`pipeline_simple_features` for more details about the PipelineSimple Dataset
     interface.
 
 

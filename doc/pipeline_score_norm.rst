@@ -1,11 +1,11 @@
 .. author: Tiago de Freitas Pereira <tiago.pereira@idiap.ch>
 .. date: Wed 21 Sep 2020 15:45:00 UTC+02
 
-..  _bob.bio.base.vanilla_biometrics_score_normalization:
+..  _bob.bio.base.pipeline_score_norm:
 
-=======================================
-Vanilla Biometrics: Score normalization
-=======================================
+===================================
+PipelineSimple: Score normalization
+===================================
 
 
 Score normalization aims to compensate for statistical variations in output scores
@@ -13,8 +13,8 @@ due to changes in the conditions across different enrollment and probe samples.
 This is achieved by scaling distributions of system output scores to better
 facilitate the application of a single, global threshold for authentication.
 
-Bob has implemented the :py:class:`bob.bio.base.pipelines.vanilla_biometrics.ScoreNormalizationPipeline` which is an
-extension of regular :py:class:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` where a post process
+Bob has implemented the :py:class:`bob.bio.base.pipelines.PipelineScoreNorm` which is an
+extension of regular :py:class:`bob.bio.base.pipelines.PipelineSimple` where a post process
 step is amended to the scoring stage.
 Bob has implemented three different strategies to normalize scores with two post processors, and these strategies are presented in the next subsections.
 
@@ -36,11 +36,11 @@ distribution can be computed beforehand, and it is defined as the following.
    zs_i = \frac{s_i - \mu}{\sigma}
 
 
-This scoring technique is implemented in our API via :py:func:`bob.bio.base.pipelines.vanilla_biometrics.ZNormScores`.
+This scoring technique is implemented in our API via :py:func:`bob.bio.base.pipelines.ZNormScores`.
 
 Currently, the ZNorm is available via the following CLI command ::
 
- $ bob bio pipelines score-norm [VANILLA-BIOMETRICS-COMMANDS] --score-normalization-type znorm
+ $ bob bio pipeline score-norm [SIMPLE-PIPELINE-COMMANDS] --score-normalization-type znorm
 
 
 T-Norm
@@ -65,11 +65,11 @@ standard deviation computed using the same criteria used to compute
 :math:`\mu`.
 
 
-This scoring technique is implemented in our API via :py:func:`bob.bio.base.pipelines.vanilla_biometrics.TNormScores`.
+This scoring technique is implemented in our API via :py:func:`bob.bio.base.pipelines.TNormScores`.
 
 Currently, the ZNorm is available via the following CLI command ::
 
- $ bob bio pipelines score-norm [VANILLA-BIOMETRICS-COMMANDS] --score-normalization-type tnorm
+ $ bob bio pipeline score-norm [SIMPLE-PIPELINE-COMMANDS] --score-normalization-type tnorm
 
 
 .. note::

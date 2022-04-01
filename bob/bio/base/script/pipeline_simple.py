@@ -8,7 +8,7 @@
 import logging
 
 import click
-from bob.bio.base.pipelines.entry_points import execute_pipeline_simple
+from bob.bio.base.pipelines import execute_pipeline_simple
 from bob.extension.scripts.click_helper import ConfigCommand
 from bob.extension.scripts.click_helper import ResourceOption
 from bob.extension.scripts.click_helper import verbosity_option
