@@ -263,16 +263,16 @@ class CSVDataset(Database):
             train_csv = search_file(
                 dataset_protocol_path,
                 [
-                    os.path.join("/", protocol, "norm", "train_world.lst"),
-                    os.path.join("/", protocol, "norm", "train_world.csv"),
+                    os.path.join(name, protocol, "norm", "train_world.lst"),
+                    os.path.join(name, protocol, "norm", "train_world.csv"),
                 ],
             )
 
             dev_enroll_csv = search_file(
                 dataset_protocol_path,
                 [
-                    os.path.join("/", protocol, "dev", "for_models.lst"),
-                    os.path.join("/", protocol, "dev", "for_models.csv"),
+                    os.path.join(name, protocol, "dev", "for_models.lst"),
+                    os.path.join(name, protocol, "dev", "for_models.csv"),
                 ],
             )
 
@@ -280,24 +280,24 @@ class CSVDataset(Database):
             dev_probe_csv = search_file(
                 dataset_protocol_path,
                 [
-                    os.path.join("/", protocol, "dev", legacy_probe),
-                    os.path.join("/", protocol, "dev", "for_probes.csv"),
+                    os.path.join(name, protocol, "dev", legacy_probe),
+                    os.path.join(name, protocol, "dev", "for_probes.csv"),
                 ],
             )
 
             eval_enroll_csv = search_file(
                 dataset_protocol_path,
                 [
-                    os.path.join("/", protocol, "eval", "for_models.lst"),
-                    os.path.join("/", protocol, "eval", "for_models.csv"),
+                    os.path.join(name, protocol, "eval", "for_models.lst"),
+                    os.path.join(name, protocol, "eval", "for_models.csv"),
                 ],
             )
 
             eval_probe_csv = search_file(
                 dataset_protocol_path,
                 [
-                    os.path.join("/", protocol, "eval", legacy_probe),
-                    os.path.join("/", protocol, "eval", "for_probes.csv"),
+                    os.path.join(name, protocol, "eval", legacy_probe),
+                    os.path.join(name, protocol, "eval", "for_probes.csv"),
                 ],
             )
 

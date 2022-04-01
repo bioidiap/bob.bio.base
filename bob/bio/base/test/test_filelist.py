@@ -30,24 +30,22 @@ from bob.pipelines.sample_loaders import AnnotationsLoader
 
 
 legacy_example_dir = os.path.realpath(
-    bob.io.base.test_utils.datafile(".", __name__, "data/example_filelist")
+    bob.io.base.test_utils.datafile(".", __name__, "data/")
 )
 
 legacy2_example_dir = os.path.realpath(
-    bob.io.base.test_utils.datafile(".", __name__, "data/example_filelist2")
+    bob.io.base.test_utils.datafile(".", __name__, "data/")
 )
 
 
-example_dir = os.path.realpath(
-    bob.io.base.test_utils.datafile(".", __name__, "data/example_csv_filelist")
-)
+example_dir = os.path.realpath(bob.io.base.test_utils.datafile(".", __name__, "data/"))
 atnt_protocol_path = os.path.realpath(
-    bob.io.base.test_utils.datafile(".", __name__, "data/atnt")
+    bob.io.base.test_utils.datafile(".", __name__, "data/")
 )
 
 atnt_protocol_path_cross_validation = os.path.join(
     os.path.realpath(
-        bob.io.base.test_utils.datafile(".", __name__, "data/atnt/cross_validation/")
+        bob.io.base.test_utils.datafile(".", __name__, "data/atnt/cross_validation")
     ),
     "metadata.csv",
 )
@@ -63,7 +61,7 @@ def check_all_true(list_of_something, something):
 def test_csv_file_list_dev_only():
 
     dataset = CSVDataset(
-        name="test",
+        name="example_csv_filelist",
         dataset_protocol_path=example_dir,
         protocol="protocol_only_dev",
     )
@@ -80,7 +78,7 @@ def test_csv_file_list_dev_only():
 def test_csv_file_list_dev_only_metadata():
 
     dataset = CSVDataset(
-        name="test",
+        name="example_csv_filelist",
         dataset_protocol_path=example_dir,
         protocol="protocol_only_dev_metadata",
     )
@@ -115,8 +113,9 @@ def test_csv_file_list_dev_eval():
     )
 
     def run(filename):
+
         dataset = CSVDataset(
-            name="test",
+            name="example_csv_filelist",
             dataset_protocol_path=filename,
             protocol="protocol_dev_eval",
             csv_to_sample_loader=make_pipeline(
@@ -160,7 +159,7 @@ def test_csv_file_list_dev_eval():
         assert len(dataset.groups()) == 3
 
     run(example_dir)
-    run(example_dir + ".tar.gz")
+    run(os.path.join(example_dir, "example_csv_filelist.tar.gz"))
 
 
 def test_csv_file_list_dev_eval_score_norm():
@@ -173,7 +172,7 @@ def test_csv_file_list_dev_eval_score_norm():
 
     def run(filename):
         znorm_dataset = CSVDatasetZTNorm(
-            name="test",
+            name="example_csv_filelist",
             dataset_protocol_path=filename,
             protocol="protocol_dev_eval",
             csv_to_sample_loader=make_pipeline(
@@ -224,7 +223,7 @@ def test_csv_file_list_dev_eval_score_norm():
         assert len(znorm_dataset.zprobes(proportion=0.5)) == 4
 
     run(example_dir)
-    run(example_dir + ".tar.gz")
+    run(os.path.join(example_dir, "example_csv_filelist.tar.gz"))
 
 
 def test_csv_file_list_dev_eval_sparse():
@@ -236,7 +235,7 @@ def test_csv_file_list_dev_eval_sparse():
     )
 
     dataset = CSVDataset(
-        name="test",
+        name="example_csv_filelist",
         dataset_protocol_path=example_dir,
         protocol="protocol_dev_eval_sparse",
         csv_to_sample_loader=make_pipeline(
@@ -297,7 +296,7 @@ def test_csv_file_list_dev_eval_sparse():
 def test_lst_file_list_dev_eval():
 
     dataset = CSVDataset(
-        name="test",
+        name="example_filelist",
         dataset_protocol_path=legacy_example_dir,
         protocol="",
         csv_to_sample_loader=LSTToSampleLoader(
@@ -335,7 +334,7 @@ def test_lst_file_list_dev_eval():
 def test_lst_file_list_dev_eval_sparse():
 
     dataset = CSVDataset(
-        name="test",
+        name="example_filelist",
         dataset_protocol_path=legacy_example_dir,
         protocol="",
         csv_to_sample_loader=LSTToSampleLoader(
@@ -374,7 +373,7 @@ def test_lst_file_list_dev_eval_sparse():
 def test_lst_file_list_dev_sparse_filelist2():
 
     dataset = CSVDataset(
-        name="test",
+        name="example_filelist2",
         dataset_protocol_path=legacy2_example_dir,
         protocol="",
         csv_to_sample_loader=LSTToSampleLoader(
@@ -395,7 +394,7 @@ def test_lst_file_list_dev_sparse_filelist2():
 def test_csv_file_list_atnt():
 
     dataset = CSVDataset(
-        name="test", dataset_protocol_path=atnt_protocol_path, protocol="idiap_protocol"
+        name="atnt", dataset_protocol_path=atnt_protocol_path, protocol="idiap_protocol"
     )
     assert len(dataset.background_model_samples()) == 200
     assert len(dataset.references()) == 20
@@ -450,7 +449,7 @@ def run_experiment(dataset):
 def test_atnt_experiment():
 
     dataset = CSVDataset(
-        name="test",
+        name="atnt",
         dataset_protocol_path=atnt_protocol_path,
         protocol="idiap_protocol",
         csv_to_sample_loader=CSVToSampleLoaderBiometrics(
@@ -473,7 +472,7 @@ def test_atnt_experiment_cross_validation():
 
     def run_cross_validation_experiment(test_size=0.9):
         dataset = CSVDatasetCrossValidation(
-            name="test",
+            name="atnt",
             csv_file_name=atnt_protocol_path_cross_validation,
             random_state=0,
             test_size=test_size,
@@ -503,7 +502,9 @@ def test_atnt_experiment_cross_validation():
 
 def test_query():
     db = FileListBioDatabase(
-        legacy_example_dir, "test", use_dense_probe_file_list=False
+        os.path.join(legacy_example_dir, "example_filelist"),
+        "test",
+        use_dense_probe_file_list=False,
     )
 
     assert (
@@ -576,8 +577,9 @@ def test_query():
 
 
 def test_query_protocol():
+
     db = FileListBioDatabase(
-        os.path.dirname(legacy_example_dir),
+        legacy_example_dir,
         "test",
         protocol="example_filelist",
         use_dense_probe_file_list=False,
@@ -795,13 +797,18 @@ def test_query_protocol():
 
 def test_noztnorm():
     db = FileListBioDatabase(
-        os.path.join(os.path.dirname(legacy_example_dir), "example_filelist2"), "test"
+        os.path.join(legacy_example_dir, "example_filelist2"), "test"
     )
     assert len(db.all_files())
 
 
 def test_query_dense():
-    db = FileListBioDatabase(legacy_example_dir, "test", use_dense_probe_file_list=True)
+
+    db = FileListBioDatabase(
+        os.path.join(legacy_example_dir, "example_filelist"),
+        "test",
+        use_dense_probe_file_list=True,
+    )
 
     assert len(db.objects(groups="world")) == 8  # 8 samples in the world set
 
@@ -814,14 +821,16 @@ def test_query_dense():
 
 
 def test_annotation():
+
     db = FileListBioDatabase(
-        legacy_example_dir,
+        os.path.join(legacy_example_dir, "example_filelist"),
         "test",
         use_dense_probe_file_list=False,
-        annotation_directory=legacy_example_dir,
+        annotation_directory=os.path.join(legacy_example_dir, "example_filelist"),
         annotation_type="named",
     )
     f = [o for o in db.objects() if o.path == "data/model4_session1_sample2"][0]
+
     annots = db.annotations(f)
 
     assert annots is not None
@@ -836,27 +845,34 @@ def test_multiple_extensions():
     db = FileListBioDatabase(
         legacy_example_dir,
         "test",
+        protocol="example_filelist",
         use_dense_probe_file_list=False,
-        original_directory=legacy_example_dir,
+        original_directory=os.path.join(legacy_example_dir, "example_filelist"),
         original_extension=".pos",
     )
+
     file = bob.bio.base.database.BioFile(
         4, "data/model4_session1_sample2", "data/model4_session1_sample2"
     )
 
     file_name = db.original_file_name(file, True)
-    assert file_name == os.path.join(legacy_example_dir, file.path + ".pos")
+    assert file_name == os.path.join(
+        legacy_example_dir, "example_filelist", file.path + ".pos"
+    )
 
     # check that the new behavior works as well
     db = FileListBioDatabase(
         legacy_example_dir,
         "test",
+        protocol="example_filelist",
         use_dense_probe_file_list=False,
-        original_directory=legacy_example_dir,
+        original_directory=os.path.join(legacy_example_dir, "example_filelist"),
         original_extension=[".jpg", ".pos"],
     )
     file_name = db.original_file_name(file)
-    assert file_name == os.path.join(legacy_example_dir, file.path + ".pos")
+    assert file_name == os.path.join(
+        legacy_example_dir, "example_filelist", file.path + ".pos"
+    )
 
     file = bob.bio.base.database.BioFile(
         4, "data/model4_session1_sample1", "data/model4_session1_sample1"
@@ -871,7 +887,7 @@ def test_driver_api():
         main(
             (
                 "bio_filelist dumplist --list-directory=%s --self-test"
-                % legacy_example_dir
+                % os.path.join(legacy_example_dir, "example_filelist")
             ).split()
         )
         == 0
@@ -880,7 +896,7 @@ def test_driver_api():
         main(
             (
                 "bio_filelist dumplist --list-directory=%s --purpose=enroll --group=dev --class=client --self-test"
-                % legacy_example_dir
+                % os.path.join(legacy_example_dir, "example_filelist")
             ).split()
         )
         == 0
@@ -889,7 +905,7 @@ def test_driver_api():
         main(
             (
                 "bio_filelist checkfiles --list-directory=%s --self-test"
-                % legacy_example_dir
+                % os.path.join(legacy_example_dir, "example_filelist")
             ).split()
         )
         == 0
