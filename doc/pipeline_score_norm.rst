@@ -3,9 +3,9 @@
 
 ..  _bob.bio.base.pipeline_score_norm:
 
-===================================
-PipelineSimple: Score normalization
-===================================
+===================
+Score normalization
+===================
 
 
 Score normalization aims to compensate for statistical variations in output scores

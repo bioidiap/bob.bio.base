@@ -194,9 +194,9 @@ def execute_pipeline_score_norm(
     **kwargs,
 ):
     """
-    Function that executes the PipelineSimple with ZTNorm.
+    Function that extends the capabilities of the PipelineSimple to run score normalization.
 
-    This is called when using the ``bob bio pipelines score-norm`` command.
+    This is called when using the ``bob bio pipeline score-norm`` command.
 
     This is also callable from a script without fear of interrupting the running
     Dask instance, allowing chaining multiple experiments while keeping the

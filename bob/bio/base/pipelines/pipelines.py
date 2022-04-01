@@ -184,37 +184,37 @@ class PipelineSimple(object):
         return self.score_writer.post_process(score_paths, filename)
 
 
-def check_valid_pipeline(simple_pipeline):
+def check_valid_pipeline(pipeline_simple):
     """
-    Applying some checks in the simple_pipeline
+    Applying some checks in the PipelineSimple
     """
 
     ## CHECKING THE TRANSFORMER
     # Checking if it's a Scikit Pipeline or a estimator
-    if isinstance(simple_pipeline.transformer, Pipeline):
+    if isinstance(pipeline_simple.transformer, Pipeline):
 
         # Checking if all steps are wrapped as samples, if not, we should wrap them
-        for p in simple_pipeline.transformer:
+        for p in pipeline_simple.transformer:
             if not isinstance_nested(p, "estimator", SampleWrapper):
                 wrap(["sample"], p)
 
     # In this case it can be a simple estimator. AND
     # Checking if it's sample wrapper, if not, do it
     elif isinstance_nested(
-        simple_pipeline.transformer, "estimator", BaseEstimator
-    ) and isinstance_nested(simple_pipeline.transformer, "estimator", BaseEstimator):
-        wrap(["sample"], simple_pipeline.transformer)
+        pipeline_simple.transformer, "estimator", BaseEstimator
+    ) and isinstance_nested(pipeline_simple.transformer, "estimator", BaseEstimator):
+        wrap(["sample"], pipeline_simple.transformer)
     else:
         raise ValueError(
-            f"simple_pipeline.transformer should be instance of either `sklearn.pipeline.Pipeline` or"
-            f"sklearn.base.BaseEstimator, not {simple_pipeline.transformer}"
+            f"pipeline_simple.transformer should be instance of either `sklearn.pipeline.Pipeline` or"
+            f"sklearn.base.BaseEstimator, not {pipeline_simple.transformer}"
         )
 
     ## Checking the Biometric algorithm
-    if not isinstance(simple_pipeline.biometric_algorithm, BioAlgorithm):
+    if not isinstance(pipeline_simple.biometric_algorithm, BioAlgorithm):
         raise ValueError(
-            f"simple_pipeline.biometric_algorithm should be instance of `BioAlgorithm`"
-            f"not {simple_pipeline.biometric_algorithm}"
+            f"pipeline_simple.biometric_algorithm should be instance of `BioAlgorithm`"
+            f"not {pipeline_simple.biometric_algorithm}"
         )
 
     return True
