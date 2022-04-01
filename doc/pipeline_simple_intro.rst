@@ -19,8 +19,6 @@ Pipeline Simple: Introduction to biometric recognition in practice
 
 To run biometric experiments, we provide a generic CLI command called ``bob bio pipelines``.
 Such CLI command is an entry-point to several pipelines implemented in this package.
-Curently only one pipeline is implemented which is ``pipeline simple``.
-This tutorial will focus on this pipeline.
 
 In our very first example, we've shown how to compare two samples using the
 ``bob bio compare-samples`` command, where the "biometric" algorithm is set with
