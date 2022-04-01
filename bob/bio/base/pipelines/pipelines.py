@@ -100,7 +100,7 @@ class PipelineSimple(object):
         allow_scoring_with_all_biometric_references=True,
     ):
         logger.info(
-            f" >> SimplePipeline: Training background model with pipeline {self.transformer}"
+            f" >> PipelineSimple: Training background model with pipeline {self.transformer}"
         )
 
         # Training background model (fit will return even if samples is ``None``,

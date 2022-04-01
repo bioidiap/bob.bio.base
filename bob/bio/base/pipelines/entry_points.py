@@ -158,7 +158,7 @@ def execute_pipeline_simple(
                 partition_size=partition_size,
             )
 
-        logger.info(f"Running the SimplePipeline for group {group}")
+        logger.info(f"Running the PipelineSimple for group {group}")
         allow_scoring_with_all_biometric_references = (
             database.allow_scoring_with_all_biometric_references
             if hasattr(database, "allow_scoring_with_all_biometric_references")

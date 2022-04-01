@@ -34,7 +34,7 @@ def reduce_scores(scores, fn=np.max):
 
 
 class BioAlgorithm(BaseEstimator, metaclass=ABCMeta):
-    """Describes a base biometric comparator for the SimplePipeline :ref:`bob.bio.base.biometric_algorithm`.
+    """Describes a base biometric comparator for the PipelineSimple :ref:`bob.bio.base.biometric_algorithm`.
 
     biometric model enrollment, via ``enroll()`` and scoring, with
     ``score()``.
@@ -58,7 +58,7 @@ class BioAlgorithm(BaseEstimator, metaclass=ABCMeta):
         self.stacked_biometric_references = None
 
     def enroll_samples(self, biometric_references):
-        """This method should implement the enrollment sub-pipeline of the SimplePipeline
+        """This method should implement the enrollment sub-pipeline of the PipelineSimple
 
         It handles the creation of biometric references
 
@@ -300,7 +300,7 @@ class BioAlgorithm(BaseEstimator, metaclass=ABCMeta):
 
 
 class Database(metaclass=ABCMeta):
-    """Base class for SimplePipeline databases"""
+    """Base class for PipelineSimple databases"""
 
     def __init__(
         self,
