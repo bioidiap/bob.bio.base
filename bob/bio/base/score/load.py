@@ -138,7 +138,7 @@ def split_four_column(filename):
 
 
 def get_split_dataframe(filename):
-    """Loads a score set that was written with :any:`bob.bio.base.pipelines.vanilla_biometrics.CSVScoreWriter`
+    """Loads a score set that was written with :any:`bob.bio.base.pipelines.CSVScoreWriter`
 
     Returns two dataframes, split between positives and negatives.
 
@@ -153,11 +153,11 @@ def get_split_dataframe(filename):
 
       dataframe: negatives, contains the list of scores (and metadata) for which
         the fields of the ``bio_ref_subject_id`` and ``probe_subject_id`` columns are
-        different. (see :ref:`bob.bio.base.vanilla_biometrics_advanced_features`)
+        different. (see :ref:`bob.bio.base.pipeline_simple_advanced_features`)
 
       dataframe: positives, contains the list of scores (and metadata) for which
         the fields of the ``bio_ref_subject_id`` and ``probe_subject_id`` columns are
-        identical. (see :ref:`bob.bio.base.vanilla_biometrics_advanced_features`)
+        identical. (see :ref:`bob.bio.base.pipeline_simple_advanced_features`)
 
     """
     df = dask.dataframe.read_csv(filename)
@@ -169,7 +169,7 @@ def get_split_dataframe(filename):
 
 
 def split_csv_scores(filename):
-    """Loads a score set that was written with :any:`bob.bio.base.pipelines.vanilla_biometrics.CSVScoreWriter`
+    """Loads a score set that was written with :any:`bob.bio.base.pipelines.CSVScoreWriter`
 
     Parameters
     ----------
@@ -182,11 +182,11 @@ def split_csv_scores(filename):
 
       array: negatives, 1D float array containing the list of scores, for which
         the fields of the ``bio_ref_subject_id`` and ``probe_subject_id`` columns are
-        different. (see :ref:`bob.bio.base.vanilla_biometrics_advanced_features`)
+        different. (see :ref:`bob.bio.base.pipeline_simple_advanced_features`)
 
       array: positives, 1D float array containing the list of scores, for which
         the fields of the ``bio_ref_subject_id`` and ``probe_subject_id`` columns are
-        identical. (see :ref:`bob.bio.base.vanilla_biometrics_advanced_features`)
+        identical. (see :ref:`bob.bio.base.pipeline_simple_advanced_features`)
 
     """
     df = dask.dataframe.read_csv(filename)

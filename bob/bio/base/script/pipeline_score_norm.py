@@ -8,7 +8,7 @@
 import logging
 
 import click
-from bob.bio.base.pipelines.vanilla_biometrics import execute_vanilla_biometrics
+from bob.bio.base.pipelines.entry_points import execute_pipeline_score_norm
 from bob.extension.scripts.click_helper import ConfigCommand
 from bob.extension.scripts.click_helper import ResourceOption
 from bob.extension.scripts.click_helper import verbosity_option
@@ -24,7 +24,7 @@ EPILOG = """\b
  Command line examples\n
  -----------------------
 
-$ bob pipelines vanilla-biometrics DATABASE PIPELINE -vv
+$ bob bio pipeline score-norm DATABASE PIPELINE -vv
 
  Check out all PIPELINE available by running:
   `resource.py --types pipeline`
@@ -37,14 +37,14 @@ $ bob pipelines vanilla-biometrics DATABASE PIPELINE -vv
 
 It is possible to do it via configuration file
 
- $ bob pipelines vanilla-biometrics -p my_experiment.py -vv
+ $ bob bio pipeline score-norm -p my_experiment.py -vv
 
 
  my_experiment.py must contain the following elements:
 
    >>> transformer = ... # A scikit-learn pipeline\n
    >>> algorithm   = ... # `An BioAlgorithm`\n
-   >>> pipeline = VanillaBiometricsPipeline(transformer,algorithm)\n
+   >>> pipeline = PipelineSimple(transformer,algorithm)\n
    >>> database = .... # Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)"
 
 \b
@@ -54,6 +54,7 @@ It is possible to do it via configuration file
 
 
 @click.command(
+    name="score-norm",
     entry_point_group="bob.bio.config",
     cls=ConfigCommand,
     epilog=EPILOG,
@@ -61,9 +62,9 @@ It is possible to do it via configuration file
 @click.option(
     "--pipeline",
     "-p",
-    required=True,
     entry_point_group="bob.bio.pipeline",
-    help="Vanilla biometrics pipeline composed of a scikit-learn Pipeline and a BioAlgorithm",
+    required=True,
+    help="PipelineSimple composed of a scikit-learn Pipeline and a BioAlgorithm",
     cls=ResourceOption,
 )
 @click.option(
@@ -98,7 +99,7 @@ It is possible to do it via configuration file
     "--output",
     show_default=True,
     default="results",
-    help="Name of output directory where output scores will be saved.",
+    help="Name of output directory where output scores will be saved. In case --checkpoint is set, checkpoints will be saved in this directory.",
     cls=ResourceOption,
 )
 @click.option(
@@ -113,14 +114,6 @@ It is possible to do it via configuration file
     "-m",
     is_flag=True,
     help="If set, it will run the experiment keeping all objects on memory with nothing checkpointed. If not set, checkpoints will be saved in `--output`.",
-    cls=ResourceOption,
-)
-@click.option(
-    "-c",
-    "--checkpoint-dir",
-    show_default=True,
-    default=None,
-    help="Name of output directory where the checkpoints will be saved. In case --checkpoint is set, checkpoints will be saved in this directory.",
     cls=ResourceOption,
 )
 @click.option(
@@ -144,6 +137,37 @@ It is possible to do it via configuration file
     cls=ResourceOption,
 )
 @click.option(
+    "-c",
+    "--checkpoint-dir",
+    show_default=True,
+    default=None,
+    help="Name of output directory where the checkpoints will be saved. In case --checkpoint is set, checkpoints will be saved in this directory.",
+    cls=ResourceOption,
+)
+@click.option(
+    "--top-norm",
+    "-t",
+    is_flag=True,
+    help="If set, it will do the top-norm.",
+    cls=ResourceOption,
+)
+@click.option(
+    "--top-norm-score-fraction",
+    default=1.0,
+    type=float,
+    help="Sets the percentage of samples used for t-norm and z-norm. Sometimes you don't want to use all the t/z samples for normalization",
+    cls=ResourceOption,
+)
+@click.option(
+    "--score-normalization-type",
+    "-nt",
+    type=click.Choice(["znorm", "tnorm"]),
+    multiple=False,
+    default="znorm",
+    help="Type of normalization",
+    cls=ResourceOption,
+)
+@click.option(
     "--force",
     "-f",
     is_flag=True,
@@ -151,7 +175,7 @@ It is possible to do it via configuration file
     cls=ResourceOption,
 )
 @verbosity_option(cls=ResourceOption)
-def vanilla_biometrics(
+def pipeline_score_norm(
     pipeline,
     database,
     dask_client,
@@ -159,13 +183,16 @@ def vanilla_biometrics(
     output,
     write_metadata_scores,
     memory,
-    checkpoint_dir,
     dask_partition_size,
     dask_n_workers,
+    checkpoint_dir,
+    top_norm,
+    top_norm_score_fraction,
+    score_normalization_type,
     force,
     **kwargs,
 ):
-    """Runs the simplest biometrics pipeline.
+    """Runs the PipelineSimple with score normalization strategies
 
     Such pipeline consists into two major components.
     The first component consists of a scikit-learn `Pipeline`,
@@ -214,18 +241,13 @@ def vanilla_biometrics(
 
     This pipeline runs: `BioAlgorithm.score(Pipeline.transform(DATA_SCORE, biometric_references))` >> biometric_references
 
-    .. Note::
-        Refrain from calling this function directly from a script. Prefer
-        :py:func:`bob.bio.base.pipelines.vanilla_biometrics.execute_vanilla_biometrics`
-        instead.
-
     """
+
+    logger.debug("Executing PipelineScoreNorm")
 
     checkpoint = not memory
 
-    logger.debug("Executing Vanilla-biometrics")
-
-    execute_vanilla_biometrics(
+    execute_pipeline_score_norm(
         pipeline,
         database,
         dask_client,
@@ -235,9 +257,11 @@ def vanilla_biometrics(
         checkpoint,
         dask_partition_size,
         dask_n_workers,
-        checkpoint_dir=checkpoint_dir,
-        force=force,
-        **kwargs,
+        checkpoint_dir,
+        top_norm,
+        top_norm_score_fraction,
+        score_normalization_type,
+        force,
     )
 
     logger.info("Experiment finished !")

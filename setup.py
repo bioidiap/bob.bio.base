@@ -114,7 +114,7 @@ setup(
             "gen               = bob.bio.base.script.gen:gen",
             "evaluate          = bob.bio.base.script.commands:evaluate",
             "sort              = bob.bio.base.script.sort:sort",
-            "pipelines         = bob.bio.base.script.pipelines:pipelines",
+            "pipeline         = bob.bio.base.script.pipeline:pipeline",
             "compare-samples   = bob.bio.base.script.compare_samples:compare_samples",
         ],
         # annotators
@@ -122,10 +122,10 @@ setup(
             "dummy             = bob.bio.base.test.dummy.annotator:annotator",
         ],
         # run pipelines
-        "bob.bio.pipelines.cli": [
-            "vanilla-biometrics = bob.bio.base.script.vanilla_biometrics:vanilla_biometrics",
-            "vanilla-biometrics-score-normalization = bob.bio.base.script.vanilla_biometrics_score_normalization:vanilla_biometrics_score_normalization",
-            "transform = bob.bio.base.script.transform:transform",
+        "bob.bio.pipeline.cli": [
+            "simple = bob.bio.base.script.pipeline_simple:pipeline_simple",
+            "score-norm = bob.bio.base.script.pipeline_score_norm:pipeline_score_norm",
+            "transform = bob.bio.base.script.pipeline_transform:pipeline_transform",
         ],
         # Vulnerability analysis commands
         "bob.vuln.cli": [

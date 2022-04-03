@@ -16,7 +16,7 @@ import h5py
 
 # from .zt_norm import ZTNormPipeline, ZTNormDaskWrapper
 from .score_post_processor import (
-    ScoreNormalizationPipeline,
+    PipelineScoreNorm,
     dask_score_normalization_pipeline,
 )
 from .legacy import BioAlgorithmLegacy
@@ -47,11 +47,13 @@ def default_save(data: np.ndarray, path: str):
     f["data"] = data
     f.close()
 
+
 def default_load(path: str) -> np.ndarray:
     f = h5py.File(path, "r")
     return f["data"]
 
-def get_vanilla_biometrics_tags(estimator=None, force_tags=None):
+
+def get_pipeline_simple_tags(estimator=None, force_tags=None):
     bob_tags = get_bob_tags(estimator=estimator, force_tags=force_tags)
     default_tags = {
         "bob_enrolled_extension": ".h5",
@@ -62,13 +64,14 @@ def get_vanilla_biometrics_tags(estimator=None, force_tags=None):
     estimator_tags = estimator._get_tags() if estimator is not None else {}
     return {**bob_tags, **default_tags, **estimator_tags, **force_tags}
 
+
 class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
     """Wrapper used to checkpoint enrolled and Scoring samples.
 
     Parameters
     ----------
-    biometric_algorithm: :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`
-       An implemented :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`
+    biometric_algorithm: :any:`bob.bio.base.pipelines.BioAlgorithm`
+       An implemented :any:`bob.bio.base.pipelines.BioAlgorithm`
 
     base_dir: str
        Path to store biometric references and scores
@@ -102,7 +105,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
     Examples
     --------
 
-    >>> from bob.bio.base.pipelines.vanilla_biometrics import BioAlgorithmCheckpointWrapper, Distance
+    >>> from bob.bio.base.pipelines import BioAlgorithmCheckpointWrapper, Distance
     >>> biometric_algorithm = BioAlgorithmCheckpointWrapper(Distance(), base_dir="./")
     >>> biometric_algorithm.enroll(sample) # doctest: +SKIP
 
@@ -128,7 +131,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
         self.biometric_algorithm = biometric_algorithm
         self.force = force
         self.hash_fn = hash_fn
-        bob_tags = get_vanilla_biometrics_tags(self.biometric_algorithm)
+        bob_tags = get_pipeline_simple_tags(self.biometric_algorithm)
         self.extension = extension or bob_tags["bob_enrolled_extension"]
         self.save_func = save_func or bob_tags["bob_enrolled_save_fn"]
         self.load_func = load_func or bob_tags["bob_enrolled_load_fn"]
@@ -249,7 +252,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
 
 class BioAlgorithmDaskWrapper(BioAlgorithm, BaseWrapper):
     """
-    Wrap :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm` to work with DASK
+    Wrap :any:`bob.bio.base.pipelines.BioAlgorithm` to work with DASK
     """
 
     def __init__(self, biometric_algorithm, **kwargs):
@@ -303,16 +306,16 @@ class BioAlgorithmDaskWrapper(BioAlgorithm, BaseWrapper):
         self.biometric_algorithm.set_score_references_path(group)
 
 
-def dask_vanilla_biometrics(pipeline, npartitions=None, partition_size=None):
+def dask_pipeline_simple(pipeline, npartitions=None, partition_size=None):
     """
-    Given a :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`, wraps :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` and
-    :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm` to be executed with dask
+    Given a :any:`bob.bio.base.pipelines.PipelineSimple`, wraps :any:`bob.bio.base.pipelines.PipelineSimple` and
+    :any:`bob.bio.base.pipelines.BioAlgorithm` to be executed with dask
 
     Parameters
     ----------
 
-    pipeline: :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`
-       Vanilla Biometrics based pipeline to be dasked
+    pipeline: :any:`bob.bio.base.pipelines.PipelineSimple`
+       pipeline to be dasked
 
     npartitions: int
        Number of partitions for the initial `dask.bag`
@@ -321,17 +324,15 @@ def dask_vanilla_biometrics(pipeline, npartitions=None, partition_size=None):
        Size of the partition for the initial `dask.bag`
     """
 
-    if isinstance(pipeline, ScoreNormalizationPipeline):
+    if isinstance(pipeline, PipelineScoreNorm):
         # Dasking the first part of the pipelines
-        pipeline.vanilla_biometrics_pipeline = dask_vanilla_biometrics(
-            pipeline.vanilla_biometrics_pipeline,
+        pipeline.pipeline_simple = dask_pipeline_simple(
+            pipeline.pipeline_simple,
             npartitions=npartitions,
             partition_size=partition_size,
         )
-        pipeline.biometric_algorithm = (
-            pipeline.vanilla_biometrics_pipeline.biometric_algorithm
-        )
-        pipeline.transformer = pipeline.vanilla_biometrics_pipeline.transformer
+        pipeline.biometric_algorithm = pipeline.pipeline_simple.biometric_algorithm
+        pipeline.transformer = pipeline.pipeline_simple.transformer
 
         pipeline = dask_score_normalization_pipeline(pipeline)
 
@@ -358,18 +359,18 @@ def dask_vanilla_biometrics(pipeline, npartitions=None, partition_size=None):
     return pipeline
 
 
-def checkpoint_vanilla_biometrics(
+def checkpoint_pipeline_simple(
     pipeline, base_dir, biometric_algorithm_dir=None, hash_fn=None, force=False
 ):
     """
-    Given a :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`, wraps :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` and
-    :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm` to be checkpointed
+    Given a :any:`bob.bio.base.pipelines.PipelineSimple`, wraps :any:`bob.bio.base.pipelines.PipelineSimple` and
+    :any:`bob.bio.base.pipelines.BioAlgorithm` to be checkpointed
 
     Parameters
     ----------
 
-    pipeline: :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`
-       Vanilla Biometrics based pipeline to be checkpointed
+    pipeline: :any:`bob.bio.base.pipelines.PipelineSimple`
+       pipeline to be checkpointed
 
     base_dir: str
        Path to store transformed input data and possibly biometric references and scores
@@ -432,14 +433,14 @@ def checkpoint_vanilla_biometrics(
 
 def is_checkpointed(pipeline):
     """
-    Check if :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` is checkpointed
+    Check if :any:`bob.bio.base.pipelines.PipelineSimple` is checkpointed
 
 
     Parameters
     ----------
 
-    pipeline: :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`
-       Vanilla Biometrics based pipeline to be checkpointed
+    pipeline: :any:`bob.bio.base.pipelines.PipelineSimple`
+       pipeline to be checkpointed
 
     """
 

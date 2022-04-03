@@ -40,7 +40,7 @@ def resources(command_line_parameters = None):
     print (bob.bio.base.list_resources('pipeline', **kwargs))
 
   if 'c' in args.types or 'config' in args.types:
-    print ("\nList of registered configs. Configs may contain multiple resources and they also allow chain loading (see bob.extension docs on chain loading). Configs are used as arguments to commands such as vanilla-biometrics):")
+    print ("\nList of registered configs. Configs may contain multiple resources and they also allow chain loading (see bob.extension docs on chain loading). Configs are used as arguments to commands such as simple):")
     print (bob.bio.base.list_resources('config', **kwargs))
 
   if 'C' in args.types or 'dask' in args.types:

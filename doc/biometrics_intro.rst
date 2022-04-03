@@ -169,7 +169,7 @@ Pipelines
 
 The nature of biometric systems being a series of subprocess depending on data produced by the previous step can be thought of in the model of **pipelines**, conducting the data through each operation.
 
-This model will be further described in :ref:`bob.bio.base.vanilla_biometrics_intro`.
+This model will be further described in :ref:`bob.bio.base.pipeline_simple_intro`.
 
 *****************
 Recognition types

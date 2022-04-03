@@ -2,19 +2,19 @@ import logging
 import os
 
 import dask.bag
-from bob.bio.base.pipelines.vanilla_biometrics import BioAlgorithmDaskWrapper
-from bob.bio.base.pipelines.vanilla_biometrics import CSVScoreWriter
-from bob.bio.base.pipelines.vanilla_biometrics import FourColumnsScoreWriter
-from bob.bio.base.pipelines.vanilla_biometrics import (
+from bob.bio.base.pipelines import BioAlgorithmDaskWrapper
+from bob.bio.base.pipelines import CSVScoreWriter
+from bob.bio.base.pipelines import FourColumnsScoreWriter
+from bob.bio.base.pipelines import (
     checkpoint_score_normalization_pipeline,
     dask_score_normalization_pipeline,
-    ScoreNormalizationPipeline,
+    PipelineScoreNorm,
     ZNormScores,
     TNormScores,
 )
-from bob.bio.base.pipelines.vanilla_biometrics import checkpoint_vanilla_biometrics
-from bob.bio.base.pipelines.vanilla_biometrics import dask_vanilla_biometrics
-from bob.bio.base.pipelines.vanilla_biometrics import is_checkpointed
+from bob.bio.base.pipelines import checkpoint_pipeline_simple
+from bob.bio.base.pipelines import dask_pipeline_simple
+from bob.bio.base.pipelines import is_checkpointed
 from bob.pipelines.utils import isinstance_nested, is_estimator_stateless
 from dask.delayed import Delayed
 from bob.pipelines.distributed import dask_get_partition_size
@@ -37,7 +37,7 @@ def post_process_scores(pipeline, scores, path):
     return pipeline.post_process(written_scores, path)
 
 
-def execute_vanilla_biometrics(
+def execute_pipeline_simple(
     pipeline,
     database,
     dask_client,
@@ -52,9 +52,9 @@ def execute_vanilla_biometrics(
     **kwargs,
 ):
     """
-    Function that executes the Vanilla Biometrics pipeline.
+    Function that executes the PipelineSimple.
 
-    This is called when using the ``bob bio pipelines vanilla-biometrics``
+    This is called when using the ``bob bio pipeline simple``
     command.
 
     This is also callable from a script without fear of interrupting the running
@@ -64,10 +64,10 @@ def execute_vanilla_biometrics(
     Parameters
     ----------
 
-    pipeline: Instance of :py:class:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`
-        A constructed vanilla-biometrics pipeline.
+    pipeline: Instance of :py:class:`bob.bio.base.pipelines.PipelineSimple`
+        A constructed PipelineSimple object.
 
-    database: Instance of :py:class:`bob.bio.base.pipelines.vanilla_biometrics.abstract_class.Database`
+    database: Instance of :py:class:`bob.bio.base.pipelines.abstract_class.Database`
         A database interface instance
 
     dask_client: instance of :py:class:`dask.distributed.Client` or ``None``
@@ -112,7 +112,7 @@ def execute_vanilla_biometrics(
     # Checkpoint if it's already checkpointed
     if checkpoint and not is_checkpointed(pipeline):
         hash_fn = database.hash_fn if hasattr(database, "hash_fn") else None
-        pipeline = checkpoint_vanilla_biometrics(
+        pipeline = checkpoint_pipeline_simple(
             pipeline, checkpoint_dir, hash_fn=hash_fn, force=force
         )
 
@@ -153,12 +153,12 @@ def execute_vanilla_biometrics(
             if dask_partition_size is not None:
                 partition_size = dask_partition_size
 
-            pipeline = dask_vanilla_biometrics(
+            pipeline = dask_pipeline_simple(
                 pipeline,
                 partition_size=partition_size,
             )
 
-        logger.info(f"Running vanilla biometrics for group {group}")
+        logger.info(f"Running the PipelineSimple for group {group}")
         allow_scoring_with_all_biometric_references = (
             database.allow_scoring_with_all_biometric_references
             if hasattr(database, "allow_scoring_with_all_biometric_references")
@@ -176,7 +176,7 @@ def execute_vanilla_biometrics(
         _ = compute_scores(post_processed_scores, dask_client)
 
 
-def execute_vanilla_biometrics_score_normalization(
+def execute_pipeline_score_norm(
     pipeline,
     database,
     dask_client,
@@ -194,10 +194,9 @@ def execute_vanilla_biometrics_score_normalization(
     **kwargs,
 ):
     """
-    Function that executes the Vanilla Biometrics pipeline with ZTNorm.
+    Function that extends the capabilities of the PipelineSimple to run score normalization.
 
-    This is called when using the ``bob bio pipelines vanilla-biometrics-ztnorm``
-    command.
+    This is called when using the ``bob bio pipeline score-norm`` command.
 
     This is also callable from a script without fear of interrupting the running
     Dask instance, allowing chaining multiple experiments while keeping the
@@ -206,10 +205,10 @@ def execute_vanilla_biometrics_score_normalization(
     Parameters
     ----------
 
-    pipeline: Instance of :py:class:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline`
-        A constructed vanilla-biometrics pipeline.
+    pipeline: Instance of :py:class:`bob.bio.base.pipelines.PipelineSimple`
+        A constructed PipelineSimple object.
 
-    database: Instance of :py:class:`bob.bio.base.pipelines.vanilla_biometrics.abstract_class.Database`
+    database: Instance of :py:class:`bob.bio.base.pipelines.abstract_class.Database`
         A database interface instance
 
     dask_client: instance of :py:class:`dask.distributed.Client` or ``None``
@@ -272,7 +271,7 @@ def execute_vanilla_biometrics_score_normalization(
 
     # Check if it's already checkpointed
     if checkpoint and not is_checkpointed(pipeline):
-        pipeline = checkpoint_vanilla_biometrics(pipeline, checkpoint_dir, force=force)
+        pipeline = checkpoint_pipeline_simple(pipeline, checkpoint_dir, force=force)
 
     ## PICKING THE TYPE OF POST-PROCESSING
     if score_normalization_type == "znorm":
@@ -343,12 +342,12 @@ def execute_vanilla_biometrics_score_normalization(
             if dask_partition_size is not None:
                 partition_size = dask_partition_size
 
-            pipeline = dask_vanilla_biometrics(
+            pipeline = dask_pipeline_simple(
                 pipeline,
                 partition_size=partition_size,
             )
 
-        logger.info(f"Running vanilla biometrics for group {group}")
+        logger.info(f"Running PipelineSimple for group {group}")
         allow_scoring_with_all_biometric_references = (
             database.allow_scoring_with_all_biometric_references
             if hasattr(database, "allow_scoring_with_all_biometric_references")

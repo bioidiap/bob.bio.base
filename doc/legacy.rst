@@ -4,15 +4,15 @@
 
 .. _bob.bio.base.legacy:
 
-======================================================
- Connecting legacy bob.bio.base to Vanilla Biometrics
-======================================================
+=================================================
+ Connecting legacy bob.bio.base to PipelineSimple
+=================================================
 
 The transition to the pipeline concept changed the way data goes from the raw sample to the extracted features, and how the biometric algorithm is applied.
 However, a set of tools was implemented to support the older bob implementations (designated as *legacy*) of database, preprocessor, extractor, and algorithms.
 
 
-This adaptation consists of wrapper classes that take a legacy bob class as input and constructs a Transformer or :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm` out of it.
+This adaptation consists of wrapper classes that take a legacy bob class as input and constructs a Transformer or :any:`bob.bio.base.pipelines.BioAlgorithm` out of it.
 
 
 .. WARNING::
@@ -165,7 +165,7 @@ This example shows the creation of the Mobio database interface in the bob.pipel
 .. code-block:: python
 
     from bob.bio.face.database import MobioBioDatabase
-    from bob.bio.base.pipelines.vanilla_biometrics import DatabaseConnector
+    from bob.bio.base.pipelines import DatabaseConnector
     from bob.extension import rc
 
     legacy_database = MobioBioDatabase(
@@ -233,12 +233,12 @@ Legacy Algorithm wrappers
 -------------------------
 
 Lastly, :py:class:`bob.bio.base.transformers.AlgorithmTransformer` and
-:any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithmLegacy`
+:any:`bob.bio.base.pipelines.BioAlgorithmLegacy`
 are available to map correctly a legacy Algorithm to a Transformer and a
-:any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`.
+:any:`bob.bio.base.pipelines.BioAlgorithm`.
 
 Those two adaptors are needed as the legacy Algorithm could consist of a projector that could be trainable (with methods :py:meth:`bob.bio.base.algorithm.Algorithm.project` and :py:meth:`bob.bio.base.algorithm.Algorithm.train_projector`), which correspond to a Transformer in the new API.
-The enrollment and scoring of the legacy algorithm were done using the :py:meth:`bob.bio.base.algorithm.Algorithm.enroll` and :py:meth:`bob.bio.base.algorithm.Algorithm.score` methods, which can be mapped to the same methods in a :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`.
+The enrollment and scoring of the legacy algorithm were done using the :py:meth:`bob.bio.base.algorithm.Algorithm.enroll` and :py:meth:`bob.bio.base.algorithm.Algorithm.score` methods, which can be mapped to the same methods in a :any:`bob.bio.base.pipelines.BioAlgorithm`.
 
 Here is an example showing how to create the Transformer out of a bob.bio.base Algorithm (:py:class:`bob.bio.base.algorithm.Distance`):
 
@@ -257,15 +257,15 @@ Here is an example showing how to create the Transformer out of a bob.bio.base A
     algorithm_transformer = AlgorithmTransformer( legacy_algorithm )
 
 And here is an example of the creation of the
-:any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm` from the
+:any:`bob.bio.base.pipelines.BioAlgorithm` from the
 bob.bio.base Algorithm (:py:class:`bob.bio.base.algorithm.Distance`) with the
-:any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithmLegacy`. This will
+:any:`bob.bio.base.pipelines.BioAlgorithmLegacy`. This will
 map correctly the ``enroll`` and ``score`` methods:
 
 .. code-block:: python
 
     from bob.bio.base.algorithm import Distance
-    from bob.bio.base.pipelines.vanilla_biometrics.legacy import BioAlgorithmLegacy
+    from bob.bio.base.pipelines.legacy import BioAlgorithmLegacy
     import scipy.spatial
 
     legacy_algorithm = Distance(

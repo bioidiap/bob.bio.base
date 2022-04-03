@@ -61,7 +61,9 @@ def get_temp_directory(sub_dir):
 def _biofile_to_delayed_sample(biofile, database, purpose="probe"):
     return DelayedSample(
         load=functools.partial(
-            biofile.load, database.original_directory, database.original_extension,
+            biofile.load,
+            database.original_directory,
+            database.original_extension,
         ),
         reference_id=str(biofile.client_id),
         key=f"{biofile.path}{purpose}",
@@ -309,14 +311,19 @@ class BioAlgorithmLegacy(BioAlgorithm):
 
     Example
     -------
-        >>> from bob.bio.base.pipelines.vanilla_biometrics import BioAlgorithmLegacy
+        >>> from bob.bio.base.pipelines import BioAlgorithmLegacy
         >>> from bob.bio.base.algorithm import Distance
         >>> biometric_algorithm = BioAlgorithmLegacy(Distance(), base_dir="./", projector_file="Projector.hdf5")
 
     """
 
     def __init__(
-        self, instance, base_dir, force=False, projector_file=None, **kwargs,
+        self,
+        instance,
+        base_dir,
+        force=False,
+        projector_file=None,
+        **kwargs,
     ):
         super().__init__(**kwargs)
 

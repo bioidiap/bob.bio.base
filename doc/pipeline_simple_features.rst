@@ -2,13 +2,13 @@
 .. author: Yannick Dayer <yannick.dayer@idiap.ch>
 .. date: Wed 24 Sep 2020 07:40:00 UTC+02
 
-..  _bob.bio.base.vanilla_biometrics_advanced_features:
+..  _bob.bio.base.pipeline_simple_advanced_features:
 
-=====================================
-Vanilla Biometrics: Advanced features
-=====================================
+=================================
+PipelineSimple: Advanced features
+=================================
 
-There are several extra features that you can attach to the Vanilla Biometrics Pipeline.
+There are several extra features that you can attach to the PipelineSimple.
 In this section we'll explain the database interface, checkpointing of experiments, multitasking with Dask, and score file formats.
 
 .. _bob.bio.base.database_interface:
@@ -17,7 +17,7 @@ The database interface
 ======================
 
 A database interface is responsible for providing data samples to the pipeline when requested so.
-It is the starting point of each sub-pipelines of vanilla-biometrics: Train, Enroll and Score.
+It is the starting point of each sub-pipelines of PipelineSimple: Train, Enroll and Score.
 
 .. note::
 
@@ -51,11 +51,11 @@ You may list the currently available databases (and pipelines) using the followi
 
 You can use such a dataset with the following command (example with the AT&T dataset)::
 
-$ bob bio pipelines vanilla-biometrics atnt <pipeline_name>
+$ bob bio pipeline simple atnt <pipeline_name>
 
-For more exotic datasets, you can simply pass your custom database file (defining a ``database`` object) to the vanilla-biometric pipeline::
+For more exotic datasets, you can simply pass your custom database file (defining a ``database`` object) to the PipelineSimple::
 
-$ bob bio pipelines vanilla-biometrics my_database.py <pipeline_name>
+$ bob bio pipeline simple my_database.py <pipeline_name>
 
 The ``database`` object defined in ``my_database.py`` is an instance of either:
 
@@ -244,23 +244,23 @@ The database interface class
 
 Although most of the experiments will be satisfied with the CSV or cross-validation interfaces, there exists a way to specify exactly what is sent to each sub-pipelines by implementing your own database interface class.
 
-When a vanilla-biometrics pipeline requests data from that class, it will call the following methods, which need to be implemented for each dataset:
+When a PipelineSimple requests data from that class, it will call the following methods, which need to be implemented for each dataset:
 
-  - :py:meth:`bob.bio.base.pipelines.vanilla_biometrics.Database.background_model_samples`:
+  - :py:meth:`bob.bio.base.pipelines.Database.background_model_samples`:
     Provides a list of :py:class:`bob.pipelines.Sample` objects that are used for
     training of the Transformers.
     Each :py:class:`bob.pipelines.Sample` must contain at least the attributes
     ``bob.pipelines.Sample.key`` and
     ``bob.pipelines.Sample.subject``, as well as the
     ``bob.pipelines.Sample.data`` of the sample.
-  - :py:meth:`bob.bio.base.pipelines.vanilla_biometrics.Database.references`: Provides a list of :py:class:`bob.pipelines.SampleSet` that are used for enrollment of the models.
+  - :py:meth:`bob.bio.base.pipelines.Database.references`: Provides a list of :py:class:`bob.pipelines.SampleSet` that are used for enrollment of the models.
     The group (*dev* or *eval*) can be given as parameter to specify which set
     must be used. Each :py:class:`bob.pipelines.SampleSet` must contain a
     ``bob.pipelines.SampleSet.subject`` attribute and a list of
     ``bob.pipelines.Sample`` containing at least the
     ``bob.pipelines.Sample.key`` attribute as well as the
     ``bob.pipelines.Sample.data`` of the sample.
-  - :py:meth:`bob.bio.base.pipelines.vanilla_biometrics.Database.probes`: Returns a list of :py:class:`bob.pipelines.SampleSet` that are used for scoring against a previously enrolled model.
+  - :py:meth:`bob.bio.base.pipelines.Database.probes`: Returns a list of :py:class:`bob.pipelines.SampleSet` that are used for scoring against a previously enrolled model.
     The group parameter (*dev* or *eval*) can be given to specify from which set
     of individuals the data comes. Each :py:class:`bob.pipelines.SampleSet`
     must contain a ``bob.pipelines.SampleSet.subject``, a
@@ -269,14 +269,14 @@ When a vanilla-biometrics pipeline requests data from that class, it will call t
     ``bob.pipelines.Sample.key`` attribute as well as the
     ``bob.pipelines.Sample.data`` of the sample.
 
-Furthermore, the :py:meth:`bob.bio.base.pipelines.vanilla_biometrics.Database.all_samples` method must return a list of all the existing samples in the dataset. This functionality is used for annotating a whole dataset.
+Furthermore, the :py:meth:`bob.bio.base.pipelines.Database.all_samples` method must return a list of all the existing samples in the dataset. This functionality is used for annotating a whole dataset.
 
 Here is a code snippet of a simple database interface:
 
 .. code-block:: python
 
     from bob.pipelines import Sample, SampleSet
-    from bob.bio.base.pipelines.vanilla_biometrics import Database
+    from bob.bio.base.pipelines import Database
 
     class CustomDatabase(Database):
         def background_model_samples(self):
@@ -322,7 +322,7 @@ Here is a code snippet of a simple database interface:
 
   For optimization reasons, an ``allow_scoring_with_all_biometric_references``
   flag can be set in the database interface (see
-  :any:`bob.bio.base.pipelines.vanilla_biometrics.Database`) to allow scoring
+  :any:`bob.bio.base.pipelines.Database`) to allow scoring
   with all biometric references. This will be much faster when your algorithm
   allows vectorization of operations, but not all protocols allow such a
   feature.
@@ -348,17 +348,17 @@ Checkpointing experiments
 Checkpoints are a useful tool that allows an experiment to prevent computing data multiple times by saving the results of each step so it can be retrieved later.
 It can be used when an experiment fails in a later stage, preventing the computation of the stages coming before it, in case the experiment is restarted.
 
-The checkpoints are files created on disk that contain the result of a sample of data passed through a Transformer or :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`.
+The checkpoints are files created on disk that contain the result of a sample of data passed through a Transformer or :any:`bob.bio.base.pipelines.BioAlgorithm`.
 When running, if the system finds a checkpoint file for its current processing step, it will load the results directly from the disk, instead of computing it again.
 
-To enable the checkpointing of a Transformer or :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm`, a :py:class:`bob.pipelines.CheckpointWrapper` is available.
+To enable the checkpointing of a Transformer or :any:`bob.bio.base.pipelines.BioAlgorithm`, a :py:class:`bob.pipelines.CheckpointWrapper` is available.
 This class takes a Transformer as input and returns the same Transformer with the ability to automatically create checkpoint files.
 The :py:class:`bob.pipelines.CheckpointWrapper` class is available in the :py:mod:`bob.pipelines`.
 
 The ``--checkpoint`` option is a command-line option that automatically wraps every steps of the pipeline with checkpointing.
 If set, the ``--checkpoint-dir`` sets the path for such a checkpoints::
 
-$ bob bio pipelines vanilla-biometrics <database> <pipeline> --checkpoint --output <output_dir> --checkpoint-dir <checkpoint_dir>
+$ bob bio pipeline simple <database> <pipeline> --checkpoint --output <output_dir> --checkpoint-dir <checkpoint_dir>
 
 When doing so, the output of each Transformer of the pipeline will be saved to the disk in the ``<checkpoint_dir>`` folder specified with the ``--checkpoint-dir`` option.
 Output scores will be saved on ``<output_dir>``.
@@ -386,14 +386,14 @@ Dask jobs can run in parallel on the same machine, or be spread on a *grid* infr
 Diagnostic and monitoring tools are also available to watch progress and debug.
 
 
-Using Dask with vanilla-biometrics
-----------------------------------
+Using Dask with PipelineSimple
+------------------------------
 
-To run an experiment with Dask, a :py:class:`bob.pipelines.DaskWrapper` class is available that takes any Transformer or :any:`bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm` and outputs a *dasked* version of it.
+To run an experiment with Dask, a :py:class:`bob.pipelines.DaskWrapper` class is available that takes any Transformer or :any:`bob.bio.base.pipelines.BioAlgorithm` and outputs a *dasked* version of it.
 
 You can easily benefit from Dask by using the ``--dask-client`` option like so::
 
-$ bob bio pipelines vanilla-biometrics <database> <pipeline> --dask-client <client-config>
+$ bob bio pipeline simple <database> <pipeline> --dask-client <client-config>
 
 where ``<client-config>`` is your own dask client configuration file, or a resource from ``bob.pipelines.distributed``:
 
@@ -409,11 +409,11 @@ where ``<client-config>`` is your own dask client configuration file, or a resou
 
 .. warning::
 
-  **For Idiap users:** If you need to run the vanilla-biometrics in the SGE. Don't forget to do::
+  **For Idiap users:** If you need to run the PipelineSimple in the SGE. Don't forget to do::
 
   $ SETSHELL grid
 
-  Also, since the grid nodes are not allowed to create additional jobs on the grid, you cannot run the main dask client on a job (``qsub -- bob bio pipelines vanilla-biometrics -l sge_...`` will not work).
+  Also, since the grid nodes are not allowed to create additional jobs on the grid, you cannot run the main dask client on a job (``qsub -- bob bio pipeline simple -l sge_...`` will not work).
 
 
 Monitoring and diagnostic
@@ -452,13 +452,13 @@ The page available contains some useful tools like a graphical visualization of 
 Writing scores in a customized manner
 =====================================
 
-The results of the Vanilla-Biometrics pipelines are scores that can be analyzed.
+The results of the PipelineSimple are scores that can be analyzed.
 To do so, the best way is to store them on disk so that a utility like ``bob bio metrics`` or ``bob bio roc`` can retrieve them.
-However, many formats could be used to store those score files, so :any:`bob.bio.base.pipelines.vanilla_biometrics.ScoreWriter` was defined.
+However, many formats could be used to store those score files, so :any:`bob.bio.base.pipelines.ScoreWriter` was defined.
 
-A :py:class:`bob.bio.base.pipelines.vanilla_biometrics.ScoreWriter` must implement a :py:meth:`bob.bio.base.pipelines.vanilla_biometrics.ScoreWriter.write` method that receives a list of :py:class:`bob.pipelines.SampleSet` that contains scores as well as metadata (subject identity, sample path, etc.).
+A :py:class:`bob.bio.base.pipelines.ScoreWriter` must implement a :py:meth:`bob.bio.base.pipelines.ScoreWriter.write` method that receives a list of :py:class:`bob.pipelines.SampleSet` that contains scores as well as metadata (subject identity, sample path, etc.).
 
-Common :py:class:`bob.bio.base.pipelines.vanilla_biometrics.ScoreWriter` are available by default:
+Common :py:class:`bob.bio.base.pipelines.ScoreWriter` are available by default:
 
 - A CSV format ScoreWriter
 - A four columns format ScoreWriter
@@ -467,21 +467,21 @@ Common :py:class:`bob.bio.base.pipelines.vanilla_biometrics.ScoreWriter` are ava
 Using a specific Score Writer
 -----------------------------
 
-By default, vanilla-biometrics will use the CSV format ScoreWriter.
+By default, PipelineSimple will use the CSV format ScoreWriter.
 
-To indicate to a vanilla-biometrics pipeline to use the four-columns ScoreWriter instead
+To indicate to a pipeline to use the four-columns ScoreWriter instead
 of the default CSV ScoreWriter, you can pass the ``--write-column-scores`` option like so::
 
-  $ bob bio pipelines vanilla-biometrics --write-column-scores <database> <pipeline> --output <output_dir>
+  $ bob bio pipeline simple --write-column-scores <database> <pipeline> --output <output_dir>
 
 
 CSV Score Writer
 ----------------
 
-A :py:class:`bob.bio.base.pipelines.vanilla_biometrics.CSVScoreWriter` is available, creating a Comma Separated Values (CSV) file with all the available metadata of the dataset as well as the score of each comparison.
-It is more complete than the :py:class:`bob.bio.base.pipelines.vanilla_biometrics.FourColumnsScoreWriter` and allows analysis of scores according to sample metadata (useful to analyze bias due to e.g. age or gender).
+A :py:class:`bob.bio.base.pipelines.CSVScoreWriter` is available, creating a Comma Separated Values (CSV) file with all the available metadata of the dataset as well as the score of each comparison.
+It is more complete than the :py:class:`bob.bio.base.pipelines.FourColumnsScoreWriter` and allows analysis of scores according to sample metadata (useful to analyze bias due to e.g. age or gender).
 
-The default :py:class:`bob.bio.base.pipelines.vanilla_biometrics.CSVScoreWriter` will write a *probe* subject and key, a *biometric reference* subject, the score resulting from the comparison of that *probe* against the *reference*, as well as all the fields set in :py:class:`bob.pipelines.SampleSet` by the :ref:`database interface<bob.bio.base.database_interface>`, for the *references* and the *probes*.
+The default :py:class:`bob.bio.base.pipelines.CSVScoreWriter` will write a *probe* subject and key, a *biometric reference* subject, the score resulting from the comparison of that *probe* against the *reference*, as well as all the fields set in :py:class:`bob.pipelines.SampleSet` by the :ref:`database interface<bob.bio.base.database_interface>`, for the *references* and the *probes*.
 
 A header is present, to identify the metadata, and the values are comma separated.
 Here is a short example of such file format with metadata on the ``age`` and ``gender`` of the subject:
@@ -498,7 +498,7 @@ Here is a short example of such file format with metadata on the ``age`` and ``g
 Four Columns Score Writer
 -------------------------
 
-:py:class:`bob.bio.base.pipelines.vanilla_biometrics.FourColumnsScoreWriter` is the old score file format used by bob.
+:py:class:`bob.bio.base.pipelines.FourColumnsScoreWriter` is the old score file format used by bob.
 It consists of a text file with four columns separated by spaces and no header.
 Each row represents a comparison between a *probe* and a *model*, and the similarity score resulting from that comparison.
 The four columns are, in order:
@@ -630,18 +630,18 @@ will output metrics and plots for the two experiments (dev and eval pairs) in
 Transforming samples
 ====================
 
-It is possible to use the a "part" of the vanilla biometrics pipeline to transform the samples in a given dataset.
+It is possible to use the a "part" of the PipelineSimple to transform the samples in a given dataset.
 This is useful for:
 
   *  Crop all faces from a dataset
   *  Extract features using a particular feature extractor
   *  Preprocess some audio files using a particular pre-processor
-  
+
 This can be done with the command:
 
 .. code-block:: text
 
-      bob bio pipelines transform --help
+      bob bio pipeline transform --help
 
       Options:
         -t, --transformer CUSTOM     A scikit-learn Pipeline containing the set of
@@ -681,8 +681,8 @@ This can be done with the command:
   It is assumed that the pipeline is Sample wrapped.
 
 The option `--transformer` accepts a python resource as an argument, but also can accept a regular
-Python file which contains a variable named `transformer` defining the `Pipeline <https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html>`__ 
-like the example below: 
+Python file which contains a variable named `transformer` defining the `Pipeline <https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html>`__
+like the example below:
 
 
 .. code-block:: python
@@ -695,7 +695,7 @@ like the example below:
     class MyTransformer(TransformerMixin, BaseEstimator):
         def _more_tags(self):
             return {"stateless": True, "requires_fit": False}
-        
+
         def transform(self, X):
             # do something
             return X
@@ -710,7 +710,7 @@ Then saving this to a file called `my_beautiful_transformer.py` and passing it a
 
 .. note::
 
-   It is possible to leverage from Dask by setting the option `--dask-client` the same way it is done with the vanilla-biometrics command
+   It is possible to leverage from Dask by setting the option `--dask-client` the same way it is done with the `bob bio pipeline simple` command
 
 
 If you are skilled on scikit learn, it is possible to leverage from `FunctionTransformer` function and make the above `Transformer` definition
@@ -719,7 +719,7 @@ way simpler as in the example below:
 
 .. code-block:: python
 
-    from sklearn.preprocessing import FunctionTransformer 
+    from sklearn.preprocessing import FunctionTransformer
     from sklearn.pipeline import make_pipeline
     from bob.pipelines import wrap
 
@@ -738,7 +738,7 @@ or if you want to checkpoint only one part of a pipeline (e.g., you need to save
 
 .. code-block:: python
 
-    from sklearn.preprocessing import FunctionTransformer 
+    from sklearn.preprocessing import FunctionTransformer
     from sklearn.pipeline import make_pipeline
     from bob.pipelines import wrap
 

@@ -12,10 +12,10 @@ Database
 
 .. autosummary::
 
-  bob.bio.base.pipelines.vanilla_biometrics.Database
-  bob.bio.base.pipelines.vanilla_biometrics.Database.background_model_samples
-  bob.bio.base.pipelines.vanilla_biometrics.Database.references
-  bob.bio.base.pipelines.vanilla_biometrics.Database.probes
+  bob.bio.base.pipelines.Database
+  bob.bio.base.pipelines.Database.background_model_samples
+  bob.bio.base.pipelines.Database.references
+  bob.bio.base.pipelines.Database.probes
 
 Database implementations
 ........................
@@ -30,25 +30,26 @@ Biometric Algorithm
 
 .. autosummary::
 
-  bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm
-  bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm.score
-  bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithm.enroll
+  bob.bio.base.pipelines.BioAlgorithm
+  bob.bio.base.pipelines.BioAlgorithm.score
+  bob.bio.base.pipelines.BioAlgorithm.enroll
 
 Writing Scores
 ~~~~~~~~~~~~~~
 
 .. autosummary::
 
-  bob.bio.base.pipelines.vanilla_biometrics.ScoreWriter
-  bob.bio.base.pipelines.vanilla_biometrics.FourColumnsScoreWriter
-  bob.bio.base.pipelines.vanilla_biometrics.CSVScoreWriter
+  bob.bio.base.pipelines.ScoreWriter
+  bob.bio.base.pipelines.FourColumnsScoreWriter
+  bob.bio.base.pipelines.CSVScoreWriter
 
 Assembling the pipeline
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
 
-  bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline
+  bob.bio.base.pipelines.PipelineSimple
+  bob.bio.base.pipelines.PipelineScoreNorm
 
 
 Building Pipelines from Legacy constructs
@@ -59,7 +60,7 @@ Creating Database interfaces from legacy
 
 .. autosummary::
 
-  bob.bio.base.pipelines.vanilla_biometrics.DatabaseConnector
+  bob.bio.base.pipelines.DatabaseConnector
 
 Creating Transformers from legacy constructs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -75,7 +76,7 @@ Creating BioAlgorithms from legacy Algorithm
 
 .. autosummary::
 
-  bob.bio.base.pipelines.vanilla_biometrics.BioAlgorithmLegacy
+  bob.bio.base.pipelines.BioAlgorithmLegacy
 
 
 
@@ -179,7 +180,6 @@ Details
 
 .. automodule:: bob.bio.base.annotator
 .. automodule:: bob.bio.base.pipelines
-.. automodule:: bob.bio.base.pipelines.vanilla_biometrics
 .. automodule:: bob.bio.base.database
 .. automodule:: bob.bio.base.preprocessor
 .. automodule:: bob.bio.base.extractor

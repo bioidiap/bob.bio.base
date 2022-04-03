@@ -2,6 +2,7 @@
 # vim: set fileencoding=utf-8 :
 # @author: Tiago de Freitas Pereira <tiago.pereira@idiap.ch>
 
+from xml.etree.ElementTree import PI
 from bob.pipelines import Sample, SampleSet, DelayedSample
 import os
 import numpy as np
@@ -13,11 +14,12 @@ from bob.bio.base.test.test_transformers import (
     FakeExtractor,
     FakeAlgorithm,
 )
-from bob.bio.base.pipelines.vanilla_biometrics import (
+from bob.bio.base.pipelines import (
     Distance,
-    VanillaBiometricsPipeline,
+    PipelineScoreNorm,
+    PipelineSimple,
     BioAlgorithmCheckpointWrapper,
-    dask_vanilla_biometrics,
+    dask_pipeline_simple,
     FourColumnsScoreWriter,
     CSVScoreWriter,
     BioAlgorithmLegacy,
@@ -178,7 +180,10 @@ def _make_transformer(dir_name):
             dir_name,
             transform_extra_arguments=(("annotations", "annotations"),),
         ),
-        wrap_bob_legacy(FakeExtractor(), dir_name,),
+        wrap_bob_legacy(
+            FakeExtractor(),
+            dir_name,
+        ),
     )
 
     return pipeline
@@ -211,16 +216,16 @@ def test_on_memory():
 
             biometric_algorithm = Distance()
 
-            vanilla_biometrics_pipeline = VanillaBiometricsPipeline(
-                transformer, biometric_algorithm, None,
+            pipeline_simple = PipelineSimple(
+                transformer,
+                biometric_algorithm,
+                None,
             )
 
             if with_dask:
-                vanilla_biometrics_pipeline = dask_vanilla_biometrics(
-                    vanilla_biometrics_pipeline, npartitions=2
-                )
+                pipeline_simple = dask_pipeline_simple(pipeline_simple, npartitions=2)
 
-            scores = vanilla_biometrics_pipeline(
+            scores = pipeline_simple(
                 database.background_model_samples(),
                 database.references(),
                 database.probes(),
@@ -249,7 +254,8 @@ def test_checkpoint_bioalg_as_transformer():
     with tempfile.TemporaryDirectory() as dir_name:
 
         def run_pipeline(
-            with_dask, score_writer=None,
+            with_dask,
+            score_writer=None,
         ):
             database = DummyDatabase()
 
@@ -259,23 +265,21 @@ def test_checkpoint_bioalg_as_transformer():
                 Distance(), base_dir=dir_name
             )
 
-            vanilla_biometrics_pipeline = VanillaBiometricsPipeline(
+            pipeline_simple = PipelineSimple(
                 transformer, biometric_algorithm, score_writer
             )
 
             if with_dask:
-                vanilla_biometrics_pipeline = dask_vanilla_biometrics(
-                    vanilla_biometrics_pipeline, npartitions=2
-                )
+                pipeline_simple = dask_pipeline_simple(pipeline_simple, npartitions=2)
 
-            scores = vanilla_biometrics_pipeline(
+            scores = pipeline_simple(
                 database.background_model_samples(),
                 database.references(),
                 database.probes(),
                 allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
             )
 
-            if vanilla_biometrics_pipeline.score_writer is None:
+            if pipeline_simple.score_writer is None:
                 if with_dask:
                     scores = scores.compute(scheduler="single-threaded")
 
@@ -287,9 +291,9 @@ def test_checkpoint_bioalg_as_transformer():
                     else:
                         assert len(sset) == 10
             else:
-                writed_scores = vanilla_biometrics_pipeline.write_scores(scores)
+                writed_scores = pipeline_simple.write_scores(scores)
                 scores_dev_path = os.path.join(dir_name, "scores-dev")
-                concatenated_scores = vanilla_biometrics_pipeline.post_process(
+                concatenated_scores = pipeline_simple.post_process(
                     writed_scores, scores_dev_path
                 )
 
@@ -298,9 +302,7 @@ def test_checkpoint_bioalg_as_transformer():
                         scheduler="single-threaded"
                     )
 
-                if isinstance(
-                    vanilla_biometrics_pipeline.score_writer, FourColumnsScoreWriter
-                ):
+                if isinstance(pipeline_simple.score_writer, FourColumnsScoreWriter):
                     assert len(open(scores_dev_path).readlines()) == 100
                 else:
                     assert (
@@ -356,7 +358,8 @@ def test_checkpoint_bioalg_with_tags():
     with tempfile.TemporaryDirectory() as dir_name:
 
         def run_pipeline(
-            with_dask, score_writer=None,
+            with_dask,
+            score_writer=None,
         ):
             database = DummyDatabase()
 
@@ -366,25 +369,23 @@ def test_checkpoint_bioalg_with_tags():
                 DistanceWithTags(), base_dir=dir_name
             )
 
-            vanilla_biometrics_pipeline = VanillaBiometricsPipeline(
+            pipeline_simple = PipelineSimple(
                 transformer, biometric_algorithm, score_writer
             )
 
             if with_dask:
-                vanilla_biometrics_pipeline = dask_vanilla_biometrics(
-                    vanilla_biometrics_pipeline, npartitions=2
-                )
+                pipeline_simple = dask_pipeline_simple(pipeline_simple, npartitions=2)
 
-            scores = vanilla_biometrics_pipeline(
+            scores = pipeline_simple(
                 database.background_model_samples(),
                 database.references(),
                 database.probes(),
                 allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
             )
 
-            written_scores = vanilla_biometrics_pipeline.write_scores(scores)
+            written_scores = pipeline_simple.write_scores(scores)
             scores_dev_path = os.path.join(dir_name, "scores-dev")
-            concatenated_scores = vanilla_biometrics_pipeline.post_process(
+            concatenated_scores = pipeline_simple.post_process(
                 written_scores, scores_dev_path
             )
 
@@ -393,7 +394,12 @@ def test_checkpoint_bioalg_with_tags():
                     scheduler="single-threaded"
                 )
 
-            assert os.path.isfile(dir_name + "/biometric_references/" + database.references()[0].key + "_with_custom_f.hdf5")
+            assert os.path.isfile(
+                dir_name
+                + "/biometric_references/"
+                + database.references()[0].key
+                + "_with_custom_f.hdf5"
+            )
 
         run_pipeline(False)
         run_pipeline(False)  # Checking if the checkpointing works
@@ -456,23 +462,19 @@ def test_checkpoint_bioalg_as_bioalg():
                 projector_file=projector_file,
             )
 
-            vanilla_biometrics_pipeline = VanillaBiometricsPipeline(
-                transformer, biometric_algorithm
-            )
+            pipeline_simple = PipelineSimple(transformer, biometric_algorithm)
 
             if with_dask:
-                vanilla_biometrics_pipeline = dask_vanilla_biometrics(
-                    vanilla_biometrics_pipeline, npartitions=2
-                )
+                pipeline_simple = dask_pipeline_simple(pipeline_simple, npartitions=2)
 
-            scores = vanilla_biometrics_pipeline(
+            scores = pipeline_simple(
                 database.background_model_samples(),
                 database.references(),
                 database.probes(),
                 allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
             )
 
-            if vanilla_biometrics_pipeline.score_writer is None:
+            if pipeline_simple.score_writer is None:
                 if with_dask:
                     scores = scores.compute(scheduler="single-threaded")
 
@@ -484,8 +486,8 @@ def test_checkpoint_bioalg_as_bioalg():
                     else:
                         assert len(sset) == 10
             else:
-                writed_scores = vanilla_biometrics_pipeline.write_scores(scores)
-                concatenated_scores = vanilla_biometrics_pipeline.post_process(
+                writed_scores = pipeline_simple.write_scores(scores)
+                concatenated_scores = pipeline_simple.post_process(
                     writed_scores, os.path.join(dir_name, "scores-dev")
                 )
 
@@ -518,13 +520,13 @@ def _run_with_failure(allow_scoring_with_all_biometric_references, sporadic_fail
 
         biometric_algorithm = Distance()
 
-        vanilla_biometrics_pipeline = VanillaBiometricsPipeline(
+        pipeline_simple = PipelineSimple(
             transformer,
             biometric_algorithm,
             None,
         )
 
-        scores = vanilla_biometrics_pipeline(
+        scores = pipeline_simple(
             database.background_model_samples(),
             database.references(),
             database.probes(),
