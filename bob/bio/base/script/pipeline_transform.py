@@ -100,6 +100,7 @@ Then, you can use above configuration file to run the command:\n
 
 
 @click.command(
+    name="transform",
     entry_point_group="bob.bio.config",
     cls=ConfigCommand,
     epilog=EPILOG,
@@ -155,7 +156,7 @@ Then, you can use above configuration file to run the command:\n
     cls=ResourceOption,
 )
 @verbosity_option(cls=ResourceOption)
-def transform(
+def pipeline_transform(
     transformer,
     database,
     dask_client,

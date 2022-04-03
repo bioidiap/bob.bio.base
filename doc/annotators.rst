@@ -16,7 +16,7 @@ a command-line script:
     $ bob bio annotate --help
 
 This script accepts two main parameters a database object that inherits from
-:any:`bob.bio.base.pipelines.vanilla_biometrics.Database` and an annotator
+:any:`bob.bio.base.pipelines.Database` and an annotator
 object that inherits from :any:`bob.bio.base.annotator.Annotator`. Please see
 the help message of the script for more information.
 

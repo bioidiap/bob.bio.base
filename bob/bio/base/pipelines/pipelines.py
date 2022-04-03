@@ -2,7 +2,7 @@
 # vim: set fileencoding=utf-8 :
 
 """
-Implementation of the Vanilla Biometrics pipeline using Dask :ref:`bob.bio.base.struct_bio_rec_sys`_
+Implementation of the PipelineSimple using Dask :ref:`bob.bio.base.struct_bio_rec_sys`_
 
 This file contains simple processing blocks meant to be used
 for bob.bio experiments
@@ -15,41 +15,41 @@ from bob.pipelines.utils import isinstance_nested
 from sklearn.pipeline import Pipeline
 from sklearn.base import BaseEstimator
 from bob.pipelines import SampleWrapper, wrap
-from bob.bio.base.pipelines.vanilla_biometrics.abstract_classes import BioAlgorithm
+from bob.bio.base.pipelines.abstract_classes import BioAlgorithm
 
 logger = logging.getLogger(__name__)
 import tempfile
 import os
 
 
-class VanillaBiometricsPipeline(object):
+class PipelineSimple(object):
     """
-    Vanilla Biometrics Pipeline
+    The simplest possible pipeline
 
     This is the backbone of most biometric recognition systems.
     It implements three subpipelines and they are the following:
 
-     - :py:class:`VanillaBiometrics.train_background_model`: Initializes or trains your transformer.
+     - :py:class:`PipelineSimple.train_background_model`: Initializes or trains your transformer.
         It will run :py:meth:`sklearn.base.BaseEstimator.fit`
 
-     - :py:class:`VanillaBiometrics.create_biometric_reference`: Creates biometric references
+     - :py:class:`PipelineSimple.create_biometric_reference`: Creates biometric references
         It will run :py:meth:`sklearn.base.BaseEstimator.transform` followed by a sequence of
-        :py:meth:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm.enroll`
+        :py:meth:`bob.bio.base.pipelines.abstract_classes.BioAlgorithm.enroll`
 
-     - :py:class:`VanillaBiometrics.compute_scores`: Computes scores
+     - :py:class:`PipelineSimple.compute_scores`: Computes scores
         It will run :py:meth:`sklearn.base.BaseEstimator.transform` followed by a sequence of
-        :py:meth:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm.score`
+        :py:meth:`bob.bio.base.pipelines.abstract_classes.BioAlgorithm.score`
 
 
     Example
     -------
        >>> from bob.pipelines.transformers import Linearize
        >>> from sklearn.pipeline import make_pipeline
-       >>> from bob.bio.base.pipelines.vanilla_biometrics import Distance, VanillaBiometricsPipeline
+       >>> from bob.bio.base.pipelines import Distance, PipelineSimple
        >>> estimator_1 = Linearize()
        >>> transformer = make_pipeline(estimator_1)
        >>> biometric_algoritm = Distance()
-       >>> pipeline = VanillaBiometricsPipeline(transformer, biometric_algoritm)
+       >>> pipeline = PipelineSimple(transformer, biometric_algoritm)
        >>> pipeline(samples_for_training_back_ground_model, samplesets_for_enroll, samplesets_for_scoring)  # doctest: +SKIP
 
 
@@ -57,9 +57,9 @@ class VanillaBiometricsPipeline(object):
 
     Example
     -------
-      >>> from bob.bio.base.pipelines.vanilla_biometrics import dask_vanilla_biometrics
-      >>> pipeline = VanillaBiometricsPipeline(transformer, biometric_algoritm)
-      >>> pipeline = dask_vanilla_biometrics(pipeline)
+      >>> from bob.bio.base.pipelines import dask_pipeline_simple
+      >>> pipeline = PipelineSimple(transformer, biometric_algoritm)
+      >>> pipeline = dask_pipeline_simple(pipeline)
       >>> pipeline(samples_for_training_back_ground_model, samplesets_for_enroll, samplesets_for_scoring).compute()  # doctest: +SKIP
 
 
@@ -69,16 +69,19 @@ class VanillaBiometricsPipeline(object):
       transformer: :py:class`sklearn.pipeline.Pipeline` or a `sklearn.base.BaseEstimator`
         Transformer that will preprocess your data
 
-      biometric_algorithm: :py:class:`bob.bio.base.pipelines.vanilla_biometrics.abstract_classes.BioAlgorithm`
+      biometric_algorithm: :py:class:`bob.bio.base.pipelines.abstract_classes.BioAlgorithm`
         Biometrics algorithm object that implements the methods `enroll` and `score` methods
 
-      score_writer: :any:`bob.bio.base.pipelines.vanilla_biometrics.ScoreWriter`
-          Format to write scores. Default to :any:`bob.bio.base.pipelines.vanilla_biometrics.FourColumnsScoreWriter`
+      score_writer: :any:`bob.bio.base.pipelines.ScoreWriter`
+          Format to write scores. Default to :any:`bob.bio.base.pipelines.FourColumnsScoreWriter`
 
     """
 
     def __init__(
-        self, transformer, biometric_algorithm, score_writer=None,
+        self,
+        transformer,
+        biometric_algorithm,
+        score_writer=None,
     ):
         self.transformer = transformer
         self.biometric_algorithm = biometric_algorithm
@@ -97,7 +100,7 @@ class VanillaBiometricsPipeline(object):
         allow_scoring_with_all_biometric_references=True,
     ):
         logger.info(
-            f" >> Vanilla Biometrics: Training background model with pipeline {self.transformer}"
+            f" >> PipelineSimple: Training background model with pipeline {self.transformer}"
         )
 
         # Training background model (fit will return even if samples is ``None``,
@@ -181,37 +184,37 @@ class VanillaBiometricsPipeline(object):
         return self.score_writer.post_process(score_paths, filename)
 
 
-def check_valid_pipeline(vanilla_pipeline):
+def check_valid_pipeline(pipeline_simple):
     """
-    Applying some checks in the vanilla biometrics pipeline
+    Applying some checks in the PipelineSimple
     """
 
     ## CHECKING THE TRANSFORMER
     # Checking if it's a Scikit Pipeline or a estimator
-    if isinstance(vanilla_pipeline.transformer, Pipeline):
+    if isinstance(pipeline_simple.transformer, Pipeline):
 
         # Checking if all steps are wrapped as samples, if not, we should wrap them
-        for p in vanilla_pipeline.transformer:
+        for p in pipeline_simple.transformer:
             if not isinstance_nested(p, "estimator", SampleWrapper):
                 wrap(["sample"], p)
 
     # In this case it can be a simple estimator. AND
     # Checking if it's sample wrapper, if not, do it
     elif isinstance_nested(
-        vanilla_pipeline.transformer, "estimator", BaseEstimator
-    ) and isinstance_nested(vanilla_pipeline.transformer, "estimator", BaseEstimator):
-        wrap(["sample"], vanilla_pipeline.transformer)
+        pipeline_simple.transformer, "estimator", BaseEstimator
+    ) and isinstance_nested(pipeline_simple.transformer, "estimator", BaseEstimator):
+        wrap(["sample"], pipeline_simple.transformer)
     else:
         raise ValueError(
-            f"VanillaBiometricsPipeline.transformer should be instance of either `sklearn.pipeline.Pipeline` or"
-            f"sklearn.base.BaseEstimator, not {vanilla_pipeline.transformer}"
+            f"pipeline_simple.transformer should be instance of either `sklearn.pipeline.Pipeline` or"
+            f"sklearn.base.BaseEstimator, not {pipeline_simple.transformer}"
         )
 
     ## Checking the Biometric algorithm
-    if not isinstance(vanilla_pipeline.biometric_algorithm, BioAlgorithm):
+    if not isinstance(pipeline_simple.biometric_algorithm, BioAlgorithm):
         raise ValueError(
-            f"VanillaBiometricsPipeline.biometric_algorithm should be instance of `BioAlgorithm`"
-            f"not {vanilla_pipeline.biometric_algorithm}"
+            f"pipeline_simple.biometric_algorithm should be instance of `BioAlgorithm`"
+            f"not {pipeline_simple.biometric_algorithm}"
         )
 
     return True

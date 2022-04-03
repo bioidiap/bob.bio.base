@@ -1,6 +1,6 @@
 import numpy as np
-from bob.bio.base.pipelines.vanilla_biometrics import BioAlgorithm
-from bob.bio.base.pipelines.vanilla_biometrics import VanillaBiometricsPipeline
+from bob.bio.base.pipelines import BioAlgorithm
+from bob.bio.base.pipelines import PipelineSimple
 from bob.pipelines import wrap
 from sklearn.decomposition import PCA
 from sklearn.pipeline import make_pipeline
@@ -17,6 +17,7 @@ def flatten(images):
     images = check_array(images, allow_nd=True)
     new_shape = [images.shape[0], -1]
     return np.reshape(images, new_shape)
+
 
 flatten_transformer = FunctionTransformer(flatten, validate=False)
 
@@ -35,16 +36,17 @@ class EuclideanDistance(BioAlgorithm):
         return model
 
     def score(self, model, probe):
-        similarity = 1/np.linalg.norm(model-probe)
+        similarity = 1 / np.linalg.norm(model - probe)
         # you should always return a similarity score
         return similarity
+
 
 bio_algorithm = EuclideanDistance()
 
 
 ## Creation of the pipeline
-# `pipeline` will be used by the `bob bio pipelines vanilla-biometrics` command
-pipeline = VanillaBiometricsPipeline(transformer, bio_algorithm)
+# `pipeline` will be used by the `bob bio pipelines vanilla` command
+pipeline = PipelineSimple(transformer, bio_algorithm)
 
 # you can also specify the other options in this file:
 database = "atnt"

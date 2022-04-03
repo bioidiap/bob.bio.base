@@ -12,7 +12,7 @@ import numpy as np
 import itertools
 import logging
 import bob.db.base
-from bob.bio.base.pipelines.vanilla_biometrics.abstract_classes import Database
+from bob.bio.base.pipelines.abstract_classes import Database
 from bob.extension.download import search_file, list_dir
 from bob.pipelines.sample_loaders import CSVToSampleLoader
 
@@ -153,8 +153,8 @@ class CSVToSampleLoaderBiometrics(CSVToSampleLoader):
 
 class CSVDataset(Database):
     """
-    Generic filelist dataset for :any:` bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` pipeline.
-    Check :any:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
+    Generic filelist dataset for :any:` bob.bio.base.pipelines.PipelineSimple` pipeline.
+    Check :any:`pipeline_simple_features` for more details about the PipelineSimple Dataset
     interface.
 
     To create a new dataset, you need to provide a directory structure similar to the one below:
@@ -179,8 +179,8 @@ class CSVDataset(Database):
 
 
     Those csv files should contain in each row i-) the path to raw data and ii-) the reference_id label
-    for enrollment (:any:`bob.bio.base.pipelines.vanilla_biometrics.Database.references`) and
-    probing (:any:`bob.bio.base.pipelines.vanilla_biometrics.Database.probes`).
+    for enrollment (:any:`bob.bio.base.pipelines.Database.references`) and
+    probing (:any:`bob.bio.base.pipelines.Database.probes`).
     The structure of each CSV file should be as below:
 
     .. code-block:: text
@@ -208,7 +208,7 @@ class CSVDataset(Database):
     are optional and it is used in case a protocol contains data for evaluation.
 
     Finally, the content of the file `my_dataset/my_protocol/train.csv` is used in the case a protocol
-    contains data for training (`bob.bio.base.pipelines.vanilla_biometrics.Database.background_model_samples`)
+    contains data for training (`bob.bio.base.pipelines.Database.background_model_samples`)
 
     Parameters
     ----------
@@ -263,16 +263,16 @@ class CSVDataset(Database):
             train_csv = search_file(
                 dataset_protocol_path,
                 [
-                    os.path.join("/", protocol, "norm", "train_world.lst"),
-                    os.path.join("/", protocol, "norm", "train_world.csv"),
+                    os.path.join(name, protocol, "norm", "train_world.lst"),
+                    os.path.join(name, protocol, "norm", "train_world.csv"),
                 ],
             )
 
             dev_enroll_csv = search_file(
                 dataset_protocol_path,
                 [
-                    os.path.join("/", protocol, "dev", "for_models.lst"),
-                    os.path.join("/", protocol, "dev", "for_models.csv"),
+                    os.path.join(name, protocol, "dev", "for_models.lst"),
+                    os.path.join(name, protocol, "dev", "for_models.csv"),
                 ],
             )
 
@@ -280,24 +280,24 @@ class CSVDataset(Database):
             dev_probe_csv = search_file(
                 dataset_protocol_path,
                 [
-                    os.path.join("/", protocol, "dev", legacy_probe),
-                    os.path.join("/", protocol, "dev", "for_probes.csv"),
+                    os.path.join(name, protocol, "dev", legacy_probe),
+                    os.path.join(name, protocol, "dev", "for_probes.csv"),
                 ],
             )
 
             eval_enroll_csv = search_file(
                 dataset_protocol_path,
                 [
-                    os.path.join("/", protocol, "eval", "for_models.lst"),
-                    os.path.join("/", protocol, "eval", "for_models.csv"),
+                    os.path.join(name, protocol, "eval", "for_models.lst"),
+                    os.path.join(name, protocol, "eval", "for_models.csv"),
                 ],
             )
 
             eval_probe_csv = search_file(
                 dataset_protocol_path,
                 [
-                    os.path.join("/", protocol, "eval", legacy_probe),
-                    os.path.join("/", protocol, "eval", "for_probes.csv"),
+                    os.path.join(name, protocol, "eval", legacy_probe),
+                    os.path.join(name, protocol, "eval", "for_probes.csv"),
                 ],
             )
 
@@ -391,7 +391,9 @@ class CSVDataset(Database):
                 )
 
         sample_sets = convert_samples_to_samplesets(
-            samples, group_by_reference_id=group_by_reference_id, references=references,
+            samples,
+            group_by_reference_id=group_by_reference_id,
+            references=references,
         )
 
         self.cache[cache_key] = sample_sets
@@ -488,8 +490,8 @@ class CSVDataset(Database):
 
 class CSVDatasetZTNorm(CSVDataset):
     """
-    Generic filelist dataset for :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` pipelines.
-    Check :any:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
+    Generic filelist dataset for :any:`bob.bio.base.pipelines.PipelineSimple` pipelines.
+    Check :any:`pipeline_simple_features` for more details about the PipelineSimple Dataset
     interface.
 
     This dataset interface takes as in put a :any:`CSVDataset` as input and have two extra methods:
@@ -583,7 +585,9 @@ class CSVDatasetZTNorm(CSVDataset):
 
         cache_key = "tnorm_csv"
         samplesets = self._get_samplesets(
-            group="dev", cache_key=cache_key, group_by_reference_id=True,
+            group="dev",
+            cache_key=cache_key,
+            group_by_reference_id=True,
         )
 
         treferences = samplesets[: int(len(samplesets) * proportion)]
@@ -593,10 +597,10 @@ class CSVDatasetZTNorm(CSVDataset):
 
 class CSVDatasetCrossValidation(Database):
     """
-    Generic filelist dataset for :any:`bob.bio.base.pipelines.vanilla_biometrics.VanillaBiometricsPipeline` pipeline that
+    Generic filelist dataset for :any:`bob.bio.base.pipelines.PipelineSimple` pipeline that
     handles **CROSS VALIDATION**.
 
-    Check :any:`vanilla_biometrics_features` for more details about the Vanilla Biometrics Dataset
+    Check :any:`pipeline_simple_features` for more details about the PipelineSimple Dataset
     interface.
 
 
