@@ -14,7 +14,7 @@ from bob.extension.scripts.click_helper import (
 )
 import bob.io.base
 from tabulate import tabulate
-from bob.bio.base.pipelines.entry_points import dask_vanilla_biometrics
+from bob.bio.base.pipelines import dask_pipeline_simple
 from bob.pipelines import SampleSet, DelayedSample
 import functools
 
@@ -74,7 +74,7 @@ def compare_samples(samples, pipeline, dask_client, verbose):
         for i, s in enumerate(samples)
     ]
     if dask_client is not None:
-        pipeline = dask_vanilla_biometrics(pipeline)
+        pipeline = dask_pipeline_simple(pipeline)
 
     table = [[s for s in samples]]
     biometric_references = pipeline.create_biometric_reference(sample_sets)
