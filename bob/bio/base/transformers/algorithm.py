@@ -19,7 +19,7 @@ class AlgorithmTransformer(TransformerMixin, BaseEstimator):
     -------
 
         Wrapping Distance algorithm with functools
-        >>> from bob.bio.base.pipelines.vanilla_biometrics import AlgorithmTransformer
+        >>> from bob.bio.base.pipelines import AlgorithmTransformer
         >>> from bob.bio.base.algorithm import Distance
         >>> transformer = AlgorithmTransformer(Distance)
 
@@ -32,7 +32,10 @@ class AlgorithmTransformer(TransformerMixin, BaseEstimator):
     """
 
     def __init__(
-        self, instance, projector_file=None, **kwargs,
+        self,
+        instance,
+        projector_file=None,
+        **kwargs,
     ):
 
         if not isinstance(instance, Algorithm):
