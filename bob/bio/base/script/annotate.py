@@ -87,7 +87,7 @@ Examples:
     "-g",
     multiple=True,
     help="Biometric Database group that will be annotated. Can be added multiple"
-        "times for different groups. [Default: All groups]",
+    "times for different groups. [Default: All groups]",
 )
 @annotate_common_options
 @verbosity_option(cls=ResourceOption)
@@ -95,7 +95,7 @@ def annotate(database, groups, annotator, output_dir, dask_client, **kwargs):
     """Annotates a database.
 
     The annotations are written in text file (json) format which can be read
-    back using :any:`bob.db.base.read_annotation_file` (annotation_type='json')
+    back using :any:`read_annotation_file` (annotation_type='json')
     """
     log_parameters(logger)
 
@@ -118,7 +118,6 @@ def annotate(database, groups, annotator, output_dir, dask_client, **kwargs):
 
     # Transformer that splits the samples into several Dask Bags
     to_dask_bags = ToDaskBag(npartitions=50)
-
 
     logger.debug("Retrieving samples from database.")
     samples = database.all_samples(groups)

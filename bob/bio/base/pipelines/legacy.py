@@ -11,7 +11,7 @@ from bob.bio.base.algorithm import Algorithm
 from bob.pipelines import DelayedSample
 from bob.pipelines import DelayedSampleSet
 from bob.pipelines import SampleSet
-from bob.db.base.utils import (
+from bob.bio.base.database.legacy import (
     check_parameters_for_validity,
     convert_names_to_highlevel,
     convert_names_to_lowlevel,
