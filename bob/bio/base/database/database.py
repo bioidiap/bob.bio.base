@@ -4,10 +4,10 @@
 import os
 import abc
 import six
-import bob.db.base
+from .legacy import FileDatabase as LegacyFileDatabase
 
 
-class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
+class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
     """This class represents the basic API for database access.
     Please use this class as a base class for your database access classes.
     Do not forget to call the constructor of this base class in your derived class.
@@ -67,25 +67,25 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
     ___test___ = False
 
     def __init__(
-            self,
-            name,
-            all_files_options={},  # additional options for the database query that can be used to extract all files
-            extractor_training_options={},
-            # additional options for the database query that can be used to extract the training files for the extractor training
-            projector_training_options={},
-            # additional options for the database query that can be used to extract the training files for the extractor training
-            enroller_training_options={},
-            # additional options for the database query that can be used to extract the training files for the extractor training
-            check_original_files_for_existence=False,
-            original_directory=None,
-            original_extension=None,
-            annotation_directory=None,
-            annotation_extension=None,
-            annotation_type=None,
-            protocol='Default',
-            training_depends_on_protocol=False,
-            models_depend_on_protocol=False,
-            **kwargs
+        self,
+        name,
+        all_files_options={},  # additional options for the database query that can be used to extract all files
+        extractor_training_options={},
+        # additional options for the database query that can be used to extract the training files for the extractor training
+        projector_training_options={},
+        # additional options for the database query that can be used to extract the training files for the extractor training
+        enroller_training_options={},
+        # additional options for the database query that can be used to extract the training files for the extractor training
+        check_original_files_for_existence=False,
+        original_directory=None,
+        original_extension=None,
+        annotation_directory=None,
+        annotation_extension=None,
+        annotation_type=None,
+        protocol="Default",
+        training_depends_on_protocol=False,
+        models_depend_on_protocol=False,
+        **kwargs
     ):
 
         assert isinstance(name, six.string_types)
@@ -93,7 +93,8 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
         super(BioDatabase, self).__init__(
             original_directory=original_directory,
             original_extension=original_extension,
-            **kwargs)
+            **kwargs
+        )
 
         self.name = name
 
@@ -116,18 +117,27 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
         # try if the implemented model_ids_with_protocol() and objects() function have at least the required interface
         try:
             # create a value that is very unlikely a valid value for anything
-            test_value = '#6T7+§X'
+            test_value = "#6T7+§X"
             # test if the parameters of the functions apply
             self.model_ids_with_protocol(groups=test_value, protocol=test_value)
-            self.objects(groups=test_value, protocol=test_value, purposes=test_value, model_ids=(test_value,))
-            self.annotations(file=bob.bio.base.database.BioFile(test_value, test_value, test_value))
+            self.objects(
+                groups=test_value,
+                protocol=test_value,
+                purposes=test_value,
+                model_ids=(test_value,),
+            )
+            self.annotations(
+                file=bob.bio.base.database.BioFile(test_value, test_value, test_value)
+            )
         except TypeError as e:
             # type error indicates that the given parameters are not valid.
-            raise NotImplementedError(str(
-                e) + "\nPlease implement:\n - the model_ids_with_protocol(...) function with at least the "
-                     "arguments 'groups' and 'protocol'\n - the objects(...) function with at least the "
-                     "arguments 'groups', 'protocol', 'purposes' and 'model_ids'\n - the annotations() "
-                     "function with at least the arguments 'file_id'.")
+            raise NotImplementedError(
+                str(e)
+                + "\nPlease implement:\n - the model_ids_with_protocol(...) function with at least the "
+                "arguments 'groups' and 'protocol'\n - the objects(...) function with at least the "
+                "arguments 'groups', 'protocol', 'purposes' and 'model_ids'\n - the annotations() "
+                "function with at least the arguments 'file_id'."
+            )
         except:
             # any other error is fine at this stage.
             pass
@@ -142,15 +152,32 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
         info : str
           A string containing the full information of all parameters of this class.
         """
-        params = "name=%s, protocol=%s, original_directory=%s, original_extension=%s" % (self.name, self.protocol, self.original_directory, self.original_extension)
-        params += ", ".join(["%s=%s" % (key, value) for key, value in self._kwargs.items()])
-        params += ", original_directory=%s, original_extension=%s" % (self.original_directory, self.original_extension)
+        params = (
+            "name=%s, protocol=%s, original_directory=%s, original_extension=%s"
+            % (
+                self.name,
+                self.protocol,
+                self.original_directory,
+                self.original_extension,
+            )
+        )
+        params += ", ".join(
+            ["%s=%s" % (key, value) for key, value in self._kwargs.items()]
+        )
+        params += ", original_directory=%s, original_extension=%s" % (
+            self.original_directory,
+            self.original_extension,
+        )
         if self.all_files_options:
             params += ", all_files_options=%s" % self.all_files_options
         if self.extractor_training_options:
-            params += ", extractor_training_options=%s" % self.extractor_training_options
+            params += (
+                ", extractor_training_options=%s" % self.extractor_training_options
+            )
         if self.projector_training_options:
-            params += ", projector_training_options=%s" % self.projector_training_options
+            params += (
+                ", projector_training_options=%s" % self.projector_training_options
+            )
         if self.enroller_training_options:
             params += ", enroller_training_options=%s" % self.enroller_training_options
 
@@ -265,9 +292,12 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
           If this database provides file sets, a list of lists of file names is returned, one sub-list for each file set.
         """
         # return the paths of the files
-        if self.uses_probe_file_sets() and files and hasattr(files[0], 'files'):
+        if self.uses_probe_file_sets() and files and hasattr(files[0], "files"):
             # List of Filesets: do not remove duplicates
-            return [[f.make_path(directory, extension) for f in file_set.files] for file_set in files]
+            return [
+                [f.make_path(directory, extension) for f in file_set.files]
+                for file_set in files
+            ]
         else:
             # List of files, do not remove duplicates
             return [f.make_path(directory, extension) for f in files]
@@ -295,7 +325,6 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
         """
         raise NotImplementedError("Please implement this function in derived classes")
 
-
     def groups(self, protocol=None):
         """
         Returns the names of all registered groups in the database
@@ -306,11 +335,14 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
           The protocol for which the groups should be retrieved.
           If you do not have protocols defined, just ignore this field.
         """
-        raise NotImplementedError("This function must be implemented in your derived class.")
-
+        raise NotImplementedError(
+            "This function must be implemented in your derived class."
+        )
 
     @abc.abstractmethod
-    def objects(self, groups=None, protocol=None, purposes=None, model_ids=None, **kwargs):
+    def objects(
+        self, groups=None, protocol=None, purposes=None, model_ids=None, **kwargs
+    ):
         """This function returns a list of :py:class:`bob.bio.base.database.BioFile` objects or the list
         of objects which inherit from this class. Returned files fulfill the given restrictions.
 
@@ -336,7 +368,9 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
           In cases, where there is one model per file, model ids and file ids are identical.
           But, there might also be other cases.
         """
-        raise NotImplementedError("This function must be implemented in your derived class.")
+        raise NotImplementedError(
+            "This function must be implemented in your derived class."
+        )
 
     def annotations(self, file):
         """
@@ -354,13 +388,15 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
         annots : dict or None
           The annotations for the file, if available.
         """
-        raise NotImplementedError("This function must be implemented in your derived class.")
+        raise NotImplementedError(
+            "This function must be implemented in your derived class."
+        )
 
     #################################################################
     ######### Methods to provide common functionality ###############
     #################################################################
 
-    def model_ids(self, groups='dev'):
+    def model_ids(self, groups="dev"):
         """model_ids(group = 'dev') -> ids
 
         Returns a list of model ids for the given group, respecting the current protocol.
@@ -375,7 +411,9 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
         ids : [int] or [str]
           The list of (unique) model ids for models of the given group.
         """
-        return sorted(self.model_ids_with_protocol(groups=groups, protocol=self.protocol))
+        return sorted(
+            self.model_ids_with_protocol(groups=groups, protocol=self.protocol)
+        )
 
     def all_files(self, groups=None, **kwargs):
         """all_files(groups=None) -> files
@@ -396,7 +434,11 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
         files : [:py:class:`bob.bio.base.database.BioFile`]
           The sorted and unique list of all files of the database.
         """
-        return self.sort(self.objects(protocol=self.protocol, groups=groups, **self.all_files_options))
+        return self.sort(
+            self.objects(
+                protocol=self.protocol, groups=groups, **self.all_files_options
+            )
+        )
 
     def training_files(self, step=None, arrange_by_client=False):
         """training_files(step = None, arrange_by_client = False) -> files
@@ -421,23 +463,27 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
         """
         if step is None:
             training_options = self.all_files_options
-        elif step == 'train_extractor':
+        elif step == "train_extractor":
             training_options = self.extractor_training_options
-        elif step == 'train_projector':
+        elif step == "train_projector":
             training_options = self.projector_training_options
-        elif step == 'train_enroller':
+        elif step == "train_enroller":
             training_options = self.enroller_training_options
         else:
             raise ValueError(
-                "The given step '%s' must be one of ('train_extractor', 'train_projector', 'train_enroller')" % step)
+                "The given step '%s' must be one of ('train_extractor', 'train_projector', 'train_enroller')"
+                % step
+            )
 
-        files = self.sort(self.objects(protocol=self.protocol, groups='world', **training_options))
+        files = self.sort(
+            self.objects(protocol=self.protocol, groups="world", **training_options)
+        )
         if arrange_by_client:
             return self.arrange_by_client(files)
         else:
             return files
 
-    def test_files(self, groups=['dev']):
+    def test_files(self, groups=["dev"]):
         """test_files(groups = ['dev']) -> files
 
         Returns all test files (i.e., files used for enrollment and probing) for the given groups, respecting the current protocol.
@@ -453,9 +499,13 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
         files : [:py:class:`bob.bio.base.database.BioFile`]
           The sorted and unique list of test files of the database.
         """
-        return self.sort(self.objects(protocol=self.protocol, groups=groups, **self.all_files_options))
+        return self.sort(
+            self.objects(
+                protocol=self.protocol, groups=groups, **self.all_files_options
+            )
+        )
 
-    def enroll_files(self, model_id=None, group='dev'):
+    def enroll_files(self, model_id=None, group="dev"):
         """enroll_files(model_id, group = 'dev') -> files
 
         Returns a list of File objects that should be used to enroll the model with the given model id from the given group, respecting the current protocol.
@@ -476,13 +526,25 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
         """
         if model_id:
             return self.sort(
-                self.objects(protocol=self.protocol, groups=group, model_ids=(model_id,), purposes='enroll',
-                             **self.all_files_options))
+                self.objects(
+                    protocol=self.protocol,
+                    groups=group,
+                    model_ids=(model_id,),
+                    purposes="enroll",
+                    **self.all_files_options
+                )
+            )
         else:
             return self.sort(
-                self.objects(protocol=self.protocol, groups=group, purposes='enroll', **self.all_files_options))
+                self.objects(
+                    protocol=self.protocol,
+                    groups=group,
+                    purposes="enroll",
+                    **self.all_files_options
+                )
+            )
 
-    def probe_files(self, model_id=None, group='dev'):
+    def probe_files(self, model_id=None, group="dev"):
         """probe_files(model_id = None, group = 'dev') -> files
 
         Returns a list of probe File objects, respecting the current protocol.
@@ -503,13 +565,25 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
           The list of files used for to probe the model with the given model id.
         """
         if model_id is not None:
-            files = self.objects(protocol=self.protocol, groups=group, model_ids=(model_id,), purposes='probe',
-                                 **self.all_files_options)
+            files = self.objects(
+                protocol=self.protocol,
+                groups=group,
+                model_ids=(model_id,),
+                purposes="probe",
+                **self.all_files_options
+            )
         else:
-            files = self.objects(protocol=self.protocol, groups=group, purposes='probe', **self.all_files_options)
+            files = self.objects(
+                protocol=self.protocol,
+                groups=group,
+                purposes="probe",
+                **self.all_files_options
+            )
         return self.sort(files)
 
-    def object_sets(self, groups=None, protocol=None, purposes=None, model_ids=None, **kwargs):
+    def object_sets(
+        self, groups=None, protocol=None, purposes=None, model_ids=None, **kwargs
+    ):
         """This function returns lists of FileSet objects, which fulfill the given restrictions.
 
         Keyword parameters:
@@ -534,9 +608,11 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
           In cases, where there is one model per file, model ids and file ids are identical.
           But, there might also be other cases.
         """
-        raise NotImplementedError("This function must be implemented in your derived class.")
+        raise NotImplementedError(
+            "This function must be implemented in your derived class."
+        )
 
-    def probe_file_sets(self, model_id=None, group='dev'):
+    def probe_file_sets(self, model_id=None, group="dev"):
         """probe_file_sets(model_id = None, group = 'dev') -> files
 
         Returns a list of probe FileSet objects, respecting the current protocol.
@@ -556,14 +632,23 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
         files : [:py:class:`bob.bio.base.database.BioFileSet`] or something similar
           The list of file sets used to probe the model with the given model id."""
         if model_id is not None:
-            file_sets = self.object_sets(protocol=self.protocol, groups=group, model_ids=(model_id,), purposes='probe',
-                                         **self.all_files_options)
+            file_sets = self.object_sets(
+                protocol=self.protocol,
+                groups=group,
+                model_ids=(model_id,),
+                purposes="probe",
+                **self.all_files_options
+            )
         else:
-            file_sets = self.object_sets(protocol=self.protocol, groups=group, purposes='probe',
-                                         **self.all_files_options)
+            file_sets = self.object_sets(
+                protocol=self.protocol,
+                groups=group,
+                purposes="probe",
+                **self.all_files_options
+            )
         return self.sort(file_sets)
 
-    def client_id_from_model_id(self, model_id, group='dev'):
+    def client_id_from_model_id(self, model_id, group="dev"):
         """Return the client id associated with the given model id.
         In this base class implementation, it is assumed that only one model is enrolled for each client and, thus, client id and model id are identical.
         All key word arguments are ignored.
@@ -574,10 +659,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, bob.db.base.FileDatabase)):
 class ZTBioDatabase(BioDatabase):
     """This class defines another set of abstract functions that need to be implemented if your database provides the interface for computing scores used for ZT-normalization."""
 
-    def __init__(self,
-                 name,
-                 z_probe_options={},  # Limit the z-probes
-                 **kwargs):
+    def __init__(self, name, z_probe_options={}, **kwargs):  # Limit the z-probes
         """**Construtctor Documentation**
 
         This constructor tests if all implemented functions take the correct arguments.
@@ -591,18 +673,20 @@ class ZTBioDatabase(BioDatabase):
         # try if the implemented tmodel_ids_with_protocol(), tobjects() and zobjects() function have at least the required interface
         try:
             # create a value that is very unlikely a valid value for anything
-            test_value = '#F9S%3*Y'
+            test_value = "#F9S%3*Y"
             # test if the parameters of the functions apply
             self.tmodel_ids_with_protocol(groups=test_value, protocol=test_value)
             self.tobjects(groups=test_value, protocol=test_value, model_ids=test_value)
             self.zobjects(groups=test_value, protocol=test_value)
         except TypeError as e:
             # type error indicates that the given parameters are not valid.
-            raise NotImplementedError(str(
-                e) + "\nPlease implement:\n - the tmodel_ids_with_protocol(...) function with at least the "
-                     "arguments 'groups' and 'protocol'\n - the tobjects(...) function with at least the arguments "
-                     "'groups', 'protocol' and 'model_ids'\n - the zobjects(...) function with at "
-                     "least the arguments 'groups' and 'protocol'")
+            raise NotImplementedError(
+                str(e)
+                + "\nPlease implement:\n - the tmodel_ids_with_protocol(...) function with at least the "
+                "arguments 'groups' and 'protocol'\n - the tobjects(...) function with at least the arguments "
+                "'groups', 'protocol' and 'model_ids'\n - the zobjects(...) function with at "
+                "least the arguments 'groups' and 'protocol'"
+            )
         except:
             # any other error is fine at this stage.
             pass
@@ -629,7 +713,9 @@ class ZTBioDatabase(BioDatabase):
           In cases, where there is one model per file, model ids and file ids are identical.
           But, there might also be other cases.
         """
-        raise NotImplementedError("This function must be implemented in your derived class.")
+        raise NotImplementedError(
+            "This function must be implemented in your derived class."
+        )
 
     @abc.abstractmethod
     def zobjects(self, groups=None, protocol=None, **kwargs):
@@ -646,9 +732,11 @@ class ZTBioDatabase(BioDatabase):
           The protocol is dependent on your database.
           If you do not have protocols defined, just ignore this field.
         """
-        raise NotImplementedError("This function must be implemented in your derived class.")
+        raise NotImplementedError(
+            "This function must be implemented in your derived class."
+        )
 
-    def all_files(self, groups=['dev'], add_zt_files=True):
+    def all_files(self, groups=["dev"], add_zt_files=True):
         """all_files(groups=None) -> files
 
         Returns all files of the database, including those for ZT norm, respecting the current protocol.
@@ -668,18 +756,28 @@ class ZTBioDatabase(BioDatabase):
         files : [:py:class:`bob.bio.base.database.BioFile`]
           The sorted and unique list of all files of the database.
         """
-        files = self.objects(protocol=self.protocol, groups=groups, **self.all_files_options)
+        files = self.objects(
+            protocol=self.protocol, groups=groups, **self.all_files_options
+        )
 
         # add all files that belong to the ZT-norm
         if add_zt_files and groups:
             for group in groups:
-                if group == 'world':
+                if group == "world":
                     continue
-                files += self.tobjects(protocol=self.protocol, groups=group, model_ids=None)
-                files += self.zobjects(protocol=self.protocol, groups=group, **self.z_probe_options)
+                files += self.tobjects(
+                    protocol=self.protocol, groups=group, model_ids=None
+                )
+                files += self.zobjects(
+                    protocol=self.protocol, groups=group, **self.z_probe_options
+                )
         elif add_zt_files:
-            files += self.tobjects(protocol=self.protocol, groups=groups, model_ids=None)
-            files += self.zobjects(protocol=self.protocol, groups=groups, **self.z_probe_options)
+            files += self.tobjects(
+                protocol=self.protocol, groups=groups, model_ids=None
+            )
+            files += self.zobjects(
+                protocol=self.protocol, groups=groups, **self.z_probe_options
+            )
         return self.sort(files)
 
     @abc.abstractmethod
@@ -697,9 +795,11 @@ class ZTBioDatabase(BioDatabase):
           The protocol is dependent on your database.
           If you do not have protocols defined, just ignore this field.
         """
-        raise NotImplementedError("This function must be implemented in your derived class.")
+        raise NotImplementedError(
+            "This function must be implemented in your derived class."
+        )
 
-    def t_model_ids(self, groups='dev'):
+    def t_model_ids(self, groups="dev"):
         """t_model_ids(group = 'dev') -> ids
 
         Returns a list of model ids of T-Norm models for the given group, respecting the current protocol.
@@ -714,9 +814,11 @@ class ZTBioDatabase(BioDatabase):
         ids : [int] or [str]
           The list of (unique) model ids for T-Norm models of the given group.
         """
-        return sorted(self.tmodel_ids_with_protocol(protocol=self.protocol, groups=groups))
+        return sorted(
+            self.tmodel_ids_with_protocol(protocol=self.protocol, groups=groups)
+        )
 
-    def t_enroll_files(self, t_model_id, group='dev'):
+    def t_enroll_files(self, t_model_id, group="dev"):
         """t_enroll_files(t_model_id, group = 'dev') -> files
 
         Returns a list of File objects that should be used to enroll the T-Norm model with the given model id from the given group, respecting the current protocol.
@@ -734,9 +836,11 @@ class ZTBioDatabase(BioDatabase):
         files : [:py:class:`bob.bio.base.database.BioFile`]
           The sorted list of files used for to enroll the model with the given model id.
         """
-        return self.sort(self.tobjects(protocol=self.protocol, groups=group, model_ids=(t_model_id,)))
+        return self.sort(
+            self.tobjects(protocol=self.protocol, groups=group, model_ids=(t_model_id,))
+        )
 
-    def z_probe_files(self, group='dev'):
+    def z_probe_files(self, group="dev"):
         """z_probe_files(group = 'dev') -> files
 
         Returns a list of probe files used to compute the Z-Norm, respecting the current protocol.
@@ -752,9 +856,11 @@ class ZTBioDatabase(BioDatabase):
         files : [:py:class:`bob.bio.base.database.BioFile`]
           The unique list of files used to compute the Z-norm.
         """
-        return self.sort(self.zobjects(protocol=self.protocol, groups=group, **self.z_probe_options))
+        return self.sort(
+            self.zobjects(protocol=self.protocol, groups=group, **self.z_probe_options)
+        )
 
-    def z_probe_file_sets(self, group='dev'):
+    def z_probe_file_sets(self, group="dev"):
         """z_probe_file_sets(group = 'dev') -> files
 
         Returns a list of probe FileSet objects used to compute the Z-Norm.
@@ -772,7 +878,7 @@ class ZTBioDatabase(BioDatabase):
         """
         raise NotImplementedError("Please implement this function in derived classes")
 
-    def client_id_from_t_model_id(self, t_model_id, group='dev'):
+    def client_id_from_t_model_id(self, t_model_id, group="dev"):
         """client_id_from_t_model_id(t_model_id, group = 'dev') -> client_id
         Returns the client id for the given T-Norm model id.
         In this base class implementation, we just use the :py:meth:`BioDatabase.client_id_from_model_id` function.

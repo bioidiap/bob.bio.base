@@ -3,7 +3,9 @@
 import os
 import six
 
-import bob.db.base
+
+from bob.bio.base.utils.annotations import read_annotation_file
+
 
 from .. import ZTBioDatabase
 from .. import BioFile
@@ -11,7 +13,8 @@ from .. import BioFile
 from .models import ListReader
 
 import logging
-logger = logging.getLogger('bob.bio.base')
+
+logger = logging.getLogger("bob.bio.base")
 
 
 class FileListBioDatabase(ZTBioDatabase):
@@ -50,7 +53,7 @@ class FileListBioDatabase(ZTBioDatabase):
     annotation_type : str or ``None``
       The type of annotation that can be read.
       Currently, options are ``'eyecenter', 'named', 'idiap'``.
-      See :py:func:`bob.db.base.read_annotation_file` for details.
+      See :py:func:`read_annotation_file` for details.
 
     dev_sub_directory : str or ``None``
       Specify a custom subdirectory for the filelists of the development set (default is ``'dev'``)
@@ -94,37 +97,33 @@ class FileListBioDatabase(ZTBioDatabase):
     """
 
     def __init__(
-            self,
-            filelists_directory,
-            name,
-            protocol=None,
-            bio_file_class=BioFile,
-
-            original_directory=None,
-            original_extension=None,
-            annotation_directory=None,
-            annotation_extension='.pos',
-            annotation_type='eyecenter',
-
-            dev_sub_directory=None,
-            eval_sub_directory=None,
-
-            world_filename=None,
-            optional_world_1_filename=None,
-            optional_world_2_filename=None,
-            models_filename=None,
-
-            # For probing, use ONE of the two score file lists:
-            probes_filename=None,  # File containing the probe files -> dense model/probe score matrix
-            scores_filename=None,  # File containing list of model and probe files -> sparse model/probe score matrix
-            # For ZT-Norm:
-            tnorm_filename=None,
-            znorm_filename=None,
-            use_dense_probe_file_list=None,
-            # if both probe_filename and scores_filename is given, what kind of list should be used?
-            keep_read_lists_in_memory=True,
-            # if set to True (the RECOMMENDED default) lists are read only once and stored in memory.
-            **kwargs
+        self,
+        filelists_directory,
+        name,
+        protocol=None,
+        bio_file_class=BioFile,
+        original_directory=None,
+        original_extension=None,
+        annotation_directory=None,
+        annotation_extension=".pos",
+        annotation_type="eyecenter",
+        dev_sub_directory=None,
+        eval_sub_directory=None,
+        world_filename=None,
+        optional_world_1_filename=None,
+        optional_world_2_filename=None,
+        models_filename=None,
+        # For probing, use ONE of the two score file lists:
+        probes_filename=None,  # File containing the probe files -> dense model/probe score matrix
+        scores_filename=None,  # File containing list of model and probe files -> sparse model/probe score matrix
+        # For ZT-Norm:
+        tnorm_filename=None,
+        znorm_filename=None,
+        use_dense_probe_file_list=None,
+        # if both probe_filename and scores_filename is given, what kind of list should be used?
+        keep_read_lists_in_memory=True,
+        # if set to True (the RECOMMENDED default) lists are read only once and stored in memory.
+        **kwargs
     ):
         """Initializes the database with the file lists from the given base directory,
         and the given sub-directories and file names (which default to useful values if not given)."""
@@ -137,77 +136,107 @@ class FileListBioDatabase(ZTBioDatabase):
             annotation_directory=annotation_directory,
             annotation_extension=annotation_extension,
             annotation_type=annotation_type,
-            **kwargs)
+            **kwargs
+        )
         # extra args for pretty printing
-        self._kwargs.update(dict(
-            filelists_directory=filelists_directory,
-            dev_sub_directory=dev_sub_directory,
-            eval_sub_directory=eval_sub_directory,
-            world_filename=world_filename,
-            optional_world_1_filename=optional_world_1_filename,
-            optional_world_2_filename=optional_world_2_filename,
-            models_filename=models_filename,
-            probes_filename=probes_filename,
-            scores_filename=scores_filename,
-            tnorm_filename=tnorm_filename,
-            znorm_filename=znorm_filename,
-            use_dense_probe_file_list=use_dense_probe_file_list,
-            # if both probe_filename and scores_filename are given, what kind
-            # of list should be used?
-            keep_read_lists_in_memory=keep_read_lists_in_memory,
-        ))
+        self._kwargs.update(
+            dict(
+                filelists_directory=filelists_directory,
+                dev_sub_directory=dev_sub_directory,
+                eval_sub_directory=eval_sub_directory,
+                world_filename=world_filename,
+                optional_world_1_filename=optional_world_1_filename,
+                optional_world_2_filename=optional_world_2_filename,
+                models_filename=models_filename,
+                probes_filename=probes_filename,
+                scores_filename=scores_filename,
+                tnorm_filename=tnorm_filename,
+                znorm_filename=znorm_filename,
+                use_dense_probe_file_list=use_dense_probe_file_list,
+                # if both probe_filename and scores_filename are given, what kind
+                # of list should be used?
+                keep_read_lists_in_memory=keep_read_lists_in_memory,
+            )
+        )
         # self.original_directory = original_directory
         # self.original_extension = original_extension
         self.bio_file_class = bio_file_class
-        self.keep_read_lists_in_memory=keep_read_lists_in_memory
+        self.keep_read_lists_in_memory = keep_read_lists_in_memory
         self.list_readers = {}
 
         self.m_base_dir = os.path.abspath(filelists_directory)
         if not os.path.isdir(self.m_base_dir):
-            raise RuntimeError('Invalid directory specified %s.' % (self.m_base_dir))
+            raise RuntimeError("Invalid directory specified %s." % (self.m_base_dir))
 
         # sub-directories for dev and eval set:
-        self.m_dev_subdir = dev_sub_directory if dev_sub_directory is not None else 'dev'
-        self.m_eval_subdir = eval_sub_directory if eval_sub_directory is not None else 'eval'
+        self.m_dev_subdir = (
+            dev_sub_directory if dev_sub_directory is not None else "dev"
+        )
+        self.m_eval_subdir = (
+            eval_sub_directory if eval_sub_directory is not None else "eval"
+        )
 
         # training list:     format:   filename client_id
-        self.m_world_filename = world_filename if world_filename is not None else os.path.join('norm',
-                                                                                               'train_world.lst')
+        self.m_world_filename = (
+            world_filename
+            if world_filename is not None
+            else os.path.join("norm", "train_world.lst")
+        )
         # optional training list 1:     format:   filename client_id
-        self.m_optional_world_1_filename = optional_world_1_filename if optional_world_1_filename is not None else os.path.join(
-            'norm', 'train_optional_world_1.lst')
+        self.m_optional_world_1_filename = (
+            optional_world_1_filename
+            if optional_world_1_filename is not None
+            else os.path.join("norm", "train_optional_world_1.lst")
+        )
         # optional training list 2:     format:   filename client_id
-        self.m_optional_world_2_filename = optional_world_2_filename if optional_world_2_filename is not None else os.path.join(
-            'norm', 'train_optional_world_2.lst')
+        self.m_optional_world_2_filename = (
+            optional_world_2_filename
+            if optional_world_2_filename is not None
+            else os.path.join("norm", "train_optional_world_2.lst")
+        )
         # model list:        format:   filename model_id client_id
-        self.m_models_filename = models_filename if models_filename is not None else 'for_models.lst'
+        self.m_models_filename = (
+            models_filename if models_filename is not None else "for_models.lst"
+        )
         # scores list:       format:   filename model_id claimed_client_id client_id
-        self.m_scores_filename = scores_filename if scores_filename is not None else 'for_scores.lst'
+        self.m_scores_filename = (
+            scores_filename if scores_filename is not None else "for_scores.lst"
+        )
         # probe list:        format:   filename client_id
-        self.m_probes_filename = probes_filename if probes_filename is not None else 'for_probes.lst'
+        self.m_probes_filename = (
+            probes_filename if probes_filename is not None else "for_probes.lst"
+        )
         # T-Norm models      format:   filename model_id client_id
-        self.m_tnorm_filename = tnorm_filename if tnorm_filename is not None else 'for_tnorm.lst'
+        self.m_tnorm_filename = (
+            tnorm_filename if tnorm_filename is not None else "for_tnorm.lst"
+        )
         # Z-Norm files       format:   filename client_id
-        self.m_znorm_filename = znorm_filename if znorm_filename is not None else 'for_znorm.lst'
+        self.m_znorm_filename = (
+            znorm_filename if znorm_filename is not None else "for_znorm.lst"
+        )
 
         self.m_use_dense_probe_file_list = use_dense_probe_file_list
-
 
     def _list_reader(self, protocol):
         if protocol not in self.list_readers:
             if protocol is not None:
                 protocol_dir = os.path.join(self.get_base_directory(), protocol)
                 if not os.path.isdir(protocol_dir):
-                    raise ValueError("The directory %s for the given protocol '%s' does not exist" % (protocol_dir, protocol))
+                    raise ValueError(
+                        "The directory %s for the given protocol '%s' does not exist"
+                        % (protocol_dir, protocol)
+                    )
             self.list_readers[protocol] = ListReader(self.keep_read_lists_in_memory)
 
         return self.list_readers[protocol]
 
     def _make_bio(self, files):
-        return [self.bio_file_class(client_id=f.client_id, path=f.path, file_id=f.id) for f in files]
+        return [
+            self.bio_file_class(client_id=f.client_id, path=f.path, file_id=f.id)
+            for f in files
+        ]
 
-
-    def all_files(self, groups=['dev'], add_zt_files=True):
+    def all_files(self, groups=["dev"], add_zt_files=True):
         """Returns all files for the given group. The internally stored protocol is used, throughout.
 
         Parameters
@@ -229,17 +258,20 @@ class FileListBioDatabase(ZTBioDatabase):
         files = self.objects(groups, self.protocol, **self.all_files_options)
         # add all files that belong to the ZT-norm
         for group in groups:
-            if group == 'world':
+            if group == "world":
                 continue
             if add_zt_files:
                 if self.implements_zt(self.protocol, group):
                     files += self.tobjects(group, self.protocol)
                     files += self.zobjects(group, self.protocol, **self.z_probe_options)
                 else:
-                    logger.warn("ZT score files are requested, but no such files are defined in group %s for protocol %s", group, self.protocol)
+                    logger.warn(
+                        "ZT score files are requested, but no such files are defined in group %s for protocol %s",
+                        group,
+                        self.protocol,
+                    )
 
         return self.sort(self._make_bio(files))
-
 
     def groups(self, protocol=None, add_world=True, add_subworld=True):
         """This function returns the list of groups for this database.
@@ -266,33 +298,66 @@ class FileListBioDatabase(ZTBioDatabase):
         groups = []
         protocol = protocol or self.protocol
         if protocol is not None:
-            if os.path.isdir(os.path.join(self.get_base_directory(), protocol, self.m_dev_subdir)):
-                groups.append('dev')
-            if os.path.isdir(os.path.join(self.get_base_directory(), protocol, self.m_eval_subdir)):
-                groups.append('eval')
+            if os.path.isdir(
+                os.path.join(self.get_base_directory(), protocol, self.m_dev_subdir)
+            ):
+                groups.append("dev")
+            if os.path.isdir(
+                os.path.join(self.get_base_directory(), protocol, self.m_eval_subdir)
+            ):
+                groups.append("eval")
             if add_world:
-                if os.path.isfile(os.path.join(self.get_base_directory(), protocol, self.m_world_filename)):
-                    groups.append('world')
+                if os.path.isfile(
+                    os.path.join(
+                        self.get_base_directory(), protocol, self.m_world_filename
+                    )
+                ):
+                    groups.append("world")
             if add_world and add_subworld:
-                if os.path.isfile(os.path.join(self.get_base_directory(), protocol, self.m_optional_world_1_filename)):
-                    groups.append('optional_world_1')
-                if os.path.isfile(os.path.join(self.get_base_directory(), protocol, self.m_optional_world_2_filename)):
-                    groups.append('optional_world_2')
+                if os.path.isfile(
+                    os.path.join(
+                        self.get_base_directory(),
+                        protocol,
+                        self.m_optional_world_1_filename,
+                    )
+                ):
+                    groups.append("optional_world_1")
+                if os.path.isfile(
+                    os.path.join(
+                        self.get_base_directory(),
+                        protocol,
+                        self.m_optional_world_2_filename,
+                    )
+                ):
+                    groups.append("optional_world_2")
         else:
-            if os.path.isdir(os.path.join(self.get_base_directory(), self.m_dev_subdir)):
-                groups.append('dev')
-            if os.path.isdir(os.path.join(self.get_base_directory(), self.m_eval_subdir)):
-                groups.append('eval')
+            if os.path.isdir(
+                os.path.join(self.get_base_directory(), self.m_dev_subdir)
+            ):
+                groups.append("dev")
+            if os.path.isdir(
+                os.path.join(self.get_base_directory(), self.m_eval_subdir)
+            ):
+                groups.append("eval")
             if add_world:
-                if os.path.isfile(os.path.join(self.get_base_directory(), self.m_world_filename)):
-                    groups.append('world')
+                if os.path.isfile(
+                    os.path.join(self.get_base_directory(), self.m_world_filename)
+                ):
+                    groups.append("world")
             if add_world and add_subworld:
-                if os.path.isfile(os.path.join(self.get_base_directory(), self.m_optional_world_1_filename)):
-                    groups.append('optional_world_1')
-                if os.path.isfile(os.path.join(self.get_base_directory(), self.m_optional_world_2_filename)):
-                    groups.append('optional_world_2')
+                if os.path.isfile(
+                    os.path.join(
+                        self.get_base_directory(), self.m_optional_world_1_filename
+                    )
+                ):
+                    groups.append("optional_world_1")
+                if os.path.isfile(
+                    os.path.join(
+                        self.get_base_directory(), self.m_optional_world_2_filename
+                    )
+                ):
+                    groups.append("optional_world_2")
         return groups
-
 
     def implements_zt(self, protocol=None, groups=None):
         """Checks if the file lists for the ZT score normalization are available.
@@ -313,10 +378,12 @@ class FileListBioDatabase(ZTBioDatabase):
           ``True`` if the all file lists for ZT score normalization exist, otherwise ``False``.
         """
         protocol = protocol or self.protocol
-        groups = self.check_parameters_for_validity(groups, "group", self.groups(protocol, add_world=False))
+        groups = self.check_parameters_for_validity(
+            groups, "group", self.groups(protocol, add_world=False)
+        )
 
         for group in groups:
-            for t in ['for_tnorm', 'for_znorm']:
+            for t in ["for_tnorm", "for_znorm"]:
                 if not os.path.exists(self._get_list_file(group, t, protocol)):
                     return False
         # all files exist
@@ -332,50 +399,58 @@ class FileListBioDatabase(ZTBioDatabase):
         probes = True
         scores = True
         for group in self.groups(protocol, add_world=False):
-            probes = probes and os.path.exists(self._get_list_file(group, type='for_probes', protocol=protocol))
-            scores = scores and os.path.exists(self._get_list_file(group, type='for_scores', protocol=protocol))
+            probes = probes and os.path.exists(
+                self._get_list_file(group, type="for_probes", protocol=protocol)
+            )
+            scores = scores and os.path.exists(
+                self._get_list_file(group, type="for_scores", protocol=protocol)
+            )
         # decide, which score files are available
         if probes and not scores:
             return True
         if not probes and scores:
             return False
-        raise ValueError("Unable to determine, which way of probing should be used. Please specify.")
-
+        raise ValueError(
+            "Unable to determine, which way of probing should be used. Please specify."
+        )
 
     def get_base_directory(self):
         """Returns the base directory where the filelists defining the database
-           are located."""
+        are located."""
         return self.m_base_dir
 
     def set_base_directory(self, filelists_directory):
         """Resets the base directory where the filelists defining the database
-          are located."""
+        are located."""
         self.m_base_dir = filelists_directory
         if not os.path.isdir(self.filelists_directory):
-            raise RuntimeError('Invalid directory specified %s.' % (self.filelists_directory))
+            raise RuntimeError(
+                "Invalid directory specified %s." % (self.filelists_directory)
+            )
 
     def _get_list_file(self, group, type=None, protocol=None):
         if protocol:
             base_directory = os.path.join(self.get_base_directory(), protocol)
         else:
             base_directory = self.get_base_directory()
-        if group == 'world':
+        if group == "world":
             return os.path.join(base_directory, self.m_world_filename)
-        elif group == 'optional_world_1':
+        elif group == "optional_world_1":
             return os.path.join(base_directory, self.m_optional_world_1_filename)
-        elif group == 'optional_world_2':
+        elif group == "optional_world_2":
             return os.path.join(base_directory, self.m_optional_world_2_filename)
         else:
-            group_dir = self.m_dev_subdir if group == 'dev' else self.m_eval_subdir
-            list_name = {'for_models': self.m_models_filename,
-                         'for_probes': self.m_probes_filename,
-                         'for_scores': self.m_scores_filename,
-                         'for_tnorm': self.m_tnorm_filename,
-                         'for_znorm': self.m_znorm_filename
-                         }[type]
+            group_dir = self.m_dev_subdir if group == "dev" else self.m_eval_subdir
+            list_name = {
+                "for_models": self.m_models_filename,
+                "for_probes": self.m_probes_filename,
+                "for_scores": self.m_scores_filename,
+                "for_tnorm": self.m_tnorm_filename,
+                "for_znorm": self.m_znorm_filename,
+            }[type]
             return os.path.join(base_directory, group_dir, list_name)
 
-    def client_id_from_model_id(self, model_id, group='dev'):
+    def client_id_from_model_id(self, model_id, group="dev"):
         """Returns the client id that is connected to the given model id.
 
         Parameters
@@ -399,19 +474,26 @@ class FileListBioDatabase(ZTBioDatabase):
           The client id for the given model id, if found.
         """
         protocol = self.protocol
-        groups = self.check_parameters_for_validity(group, "group",
-                                                    self.groups(protocol),
-                                                    default_parameters=self.groups(protocol, add_subworld=False))
+        groups = self.check_parameters_for_validity(
+            group,
+            "group",
+            self.groups(protocol),
+            default_parameters=self.groups(protocol, add_subworld=False),
+        )
 
         for group in groups:
-            model_dict = self._list_reader(protocol).read_models(self._get_list_file(group, 'for_models', protocol), group,
-                                                        'for_models')
+            model_dict = self._list_reader(protocol).read_models(
+                self._get_list_file(group, "for_models", protocol), group, "for_models"
+            )
             if model_id in model_dict:
                 return model_dict[model_id]
 
-        raise ValueError("The given model id '%s' cannot be found in one of the groups '%s'" % (model_id, groups))
+        raise ValueError(
+            "The given model id '%s' cannot be found in one of the groups '%s'"
+            % (model_id, groups)
+        )
 
-    def client_id_from_t_model_id(self, t_model_id, group='dev'):
+    def client_id_from_t_model_id(self, t_model_id, group="dev"):
         """Returns the client id that is connected to the given T-Norm model id.
 
         Parameters
@@ -432,23 +514,30 @@ class FileListBioDatabase(ZTBioDatabase):
           The client id for the given model id of a T-Norm model, if found.
         """
         protocol = self.protocol
-        groups = self.check_parameters_for_validity(group, "group", self.groups(protocol, add_world=False))
+        groups = self.check_parameters_for_validity(
+            group, "group", self.groups(protocol, add_world=False)
+        )
 
         for group in groups:
-            model_dict = self._list_reader(protocol).read_models(self._get_list_file(group, 'for_tnorm', protocol), group,
-                                                        'for_tnorm')
+            model_dict = self._list_reader(protocol).read_models(
+                self._get_list_file(group, "for_tnorm", protocol), group, "for_tnorm"
+            )
             if t_model_id in model_dict:
                 return model_dict[t_model_id]
 
         raise ValueError(
-            "The given T-norm model id '%s' cannot be found in one of the groups '%s'" % (t_model_id, groups))
+            "The given T-norm model id '%s' cannot be found in one of the groups '%s'"
+            % (t_model_id, groups)
+        )
 
     def __client_id_list__(self, groups, type, protocol=None):
         ids = set()
         protocol = protocol or self.protocol
         # read all lists for all groups and extract the model ids
         for group in groups:
-            files = self._list_reader(protocol).read_list(self._get_list_file(group, type, protocol), group, type)
+            files = self._list_reader(protocol).read_list(
+                self._get_list_file(group, type, protocol), group, type
+            )
             for file in files:
                 ids.add(file.client_id)
         return ids
@@ -473,11 +562,14 @@ class FileListBioDatabase(ZTBioDatabase):
         """
 
         protocol = protocol or self.protocol
-        groups = self.check_parameters_for_validity(groups, "group",
-                                                    self.groups(protocol),
-                                                    default_parameters=self.groups(protocol, add_subworld=False))
+        groups = self.check_parameters_for_validity(
+            groups,
+            "group",
+            self.groups(protocol),
+            default_parameters=self.groups(protocol, add_subworld=False),
+        )
 
-        return self.__client_id_list__(groups, 'for_models', protocol)
+        return self.__client_id_list__(groups, "for_models", protocol)
 
     def tclient_ids(self, protocol=None, groups=None):
         """Returns a list of T-Norm client ids for the specific query by the user.
@@ -499,9 +591,11 @@ class FileListBioDatabase(ZTBioDatabase):
         """
 
         protocol = protocol or self.protocol
-        groups = self.check_parameters_for_validity(groups, "group", self.groups(protocol, add_world=False))
+        groups = self.check_parameters_for_validity(
+            groups, "group", self.groups(protocol, add_world=False)
+        )
 
-        return self.__client_id_list__(groups, 'for_tnorm', protocol)
+        return self.__client_id_list__(groups, "for_tnorm", protocol)
 
     def zclient_ids(self, protocol=None, groups=None):
         """Returns a list of Z-Norm client ids for the specific query by the user.
@@ -523,16 +617,20 @@ class FileListBioDatabase(ZTBioDatabase):
         """
 
         protocol = protocol or self.protocol
-        groups = self.check_parameters_for_validity(groups, "group", self.groups(protocol, add_world=False))
+        groups = self.check_parameters_for_validity(
+            groups, "group", self.groups(protocol, add_world=False)
+        )
 
-        return self.__client_id_list__(groups, 'for_znorm', protocol)
+        return self.__client_id_list__(groups, "for_znorm", protocol)
 
     def __model_id_list__(self, groups, type, protocol=None):
         ids = set()
         protocol = protocol or self.protocol
         # read all lists for all groups and extract the model ids
         for group in groups:
-            dict = self._list_reader(protocol).read_models(self._get_list_file(group, type, protocol), group, type)
+            dict = self._list_reader(protocol).read_models(
+                self._get_list_file(group, type, protocol), group, type
+            )
             ids.update(dict.keys())
         return list(ids)
 
@@ -555,9 +653,11 @@ class FileListBioDatabase(ZTBioDatabase):
           A list containing all the model ids which have the given properties.
         """
         protocol = protocol or self.protocol
-        groups = self.check_parameters_for_validity(groups, "group", self.groups(protocol=protocol))
+        groups = self.check_parameters_for_validity(
+            groups, "group", self.groups(protocol=protocol)
+        )
 
-        return self.__model_id_list__(groups, 'for_models', protocol)
+        return self.__model_id_list__(groups, "for_models", protocol)
 
     def tmodel_ids_with_protocol(self, protocol=None, groups=None, **kwargs):
         """Returns a list of T-Norm model ids for the specific query by the user.
@@ -578,11 +678,21 @@ class FileListBioDatabase(ZTBioDatabase):
           A list containing all the T-Norm model ids belonging to the given group.
         """
         protocol = protocol or self.protocol
-        groups = self.check_parameters_for_validity(groups, "group", self.groups(protocol, add_world=False))
+        groups = self.check_parameters_for_validity(
+            groups, "group", self.groups(protocol, add_world=False)
+        )
 
-        return self.__model_id_list__(groups, 'for_tnorm', protocol)
+        return self.__model_id_list__(groups, "for_tnorm", protocol)
 
-    def objects(self, groups=None, protocol=None, purposes=None, model_ids=None, classes=None, **kwargs):
+    def objects(
+        self,
+        groups=None,
+        protocol=None,
+        purposes=None,
+        model_ids=None,
+        classes=None,
+        **kwargs
+    ):
         """Returns a set of :py:class:`bob.bio.base.database.BioFile` objects for the specific query by the user.
 
         Parameters
@@ -623,13 +733,22 @@ class FileListBioDatabase(ZTBioDatabase):
 
         protocol = protocol or self.protocol
         if self.uses_dense_probe_file(protocol) and classes is not None:
-            raise ValueError("To be able to use the 'classes' keyword, please use the 'for_scores.lst' list file.")
+            raise ValueError(
+                "To be able to use the 'classes' keyword, please use the 'for_scores.lst' list file."
+            )
 
-        purposes = self.check_parameters_for_validity(purposes, "purpose", ('enroll', 'probe'))
-        groups = self.check_parameters_for_validity(groups, "group",
-                                                    self.groups(protocol),
-                                                    default_parameters=self.groups(protocol, add_subworld=False))
-        classes = self.check_parameters_for_validity(classes, "class", ('client', 'impostor'))
+        purposes = self.check_parameters_for_validity(
+            purposes, "purpose", ("enroll", "probe")
+        )
+        groups = self.check_parameters_for_validity(
+            groups,
+            "group",
+            self.groups(protocol),
+            default_parameters=self.groups(protocol, add_subworld=False),
+        )
+        classes = self.check_parameters_for_validity(
+            classes, "class", ("client", "impostor")
+        )
 
         if isinstance(model_ids, six.string_types):
             model_ids = (model_ids,)
@@ -637,27 +756,58 @@ class FileListBioDatabase(ZTBioDatabase):
         # first, collect all the lists that we want to process
         lists = []
         probe_lists = []
-        if 'world' in groups:
-            lists.append(self._list_reader(protocol).read_list(self._get_list_file('world', protocol=protocol), 'world'))
-        if 'optional_world_1' in groups:
-            lists.append(self._list_reader(protocol).read_list(self._get_list_file('optional_world_1', protocol=protocol),
-                                                      'optional_world_1'))
-        if 'optional_world_2' in groups:
-            lists.append(self._list_reader(protocol).read_list(self._get_list_file('optional_world_2', protocol=protocol),
-                                                      'optional_world_2'))
+        if "world" in groups:
+            lists.append(
+                self._list_reader(protocol).read_list(
+                    self._get_list_file("world", protocol=protocol), "world"
+                )
+            )
+        if "optional_world_1" in groups:
+            lists.append(
+                self._list_reader(protocol).read_list(
+                    self._get_list_file("optional_world_1", protocol=protocol),
+                    "optional_world_1",
+                )
+            )
+        if "optional_world_2" in groups:
+            lists.append(
+                self._list_reader(protocol).read_list(
+                    self._get_list_file("optional_world_2", protocol=protocol),
+                    "optional_world_2",
+                )
+            )
 
-        for group in ('dev', 'eval'):
+        for group in ("dev", "eval"):
             if group in groups:
-                if 'enroll' in purposes:
+                if "enroll" in purposes:
                     lists.append(
-                        self._list_reader(protocol).read_list(self._get_list_file(group, 'for_models', protocol=protocol), group, 'for_models'))
-                if 'probe' in purposes:
+                        self._list_reader(protocol).read_list(
+                            self._get_list_file(group, "for_models", protocol=protocol),
+                            group,
+                            "for_models",
+                        )
+                    )
+                if "probe" in purposes:
                     if self.uses_dense_probe_file(protocol):
                         probe_lists.append(
-                            self._list_reader(protocol).read_list(self._get_list_file(group, 'for_probes', protocol=protocol), group, 'for_probes'))
+                            self._list_reader(protocol).read_list(
+                                self._get_list_file(
+                                    group, "for_probes", protocol=protocol
+                                ),
+                                group,
+                                "for_probes",
+                            )
+                        )
                     else:
                         probe_lists.append(
-                            self._list_reader(protocol).read_list(self._get_list_file(group, 'for_scores', protocol=protocol), group, 'for_scores'))
+                            self._list_reader(protocol).read_list(
+                                self._get_list_file(
+                                    group, "for_scores", protocol=protocol
+                                ),
+                                group,
+                                "for_scores",
+                            )
+                        )
 
         # now, go through the lists and filter the elements
 
@@ -690,8 +840,11 @@ class FileListBioDatabase(ZTBioDatabase):
                     # filter by model id
                     if model_ids is None or file._model_id in model_ids:
                         # filter by class
-                        if ('client' in classes and file.client_id == file.claimed_id) or \
-                                ('impostor' in classes and file.client_id != file.claimed_id):
+                        if (
+                            "client" in classes and file.client_id == file.claimed_id
+                        ) or (
+                            "impostor" in classes and file.client_id != file.claimed_id
+                        ):
                             # check if we already have this file
                             if file.id not in file_ids:
                                 file_ids.add(file.id)
@@ -723,17 +876,20 @@ class FileListBioDatabase(ZTBioDatabase):
           A list of :py:class:`BioFile` objects considering all the filtering criteria.
         """
         protocol = protocol or self.protocol
-        groups = self.check_parameters_for_validity(groups, "group", self.groups(protocol, add_world=False))
+        groups = self.check_parameters_for_validity(
+            groups, "group", self.groups(protocol, add_world=False)
+        )
 
-        if (isinstance(model_ids, six.string_types)):
+        if isinstance(model_ids, six.string_types):
             model_ids = (model_ids,)
 
         # iterate over the lists and extract the files
         # we assume that there is no duplicate file here...
         retval = []
         for group in groups:
-            for file in self._list_reader(protocol).read_list(self._get_list_file(group, 'for_tnorm', protocol), group,
-                                                     'for_tnorm'):
+            for file in self._list_reader(protocol).read_list(
+                self._get_list_file(group, "for_tnorm", protocol), group, "for_tnorm"
+            ):
                 if model_ids is None or file._model_id in model_ids:
                     retval.append(file)
 
@@ -759,15 +915,24 @@ class FileListBioDatabase(ZTBioDatabase):
         """
 
         protocol = protocol or self.protocol
-        groups = self.check_parameters_for_validity(groups, "group", self.groups(protocol, add_world=False))
+        groups = self.check_parameters_for_validity(
+            groups, "group", self.groups(protocol, add_world=False)
+        )
 
         # iterate over the lists and extract the files
         # we assume that there is no duplicate file here...
         retval = []
         for group in groups:
-            retval.extend([file for file in
-                           self._list_reader(protocol).read_list(self._get_list_file(group, 'for_znorm', protocol), group,
-                                                        'for_znorm')])
+            retval.extend(
+                [
+                    file
+                    for file in self._list_reader(protocol).read_list(
+                        self._get_list_file(group, "for_znorm", protocol),
+                        group,
+                        "for_znorm",
+                    )
+                ]
+            )
 
         return self._make_bio(retval)
 
@@ -790,11 +955,12 @@ class FileListBioDatabase(ZTBioDatabase):
             return None
 
         # since the file id is equal to the file name, we can simply use it
-        annotation_file = os.path.join(self.annotation_directory, file.id + self.annotation_extension)
+        annotation_file = os.path.join(
+            self.annotation_directory, file.id + self.annotation_extension
+        )
 
         # return the annotations as read from file
-        return bob.db.base.read_annotation_file(annotation_file, self.annotation_type)
-
+        return read_annotation_file(annotation_file, self.annotation_type)
 
     def original_file_name(self, file, check_existence=True):
         """Returns the original file name of the given file.
@@ -836,5 +1002,7 @@ class FileListBioDatabase(ZTBioDatabase):
                 return file_name
 
         # None of the extensions matched
-        raise IOError("File '%s' does not exist with any of the extensions '%s'" % (
-            file.make_path(self.original_directory, None), self.original_extension))
+        raise IOError(
+            "File '%s' does not exist with any of the extensions '%s'"
+            % (file.make_path(self.original_directory, None), self.original_extension)
+        )
