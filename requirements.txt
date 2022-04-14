@@ -1,12 +1,9 @@
 bob.blitz
 bob.core
-bob.db.base > 2.2.0
 bob.extension > 5.0.1
 bob.io.base
-bob.math
 bob.measure
 bob.pipelines
-bob.sp
 bob.pipelines
 tabulate
 click

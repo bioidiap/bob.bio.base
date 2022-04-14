@@ -24,12 +24,9 @@ requirements:
     - pip {{ pip }}
     - bob.blitz
     - bob.core
-    - bob.db.base >2.2.0
     - bob.extension >5.0.1
-    - bob.io.base
-    - bob.math
+    - bob.io.base    
     - bob.measure
-    - bob.sp
     - bob.pipelines
     - tabulate {{ tabulate }}
     - pandas {{ pandas }}

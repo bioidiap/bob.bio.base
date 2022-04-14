@@ -4,14 +4,13 @@
 
 import os
 from bob.pipelines import DelayedSample, SampleSet
-from bob.db.base.utils import check_parameters_for_validity
+from .legacy import check_parameters_for_validity
 import csv
 import bob.io.base
 import functools
 import numpy as np
 import itertools
 import logging
-import bob.db.base
 from bob.bio.base.pipelines.abstract_classes import Database
 from bob.extension.download import search_file, list_dir
 from bob.pipelines.sample_loaders import CSVToSampleLoader

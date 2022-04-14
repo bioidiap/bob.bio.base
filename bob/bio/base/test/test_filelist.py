@@ -878,35 +878,3 @@ def test_multiple_extensions():
         4, "data/model4_session1_sample1", "data/model4_session1_sample1"
     )
     nose.tools.assert_raises(IOError, db.original_file_name, file, False)
-
-
-def test_driver_api():
-    from bob.db.base.script.dbmanage import main
-
-    assert (
-        main(
-            (
-                "bio_filelist dumplist --list-directory=%s --self-test"
-                % os.path.join(legacy_example_dir, "example_filelist")
-            ).split()
-        )
-        == 0
-    )
-    assert (
-        main(
-            (
-                "bio_filelist dumplist --list-directory=%s --purpose=enroll --group=dev --class=client --self-test"
-                % os.path.join(legacy_example_dir, "example_filelist")
-            ).split()
-        )
-        == 0
-    )
-    assert (
-        main(
-            (
-                "bio_filelist checkfiles --list-directory=%s --self-test"
-                % os.path.join(legacy_example_dir, "example_filelist")
-            ).split()
-        )
-        == 0
-    )

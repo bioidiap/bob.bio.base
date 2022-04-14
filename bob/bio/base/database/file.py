@@ -1,9 +1,10 @@
-import bob.db.base
-from bob.db.base.annotations import read_annotation_file
+from bob.bio.base.utils.annotations import read_annotation_file
 from bob.pipelines.sample import _ReprMixin
+from .legacy import File as LegacyFile
+import bob.io.base
 
 
-class BioFile(bob.db.base.File, _ReprMixin):
+class BioFile(LegacyFile, _ReprMixin):
     """
     A simple base class that defines basic properties of File object for the use
     in verification experiments
@@ -16,9 +17,9 @@ class BioFile(bob.db.base.File, _ReprMixin):
         If you use an SQL database, this should be an SQL type like Integer or
         String.
     path : object
-        see :py:class:`bob.db.base.File` constructor
+        see :py:class:`bob.bio.base.database.legacy.File` constructor
     file_id : object
-        see :py:class:`bob.db.base.File` constructor
+        see :py:class:`bob.bio.base.database.legacy.File` constructor
     original_directory : str or None
         The path to the original directory of the file
     original_extension : str or None
@@ -30,7 +31,7 @@ class BioFile(bob.db.base.File, _ReprMixin):
         The extension of annotation files. Default is ``.json``
     annotation_type : str or None
         The type of the annotation file, see
-        :`bob.db.base.annotations.read_annotation_file`. Default is
+        :`bob.bio.base.utils.read_annotation_file`. Default is
         ``json``.
     """
 
