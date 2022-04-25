@@ -161,12 +161,12 @@ In this example, ``my_dataset_csv_folder`` would be the base path given to the `
 .. code-block:: python
 
     from bob.bio.base.database import CSVDataset, AnnotationsLoader
-    import bob.io.image
+    import bob.io.base
 
     # Define a loading function called for each sample with its path
     def my_load_function(full_path):
         # Example with image samples
-        return bob.io.image.load(full_path)
+        return bob.io.base.load(full_path)
 
     # Create a loader that takes the root of the dataset and a loader function
     my_sample_loader = CSVToSampleLoader(

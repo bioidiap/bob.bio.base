@@ -405,8 +405,6 @@ def test_csv_file_list_atnt():
 
 
 def data_loader(path):
-    import bob.io.image
-
     return bob.io.base.load(path)
 
 
