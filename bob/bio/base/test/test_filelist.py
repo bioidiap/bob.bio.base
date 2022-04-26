@@ -18,7 +18,6 @@ from bob.bio.base.database import (
 import nose.tools
 from bob.pipelines import DelayedSample, SampleSet
 import numpy as np
-from bob.bio.base.test.utils import atnt_database_directory
 from bob.bio.base.pipelines.biometric_algorithms import (
     Distance,
 )
