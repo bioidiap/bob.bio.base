@@ -204,19 +204,20 @@ Here is the creation of the pipeline combining the Transformer and the BioAlgori
 Minimal example of a PipelineSimple experiment
 --------------------------------------------------
 
-To run a minimal example, let's download the ATNT faces database and execute this pipeline.
-The ATNT database can be easily downloaded using the following command::
-
-  $ bob_dbmanage.py atnt download --output-dir ~/bob_data/datasets/atnt
+To run a minimal example, let's use the ATNT faces database and execute this pipeline.
+The ATNT database is included in this package.
 
 .. note::
   Usually, you need to download the files of each database manually yourself.
   We do not and cannot provide a script that downloads a biometric database automatically.
 
 For each database, you need to configure Bob to specify the location of its
-files. To do so for ATNT, run the following command::
+files. To do so for ATNT (no need for ATNT database below), run the following command::
 
   $ bob config set bob.db.atnt.directory ~/bob_data/datasets/atnt
+
+.. note::
+    Since the original files of the ATNT database is included in this package, you can skip the step above.
 
 For more information, see :ref:`bob.extension.rc`.
 
