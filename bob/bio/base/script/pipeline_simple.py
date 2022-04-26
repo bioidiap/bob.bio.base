@@ -151,6 +151,12 @@ It is possible to do it via configuration file
     help="If set, it will force generate all the checkpoints of an experiment. This option doesn't work if `--memory` is set",
     cls=ResourceOption,
 )
+@click.option(
+    "--no-dask",
+    is_flag=True,
+    help="If set, it will not use Dask to run the experiment.",
+    cls=ResourceOption,
+)
 @verbosity_option(cls=ResourceOption)
 def pipeline_simple(
     pipeline,
@@ -164,6 +170,7 @@ def pipeline_simple(
     dask_partition_size,
     dask_n_workers,
     force,
+    no_dask,
     **kwargs,
 ):
     """Runs the simplest biometrics pipeline.
@@ -221,21 +228,23 @@ def pipeline_simple(
         instead.
 
     """
+    if no_dask:
+        dask_client = None
 
     checkpoint = not memory
 
     logger.debug("Executing PipelineSimple")
 
     execute_pipeline_simple(
-        pipeline,
-        database,
-        dask_client,
-        groups,
-        output,
-        write_metadata_scores,
-        checkpoint,
-        dask_partition_size,
-        dask_n_workers,
+        pipeline=pipeline,
+        database=database,
+        dask_client=dask_client,
+        groups=groups,
+        output=output,
+        write_metadata_scores=write_metadata_scores,
+        checkpoint=checkpoint,
+        dask_partition_size=dask_partition_size,
+        dask_n_workers=dask_n_workers,
         checkpoint_dir=checkpoint_dir,
         force=force,
         **kwargs,

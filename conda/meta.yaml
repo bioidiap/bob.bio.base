@@ -25,7 +25,7 @@ requirements:
     - bob.blitz
     - bob.core
     - bob.extension >5.0.1
-    - bob.io.base    
+    - bob.io.base
     - bob.measure
     - bob.pipelines
     - tabulate {{ tabulate }}
@@ -70,7 +70,6 @@ test:
     - sphinx {{ sphinx }}
     - sphinx_rtd_theme {{ sphinx_rtd_theme }}
     - matplotlib {{ matplotlib }}
-    - bob.io.image
     - bob.db.atnt
     - gridtk
 
