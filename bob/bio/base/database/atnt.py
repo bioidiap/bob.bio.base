@@ -58,6 +58,7 @@ class AtntBioDatabase(CSVDataset):
         )
         # just expost original_directory for backward compatibility of tests
         self.original_directory = dataset_original_directory
+        self.original_extension = ".pgm"
 
     # define an objects method for compatibility with the old tests
     def objects(self, model_ids=None, groups=None, purposes=None, protocol=None):

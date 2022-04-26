@@ -110,7 +110,7 @@ class Extractor (object):
     feature : object
       The extracted feature, i.e., what is returned from `__call__`.
 
-    feature_file : str or :py:class:`bob.io.base.HDF5File`
+    feature_file : str or :py:class:`h5py.File`
       The file open for writing, or the name of the file to write.
     """
     utils.save(feature, feature_file)
@@ -123,7 +123,7 @@ class Extractor (object):
 
     **Parameters:**
 
-    feature_file : str or :py:class:`bob.io.base.HDF5File`
+    feature_file : str or :py:class:`h5py.File`
       The file open for reading or the name of the file to read from.
 
     **Returns:**
