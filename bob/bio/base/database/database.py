@@ -5,6 +5,7 @@ import os
 import abc
 import six
 from .legacy import FileDatabase as LegacyFileDatabase
+from .file import BioFile
 
 
 class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
@@ -127,7 +128,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
                 model_ids=(test_value,),
             )
             self.annotations(
-                file=bob.bio.base.database.BioFile(test_value, test_value, test_value)
+                file=BioFile(test_value, test_value, test_value)
             )
         except TypeError as e:
             # type error indicates that the given parameters are not valid.

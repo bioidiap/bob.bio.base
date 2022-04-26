@@ -159,6 +159,80 @@ def check_parameters_for_validity(
     return parameters
 
 
+def check_parameter_for_validity(
+    parameter, parameter_description, valid_parameters, default_parameter=None
+):
+    """Checks the given parameter for validity
+
+    Ensures a given parameter is in the set of valid parameters. If the
+    parameter is ``None`` or empty, the value in ``default_parameter`` will
+    be returned, in case it is specified, otherwise a :py:exc:`ValueError`
+    will be raised.
+
+    This function will return the parameter after the check tuple or list
+    of parameters, or raise a :py:exc:`ValueError`.
+
+    Parameters
+    ----------
+    parameter : :obj:`str` or :obj:`None`
+                    The single parameter to be checked. Might be a string or None.
+
+    parameter_description : str
+                    A short description of the parameter. This will be used to raise an
+                    exception in case the parameter is not valid.
+
+    valid_parameters : list of :obj:`str`
+                    A list/tuple of valid values for the parameters.
+
+    default_parameter : list of :obj:`str`, optional
+                    The default parameter that will be returned in case parameter is None or
+                    empty. If omitted and parameter is empty, a ValueError is raised.
+
+    Returns
+    -------
+    str
+                    The validated parameter.
+
+    Raises
+    ------
+    ValueError
+                    If the specified parameter is invalid.
+
+    """
+
+    if parameter is None:
+        # parameter not specified ...
+        if default_parameter is not None:
+            # ... -> use default parameter
+            parameter = default_parameter
+        else:
+            # ... -> raise an exception
+            raise ValueError(
+                "The %s has to be one of %s, it might not be 'None'."
+                % (parameter_description, valid_parameters)
+            )
+
+    if isinstance(parameter, (list, tuple, set)):
+        # the parameter is in a list/tuple ...
+        if len(parameter) > 1:
+            raise ValueError(
+                "The %s has to be one of %s, it might not be more than one "
+                "(%s was given)." % (parameter_description, valid_parameters, parameter)
+            )
+        # ... -> we take the first one
+        parameter = parameter[0]
+
+    # perform the check
+    if parameter not in valid_parameters:
+        raise ValueError(
+            "The given %s '%s' is not allowed. Please choose one of %s."
+            % (parameter_description, parameter, valid_parameters)
+        )
+
+    # tests passed -> return the parameter
+    return parameter
+
+
 class File(object):
     """Abstract class that define basic properties of File objects.
 
@@ -379,7 +453,7 @@ class FileDatabase(object):
     ):
         warnings.warn(
             "check_parameters_for_validity is deprecated. Please use "
-            "the equivalent function in bob.db.base.utils",
+            "the equivalent function in this file",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -392,7 +466,7 @@ class FileDatabase(object):
     ):
         warnings.warn(
             "check_parameter_for_validity is deprecated. Please use the "
-            "equivalent function in bob.db.base.utils",
+            "equivalent function in this file",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -403,7 +477,7 @@ class FileDatabase(object):
     def convert_names_to_highlevel(self, names, low_level_names, high_level_names):
         warnings.warn(
             "convert_names_to_highlevel is deprecated. Please use the "
-            "equivalent function in bob.db.base.utils",
+            "equivalent function in this file",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -412,7 +486,7 @@ class FileDatabase(object):
     def convert_names_to_lowlevel(self, names, low_level_names, high_level_names):
         warnings.warn(
             "convert_names_to_lowlevel is deprecated. Please use the "
-            "equivalent function in bob.db.base.utils",
+            "equivalent function in this file",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -421,7 +495,7 @@ class FileDatabase(object):
     def file_names(self, files, directory, extension):
         warnings.warn(
             "file_names is deprecated. Please use the "
-            "equivalent function in bob.db.base.utils",
+            "equivalent function in this file",
             DeprecationWarning,
             stacklevel=2,
         )
