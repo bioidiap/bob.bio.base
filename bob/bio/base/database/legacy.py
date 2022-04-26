@@ -52,7 +52,7 @@ def file_names(files, directory, extension):
 
     Parameters
     ----------
-    files : list of :py:class:`bob.db.base.File`
+    files : list of ``bob.db.base.File``
         The list of file object to retrieve the file names for.
 
     directory : str
@@ -77,12 +77,12 @@ def sort_files(files):
 
     Parameters
     ----------
-    files : list of :py:class:`bob.db.base.File`
+    files : list of ``bob.db.base.File``
         The list of files to be uniquified and sorted.
 
     Returns
     -------
-    sorted : list of :py:class:`bob.db.base.File`
+    sorted : list of ``bob.db.base.File``
         The sorted list of files, with duplicate `BioFile.id`\s being removed.
     """
     # sort files using their sort function
@@ -311,7 +311,7 @@ class FileDatabase(object):
 
         Parameters
         ----------
-        files : list of :py:class:`bob.db.base.File`
+        files : list of ``bob.db.base.File``
             The list of file object to retrieve the original data file names for.
 
         Returns
@@ -336,13 +336,13 @@ class FileDatabase(object):
         Parameters
         ----------
         file
-            :py:class:`bob.db.base.File` or a derivative
+            ``bob.db.base.File`` or a derivative
             The File objects for which the file name should be retrieved
 
         Returns
         -------
         str
-            The original file name for the given :py:class:`bob.db.base.File`
+            The original file name for the given ``bob.db.base.File``
             object.
 
         Raises

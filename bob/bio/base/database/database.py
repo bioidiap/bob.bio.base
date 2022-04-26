@@ -45,7 +45,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
     The file name extension of the annotation files.
 
     annotation_type : str
-    The type of the annotation file to read, see `bob.db.base.read_annotation_file` for accepted formats.
+    The type of the annotation file to read, only json works.
 
     protocol : str or ``None``
     The name of the protocol that defines the default experimental setup for this database.
