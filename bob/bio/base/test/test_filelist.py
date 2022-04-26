@@ -18,7 +18,6 @@ from bob.bio.base.database import (
 import nose.tools
 from bob.pipelines import DelayedSample, SampleSet
 import numpy as np
-from bob.bio.base.test.utils import atnt_database_directory
 from bob.bio.base.pipelines.biometric_algorithms import (
     Distance,
 )
@@ -27,6 +26,7 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import make_pipeline
 from bob.pipelines import wrap
 from bob.pipelines.sample_loaders import AnnotationsLoader
+from bob.bio.base.test.dummy.database import database as ATNT_DATABASE
 
 
 legacy_example_dir = os.path.realpath(
@@ -126,8 +126,8 @@ def test_csv_file_list_dev_eval():
                 ),
                 AnnotationsLoader(
                     annotation_directory=annotation_directory,
-                    annotation_extension=".pos",
-                    annotation_type="eyecenter",
+                    annotation_extension=".json",
+                    annotation_type="json",
                 ),
             ),
         )
@@ -183,8 +183,8 @@ def test_csv_file_list_dev_eval_score_norm():
                 ),
                 AnnotationsLoader(
                     annotation_directory=annotation_directory,
-                    annotation_extension=".pos",
-                    annotation_type="eyecenter",
+                    annotation_extension=".json",
+                    annotation_type="json",
                 ),
             ),
         )
@@ -246,8 +246,8 @@ def test_csv_file_list_dev_eval_sparse():
             ),
             AnnotationsLoader(
                 annotation_directory=annotation_directory,
-                annotation_extension=".pos",
-                annotation_type="eyecenter",
+                annotation_extension=".json",
+                annotation_type="json",
             ),
         ),
         is_sparse=True,
@@ -417,7 +417,7 @@ def test_csv_cross_validation_atnt():
         test_size=0.8,
         csv_to_sample_loader=CSVToSampleLoaderBiometrics(
             data_loader=data_loader,
-            dataset_original_directory=atnt_database_directory(),
+            dataset_original_directory=ATNT_DATABASE.original_directory,
             extension=".pgm",
         ),
     )
@@ -452,7 +452,7 @@ def test_atnt_experiment():
         protocol="idiap_protocol",
         csv_to_sample_loader=CSVToSampleLoaderBiometrics(
             data_loader=data_loader,
-            dataset_original_directory=atnt_database_directory(),
+            dataset_original_directory=ATNT_DATABASE.original_directory,
             extension=".pgm",
         ),
     )
@@ -476,7 +476,7 @@ def test_atnt_experiment_cross_validation():
             test_size=test_size,
             csv_to_sample_loader=CSVToSampleLoaderBiometrics(
                 data_loader=data_loader,
-                dataset_original_directory=atnt_database_directory(),
+                dataset_original_directory=ATNT_DATABASE.original_directory,
                 extension=".pgm",
             ),
         )
@@ -825,17 +825,17 @@ def test_annotation():
         "test",
         use_dense_probe_file_list=False,
         annotation_directory=os.path.join(legacy_example_dir, "example_filelist"),
-        annotation_type="named",
+        annotation_type="json",
     )
     f = [o for o in db.objects() if o.path == "data/model4_session1_sample2"][0]
 
     annots = db.annotations(f)
 
     assert annots is not None
-    assert "key1" in annots
-    assert "key2" in annots
-    assert annots["key1"] == (20, 10)
-    assert annots["key2"] == (40, 30)
+    assert "reye" in annots
+    assert "leye" in annots
+    assert annots["reye"] == [20, 10]
+    assert annots["leye"] == [40, 30]
 
 
 def test_multiple_extensions():
@@ -846,7 +846,7 @@ def test_multiple_extensions():
         protocol="example_filelist",
         use_dense_probe_file_list=False,
         original_directory=os.path.join(legacy_example_dir, "example_filelist"),
-        original_extension=".pos",
+        original_extension=".json",
     )
 
     file = bob.bio.base.database.BioFile(
@@ -855,7 +855,7 @@ def test_multiple_extensions():
 
     file_name = db.original_file_name(file, True)
     assert file_name == os.path.join(
-        legacy_example_dir, "example_filelist", file.path + ".pos"
+        legacy_example_dir, "example_filelist", file.path + ".json"
     )
 
     # check that the new behavior works as well
@@ -865,11 +865,11 @@ def test_multiple_extensions():
         protocol="example_filelist",
         use_dense_probe_file_list=False,
         original_directory=os.path.join(legacy_example_dir, "example_filelist"),
-        original_extension=[".jpg", ".pos"],
+        original_extension=[".jpg", ".json"],
     )
     file_name = db.original_file_name(file)
     assert file_name == os.path.join(
-        legacy_example_dir, "example_filelist", file.path + ".pos"
+        legacy_example_dir, "example_filelist", file.path + ".json"
     )
 
     file = bob.bio.base.database.BioFile(

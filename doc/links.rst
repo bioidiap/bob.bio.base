@@ -8,7 +8,6 @@
 .. _bob: https://www.idiap.ch/software/bob
 .. _idiap at gitlab: https://gitlab.idiap.ch/bob
 .. _at&t database: http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
-.. _gridtk: https://pypi.python.org/pypi/gridtk
 .. _buildout: http://www.buildout.org
 .. _setuptools: http://trac.edgewall.org/wiki/setuptools
 .. _nist: http://www.nist.gov/itl/iad/ig/focs.cfm

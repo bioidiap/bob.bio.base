@@ -10,7 +10,8 @@ from .file import BioFileSet
 from .database import BioDatabase
 from .database import ZTBioDatabase
 from .filelist import FileListBioDatabase
-from . import filelist
+from . import filelist  # noqa: F401
+from .atnt import AtntBioDatabase  # noqa: F401
 
 
 # gets sphinx autodoc done right - don't remove it
@@ -37,5 +38,6 @@ __appropriate__(
     CSVDataset,
     CSVToSampleLoaderBiometrics,
     CSVDatasetCrossValidation,
+    FileListBioDatabase,
 )
 __all__ = [_ for _ in dir() if not _.startswith("_")]

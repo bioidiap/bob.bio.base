@@ -1,4 +1,2 @@
-bob.db.atnt
 matplotlib
-gridtk
 nose
