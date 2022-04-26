@@ -258,8 +258,8 @@ class Algorithm (object):
     """Saves the given *projected* feature to a file with the given name.
     In this base class implementation:
 
-    - If the given feature has a ``save`` attribute, it calls ``feature.save(bob.io.base.HDF5File(feature_file), 'w')``.
-      In this case, the given feature_file might be either a file name or a bob.io.base.HDF5File.
+    - If the given feature has a ``save`` attribute, it calls ``feature.save(h5py.File(feature_file), 'w')``.
+      In this case, the given feature_file might be either a file name or a h5py.File.
     - Otherwise, it uses :py:func:`bob.io.base.save` to do that.
 
     If you have a different format, please overwrite this function.
@@ -271,7 +271,7 @@ class Algorithm (object):
     feature : object
       A feature as returned by the :py:meth:`project` function, which should be written.
 
-    feature_file : str or :py:class:`bob.io.base.HDF5File`
+    feature_file : str or :py:class:`h5py.File`
       The file open for writing, or the file name to write to.
     """
     utils.save(feature, feature_file)
@@ -288,7 +288,7 @@ class Algorithm (object):
 
     **Parameters:**
 
-    feature_file : str or :py:class:`bob.io.base.HDF5File`
+    feature_file : str or :py:class:`h5py.File`
       The file open for reading, or the file name to read from.
 
     **Returns:**
@@ -303,8 +303,8 @@ class Algorithm (object):
     """Writes the enrolled model to the given file.
     In this base class implementation:
 
-    - If the given model has a 'save' attribute, it calls ``model.save(bob.io.base.HDF5File(model_file), 'w')``.
-      In this case, the given model_file might be either a file name or a :py:class:`bob.io.base.HDF5File`.
+    - If the given model has a 'save' attribute, it calls ``model.save(h5py.File(model_file), 'w')``.
+      In this case, the given model_file might be either a file name or a :py:class:`h5py.File`.
     - Otherwise, it uses :py:func:`bob.io.base.save` to do that.
 
     If you have a different format, please overwrite this function.
@@ -314,7 +314,7 @@ class Algorithm (object):
     model : object
       A model as returned by the ``enroll`` function, which should be written.
 
-    model_file : str or :py:class:`bob.io.base.HDF5File`
+    model_file : str or :py:class:`h5py.File`
       The file open for writing, or the file name to write to.
     """
     utils.save(model, model_file)
@@ -330,7 +330,7 @@ class Algorithm (object):
 
     **Parameters:**
 
-    model_file : str or :py:class:`bob.io.base.HDF5File`
+    model_file : str or :py:class:`h5py.File`
       The file open for reading, or the file name to read from.
 
     **Returns:**

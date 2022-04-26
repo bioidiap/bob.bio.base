@@ -70,8 +70,6 @@ test:
     - sphinx {{ sphinx }}
     - sphinx_rtd_theme {{ sphinx_rtd_theme }}
     - matplotlib {{ matplotlib }}
-    - bob.db.atnt
-    - gridtk
 
 about:
   home: https://www.idiap.ch/software/bob/

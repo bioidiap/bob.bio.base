@@ -291,7 +291,7 @@ def execute_pipeline_score_norm(
             f"score_normalization_type {score_normalization_type} is not valid"
         )
 
-    pipeline = ScoreNormalizationPipeline(
+    pipeline = PipelineScoreNorm(
         pipeline, post_processor, CSVScoreWriter(os.path.join(output, "./tmp"))
     )
 

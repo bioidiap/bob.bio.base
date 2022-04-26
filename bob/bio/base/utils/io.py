@@ -5,6 +5,7 @@ import collections  # this is needed for the sphinx documentation
 import functools  # this is needed for the sphinx documentation
 import numpy
 import logging
+import h5py
 
 logger = logging.getLogger("bob.bio.base")
 
@@ -87,8 +88,8 @@ def read_original_data(biofile, directory, extension):
 
 def load(file):
     """Loads data from file. The given file might be an HDF5 file open for reading or a string."""
-    if isinstance(file, bob.io.base.HDF5File):
-        return file.read("array")
+    if isinstance(file, h5py.File):
+        return numpy.array(file["array"])
     else:
         return bob.io.base.load(file)
 
@@ -99,13 +100,13 @@ def save(data, file, compression=0):
   Otherwise the data is written to the HDF5 file using the given compression."""
     f = (
         file
-        if isinstance(file, bob.io.base.HDF5File)
-        else bob.io.base.HDF5File(file, "w")
+        if isinstance(file, h5py.File)
+        else h5py.File(file, "w")
     )
     if hasattr(data, "save"):
         data.save(f)
     else:
-        f.set("array", data, compression=compression)
+        f["array"] = data
 
 
 def open_compressed(filename, open_flag="r", compression_type="bz2"):
@@ -127,7 +128,7 @@ def open_compressed(filename, open_flag="r", compression_type="bz2"):
         real_file.close()
         tar.close()
 
-    return bob.io.base.HDF5File(hdf5_file_name, open_flag)
+    return h5py.File(hdf5_file_name, open_flag)
 
 
 def close_compressed(filename, hdf5_file, compression_type="bz2", create_link=False):
@@ -161,7 +162,7 @@ def load_compressed(filename, compression_type="bz2"):
   Accepted compression types are 'gz', 'bz2', ''"""
     # read from compressed HDF5
     hdf5 = open_compressed(filename, "r")
-    data = hdf5.read("array")
+    data = numpy.array(hdf5["array"])
     close_compressed(filename, hdf5)
 
     return data

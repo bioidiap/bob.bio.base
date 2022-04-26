@@ -95,7 +95,7 @@ class Preprocessor (object):
         data : object
           The preprocessed data, i.e., what is returned from `__call__`.
 
-        data_file : str or :py:class:`bob.io.base.HDF5File`
+        data_file : str or :py:class:`h5py.File`
           The file open for writing, or the name of the file to write.
         """
         utils.save(data, data_file)
@@ -109,7 +109,7 @@ class Preprocessor (object):
 
         **Parameters:**
 
-        data_file : str or :py:class:`bob.io.base.HDF5File`
+        data_file : str or :py:class:`h5py.File`
           The file open for reading or the name of the file to read from.
 
         **Returns:**
