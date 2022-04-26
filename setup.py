@@ -69,9 +69,11 @@ setup(
             "dummy             = bob.bio.base.test.dummy.config",  # for test purposes only
             "dummy2            = bob.bio.base.test.dummy.config2",  # for test purposes only
             "dummy_samples     = bob.bio.base.test.dummy.samples_list",  # for test purposes only
+            "atnt              = bob.bio.base.config.database.atnt",
         ],
         "bob.bio.database": [
             "dummy             = bob.bio.base.test.dummy.database:database",  # for test purposes only
+            "atnt              = bob.bio.base.config.database.atnt:database",
         ],
         "bob.bio.preprocessor": [
             "dummy             = bob.bio.base.test.dummy.preprocessor:preprocessor",  # for test purposes only
