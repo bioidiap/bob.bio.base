@@ -1,5 +1,3 @@
-bob.blitz
-bob.core
 bob.extension > 5.0.1
 bob.io.base
 bob.measure

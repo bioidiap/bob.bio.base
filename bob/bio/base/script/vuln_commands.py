@@ -9,7 +9,7 @@ import functools
 import click
 from click.types import FLOAT
 from bob.measure.script import common_options
-from bob.core import random
+from numpy import random
 from bob.io.base import create_directories_safe
 from bob.bio.base.score.load import split_csv_vuln
 from . import vuln_figure as figure
@@ -107,15 +107,12 @@ def gen_score_distr(
     num_zei=5000,
     num_pa=5000,
 ):
-    mt = random.mt19937()  # initialise the random number generator
+    # initialise the random number generator
+    mt = random.RandomState(0)
 
-    genuine_generator = random.normal(numpy.float32, mean_gen, sigma_gen)
-    zei_generator = random.normal(numpy.float32, mean_zei, sigma_zei)
-    pa_generator = random.normal(numpy.float32, mean_pa, sigma_pa)
-
-    genuine_scores = [genuine_generator(mt) for i in range(num_gen)]
-    zei_scores = [zei_generator(mt) for i in range(num_zei)]
-    pa_scores = [pa_generator(mt) for i in range(num_pa)]
+    genuine_scores = mt.normal(loc=mean_gen, scale=sigma_gen, size=num_gen)
+    zei_scores = mt.normal(loc=mean_zei, scale=sigma_zei, size=num_zei)
+    pa_scores = mt.normal(loc=mean_pa, scale=sigma_pa, size=num_pa)
 
     return genuine_scores, zei_scores, pa_scores
 
