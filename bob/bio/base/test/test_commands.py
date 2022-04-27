@@ -64,17 +64,17 @@ def test_metrics():
         )
         assert_click_runner_result(result)
 
-    with runner.isolated_filesystem():
-        result = runner.invoke(
-            commands.metrics, ["-e", "--criterion", "cllr", dev1, test2]
-        )
-        assert_click_runner_result(result)
+    # with runner.isolated_filesystem():
+    #     result = runner.invoke(
+    #         commands.metrics, ["-e", "--criterion", "cllr", dev1, test2]
+    #     )
+    #     assert_click_runner_result(result)
 
-    with runner.isolated_filesystem():
-        result = runner.invoke(
-            commands.metrics, ["-l", "tmp", "--criterion", "cllr", "--cost", 0.9, dev1]
-        )
-        assert_click_runner_result(result)
+    # with runner.isolated_filesystem():
+    #     result = runner.invoke(
+    #         commands.metrics, ["-l", "tmp", "--criterion", "cllr", "--cost", 0.9, dev1]
+    #     )
+    #     assert_click_runner_result(result)
 
     with runner.isolated_filesystem():
         result = runner.invoke(

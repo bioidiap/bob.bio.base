@@ -1,7 +1,6 @@
 python
 scikit-learn
 bob.bio.face
-bob.bio.gmm
 bob.bio.video
 bob.bio.spear
 bob.bio.vein
