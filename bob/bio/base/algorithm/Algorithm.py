@@ -216,9 +216,9 @@ class Algorithm (object):
     """
 
     if isinstance(models, list):
-      return [self.probe_fusion_function(self.score(model, probe)) for model in models]
+      return [self.model_fusion_function(self.score(model, probe)) for model in models]
     elif isinstance(models, numpy.ndarray):
-      return [self.probe_fusion_function(self.score(models[i,:], probe)) for i in range(models.shape[0])]
+      return [self.model_fusion_function(self.score(models[i,:], probe)) for i in range(models.shape[0])]
     else:
       raise ValueError("The model does not have the desired format (list, array, ...)")
 
