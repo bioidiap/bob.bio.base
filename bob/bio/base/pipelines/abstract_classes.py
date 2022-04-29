@@ -17,18 +17,22 @@ def reduce_scores(scores, fn=np.max):
     Given a :any:`numpy.ndarray` coming from multiple probes,
     average them.
 
-    This function needs to handle the 2 cases.
+    ``reduce_scores`` needs to handle 2 cases:
     The first case is when one Sample (not a `SampleSet`) points to one score
     The second case is when one Sample points to several scores (while dealing with `VideoLikeContainer`)
 
     """
 
-    ## axis=0 points to each sample in a sampleset
-    ## axis=1 points to the score w.r.t each biometric reference
-    ## axis=2 points to each individual score of a sample (in image-based cases is one score per sample,
-    # and in video-based cases can be multiple scores)
+    # axis=0 points to each probe sample in a probe sampleset
+    # axis=1 points to the score w.r.t each biometric reference
+    # axis=2 points to each individual score of a sample: e.g.:
+    #   - image-based: axis 2 is one score per sample (scores.shape[2] == 1)
+    #   - video-based: axis 2 can contain multiple scores (scores.shape[2] > 1)
 
-    # First we have to average w.r.t tp individual samples, than between samples
+    # First we have to average w.r.t individual samples, then between samples
+
+    # The result is an array of scores, one score for each biometric reference.
+    # (same length as scores.shape[1])
 
     return fn(np.array([fn(x, axis=1) for x in scores]), axis=0)
 
@@ -257,6 +261,9 @@ class BioAlgorithm(BaseEstimator, metaclass=ABCMeta):
     @abstractmethod
     def score(self, biometric_reference, data):
         """It handles the score computation for one sample
+
+        Scores a probe (containing possibly multiple samples) against one model (one
+        identity)
 
         Parameters
         ----------

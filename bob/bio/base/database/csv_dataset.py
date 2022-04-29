@@ -212,15 +212,33 @@ class CSVDataset(Database):
     Parameters
     ----------
 
-        dataset_path: str
+        name: str
+            Name of the dataset (root folder name containing the protocol folders)
+
+        protocol: str
+            Name of the protocol (folder name containing the dev, eval and norm folders)
+
+        dataset_protocol_path: str
           Absolute path or a tarball of the dataset protocol description.
 
-        protocol_na,e: str
+        protocol_name: str
           The name of the protocol
 
         csv_to_sample_loader: `bob.pipelines.sample_loaders.CSVToSampleLoader`
             Base class that whose objective is to generate :any:`bob.pipelines.Sample`
             and/or :any:`bob.pipelines.SampleSet` from csv rows
+
+        is_sparse: bool
+            If True, will look for a `for_scores.lst` file instead of a `for_probes.lst`
+            (legacy format)
+
+        allow_scoring_with_all_biometric_references: bool
+            Optimization trick for Dask. If True, all references will be passed for
+            scoring against the probes.
+
+        group_probes_by_reference_id: bool
+            If True, probe SampleSet will contain all the samples with a given
+            `reference_id`, otherwise, one SampleSet will be created for each sample.
 
 
     """
