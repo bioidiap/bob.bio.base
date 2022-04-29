@@ -2,36 +2,34 @@
 # vim: set fileencoding=utf-8 :
 # @author: Tiago de Freitas Pereira <tiago.pereira@idiap.ch>
 
-from xml.etree.ElementTree import PI
-from bob.pipelines import Sample, SampleSet, DelayedSample
-import os
-import numpy as np
-import tempfile
-from sklearn.pipeline import make_pipeline
-from bob.bio.base.wrappers import wrap_bob_legacy
-from bob.bio.base.test.test_transformers import (
-    FakePreprocesor,
-    FakeExtractor,
-    FakeAlgorithm,
-)
-from bob.bio.base.pipelines import (
-    Distance,
-    PipelineScoreNorm,
-    PipelineSimple,
-    BioAlgorithmCheckpointWrapper,
-    dask_pipeline_simple,
-    FourColumnsScoreWriter,
-    CSVScoreWriter,
-    BioAlgorithmLegacy,
-)
-
-import bob.pipelines as mario
-import uuid
-import shutil
 import itertools
-from nose.tools import raises
+import os
+import shutil
+import tempfile
+import uuid
+
+import numpy as np
 
 from h5py import File as HDF5File
+from nose.tools import raises
+from sklearn.pipeline import make_pipeline
+
+from bob.bio.base.pipelines import (
+    BioAlgorithmCheckpointWrapper,
+    BioAlgorithmLegacy,
+    CSVScoreWriter,
+    Distance,
+    FourColumnsScoreWriter,
+    PipelineSimple,
+    dask_pipeline_simple,
+)
+from bob.bio.base.test.test_transformers import (
+    FakeAlgorithm,
+    FakeExtractor,
+    FakePreprocesor,
+)
+from bob.bio.base.wrappers import wrap_bob_legacy
+from bob.pipelines import DelayedSample, Sample, SampleSet
 
 
 class DummyDatabase:
@@ -98,9 +96,13 @@ class DummyDatabase:
         offset = 0
         for i, s in enumerate(sample_set):
             if self.one_d:
-                s.samples = self._create_random_1dsamples(n_samples, offset, self.dim)
+                s.samples = self._create_random_1dsamples(
+                    n_samples, offset, self.dim
+                )
             else:
-                s.samples = self._create_random_2dsamples(n_samples, offset, self.dim)
+                s.samples = self._create_random_2dsamples(
+                    n_samples, offset, self.dim
+                )
             if self.contains_fta and i % 2:
                 for sample in s.samples[::2]:
                     sample.data = None
@@ -114,16 +116,22 @@ class DummyDatabase:
         return sample_set
 
     def background_model_samples(self):
-        samples = [sset.samples for sset in self._create_random_sample_set(seed=10)]
+        samples = [
+            sset.samples for sset in self._create_random_sample_set(seed=10)
+        ]
         return list(itertools.chain(*samples))
 
     def references(self):
-        return self._create_random_sample_set(self.n_references, self.dim, seed=11)
+        return self._create_random_sample_set(
+            self.n_references, self.dim, seed=11
+        )
 
     def probes(self):
         probes = []
 
-        probes = self._create_random_sample_set(n_sample_set=10, n_samples=1, seed=12)
+        probes = self._create_random_sample_set(
+            n_sample_set=10, n_samples=1, seed=12
+        )
         for p in probes:
             p.references = [str(r) for r in list(range(self.n_references))]
 
@@ -132,7 +140,9 @@ class DummyDatabase:
     def zprobes(self):
         zprobes = []
 
-        zprobes = self._create_random_sample_set(n_sample_set=10, n_samples=1, seed=14)
+        zprobes = self._create_random_sample_set(
+            n_sample_set=10, n_samples=1, seed=14
+        )
         for p in zprobes:
             p.reference_id = "z-" + str(p.reference_id)
             p.references = [str(r) for r in list(range(self.n_references))]
@@ -140,7 +150,9 @@ class DummyDatabase:
         return zprobes
 
     def treferences(self):
-        t_sset = self._create_random_sample_set(self.n_references, self.dim, seed=15)
+        t_sset = self._create_random_sample_set(
+            self.n_references, self.dim, seed=15
+        )
         for t in t_sset:
             t.reference_id = "t_" + str(t.reference_id)
         return t_sset
@@ -198,7 +210,9 @@ def _make_transformer_with_algorithm(dir_name):
         ),
         wrap_bob_legacy(FakeExtractor(), dir_name),
         wrap_bob_legacy(
-            FakeAlgorithm(), dir_name, fit_extra_arguments=[("y", "reference_id")]
+            FakeAlgorithm(),
+            dir_name,
+            fit_extra_arguments=[("y", "reference_id")],
         ),
     )
 
@@ -209,7 +223,9 @@ def test_on_memory():
 
     with tempfile.TemporaryDirectory() as dir_name:
 
-        def run_pipeline(with_dask, allow_scoring_with_all_biometric_references):
+        def run_pipeline(
+            with_dask, allow_scoring_with_all_biometric_references
+        ):
             database = DummyDatabase()
 
             transformer = _make_transformer(dir_name)
@@ -223,7 +239,9 @@ def test_on_memory():
             )
 
             if with_dask:
-                pipeline_simple = dask_pipeline_simple(pipeline_simple, npartitions=2)
+                pipeline_simple = dask_pipeline_simple(
+                    pipeline_simple, npartitions=2
+                )
 
             scores = pipeline_simple(
                 database.background_model_samples(),
@@ -243,7 +261,9 @@ def test_on_memory():
 
         run_pipeline(False, True)
         run_pipeline(False, False)  # Testing checkpoint
-        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        shutil.rmtree(
+            dir_name
+        )  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
         run_pipeline(True, True)
         run_pipeline(True, True)  # Testing checkpoint
@@ -270,7 +290,9 @@ def test_checkpoint_bioalg_as_transformer():
             )
 
             if with_dask:
-                pipeline_simple = dask_pipeline_simple(pipeline_simple, npartitions=2)
+                pipeline_simple = dask_pipeline_simple(
+                    pipeline_simple, npartitions=2
+                )
 
             scores = pipeline_simple(
                 database.background_model_samples(),
@@ -302,7 +324,9 @@ def test_checkpoint_bioalg_as_transformer():
                         scheduler="single-threaded"
                     )
 
-                if isinstance(pipeline_simple.score_writer, FourColumnsScoreWriter):
+                if isinstance(
+                    pipeline_simple.score_writer, FourColumnsScoreWriter
+                ):
                     assert len(open(scores_dev_path).readlines()) == 100
                 else:
                     assert (
@@ -311,27 +335,36 @@ def test_checkpoint_bioalg_as_transformer():
 
         run_pipeline(False)
         run_pipeline(False)  # Checking if the checkpointing works
-        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        shutil.rmtree(
+            dir_name
+        )  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         # Writing scores
         run_pipeline(
-            False, FourColumnsScoreWriter(os.path.join(dir_name, "final_scores"))
+            False,
+            FourColumnsScoreWriter(os.path.join(dir_name, "final_scores")),
         )
-        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        shutil.rmtree(
+            dir_name
+        )  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         # Dask
         run_pipeline(True)
         run_pipeline(True)  # Checking if the checkpointing works
-        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        shutil.rmtree(
+            dir_name
+        )  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         # Writing scores
         run_pipeline(
             True, FourColumnsScoreWriter(os.path.join(dir_name, "final_scores"))
         )
-        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        shutil.rmtree(
+            dir_name
+        )  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         # CSVWriter
@@ -341,7 +374,9 @@ def test_checkpoint_bioalg_as_transformer():
         run_pipeline(
             False, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
         )  # Checking if the checkpointing works
-        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        shutil.rmtree(
+            dir_name
+        )  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         # CSVWriter + Dask
@@ -374,7 +409,9 @@ def test_checkpoint_bioalg_with_tags():
             )
 
             if with_dask:
-                pipeline_simple = dask_pipeline_simple(pipeline_simple, npartitions=2)
+                pipeline_simple = dask_pipeline_simple(
+                    pipeline_simple, npartitions=2
+                )
 
             scores = pipeline_simple(
                 database.background_model_samples(),
@@ -403,27 +440,36 @@ def test_checkpoint_bioalg_with_tags():
 
         run_pipeline(False)
         run_pipeline(False)  # Checking if the checkpointing works
-        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        shutil.rmtree(
+            dir_name
+        )  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         # Writing scores
         run_pipeline(
-            False, FourColumnsScoreWriter(os.path.join(dir_name, "final_scores"))
+            False,
+            FourColumnsScoreWriter(os.path.join(dir_name, "final_scores")),
         )
-        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        shutil.rmtree(
+            dir_name
+        )  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         # Dask
         run_pipeline(True)
         run_pipeline(True)  # Checking if the checkpointing works
-        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        shutil.rmtree(
+            dir_name
+        )  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         # Writing scores
         run_pipeline(
             True, FourColumnsScoreWriter(os.path.join(dir_name, "final_scores"))
         )
-        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        shutil.rmtree(
+            dir_name
+        )  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         # CSVWriter
@@ -433,7 +479,9 @@ def test_checkpoint_bioalg_with_tags():
         run_pipeline(
             False, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
         )  # Checking if the checkpointing works
-        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        shutil.rmtree(
+            dir_name
+        )  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         # CSVWriter + Dask
@@ -449,7 +497,9 @@ def test_checkpoint_bioalg_as_bioalg():
 
     with tempfile.TemporaryDirectory() as dir_name:
 
-        def run_pipeline(with_dask, score_writer=FourColumnsScoreWriter(dir_name)):
+        def run_pipeline(
+            with_dask, score_writer=FourColumnsScoreWriter(dir_name)
+        ):
             database = DummyDatabase()
 
             transformer = _make_transformer_with_algorithm(dir_name)
@@ -465,7 +515,9 @@ def test_checkpoint_bioalg_as_bioalg():
             pipeline_simple = PipelineSimple(transformer, biometric_algorithm)
 
             if with_dask:
-                pipeline_simple = dask_pipeline_simple(pipeline_simple, npartitions=2)
+                pipeline_simple = dask_pipeline_simple(
+                    pipeline_simple, npartitions=2
+                )
 
             scores = pipeline_simple(
                 database.background_model_samples(),
@@ -500,21 +552,29 @@ def test_checkpoint_bioalg_as_bioalg():
 
         run_pipeline(False)
         run_pipeline(False)  # Checking if the checkpointing works
-        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        shutil.rmtree(
+            dir_name
+        )  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         # Dask
         run_pipeline(True)
         run_pipeline(True)  # Checking if the checkpointing works
-        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        shutil.rmtree(
+            dir_name
+        )  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
 
-def _run_with_failure(allow_scoring_with_all_biometric_references, sporadic_fail):
+def _run_with_failure(
+    allow_scoring_with_all_biometric_references, sporadic_fail
+):
 
     with tempfile.TemporaryDirectory() as dir_name:
 
-        database = DummyDatabase(some_fta=sporadic_fail, all_fta=not sporadic_fail)
+        database = DummyDatabase(
+            some_fta=sporadic_fail, all_fta=not sporadic_fail
+        )
 
         transformer = _make_transformer(dir_name)
 

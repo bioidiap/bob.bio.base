@@ -5,19 +5,17 @@
 
 """Executes biometric pipeline"""
 
-import click
-
-from bob.extension.scripts.click_helper import (
-    verbosity_option,
-    ResourceOption,
-    ConfigCommand,
-)
-import bob.io.base
-from tabulate import tabulate
-from bob.bio.base.pipelines import dask_pipeline_simple
-from bob.pipelines import SampleSet, DelayedSample
 import functools
 
+import click
+
+from tabulate import tabulate
+
+import bob.io.base
+
+from bob.bio.base.pipelines import dask_pipeline_simple
+from bob.extension.scripts.click_helper import ResourceOption, verbosity_option
+from bob.pipelines import DelayedSample, SampleSet
 
 EPILOG = """\n
 
@@ -84,7 +82,7 @@ def compare_samples(samples, pipeline, dask_client, verbose):
     for sset in scores:
         table.append([str(s.data) for s in sset])
 
-    print(f"All vs All comparison")
+    print("All vs All comparison")
     print(tabulate(table))
 
     if dask_client is not None:

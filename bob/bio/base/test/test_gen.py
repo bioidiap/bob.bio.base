@@ -9,16 +9,15 @@ The gen module generates synthetic scores and saves them to a file for
 demonstration and test purpose.
 """
 
+import logging
 import os
+
 import numpy
 
-
 from click.testing import CliRunner
-from bob.extension.scripts.click_helper import assert_click_runner_result
 
 from bob.bio.base.script.gen import gen, gen_score_distr
-
-import logging
+from bob.extension.scripts.click_helper import assert_click_runner_result
 
 logger = logging.getLogger(__name__)
 logger.setLevel(
@@ -37,7 +36,9 @@ def gen_case(
     """Tests one case of the gen command"""
     n_pos = n_subjects * n_probes_per_subject if n_pos is None else n_pos
     n_neg = (
-        n_subjects * (n_subjects - 1) * n_probes_per_subject if n_neg is None else n_neg
+        n_subjects * (n_subjects - 1) * n_probes_per_subject
+        if n_neg is None
+        else n_neg
     )
     n_unk = (
         n_unknown_subjects * n_subjects * n_probes_per_subject
@@ -150,10 +151,20 @@ def test_gen():
 def test_gen_score_dist():
     """Tests that the scores generation works as expected"""
     neg, pos = gen_score_distr(
-        mean_neg=-10, mean_pos=10, sigma_neg=1, sigma_pos=1, n_neg=20, n_pos=20, seed=0
+        mean_neg=-10,
+        mean_pos=10,
+        sigma_neg=1,
+        sigma_pos=1,
+        n_neg=20,
+        n_pos=20,
+        seed=0,
     )
-    assert len(neg) == 20, f"Incorrect number of negative scores generated ({len(neg)})"
-    assert len(pos) == 20, f"Incorrect number of positive scores generated ({len(pos)})"
+    assert (
+        len(neg) == 20
+    ), f"Incorrect number of negative scores generated ({len(neg)})"
+    assert (
+        len(pos) == 20
+    ), f"Incorrect number of positive scores generated ({len(pos)})"
     assert all(
         [isinstance(s, (numpy.floating, float)) for s in neg]
     ), "A score was not a float"

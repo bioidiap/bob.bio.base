@@ -1,19 +1,26 @@
 """Generate random scores.
 """
-import os
+import csv
 import logging
-import numpy
+import os
+
 import click
+import numpy
+
 from bob.extension.scripts.click_helper import verbosity_option
 from bob.io.base import create_directories_safe
-from bob.measure.script import common_options
-import csv
 
 logger = logging.getLogger(__name__)
 
 
 def gen_score_distr(
-    mean_neg, mean_pos, sigma_neg=10, sigma_pos=10, n_neg=5000, n_pos=5000, seed=0
+    mean_neg,
+    mean_pos,
+    sigma_neg=10,
+    sigma_pos=10,
+    n_neg=5000,
+    n_pos=5000,
+    seed=0,
 ):
     """Generate scores from normal distributions
 
@@ -114,13 +121,17 @@ def write_scores_to_file(
                     [s_name, s_name, probe_id, score] + list(metadata.values())
                 )
             else:
-                f.write("%s%s%s %s %f\n" % (s_name, s_five, s_name, probe_id, score))
+                f.write(
+                    "%s%s%s %s %f\n" % (s_name, s_five, s_name, probe_id, score)
+                )
 
         # Generate one line per probe against each ref (unless "--force-count" specified)
         logger.debug("Writing negative scores.")
         for i, score in enumerate(neg):
             n_impostors = n_subjects - 1
-            ref = s_subjects[int(i / n_probes_per_subject / n_impostors) % n_subjects]
+            ref = s_subjects[
+                int(i / n_probes_per_subject / n_impostors) % n_subjects
+            ]
             impostors = [s for s in s_subjects if s != ref]  # ignore pos
             probe = impostors[int(i / n_probes_per_subject) % n_impostors]
             s_five = " " if not five_col else " d" + ref
@@ -130,14 +141,17 @@ def write_scores_to_file(
                     [ref, probe, probe_id, score] + list(metadata.values())
                 )
             else:
-                f.write("%s%s%s %s %f\n" % (ref, s_five, probe, probe_id, score))
+                f.write(
+                    "%s%s%s %s %f\n" % (ref, s_five, probe, probe_id, score)
+                )
 
         logger.debug("Writing unknown scores.")
         if neg_unknown is not None:
             s_unknown_subjects = ["u%d" % i for i in range(n_unknown_subjects)]
             for i, score in enumerate(neg_unknown):
                 ref = s_subjects[
-                    int(i / n_probes_per_subject / n_unknown_subjects) % n_subjects
+                    int(i / n_probes_per_subject / n_unknown_subjects)
+                    % n_subjects
                 ]
                 probe = s_unknown_subjects[
                     int(i / n_probes_per_subject) % n_unknown_subjects
@@ -149,7 +163,9 @@ def write_scores_to_file(
                         [ref, probe, probe_id, score] + list(metadata.values())
                     )
                 else:
-                    f.write("%s%s%s %s %f\n" % (ref, s_five, probe, probe_id, score))
+                    f.write(
+                        "%s%s%s %s %f\n" % (ref, s_five, probe, probe_id, score)
+                    )
 
 
 @click.command(

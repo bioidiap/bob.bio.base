@@ -1,9 +1,11 @@
-import tempfile
 import os
 import shutil
+import tempfile
+
 from click.testing import CliRunner
-from bob.bio.base.script.annotate import annotate, annotate_samples
+
 from bob.bio.base.annotator import Callable, FailSafe
+from bob.bio.base.script.annotate import annotate, annotate_samples
 from bob.bio.base.utils.annotations import read_annotation_file
 from bob.extension.scripts.click_helper import assert_click_runner_result
 
@@ -14,7 +16,8 @@ def test_annotate():
         tmp_dir = tempfile.mkdtemp(prefix="bobtest_")
         runner = CliRunner()
         result = runner.invoke(
-            annotate, args=("-d", "dummy", "-g", "dev", "-a", "dummy", "-o", tmp_dir)
+            annotate,
+            args=("-d", "dummy", "-g", "dev", "-a", "dummy", "-o", tmp_dir),
         )
         assert_click_runner_result(result)
 
@@ -36,7 +39,8 @@ def test_annotate_samples():
         tmp_dir = tempfile.mkdtemp(prefix="bobtest_")
         runner = CliRunner()
         result = runner.invoke(
-            annotate_samples, args=("dummy_samples", "-a", "dummy", "-o", tmp_dir)
+            annotate_samples,
+            args=("dummy_samples", "-a", "dummy", "-o", tmp_dir),
         )
         assert_click_runner_result(result)
 
@@ -57,11 +61,15 @@ def dummy_extra_key_annotator(data_batch, **kwargs):
 
 
 def test_failsafe():
-    annotator = FailSafe([Callable(dummy_extra_key_annotator)], ["leye", "reye"])
+    annotator = FailSafe(
+        [Callable(dummy_extra_key_annotator)], ["leye", "reye"]
+    )
     annotations = annotator([1])
     assert all(key in annotations[0] for key in ["leye", "reye", "topleft"])
 
-    annotator = FailSafe([Callable(dummy_extra_key_annotator)], ["leye", "reye"], True)
+    annotator = FailSafe(
+        [Callable(dummy_extra_key_annotator)], ["leye", "reye"], True
+    )
     annotations = annotator([1])
     assert all(key in annotations[0] for key in ["leye", "reye"])
     assert all(key not in annotations[0] for key in ["topleft"])

@@ -1,29 +1,43 @@
 """Tests for bob.measure scripts"""
 
-import click
-from click.testing import CliRunner
 import shutil
-import pkg_resources
-import numpy
+
+import click
 import nose
+import numpy
+import pkg_resources
+
+from click.testing import CliRunner
+
 from bob.extension.scripts.click_helper import assert_click_runner_result
-from ..script import commands, sort, vuln_commands
+
 from ..score import scores
+from ..script import commands, sort, vuln_commands
 
 
 def test_metrics():
-    dev1 = pkg_resources.resource_filename("bob.bio.base.test", "data/dev-4col.txt")
+    dev1 = pkg_resources.resource_filename(
+        "bob.bio.base.test", "data/dev-4col.txt"
+    )
     runner = CliRunner()
     result = runner.invoke(commands.metrics, [dev1])
     with runner.isolated_filesystem():
         with open("tmp", "w") as f:
             f.write(result.output)
         assert_click_runner_result(result)
-    dev2 = pkg_resources.resource_filename("bob.bio.base.test", "data/dev-5col.txt")
-    test1 = pkg_resources.resource_filename("bob.bio.base.test", "data/test-4col.txt")
-    test2 = pkg_resources.resource_filename("bob.bio.base.test", "data/test-5col.txt")
+    dev2 = pkg_resources.resource_filename(
+        "bob.bio.base.test", "data/dev-5col.txt"
+    )
+    test1 = pkg_resources.resource_filename(
+        "bob.bio.base.test", "data/test-4col.txt"
+    )
+    test2 = pkg_resources.resource_filename(
+        "bob.bio.base.test", "data/test-5col.txt"
+    )
     with runner.isolated_filesystem():
-        result = runner.invoke(commands.metrics, ["-e", dev1, test1, dev2, test2])
+        result = runner.invoke(
+            commands.metrics, ["-e", dev1, test1, dev2, test2]
+        )
         with open("tmp", "w") as f:
             f.write(result.output)
         assert_click_runner_result(result)
@@ -35,7 +49,9 @@ def test_metrics():
         )
         assert_click_runner_result(result)
     with runner.isolated_filesystem():
-        result = runner.invoke(commands.metrics, ["-e", "-l", "tmp", dev1, test2])
+        result = runner.invoke(
+            commands.metrics, ["-e", "-l", "tmp", dev1, test2]
+        )
         assert_click_runner_result(result)
 
     with runner.isolated_filesystem():
@@ -78,7 +94,8 @@ def test_metrics():
 
     with runner.isolated_filesystem():
         result = runner.invoke(
-            commands.metrics, ["-e", "--criterion", "rr", "-T", "0.1", dev1, test2]
+            commands.metrics,
+            ["-e", "--criterion", "rr", "-T", "0.1", dev1, test2],
         )
         assert_click_runner_result(result)
 
@@ -145,16 +162,24 @@ def test_roc():
 
 
 def test_det():
-    dev1 = pkg_resources.resource_filename("bob.bio.base.test", "data/dev-4col.txt")
+    dev1 = pkg_resources.resource_filename(
+        "bob.bio.base.test", "data/dev-4col.txt"
+    )
     runner = CliRunner()
     with runner.isolated_filesystem():
         result = runner.invoke(commands.det, [dev1, "-S"])
         if result.output:
             click.echo(result.output)
         assert_click_runner_result(result)
-    dev2 = pkg_resources.resource_filename("bob.bio.base.test", "data/dev-5col.txt")
-    test1 = pkg_resources.resource_filename("bob.bio.base.test", "data/test-4col.txt")
-    test2 = pkg_resources.resource_filename("bob.bio.base.test", "data/test-5col.txt")
+    dev2 = pkg_resources.resource_filename(
+        "bob.bio.base.test", "data/dev-5col.txt"
+    )
+    test1 = pkg_resources.resource_filename(
+        "bob.bio.base.test", "data/test-4col.txt"
+    )
+    test2 = pkg_resources.resource_filename(
+        "bob.bio.base.test", "data/test-5col.txt"
+    )
     with runner.isolated_filesystem():
         result = runner.invoke(
             commands.det,
@@ -176,7 +201,8 @@ def test_det():
         assert_click_runner_result(result)
     with runner.isolated_filesystem():
         result = runner.invoke(
-            commands.det, ["--output", "test.pdf", "-e", dev1, test1, dev2, test2]
+            commands.det,
+            ["--output", "test.pdf", "-e", dev1, test1, dev2, test2],
         )
         if result.output:
             click.echo(result.output)
@@ -210,16 +236,24 @@ def test_det():
 
 
 def test_epc():
-    dev1 = pkg_resources.resource_filename("bob.bio.base.test", "data/dev-4col.txt")
-    test1 = pkg_resources.resource_filename("bob.bio.base.test", "data/test-4col.txt")
+    dev1 = pkg_resources.resource_filename(
+        "bob.bio.base.test", "data/dev-4col.txt"
+    )
+    test1 = pkg_resources.resource_filename(
+        "bob.bio.base.test", "data/test-4col.txt"
+    )
     runner = CliRunner()
     with runner.isolated_filesystem():
         result = runner.invoke(commands.epc, [dev1, test1])
         if result.output:
             click.echo(result.output)
         assert_click_runner_result(result)
-    dev2 = pkg_resources.resource_filename("bob.bio.base.test", "data/dev-4col.tar.gz")
-    test2 = pkg_resources.resource_filename("bob.bio.base.test", "data/test-5col.txt")
+    dev2 = pkg_resources.resource_filename(
+        "bob.bio.base.test", "data/dev-4col.tar.gz"
+    )
+    test2 = pkg_resources.resource_filename(
+        "bob.bio.base.test", "data/test-5col.txt"
+    )
     with runner.isolated_filesystem():
         result = runner.invoke(
             commands.epc,
@@ -256,10 +290,18 @@ def test_epc():
 
 
 def test_hist():
-    dev1 = pkg_resources.resource_filename("bob.bio.base.test", "data/dev-4col.txt")
-    dev2 = pkg_resources.resource_filename("bob.bio.base.test", "data/dev-5col.txt")
-    test1 = pkg_resources.resource_filename("bob.bio.base.test", "data/test-4col.txt")
-    test2 = pkg_resources.resource_filename("bob.bio.base.test", "data/test-5col.txt")
+    dev1 = pkg_resources.resource_filename(
+        "bob.bio.base.test", "data/dev-4col.txt"
+    )
+    dev2 = pkg_resources.resource_filename(
+        "bob.bio.base.test", "data/dev-5col.txt"
+    )
+    test1 = pkg_resources.resource_filename(
+        "bob.bio.base.test", "data/test-4col.txt"
+    )
+    test2 = pkg_resources.resource_filename(
+        "bob.bio.base.test", "data/test-5col.txt"
+    )
     runner = CliRunner()
     with runner.isolated_filesystem():
         result = runner.invoke(commands.hist, [dev1])
@@ -447,7 +489,9 @@ def test_metrics_vuln():
         "bob.bio.base.test", "data/vuln/scores-eval-med.csv"
     )
     with runner.isolated_filesystem():
-        result = runner.invoke(vuln_commands.metrics, ["-e", dev1, test1, dev2, test2])
+        result = runner.invoke(
+            vuln_commands.metrics, ["-e", dev1, test1, dev2, test2]
+        )
         with open("tmp", "w") as f:
             f.write(result.output)
         assert_click_runner_result(result)
@@ -459,7 +503,9 @@ def test_metrics_vuln():
         )
         assert_click_runner_result(result)
     with runner.isolated_filesystem():
-        result = runner.invoke(vuln_commands.metrics, ["-e", "-l", "tmp", dev1, test2])
+        result = runner.invoke(
+            vuln_commands.metrics, ["-e", "-l", "tmp", dev1, test2]
+        )
         assert_click_runner_result(result)
 
 
@@ -473,7 +519,8 @@ def test_det_vuln():
     runner = CliRunner()
     with runner.isolated_filesystem():
         result = runner.invoke(
-            vuln_commands.det, ["-fnmr", "0.2", "-o", "DET.pdf", dev_file, eval_file]
+            vuln_commands.det,
+            ["-fnmr", "0.2", "-o", "DET.pdf", dev_file, eval_file],
         )
         assert_click_runner_result(result)
 
@@ -500,7 +547,15 @@ def test_fmr_iapmr_vuln():
 
         result = runner.invoke(
             vuln_commands.fmr_iapmr,
-            ["--output", "FMRIAPMR.pdf", dev_file, eval_file, "-G", "-L", "1e-7,1,0,1"],
+            [
+                "--output",
+                "FMRIAPMR.pdf",
+                dev_file,
+                eval_file,
+                "-G",
+                "-L",
+                "1e-7,1,0,1",
+            ],
         )
         assert_click_runner_result(result)
 

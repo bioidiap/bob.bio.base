@@ -1,13 +1,17 @@
 """Plots and measures for bob.bio.base"""
 
+import logging
 import math
+
 import click
 import matplotlib.pyplot as mpl
-import bob.measure.script.figure as measure_figure
-import bob.measure
-from bob.measure import plot, utils
+
 from tabulate import tabulate
-import logging
+
+import bob.measure
+import bob.measure.script.figure as measure_figure
+
+from bob.measure import plot
 
 LOGGER = logging.getLogger("bob.bio.base")
 
@@ -28,7 +32,7 @@ class Det(measure_figure.Det):
 
 
 class Cmc(measure_figure.PlotBase):
-    """ Handles the plotting of Cmc """
+    """Handles the plotting of Cmc"""
 
     def __init__(self, ctx, scores, evaluation, func_load):
         super(Cmc, self).__init__(ctx, scores, evaluation, func_load)
@@ -39,7 +43,7 @@ class Cmc(measure_figure.PlotBase):
         self._max_R = 0
 
     def compute(self, idx, input_scores, input_names):
-        """ Plot CMC for dev and eval data using
+        """Plot CMC for dev and eval data using
         :py:func:`bob.measure.plot.cmc`"""
         mpl.figure(1)
         if self._eval:
@@ -80,7 +84,7 @@ class Cmc(measure_figure.PlotBase):
 
 
 class Dir(measure_figure.PlotBase):
-    """ Handles the plotting of DIR curve"""
+    """Handles the plotting of DIR curve"""
 
     def __init__(self, ctx, scores, evaluation, func_load):
         super(Dir, self).__init__(ctx, scores, evaluation, func_load)
@@ -91,7 +95,7 @@ class Dir(measure_figure.PlotBase):
         self._y_label = self._y_label or "True Positive Identification Rate"
 
     def compute(self, idx, input_scores, input_names):
-        """ Plot DIR for dev and eval data using
+        """Plot DIR for dev and eval data using
         :py:func:`bob.measure.plot.detection_identification_curve`"""
         mpl.figure(1)
         if self._eval:
@@ -135,7 +139,7 @@ class Dir(measure_figure.PlotBase):
 
 
 class Metrics(measure_figure.Metrics):
-    """ Compute metrics from score files"""
+    """Compute metrics from score files"""
 
     def __init__(
         self,
@@ -161,7 +165,7 @@ class Metrics(measure_figure.Metrics):
             )
 
     def compute(self, idx, input_scores, input_names):
-        """ Compute metrics for the given criteria"""
+        """Compute metrics for the given criteria"""
         title = self._legends[idx] if self._legends is not None else None
         headers = ["" or title, "Dev. %s" % input_names[0]]
         if self._eval and input_scores[1] is not None:
@@ -171,10 +175,14 @@ class Metrics(measure_figure.Metrics):
             dev_rr = "%.1f%%" % (100 * rr)
             raws = [["RR", dev_rr]]
             if self._eval and input_scores[1] is not None:
-                rr = bob.measure.recognition_rate(input_scores[1], self._thres[idx])
+                rr = bob.measure.recognition_rate(
+                    input_scores[1], self._thres[idx]
+                )
                 eval_rr = "%.1f%%" % (100 * rr)
                 raws[0].append(eval_rr)
-            click.echo(tabulate(raws, headers, self._tablefmt), file=self.log_file)
+            click.echo(
+                tabulate(raws, headers, self._tablefmt), file=self.log_file
+            )
         elif self._criterion == "mindcf":
             if "cost" in self._ctx.meta:
                 cost = self._ctx.meta.get("cost", 0.99)
@@ -202,7 +210,9 @@ class Metrics(measure_figure.Metrics):
             )
             dev_far_str = "%.1f%%" % (100 * far)
             dev_frr_str = "%.1f%%" % (100 * frr)
-            dev_mindcf_str = "%.1f%%" % ((cost * far + (1 - cost) * frr) * 100.0)
+            dev_mindcf_str = "%.1f%%" % (
+                (cost * far + (1 - cost) * frr) * 100.0
+            )
             raws = [
                 ["FAR", dev_far_str],
                 ["FRR", dev_frr_str],
@@ -215,13 +225,19 @@ class Metrics(measure_figure.Metrics):
                 )
                 eval_far_str = "%.1f%%" % (100 * far)
                 eval_frr_str = "%.1f%%" % (100 * frr)
-                eval_mindcf_str = "%.1f%%" % ((cost * far + (1 - cost) * frr) * 100.0)
+                eval_mindcf_str = "%.1f%%" % (
+                    (cost * far + (1 - cost) * frr) * 100.0
+                )
                 raws[0].append(eval_far_str)
                 raws[1].append(eval_frr_str)
                 raws[2].append(eval_mindcf_str)
-            click.echo(tabulate(raws, headers, self._tablefmt), file=self.log_file)
+            click.echo(
+                tabulate(raws, headers, self._tablefmt), file=self.log_file
+            )
         elif self._criterion == "cllr":
-            cllr = bob.measure.calibration.cllr(input_scores[0][0], input_scores[0][1])
+            cllr = bob.measure.calibration.cllr(
+                input_scores[0][0], input_scores[0][1]
+            )
             min_cllr = bob.measure.calibration.min_cllr(
                 input_scores[0][0], input_scores[0][1]
             )
@@ -239,7 +255,9 @@ class Metrics(measure_figure.Metrics):
                 eval_min_cllr_str = "%.1f%%" % min_cllr
                 raws[0].append(eval_cllr_str)
                 raws[1].append(eval_min_cllr_str)
-                click.echo(tabulate(raws, headers, self._tablefmt), file=self.log_file)
+                click.echo(
+                    tabulate(raws, headers, self._tablefmt), file=self.log_file
+                )
         else:
             title = self._legends[idx] if self._legends is not None else None
             all_metrics = self._get_all_metrics(idx, input_scores, input_names)
@@ -264,7 +282,9 @@ class Metrics(measure_figure.Metrics):
                 rows[4].append(all_metrics[1][4])
                 rows[5].append(all_metrics[1][5])
 
-            click.echo(tabulate(rows, headers, self._tablefmt), file=self.log_file)
+            click.echo(
+                tabulate(rows, headers, self._tablefmt), file=self.log_file
+            )
 
 
 class MultiMetrics(measure_figure.MultiMetrics):
@@ -288,7 +308,7 @@ class MultiMetrics(measure_figure.MultiMetrics):
 
 
 class Hist(measure_figure.Hist):
-    """ Histograms for biometric scores """
+    """Histograms for biometric scores"""
 
     def _setup_hist(self, neg, pos):
         self._title_base = "Biometric scores"

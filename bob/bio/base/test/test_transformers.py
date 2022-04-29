@@ -1,30 +1,33 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8 :
 
-from bob.bio.base.preprocessor import Preprocessor
-from bob.bio.base.extractor import Extractor
-from bob.bio.base.algorithm import Algorithm
-import scipy
-from bob.bio.base.transformers import (
-    PreprocessorTransformer,
-    ExtractorTransformer,
-    AlgorithmTransformer,
-)
-from bob.pipelines import SampleWrapper, CheckpointWrapper, Sample, wrap
+import os
+import tempfile
 
 import numpy as np
-import tempfile
-import os
-import bob.io.base
-from bob.bio.base.wrappers import (
-    wrap_checkpoint_preprocessor,
-    wrap_checkpoint_extractor,
-    wrap_checkpoint_algorithm,
-    wrap_sample_preprocessor,
-    wrap_sample_extractor,
-    wrap_sample_algorithm,
-)
+import scipy
+
 from sklearn.pipeline import make_pipeline
+
+import bob.io.base
+
+from bob.bio.base.algorithm import Algorithm
+from bob.bio.base.extractor import Extractor
+from bob.bio.base.preprocessor import Preprocessor
+from bob.bio.base.transformers import (
+    AlgorithmTransformer,
+    ExtractorTransformer,
+    PreprocessorTransformer,
+)
+from bob.bio.base.wrappers import (
+    wrap_checkpoint_algorithm,
+    wrap_checkpoint_extractor,
+    wrap_checkpoint_preprocessor,
+    wrap_sample_algorithm,
+    wrap_sample_extractor,
+    wrap_sample_preprocessor,
+)
+from bob.pipelines import CheckpointWrapper, Sample, SampleWrapper, wrap
 
 
 class FakePreprocesor(Preprocessor):
@@ -34,7 +37,7 @@ class FakePreprocesor(Preprocessor):
 
 class FakeExtractor(Extractor):
     def __call__(self, data):
-        return data.flatten()[0:10] # Selecting the first 10 features
+        return data.flatten()[0:10]  # Selecting the first 10 features
 
 
 class FakeExtractorFittable(Extractor):
@@ -76,7 +79,9 @@ class FakeAlgorithm(Algorithm):
         return scipy.spatial.distance.euclidean(model, data)
 
 
-def generate_samples(n_subjects, n_samples_per_subject, shape=(2, 2), annotations=1):
+def generate_samples(
+    n_subjects, n_samples_per_subject, shape=(2, 2), annotations=1
+):
     """
     Simple sample generator that generates a certain number of samples per
     subject, whose data is np.zeros + subject index
@@ -215,7 +220,9 @@ def test_algorithm():
     with tempfile.TemporaryDirectory() as dir_name:
 
         projector_file = os.path.join(dir_name, "Projector.hdf5")
-        projector_pkl = os.path.join(dir_name, "Projector.pkl")  # Testing pickling
+        projector_pkl = os.path.join(
+            dir_name, "Projector.pkl"
+        )  # Testing pickling
 
         algorithm = FakeAlgorithm()
         algorithm_transformer = AlgorithmTransformer(
@@ -251,7 +258,9 @@ def test_algorithm():
             model_path=projector_pkl,
         )
         # Fitting again to assert if it loads again
-        checkpointing_transformer = checkpointing_transformer.fit(training_samples)
+        checkpointing_transformer = checkpointing_transformer.fit(
+            training_samples
+        )
         transformed_sample = checkpointing_transformer.transform(test_sample)
 
         # Fitting again
@@ -263,24 +272,45 @@ def test_algorithm():
 
 def test_wrap_bob_pipeline():
     def run_pipeline(with_dask, with_checkpoint):
-        fit_extra_arguments = (("y","subject"),)
+        fit_extra_arguments = (("y", "subject"),)
         with tempfile.TemporaryDirectory() as dir_name:
-            if with_checkpoint:                
+            if with_checkpoint:
                 pipeline = make_pipeline(
-                    wrap_checkpoint_preprocessor(FakePreprocesor(), dir_name,),
-                    wrap_checkpoint_extractor(FakeExtractor(), dir_name,),
-                    wrap_checkpoint_algorithm(FakeAlgorithm(), dir_name, fit_extra_arguments=fit_extra_arguments),
+                    wrap_checkpoint_preprocessor(
+                        FakePreprocesor(),
+                        dir_name,
+                    ),
+                    wrap_checkpoint_extractor(
+                        FakeExtractor(),
+                        dir_name,
+                    ),
+                    wrap_checkpoint_algorithm(
+                        FakeAlgorithm(),
+                        dir_name,
+                        fit_extra_arguments=fit_extra_arguments,
+                    ),
                 )
             else:
                 pipeline = make_pipeline(
                     wrap_sample_preprocessor(FakePreprocesor()),
-                    wrap_sample_extractor(FakeExtractor(), dir_name,),
-                    wrap_sample_algorithm(FakeAlgorithm(), dir_name, fit_extra_arguments=fit_extra_arguments),
+                    wrap_sample_extractor(
+                        FakeExtractor(),
+                        dir_name,
+                    ),
+                    wrap_sample_algorithm(
+                        FakeAlgorithm(),
+                        dir_name,
+                        fit_extra_arguments=fit_extra_arguments,
+                    ),
                 )
 
             oracle = [7.0, 7.0, 7.0, 7.0]
-            training_samples = generate_samples(n_subjects=2, n_samples_per_subject=2)
-            test_samples = generate_samples(n_subjects=1, n_samples_per_subject=1)
+            training_samples = generate_samples(
+                n_subjects=2, n_samples_per_subject=2
+            )
+            test_samples = generate_samples(
+                n_subjects=1, n_samples_per_subject=1
+            )
             if with_dask:
                 pipeline = wrap(["dask"], pipeline)
                 transformed_samples = (

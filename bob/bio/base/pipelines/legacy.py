@@ -6,22 +6,20 @@
 import functools
 import logging
 import os
+import tempfile
+
+import numpy as np
 
 from bob.bio.base.algorithm import Algorithm
-from bob.pipelines import DelayedSample
-from bob.pipelines import DelayedSampleSet
-from bob.pipelines import SampleSet
 from bob.bio.base.database.legacy import (
     check_parameters_for_validity,
     convert_names_to_highlevel,
     convert_names_to_lowlevel,
 )
-import pickle
-from .abstract_classes import BioAlgorithm
-from .abstract_classes import Database
-import tempfile
+from bob.pipelines import DelayedSample, DelayedSampleSet, SampleSet
+
 from . import pickle_compress, uncompress_unpickle
-import numpy as np
+from .abstract_classes import BioAlgorithm, Database
 
 logger = logging.getLogger("bob.bio.base")
 
@@ -334,13 +332,17 @@ class BioAlgorithmLegacy(BioAlgorithm):
         logger.info(f"Using `bob.bio.base` legacy algorithm {instance}")
 
         if instance.requires_projector_training and projector_file is None:
-            raise ValueError(f"{instance} requires a `projector_file` to be set")
+            raise ValueError(
+                f"{instance} requires a `projector_file` to be set"
+            )
 
         self.instance = instance
         self.is_background_model_loaded = False
 
         self.projector_file = projector_file
-        self.biometric_reference_dir = os.path.join(base_dir, "biometric_references")
+        self.biometric_reference_dir = os.path.join(
+            base_dir, "biometric_references"
+        )
         self._biometric_reference_extension = ".hdf5"
         self.score_dir = os.path.join(base_dir, "scores")
         self.force = force
@@ -381,8 +383,12 @@ class BioAlgorithmLegacy(BioAlgorithm):
 
         return scores
 
-    def score_multiple_biometric_references(self, biometric_references, data, **kwargs):
-        scores = self.instance.score_for_multiple_models(biometric_references, data)
+    def score_multiple_biometric_references(
+        self, biometric_references, data, **kwargs
+    ):
+        scores = self.instance.score_for_multiple_models(
+            biometric_references, data
+        )
 
         # Preparing the 3d scoring format
         # look: https://gitlab.idiap.ch/bob/bob.bio.base/-/merge_requests/264

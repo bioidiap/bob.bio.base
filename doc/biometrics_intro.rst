@@ -14,7 +14,7 @@ Plots are generated using the :ref:`bob bio suite of tools <bob.bio.base.bob_bio
 
 
 **********
-Definition 
+Definition
 **********
 
 Biometrics is the science of establishing the identity of an individual based on measurable physical, behavioral, and/or chemical signals of such a person.
@@ -203,7 +203,7 @@ This can be due to imperfect sensing conditions (noise in the sensor), alteratio
 This variability when observed on the feature set of one individual is called intra-class variation.
 
 The degree of similarity between two biometric feature sets is indicated by a score (integer or floating-point number) for each verification.
-When comparing two feature sets of the same individual, the similarity score is known as a *genuine* score. If the score is a result of matching the feature sets of different users, it is known as an *impostor* score. 
+When comparing two feature sets of the same individual, the similarity score is known as a *genuine* score. If the score is a result of matching the feature sets of different users, it is known as an *impostor* score.
 
 To get the binary answer that we seek, a decision is taken using a threshold value (denoted :math:`\tau`, :math:`\theta`, or :math:`\eta`).
 Scores that have a higher value than the threshold are considered *Matches*, and scores lower than the threshold are evaluated as *Non-Matches*.
@@ -460,4 +460,3 @@ References
 
 
 .. include:: links.rst
-

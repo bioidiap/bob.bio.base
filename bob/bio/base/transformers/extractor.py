@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8 :
 
-from sklearn.base import TransformerMixin, BaseEstimator
+from sklearn.base import BaseEstimator, TransformerMixin
+
 from bob.bio.base.extractor import Extractor
+
 from . import split_X_by_y
 
 
@@ -19,7 +21,10 @@ class ExtractorTransformer(TransformerMixin, BaseEstimator):
     """
 
     def __init__(
-        self, instance, model_path=None, **kwargs,
+        self,
+        instance,
+        model_path=None,
+        **kwargs,
     ):
 
         if not isinstance(instance, Extractor):
@@ -27,7 +32,9 @@ class ExtractorTransformer(TransformerMixin, BaseEstimator):
                 "`instance` should be an instance of `bob.bio.base.extractor.Extractor`"
             )
 
-        if instance.requires_training and (model_path is None or model_path == ""):
+        if instance.requires_training and (
+            model_path is None or model_path == ""
+        ):
             raise ValueError(
                 f"`model_path` needs to be set if extractor {instance} requires training"
             )
@@ -52,7 +59,8 @@ class ExtractorTransformer(TransformerMixin, BaseEstimator):
             return [self.instance(data) for data in X]
         else:
             return [
-                self.instance(data, metadata) for data, metadata in zip(X, metadata)
+                self.instance(data, metadata)
+                for data, metadata in zip(X, metadata)
             ]
 
     def _more_tags(self):
@@ -62,4 +70,3 @@ class ExtractorTransformer(TransformerMixin, BaseEstimator):
             "bob_features_save_fn": self.instance.write_feature,
             "bob_features_load_fn": self.instance.read_feature,
         }
-

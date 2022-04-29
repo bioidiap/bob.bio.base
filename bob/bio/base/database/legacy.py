@@ -7,11 +7,11 @@
 Set of legacy functionality for the bob.bio.base.database.Database interface.
 """
 
+import logging
 import os
+import warnings
 
 import bob.io.base
-import logging
-import warnings
 
 logger = logging.getLogger(__name__)
 
@@ -83,13 +83,15 @@ def sort_files(files):
     Returns
     -------
     sorted : list of ``bob.db.base.File``
-        The sorted list of files, with duplicate `BioFile.id`\s being removed.
+        The sorted list of files, with duplicate `BioFile.id`\\s being removed.
     """
     # sort files using their sort function
     sorted_files = sorted(files)
     # remove duplicates
     return [
-        f for i, f in enumerate(sorted_files) if not i or sorted_files[i - 1].id != f.id
+        f
+        for i, f in enumerate(sorted_files)
+        if not i or sorted_files[i - 1].id != f.id
     ]
 
 
@@ -139,7 +141,9 @@ def check_parameters_for_validity(
     if not parameters:
         # parameters are not specified, i.e., 'None' or empty lists
         parameters = (
-            default_parameters if default_parameters is not None else valid_parameters
+            default_parameters
+            if default_parameters is not None
+            else valid_parameters
         )
 
     if not isinstance(parameters, (list, tuple, set)):
@@ -217,7 +221,8 @@ def check_parameter_for_validity(
         if len(parameter) > 1:
             raise ValueError(
                 "The %s has to be one of %s, it might not be more than one "
-                "(%s was given)." % (parameter_description, valid_parameters, parameter)
+                "(%s was given)."
+                % (parameter_description, valid_parameters, parameter)
             )
         # ... -> we take the first one
         parameter = parameter[0]
@@ -314,7 +319,9 @@ class File(object):
         # create the path
         return str(os.path.join(directory or "", self.path + (extension or "")))
 
-    def save(self, data, directory=None, extension=".hdf5", create_directories=True):
+    def save(
+        self, data, directory=None, extension=".hdf5", create_directories=True
+    ):
         """Saves the input data at the specified location and using the given
         extension. Override it if you need to save differently.
 
@@ -401,7 +408,9 @@ class FileDatabase(object):
             logger.warning(
                 "self.original_extension was not provided (must not be None)!"
             )
-        return file_names(files, self.original_directory, self.original_extension)
+        return file_names(
+            files, self.original_directory, self.original_extension
+        )
 
     def original_file_name(self, file):
         """This function returns the original file name for the given File
@@ -431,7 +440,9 @@ class FileDatabase(object):
                 " specified in the constructor."
             )
         # extract file name
-        file_name = file.make_path(self.original_directory, self.original_extension)
+        file_name = file.make_path(
+            self.original_directory, self.original_extension
+        )
 
         if not self.check_existence or os.path.exists(file_name):
             return file_name
@@ -458,11 +469,18 @@ class FileDatabase(object):
             stacklevel=2,
         )
         return check_parameters_for_validity(
-            parameters, parameter_description, valid_parameters, default_parameters
+            parameters,
+            parameter_description,
+            valid_parameters,
+            default_parameters,
         )
 
     def check_parameter_for_validity(
-        self, parameter, parameter_description, valid_parameters, default_parameter=None
+        self,
+        parameter,
+        parameter_description,
+        valid_parameters,
+        default_parameter=None,
     ):
         warnings.warn(
             "check_parameter_for_validity is deprecated. Please use the "
@@ -471,26 +489,37 @@ class FileDatabase(object):
             stacklevel=2,
         )
         return check_parameter_for_validity(
-            parameter, parameter_description, valid_parameters, default_parameter
+            parameter,
+            parameter_description,
+            valid_parameters,
+            default_parameter,
         )
 
-    def convert_names_to_highlevel(self, names, low_level_names, high_level_names):
+    def convert_names_to_highlevel(
+        self, names, low_level_names, high_level_names
+    ):
         warnings.warn(
             "convert_names_to_highlevel is deprecated. Please use the "
             "equivalent function in this file",
             DeprecationWarning,
             stacklevel=2,
         )
-        return convert_names_to_highlevel(names, low_level_names, high_level_names)
+        return convert_names_to_highlevel(
+            names, low_level_names, high_level_names
+        )
 
-    def convert_names_to_lowlevel(self, names, low_level_names, high_level_names):
+    def convert_names_to_lowlevel(
+        self, names, low_level_names, high_level_names
+    ):
         warnings.warn(
             "convert_names_to_lowlevel is deprecated. Please use the "
             "equivalent function in this file",
             DeprecationWarning,
             stacklevel=2,
         )
-        return convert_names_to_lowlevel(names, low_level_names, high_level_names)
+        return convert_names_to_lowlevel(
+            names, low_level_names, high_level_names
+        )
 
     def file_names(self, files, directory, extension):
         warnings.warn(
@@ -514,11 +543,15 @@ class Database(FileDatabase):
     """This class is deprecated. New databases should use the
     :py:class:`bob.db.base.FileDatabase` class if required"""
 
-    def __init__(self, original_directory=None, original_extension=None, **kwargs):
+    def __init__(
+        self, original_directory=None, original_extension=None, **kwargs
+    ):
         warnings.warn(
             "The bob.db.base.Database class is deprecated. "
             "Please use bob.db.base.FileDatabase instead.",
             DeprecationWarning,
             stacklevel=2,
         )
-        super(Database, self).__init__(original_directory, original_extension, **kwargs)
+        super(Database, self).__init__(
+            original_directory, original_extension, **kwargs
+        )

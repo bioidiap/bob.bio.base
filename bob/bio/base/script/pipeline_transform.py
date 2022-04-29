@@ -4,24 +4,22 @@
 
 
 import logging
-import numpy as np
+
 import click
-from bob.extension.scripts.click_helper import ConfigCommand
-from bob.extension.scripts.click_helper import ResourceOption
-from bob.extension.scripts.click_helper import verbosity_option
 
-from bob.pipelines.distributed import VALID_DASK_CLIENT_STRINGS
-
-from bob.pipelines.distributed import dask_get_partition_size
-
+from bob.extension.scripts.click_helper import (
+    ConfigCommand,
+    ResourceOption,
+    verbosity_option,
+)
+from bob.pipelines.distributed import (
+    VALID_DASK_CLIENT_STRINGS,
+    dask_get_partition_size,
+)
 from bob.pipelines.utils import is_pipeline_wrapped
 
 logger = logging.getLogger(__name__)
-from bob.pipelines.wrappers import (
-    wrap,
-    CheckpointWrapper,
-    DaskWrapper,
-)
+from bob.pipelines.wrappers import CheckpointWrapper, DaskWrapper, wrap
 
 EPILOG = """\b
 Command line examples\n
@@ -55,7 +53,7 @@ from bob.pipelines import wrap \n
 class MyTransformer(TransformerMixin, BaseEstimator): \n
     def _more_tags(self): \n
         return {"stateless": True, "requires_fit": False} \n
-    
+
     def transform(self, X): \n
         # do something \n
         return X \n
@@ -181,7 +179,7 @@ def pipeline_transform(
 
     # If NONE of the items are checkpointed, we checkpoint them all
     if not any(is_pipeline_wrapped(transformer, CheckpointWrapper)):
-        logger.info(f"Checkpointing it")
+        logger.info("Checkpointing it")
         transformer = wrap(
             ["checkpoint"],
             transformer,
@@ -206,7 +204,7 @@ def pipeline_transform(
 
     if any(dasked_elements):
         logger.warning(
-            f"The pipeline is already dasked, hence, we are not dasking it again."
+            "The pipeline is already dasked, hence, we are not dasking it again."
         )
     else:
 
@@ -219,8 +217,12 @@ def pipeline_transform(
                 else dask_partition_size
             )
 
-        logger.info(f"Dask wrapping it with partition size {dask_partition_size}")
-        transformer = wrap(["dask"], transformer, partition_size=dask_partition_size)
+        logger.info(
+            f"Dask wrapping it with partition size {dask_partition_size}"
+        )
+        transformer = wrap(
+            ["dask"], transformer, partition_size=dask_partition_size
+        )
 
     transformer.transform(samples).compute(
         scheduler="single-threaded" if dask_client is None else dask_client

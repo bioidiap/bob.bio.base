@@ -1,24 +1,29 @@
 """Runs error analysis on score sets, outputs metrics and plots"""
 
+import logging
+
 import click
-import numpy as np
-from tabulate import tabulate
 import matplotlib.pyplot as mpl
+import numpy as np
+
+from tabulate import tabulate
+
 import bob.measure.script.figure as measure_figure
-from bob.measure.utils import get_thres, remove_nan
+
 from bob.measure import (
-    frr_threshold,
+    f_score,
     far_threshold,
     farfrr,
-    f_score,
-    roc_auc_score,
-    ppndf,
+    frr_threshold,
     min_weighted_error_rate_threshold,
+    plot,
+    ppndf,
     precision_recall,
+    roc_auc_score,
 )
-from bob.measure import plot
+from bob.measure.utils import get_thres, remove_nan
+
 from . import error_utils
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -72,11 +77,17 @@ class Metrics(measure_figure.Metrics):
         )
 
     def _get_all_metrics(self, idx, input_scores, input_names):
-        """ Compute all metrics for dev and eval scores"""
+        """Compute all metrics for dev and eval scores"""
         # Parse input and remove/count failed samples (NaN)
-        dev_neg, dev_neg_na, dev_neg_count = remove_nan(input_scores[0]["licit_neg"])
-        dev_pos, dev_pos_na, dev_pos_count = remove_nan(input_scores[0]["licit_pos"])
-        dev_spoof, dev_spoof_na, dev_spoof_count = remove_nan(input_scores[0]["spoof"])
+        dev_neg, dev_neg_na, dev_neg_count = remove_nan(
+            input_scores[0]["licit_neg"]
+        )
+        dev_pos, dev_pos_na, dev_pos_count = remove_nan(
+            input_scores[0]["licit_pos"]
+        )
+        dev_spoof, dev_spoof_na, dev_spoof_count = remove_nan(
+            input_scores[0]["spoof"]
+        )
         dev_fta = (dev_neg_na + dev_pos_na + dev_spoof_na) / (
             dev_neg_count + dev_pos_count + dev_spoof_count
         )
@@ -131,7 +142,9 @@ class Metrics(measure_figure.Metrics):
             # priori computed on the dev set
             res.append(
                 self._strings(
-                    self._numbers(eval_neg, eval_pos, eval_spoof, threshold, eval_fta)
+                    self._numbers(
+                        eval_neg, eval_pos, eval_spoof, threshold, eval_fta
+                    )
                 )
             )
         else:
@@ -276,7 +289,7 @@ def _iapmr_plot(scores, threshold, iapmr, real_data, **kwargs):
 
 
 class HistVuln(measure_figure.Hist):
-    """ Histograms for vulnerability """
+    """Histograms for vulnerability"""
 
     def __init__(self, ctx, scores, evaluation, func_load):
         super(HistVuln, self).__init__(
@@ -317,19 +330,23 @@ class HistVuln(measure_figure.Hist):
             eval_scores = {"licit_neg": [], "licit_pos": [], "spoof": []}
 
         threshold = (
-            get_thres(self._criterion, dev_scores["licit_neg"], dev_scores["licit_pos"])
+            get_thres(
+                self._criterion,
+                dev_scores["licit_neg"],
+                dev_scores["licit_pos"],
+            )
             if self._thres is None
             else self._thres[idx]
         )
         return (
             [
-                dev_scores["licit_neg"], dev_scores["spoof"],
+                dev_scores["licit_neg"],
+                dev_scores["spoof"],
             ],
+            [dev_scores["licit_pos"]],
             [
-                dev_scores["licit_pos"]
-            ],
-            [
-                eval_scores["licit_neg"], eval_scores["spoof"],
+                eval_scores["licit_neg"],
+                eval_scores["spoof"],
             ],
             [
                 eval_scores["licit_pos"],
@@ -354,7 +371,9 @@ class HistVuln(measure_figure.Hist):
             _iapmr_plot(spoof, threshold, iapmr, real_data=real_data)
             n = idx % self._step_print
             col = n % self._ncols
-            rest_print = self.n_systems - int(idx / self._step_print) * self._step_print
+            rest_print = (
+                self.n_systems - int(idx / self._step_print) * self._step_print
+            )
             if col == self._ncols - 1 or n == rest_print - 1:
                 ax2.set_ylabel("IAPMR (%)", color="C3")
             ax2.tick_params(axis="y", colors="C3")
@@ -363,12 +382,14 @@ class HistVuln(measure_figure.Hist):
 
 
 class Epc(measure_figure.PlotBase):
-    """ Handles the plotting of EPC """
+    """Handles the plotting of EPC"""
 
     def __init__(self, ctx, scores, evaluation, func_load):
         super(Epc, self).__init__(ctx, scores, evaluation, func_load)
         self._iapmr = self._ctx.meta.get("iapmr", True)
-        self._titles = self._titles or ["EPC and IAPMR" if self._iapmr else "EPC"]
+        self._titles = self._titles or [
+            "EPC and IAPMR" if self._iapmr else "EPC"
+        ]
         self._x_label = self._x_label or "Weight $\\beta$"
         self._y_label = self._y_label or "HTER (%)"
         self._eval = True  # always eval data with EPC
@@ -422,7 +443,9 @@ class Epc(measure_figure.PlotBase):
                     100.0 * error_utils.calc_pass_rate(k, eval_scores["spoof"])
                 )
 
-            logger.info(f"IAPMR in EPC plot using {input_names[0]}, {input_names[1]}")
+            logger.info(
+                f"IAPMR in EPC plot using {input_names[0]}, {input_names[1]}"
+            )
             mpl.plot(
                 thres,
                 mix_prob_y,
@@ -442,7 +465,7 @@ class Epc(measure_figure.PlotBase):
 
 
 class Epsc(measure_figure.GridSubplot):
-    """ Handles the plotting of EPSC """
+    """Handles the plotting of EPSC"""
 
     def __init__(self, ctx, scores, func_load, criteria, var_param, **kwargs):
         evaluation = ctx.meta.get("evaluation", True)
@@ -454,7 +477,9 @@ class Epsc(measure_figure.GridSubplot):
         self._fixed_params = ctx.meta.get("fixed_params", [0.5])
         self._nb_subplots = 2 if (self._wer and self._iapmr) else 1
         if len(self._titles) < self._nb_figs * self._nb_subplots:
-            self._titles = [v for v in self._titles for _ in range(self._nb_subplots)]
+            self._titles = [
+                v for v in self._titles for _ in range(self._nb_subplots)
+            ]
         self._eval = True  # always eval data with EPSC
         self._split = False
         self._nb_figs = 1
@@ -471,7 +496,7 @@ class Epsc(measure_figure.GridSubplot):
         self._ncols += 1 if self._wer else 0
 
     def compute(self, idx, input_scores, input_names):
-        """ Plot EPSC for vuln"""
+        """Plot EPSC for vuln"""
         dev_scores = clean_scores(input_scores[0])
         if self._eval:
             eval_scores = clean_scores(input_scores[1])
@@ -541,7 +566,11 @@ class Epsc(measure_figure.GridSubplot):
                     if self._titles
                     else None
                 )
-                display = set_title.replace(" ", "") if set_title is not None else True
+                display = (
+                    set_title.replace(" ", "")
+                    if set_title is not None
+                    else True
+                )
                 wer_title = set_title or "EPSC"
                 if display:
                     self._axis1.set_title(wer_title)
@@ -566,7 +595,9 @@ class Epsc(measure_figure.GridSubplot):
                         label=label,
                     )
                     self._axis1.set_xlabel(self._x_label or "Weight $\\beta$")
-                self._axis1.set_ylabel(self._y_label or "WER$_{\\omega,\\beta}$ (%)")
+                self._axis1.set_ylabel(
+                    self._y_label or "WER$_{\\omega,\\beta}$ (%)"
+                )
                 self._axis1.grid(True)
                 self._axis1.legend(loc=self._legend_loc)
 
@@ -576,11 +607,17 @@ class Epsc(measure_figure.GridSubplot):
                 )
                 mpl.sca(self._axis2)
                 set_title = (
-                    self._titles[(idx // self.n_systems) * self._nb_subplots + 1]
+                    self._titles[
+                        (idx // self.n_systems) * self._nb_subplots + 1
+                    ]
                     if self._titles
                     else None
                 )
-                display = set_title.replace(" ", "") if set_title is not None else True
+                display = (
+                    set_title.replace(" ", "")
+                    if set_title is not None
+                    else True
+                )
                 iapmr_title = set_title or "EPSC"
                 if display:
                     self._axis2.set_title(iapmr_title)
@@ -623,7 +660,7 @@ class Epsc(measure_figure.GridSubplot):
 
 
 class Epsc3D(Epsc):
-    """ 3D EPSC plots for vuln"""
+    """3D EPSC plots for vuln"""
 
     def __init__(self, ctx, scores, func_load, criteria, var_param, **kwargs):
         super().__init__(ctx, scores, func_load, criteria, var_param, **kwargs)
@@ -633,7 +670,7 @@ class Epsc3D(Epsc):
             )
 
     def compute(self, idx, input_scores, input_names):
-        """ Implements plots"""
+        """Implements plots"""
         dev_scores = clean_scores(input_scores[0])
         if self._eval:
             eval_scores = clean_scores(input_scores[1])
@@ -863,7 +900,10 @@ class DetVuln(BaseVulnDetRoc):
             ax2 = ax1.twiny()
             ax2.set_xlabel("IAPMR (%)", color="C3")
             ax2.tick_params(
-                axis="x", colors="C3", labelrotation=self._x_rotation, labelcolor="C3"
+                axis="x",
+                colors="C3",
+                labelrotation=self._x_rotation,
+                labelcolor="C3",
             )
             # Prevent tick labels overlap
             ax2.tick_params(axis="both", which="major", labelsize="x-small")
@@ -898,7 +938,9 @@ class DetVuln(BaseVulnDetRoc):
             farfrr_spoof, farfrr_spoof_det = self._get_farfrr(
                 scores["spoof"],
                 scores["licit_pos"],
-                frr_threshold(scores["spoof"], scores["licit_pos"], farfrr_licit[1]),
+                frr_threshold(
+                    scores["spoof"], scores["licit_pos"], farfrr_licit[1]
+                ),
             )
 
             if not self._real_data:
@@ -946,8 +988,11 @@ class DetVuln(BaseVulnDetRoc):
                 color=self._colors[idx],
             )  # FAR point, licit scenario
             # Spoof
-            axlim = self._axlim or [0.01,99,0.1,99]
-            if farfrr_spoof_det[0] > axlim[0] and farfrr_spoof_det[0] < axlim[1]:
+            axlim = self._axlim or [0.01, 99, 0.1, 99]
+            if (
+                farfrr_spoof_det[0] > axlim[0]
+                and farfrr_spoof_det[0] < axlim[1]
+            ):
                 mpl.annotate(
                     xy=(farfrr_spoof_det[0], farfrr_spoof_det[1]),
                     text=label_spoof,
@@ -962,7 +1007,9 @@ class DetVuln(BaseVulnDetRoc):
                     color="C3",
                 )  # FAR point, spoof scenario
             else:
-                logger.warning(f"The IAPMR for an FNMR of {line} is outside the plot.")
+                logger.warning(
+                    f"The IAPMR for an FNMR of {line} is outside the plot."
+                )
 
 
 class RocVuln(BaseVulnDetRoc):
@@ -989,7 +1036,9 @@ class RocVuln(BaseVulnDetRoc):
                 dev_eval = ""
             self._titles[i] = t or ("ROC: LICIT" + add + dev_eval)
         if self._legend_loc == "best":
-            self._legend_loc = "lower right" if self._semilogx else "upper right"
+            self._legend_loc = (
+                "lower right" if self._semilogx else "upper right"
+            )
 
     def _plot(self, x, y, s, npoints, **kwargs):
         logger.info("Plotting ROC")
@@ -1017,7 +1066,10 @@ class RocVuln(BaseVulnDetRoc):
             ax2.set_xlabel("IAPMR (%)", color="C3")
             mpl.xticks(rotation=self._x_rotation)
             ax2.tick_params(
-                axis="x", colors="C3", labelrotation=self._x_rotation, labelcolor="C3"
+                axis="x",
+                colors="C3",
+                labelrotation=self._x_rotation,
+                labelcolor="C3",
             )
             ax2.spines["top"].set_color("C3")
             plot.roc(
@@ -1056,7 +1108,9 @@ class RocVuln(BaseVulnDetRoc):
             farfrr_spoof, farfrr_spoof_roc = self._get_farfrr(
                 scores["spoof"],
                 scores["licit_pos"],
-                frr_threshold(scores["spoof"], scores["licit_pos"], farfrr_licit[1]),
+                frr_threshold(
+                    scores["spoof"], scores["licit_pos"], farfrr_licit[1]
+                ),
             )
 
             if not self._real_data and not evaluation:
@@ -1122,19 +1176,25 @@ class FmrIapmr(measure_figure.PlotBase):
             )
 
     def compute(self, idx, input_scores, input_names):
-        """ Implements plots"""
+        """Implements plots"""
         dev_scores = clean_scores(input_scores[0])
         if self._eval:
             eval_scores = clean_scores(input_scores[1])
         fmr_list = np.linspace(0, 1, 100)
         iapmr_list = []
         for i, fmr in enumerate(fmr_list):
-            thr = far_threshold(dev_scores["licit_neg"], dev_scores["licit_pos"], fmr)
+            thr = far_threshold(
+                dev_scores["licit_neg"], dev_scores["licit_pos"], fmr
+            )
             iapmr_list.append(farfrr(eval_scores["spoof"], [0.0], thr)[0])
             # re-calculate fmr since threshold might give a different result
             # for fmr.
             fmr_list[i], _ = farfrr(eval_scores["licit_neg"], [0.0], thr)
-        label = self._legends[idx] if self._legends is not None else f"system {idx+1}"
+        label = (
+            self._legends[idx]
+            if self._legends is not None
+            else f"system {idx+1}"
+        )
         logger.info(f"Plot FmrIapmr using: {input_names[1]}")
         if self._semilogx:
             mpl.semilogx(fmr_list, iapmr_list, label=label)

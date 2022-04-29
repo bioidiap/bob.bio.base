@@ -1,10 +1,12 @@
 """Sorts score files based on their score value
 """
-import click
 import logging
+
+import click
 import numpy
-from bob.bio.base.score.load import load_score, dump_score
-from bob.extension.scripts.click_helper import verbosity_option, log_parameters
+
+from bob.bio.base.score.load import dump_score, load_score
+from bob.extension.scripts.click_helper import log_parameters, verbosity_option
 
 logger = logging.getLogger(__name__)
 

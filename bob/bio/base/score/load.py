@@ -9,10 +9,11 @@ import csv
 import logging
 import os
 import tarfile
+
 from pathlib import Path
 
-import numpy
 import dask.dataframe
+import numpy
 
 logger = logging.getLogger(__name__)
 
@@ -428,7 +429,11 @@ def cmc(filename, ncolumns=None):
 
     """
 
-    ncolumns = 4 if iscsv(filename) else _estimate_score_file_format(filename, ncolumns)
+    ncolumns = (
+        4
+        if iscsv(filename)
+        else _estimate_score_file_format(filename, ncolumns)
+    )
 
     if ncolumns == 4:
         return cmc_four_column(filename)
@@ -527,10 +532,7 @@ def load_files(filenames, func_load):
         return None
     res = []
     for filepath in filenames:
-        try:
-            res.append(func_load(filepath))
-        except:
-            raise
+        res.append(func_load(filepath))
     return res
 
 
@@ -571,7 +573,9 @@ def get_negatives_positives_all(score_lines_list):
 def get_all_scores(score_lines_list):
     """Take a list of outputs of load_score and return stacked scores"""
 
-    return numpy.vstack([score_lines["score"] for score_lines in score_lines_list]).T
+    return numpy.vstack(
+        [score_lines["score"] for score_lines in score_lines_list]
+    ).T
 
 
 def dump_score(filename, score_lines):
@@ -649,12 +653,16 @@ def _iterate_csv_score_file(filename):
         yield row
 
 
-def _split_scores(score_lines, real_id_index, claimed_id_index=0, score_index=-1):
+def _split_scores(
+    score_lines, real_id_index, claimed_id_index=0, score_index=-1
+):
     """Take the output of :py:func:`four_column` or :py:func:`five_column` and return negatives and positives."""
     positives, negatives = [], []
     for line in score_lines:
         which = (
-            positives if line[claimed_id_index] == line[real_id_index] else negatives
+            positives
+            if line[claimed_id_index] == line[real_id_index]
+            else negatives
         )
         which.append(line[score_index])
 
@@ -677,7 +685,11 @@ def _split_cmc_scores(
     neg_dict = {}
     # read four column list
     for line in score_lines:
-        which = pos_dict if line[claimed_id_index] == line[real_id_index] else neg_dict
+        which = (
+            pos_dict
+            if line[claimed_id_index] == line[real_id_index]
+            else neg_dict
+        )
         probe_name = line[probe_name_index]
         # append score
         if probe_name not in which:

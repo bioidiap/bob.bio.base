@@ -3,13 +3,15 @@
 ATNT database implementation
 """
 
-from bob.bio.base.database import CSVDataset
-from bob.bio.base.database import CSVToSampleLoaderBiometrics
-from bob.extension.download import get_file
+from pathlib import Path
+
+from sklearn.pipeline import make_pipeline
+
 import bob.io.base
 import bob.io.base.test_utils
-from sklearn.pipeline import make_pipeline
-from pathlib import Path
+
+from bob.bio.base.database import CSVDataset, CSVToSampleLoaderBiometrics
+from bob.extension.download import get_file
 
 
 class AtntBioDatabase(CSVDataset):
@@ -61,7 +63,9 @@ class AtntBioDatabase(CSVDataset):
         self.original_extension = ".pgm"
 
     # define an objects method for compatibility with the old tests
-    def objects(self, model_ids=None, groups=None, purposes=None, protocol=None):
+    def objects(
+        self, model_ids=None, groups=None, purposes=None, protocol=None
+    ):
         samples = []
 
         if groups is None:
@@ -92,9 +96,11 @@ class AtntBioDatabase(CSVDataset):
 
 def main():
     """Code used to generate the .csv files for atnt database"""
-    from bob.bio.face.database.atnt import AtntBioDatabase
     import os
+
     from csv import DictWriter
+
+    from bob.bio.face.database.atnt import AtntBioDatabase
 
     database = AtntBioDatabase()
 
@@ -159,7 +165,10 @@ def main():
         file_attr_probes = file_attr
 
         write_to_csv(
-            os.path.join(dev_path, "for_models.csv"), dev_enroll, csv_fields, file_attr
+            os.path.join(dev_path, "for_models.csv"),
+            dev_enroll,
+            csv_fields,
+            file_attr,
         )
         write_to_csv(
             os.path.join(dev_path, "for_probes.csv"),
@@ -188,7 +197,7 @@ def main():
                 file_attr,
             )
 
-    print(f"Created 'atnt' folder.")
+    print("Created 'atnt' folder.")
 
 
 if __name__ == "__main__":

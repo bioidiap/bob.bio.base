@@ -3,12 +3,9 @@
 # @author: Manuel Guenther <Manuel.Guenther@idiap.ch>
 # @date: Thu May 24 10:41:42 CEST 2012
 
-import os
-import shutil
-import numpy
 import math
-from nose.plugins.skip import SkipTest
 
+import numpy
 import pkg_resources
 
 regenerate_refs = False
@@ -17,14 +14,18 @@ seed_value = 5489
 
 import scipy.spatial
 
+import bob.bio.base
 import bob.io.base
 import bob.io.base.test_utils
-import bob.bio.base
+
 from . import utils
 
 
 def _compare(
-    data, reference, write_function=bob.bio.base.save, read_function=bob.bio.base.load
+    data,
+    reference,
+    write_function=bob.bio.base.save,
+    read_function=bob.bio.base.load,
 ):
     # execute the preprocessor
     if regenerate_refs:
@@ -33,7 +34,7 @@ def _compare(
     assert numpy.allclose(data, read_function(reference), atol=1e-5)
 
 
-def test_distance():
+def test_distance_euclidean():
     # test the two registered distance functions
 
     # euclidean distance
@@ -54,7 +55,10 @@ def test_distance():
 
     model = euclidean.enroll([f1, f1])
     assert (
-        abs(euclidean.score_for_multiple_probes(model, [f2, f2]) + math.sqrt(200.0))
+        abs(
+            euclidean.score_for_multiple_probes(model, [f2, f2])
+            + math.sqrt(200.0)
+        )
         < 1e-6
     ), euclidean.score_for_multiple_probes(model, [f2, f2])
 
@@ -68,10 +72,7 @@ def test_distance():
     ), cosine.score_for_multiple_probes(model, [f2, f2])
 
 
-def test_distance():
-
-    import scipy.spatial
-
+def test_distance_cosine():
     # assure that the configurations are loadable
     distance = bob.bio.base.load_resource(
         "distance-cosine", "algorithm", preferred_package="bob.bio.base"
@@ -79,21 +80,24 @@ def test_distance():
     assert isinstance(distance, bob.bio.base.algorithm.Distance)
     assert isinstance(distance, bob.bio.base.algorithm.Algorithm)
 
-    assert distance.performs_projection == False
-    assert distance.requires_projector_training == False
-    assert distance.use_projected_features_for_enrollment == False
-    assert distance.split_training_features_by_client == False
-    assert distance.requires_enroller_training == False
+    assert not distance.performs_projection
+    assert not distance.requires_projector_training
+    assert not distance.use_projected_features_for_enrollment
+    assert not distance.split_training_features_by_client
+    assert not distance.requires_enroller_training
 
     distance = bob.bio.base.algorithm.Distance(
-        distance_function=scipy.spatial.distance.cosine, is_distance_function=True
+        distance_function=scipy.spatial.distance.cosine,
+        is_distance_function=True,
     )
 
     # compare model with probe
     enroll = utils.random_training_set(5, 5, 0.0, 255.0, seed=21)
     model = numpy.mean(distance.enroll(enroll), axis=0)
     probe = bob.io.base.load(
-        pkg_resources.resource_filename("bob.bio.base.test", "data/lda_projected.hdf5")
+        pkg_resources.resource_filename(
+            "bob.bio.base.test", "data/lda_projected.hdf5"
+        )
     )
 
     reference_score = -0.1873371

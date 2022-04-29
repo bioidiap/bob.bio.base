@@ -2,22 +2,23 @@ import logging
 import os
 
 import dask.bag
-from bob.bio.base.pipelines import BioAlgorithmDaskWrapper
-from bob.bio.base.pipelines import CSVScoreWriter
-from bob.bio.base.pipelines import FourColumnsScoreWriter
-from bob.bio.base.pipelines import (
-    checkpoint_score_normalization_pipeline,
-    dask_score_normalization_pipeline,
-    PipelineScoreNorm,
-    ZNormScores,
-    TNormScores,
-)
-from bob.bio.base.pipelines import checkpoint_pipeline_simple
-from bob.bio.base.pipelines import dask_pipeline_simple
-from bob.bio.base.pipelines import is_checkpointed
-from bob.pipelines.utils import isinstance_nested, is_estimator_stateless
+
 from dask.delayed import Delayed
+
+from bob.bio.base.pipelines import (
+    BioAlgorithmDaskWrapper,
+    CSVScoreWriter,
+    FourColumnsScoreWriter,
+    PipelineScoreNorm,
+    TNormScores,
+    ZNormScores,
+    checkpoint_pipeline_simple,
+    checkpoint_score_normalization_pipeline,
+    dask_pipeline_simple,
+    is_checkpointed,
+)
 from bob.pipelines.distributed import dask_get_partition_size
+from bob.pipelines.utils import is_estimator_stateless, isinstance_nested
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,9 @@ def compute_scores(result, dask_client):
         if dask_client is not None:
             result = result.compute(scheduler=dask_client)
         else:
-            logger.warning("`dask_client` not set. Your pipeline will run locally")
+            logger.warning(
+                "`dask_client` not set. Your pipeline will run locally"
+            )
             result = result.compute(scheduler="single-threaded")
     return result
 
@@ -107,7 +110,9 @@ def execute_pipeline_simple(
     if write_metadata_scores:
         pipeline.score_writer = CSVScoreWriter(os.path.join(output, "./tmp"))
     else:
-        pipeline.score_writer = FourColumnsScoreWriter(os.path.join(output, "./tmp"))
+        pipeline.score_writer = FourColumnsScoreWriter(
+            os.path.join(output, "./tmp")
+        )
 
     # Checkpoint if it's already checkpointed
     if checkpoint and not is_checkpointed(pipeline):
@@ -125,7 +130,8 @@ def execute_pipeline_simple(
     for group in groups:
 
         score_file_name = os.path.join(
-            output, f"scores-{group}" + (".csv" if write_metadata_scores else "")
+            output,
+            f"scores-{group}" + (".csv" if write_metadata_scores else ""),
         )
         biometric_references = database.references(group=group)
         probes = database.probes(group=group)
@@ -138,18 +144,24 @@ def execute_pipeline_simple(
             continue
 
         if dask_client is not None and not isinstance_nested(
-            pipeline.biometric_algorithm, "biometric_algorithm", BioAlgorithmDaskWrapper
+            pipeline.biometric_algorithm,
+            "biometric_algorithm",
+            BioAlgorithmDaskWrapper,
         ):
             # Scaling up
             if dask_n_workers is not None and not isinstance(dask_client, str):
                 dask_client.cluster.scale(dask_n_workers)
 
             n_objects = max(
-                len(background_model_samples), len(biometric_references), len(probes)
+                len(background_model_samples),
+                len(biometric_references),
+                len(probes),
             )
             partition_size = None
             if not isinstance(dask_client, str):
-                partition_size = dask_get_partition_size(dask_client.cluster, n_objects)
+                partition_size = dask_get_partition_size(
+                    dask_client.cluster, n_objects
+                )
             if dask_partition_size is not None:
                 partition_size = dask_partition_size
 
@@ -172,7 +184,9 @@ def execute_pipeline_simple(
             allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
         )
 
-        post_processed_scores = post_process_scores(pipeline, result, score_file_name)
+        post_processed_scores = post_process_scores(
+            pipeline, result, score_file_name
+        )
         _ = compute_scores(post_processed_scores, dask_client)
 
 
@@ -267,13 +281,17 @@ def execute_pipeline_score_norm(
     if write_metadata_scores:
         pipeline.score_writer = CSVScoreWriter(os.path.join(output, "./tmp"))
     else:
-        pipeline.score_writer = FourColumnsScoreWriter(os.path.join(output, "./tmp"))
+        pipeline.score_writer = FourColumnsScoreWriter(
+            os.path.join(output, "./tmp")
+        )
 
     # Check if it's already checkpointed
     if checkpoint and not is_checkpointed(pipeline):
-        pipeline = checkpoint_pipeline_simple(pipeline, checkpoint_dir, force=force)
+        pipeline = checkpoint_pipeline_simple(
+            pipeline, checkpoint_dir, force=force
+        )
 
-    ## PICKING THE TYPE OF POST-PROCESSING
+    # PICKING THE TYPE OF POST-PROCESSING
     if score_normalization_type == "znorm":
         post_processor = ZNormScores(
             pipeline=pipeline,
@@ -301,7 +319,8 @@ def execute_pipeline_score_norm(
         # dask_score_normalization_pipeline,
 
         pipeline = checkpoint_score_normalization_pipeline(
-            pipeline, os.path.join(checkpoint_dir, f"{score_normalization_type}-scores")
+            pipeline,
+            os.path.join(checkpoint_dir, f"{score_normalization_type}-scores"),
         )
 
     background_model_samples = database.background_model_samples()
@@ -327,18 +346,24 @@ def execute_pipeline_score_norm(
             continue
 
         if dask_client is not None and not isinstance_nested(
-            pipeline.biometric_algorithm, "biometric_algorithm", BioAlgorithmDaskWrapper
+            pipeline.biometric_algorithm,
+            "biometric_algorithm",
+            BioAlgorithmDaskWrapper,
         ):
             # Scaling up
             if dask_n_workers is not None and not isinstance(dask_client, str):
                 dask_client.cluster.scale(dask_n_workers)
 
             n_objects = max(
-                len(background_model_samples), len(biometric_references), len(probes)
+                len(background_model_samples),
+                len(biometric_references),
+                len(probes),
             )
             partition_size = None
             if not isinstance(dask_client, str):
-                partition_size = dask_get_partition_size(dask_client.cluster, n_objects)
+                partition_size = dask_get_partition_size(
+                    dask_client.cluster, n_objects
+                )
             if dask_partition_size is not None:
                 partition_size = dask_partition_size
 
@@ -384,7 +409,9 @@ def execute_pipeline_score_norm(
         # Running RAW_SCORES
 
         raw_scores = post_process_scores(
-            pipeline, raw_scores, _build_filename(score_file_name, "raw_scores.csv")
+            pipeline,
+            raw_scores,
+            _build_filename(score_file_name, "raw_scores.csv"),
         )
         _ = compute_scores(raw_scores, dask_client)
 

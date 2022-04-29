@@ -131,7 +131,3 @@ Calibration by group
 
 .. todo::
      Discuss all the four calibration strategies
-
-
-
-

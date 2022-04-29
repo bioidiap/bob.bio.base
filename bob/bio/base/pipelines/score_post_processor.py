@@ -7,33 +7,32 @@ Implementation of a pipeline that post process scores
 
 """
 
-from bob.pipelines import (
-    Sample,
-    SampleSet,
-)
-import bob.bio.base
-
-from bob.pipelines.wrappers import CheckpointWrapper, DaskWrapper
-from bob.pipelines.utils import isinstance_nested
-import numpy as np
-import os
-from .score_writers import FourColumnsScoreWriter
 import copy
 import logging
-from .pipelines import check_valid_pipeline, PipelineSimple
-from . import pickle_compress, uncompress_unpickle
-from sklearn.base import TransformerMixin, BaseEstimator
+import os
 import tempfile
-from bob.bio.base.score.load import get_split_dataframe
 
-import dask.dataframe
-from scipy.optimize import curve_fit
-from scipy.stats import weibull_min, gamma, beta
-from sklearn.linear_model import LogisticRegression
-from scipy.special import expit
 from functools import partial
 
-from bob.pipelines.utils import is_estimator_stateless
+import dask.dataframe
+import numpy as np
+
+from scipy.optimize import curve_fit
+from scipy.special import expit
+from scipy.stats import beta, gamma, weibull_min
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.linear_model import LogisticRegression
+
+import bob.bio.base
+
+from bob.bio.base.score.load import get_split_dataframe
+from bob.pipelines import Sample, SampleSet
+from bob.pipelines.utils import is_estimator_stateless, isinstance_nested
+from bob.pipelines.wrappers import CheckpointWrapper, DaskWrapper
+
+from . import pickle_compress, uncompress_unpickle
+from .pipelines import PipelineSimple
+from .score_writers import FourColumnsScoreWriter
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +119,9 @@ class PipelineScoreNorm(PipelineSimple):
         if isinstance_nested(
             self.post_processor, "estimator", ZNormScores
         ) or isinstance(self.post_processor, ZNormScores):
-            self.post_processor.fit([post_process_samples, biometric_references])
+            self.post_processor.fit(
+                [post_process_samples, biometric_references]
+            )
             # Transformer
             post_processed_scores = self.post_processor.transform(raw_scores)
 
@@ -140,7 +141,9 @@ class PipelineScoreNorm(PipelineSimple):
         return raw_scores, post_processed_scores
 
     def train_background_model(self, background_model_samples):
-        return self.pipeline_simple.train_background_model(background_model_samples)
+        return self.pipeline_simple.train_background_model(
+            background_model_samples
+        )
 
     def create_biometric_reference(self, biometric_reference_samples):
         return self.pipeline_simple.create_biometric_reference(
@@ -241,7 +244,7 @@ class CheckpointPostProcessor(CheckpointWrapper):
             return self
 
         # if the estimator needs to be fitted.
-        logger.debug(f"CheckpointPostProcessor.fit")
+        logger.debug("CheckpointPostProcessor.fit")
 
         if not self.force and (
             self.model_path is not None and os.path.isfile(self.model_path)
@@ -340,11 +343,9 @@ class ZNormScores(TransformerMixin, BaseEstimator):
                 "biometric_algorithm",
                 bob.bio.base.pipelines.wrappers.BioAlgorithmDaskWrapper,
             ):
-                self.pipeline.biometric_algorithm.biometric_algorithm.score_dir = (
-                    os.path.join(
-                        self.pipeline.biometric_algorithm.biometric_algorithm.score_dir,
-                        "score-norm",
-                    )
+                self.pipeline.biometric_algorithm.biometric_algorithm.score_dir = os.path.join(
+                    self.pipeline.biometric_algorithm.biometric_algorithm.score_dir,
+                    "score-norm",
                 )
                 self.pipeline.biometric_algorithm.biometric_algorithm.biometric_reference_dir = os.path.join(
                     self.pipeline.biometric_algorithm.biometric_algorithm.biometric_reference_dir,
@@ -355,11 +356,9 @@ class ZNormScores(TransformerMixin, BaseEstimator):
                 self.pipeline.biometric_algorithm.score_dir = os.path.join(
                     self.pipeline.biometric_algorithm.score_dir, "score-norm"
                 )
-                self.pipeline.biometric_algorithm.biometric_reference_dir = (
-                    os.path.join(
-                        self.pipeline.biometric_algorithm.biometric_reference_dir,
-                        "score-norm",
-                    )
+                self.pipeline.biometric_algorithm.biometric_reference_dir = os.path.join(
+                    self.pipeline.biometric_algorithm.biometric_reference_dir,
+                    "score-norm",
                 )
 
     def fit(self, X, y=None):
@@ -386,7 +385,7 @@ class ZNormScores(TransformerMixin, BaseEstimator):
         self.z_stats = dict()
         for sset in z_scores:
             for s in sset:
-                if not s.reference_id in self.z_stats:
+                if s.reference_id not in self.z_stats:
                     self.z_stats[s.reference_id] = Sample([], parent=s)
 
                 self.z_stats[s.reference_id].data.append(s.data)
@@ -396,11 +395,13 @@ class ZNormScores(TransformerMixin, BaseEstimator):
         for key in self.z_stats:
             data = self.z_stats[key].data
 
-            ## Selecting the top scores
+            # Selecting the top scores
             if self.top_norm:
                 # Sorting in ascending order
                 data = -np.sort(-data)
-                proportion = int(np.floor(len(data) * self.top_norm_score_fraction))
+                proportion = int(
+                    np.floor(len(data) * self.top_norm_score_fraction)
+                )
                 data = data[0:proportion]
 
             self.z_stats[key].mu = np.mean(self.z_stats[key].data)
@@ -422,7 +423,8 @@ class ZNormScores(TransformerMixin, BaseEstimator):
             scores = []
             for no_normed_score in X:
                 score = (
-                    no_normed_score.data - self.z_stats[no_normed_score.reference_id].mu
+                    no_normed_score.data
+                    - self.z_stats[no_normed_score.reference_id].mu
                 ) / self.z_stats[no_normed_score.reference_id].std
 
                 z_score = Sample(score, parent=no_normed_score)
@@ -436,7 +438,9 @@ class ZNormScores(TransformerMixin, BaseEstimator):
             for probe_scores in X:
 
                 z_normed_scores.append(
-                    SampleSet(_transform_samples(probe_scores), parent=probe_scores)
+                    SampleSet(
+                        _transform_samples(probe_scores), parent=probe_scores
+                    )
                 )
         else:
             # If it is Samples
@@ -485,11 +489,9 @@ class TNormScores(TransformerMixin, BaseEstimator):
                 "biometric_algorithm",
                 bob.bio.base.pipelines.wrappers.BioAlgorithmDaskWrapper,
             ):
-                self.pipeline.biometric_algorithm.biometric_algorithm.score_dir = (
-                    os.path.join(
-                        self.pipeline.biometric_algorithm.biometric_algorithm.score_dir,
-                        "score-norm",
-                    )
+                self.pipeline.biometric_algorithm.biometric_algorithm.score_dir = os.path.join(
+                    self.pipeline.biometric_algorithm.biometric_algorithm.score_dir,
+                    "score-norm",
                 )
                 self.pipeline.biometric_algorithm.biometric_algorithm.biometric_reference_dir = os.path.join(
                     self.pipeline.biometric_algorithm.biometric_algorithm.biometric_reference_dir,
@@ -500,11 +502,9 @@ class TNormScores(TransformerMixin, BaseEstimator):
                 self.pipeline.biometric_algorithm.score_dir = os.path.join(
                     self.pipeline.biometric_algorithm.score_dir, "score-norm"
                 )
-                self.pipeline.biometric_algorithm.biometric_reference_dir = (
-                    os.path.join(
-                        self.pipeline.biometric_algorithm.biometric_reference_dir,
-                        "score-norm",
-                    )
+                self.pipeline.biometric_algorithm.biometric_reference_dir = os.path.join(
+                    self.pipeline.biometric_algorithm.biometric_reference_dir,
+                    "score-norm",
                 )
 
     def fit(self, X, y=None):
@@ -513,12 +513,14 @@ class TNormScores(TransformerMixin, BaseEstimator):
         treference_samples = X[0]
 
         # TODO: We need to pass probe samples instead of probe features
-        probe_samples = X[1]  ## Probes to be normalized
+        probe_samples = X[1]  # Probes to be normalized
 
         probe_features = self.pipeline.transformer.transform(probe_samples)
 
         # Creating T-Models
-        treferences = self.pipeline.create_biometric_reference(treference_samples)
+        treferences = self.pipeline.create_biometric_reference(
+            treference_samples
+        )
 
         # t_references_ids = [s.reference_id for s in treferences]
 
@@ -550,11 +552,13 @@ class TNormScores(TransformerMixin, BaseEstimator):
         for key in self.t_stats:
             data = self.t_stats[key].data
 
-            ## Selecting the top scores
+            # Selecting the top scores
             if self.top_norm:
                 # Sorting in ascending order
                 data = -np.sort(-data)
-                proportion = int(np.floor(len(data) * self.top_norm_score_fraction))
+                proportion = int(
+                    np.floor(len(data) * self.top_norm_score_fraction)
+                )
                 data = data[0:proportion]
 
             self.t_stats[key].mu = np.mean(self.t_stats[key].data)
@@ -592,7 +596,8 @@ class TNormScores(TransformerMixin, BaseEstimator):
 
                 t_normed_scores.append(
                     SampleSet(
-                        _transform_samples(probe_scores, stats), parent=probe_scores
+                        _transform_samples(probe_scores, stats),
+                        parent=probe_scores,
                     )
                 )
         else:
@@ -643,24 +648,34 @@ class WeibullCalibration(TransformerMixin, BaseEstimator):
 
         bins = 20
 
-        impostors_X, impostors_Y = np.histogram(X[y == 0], bins=bins, density=True)
+        impostors_X, impostors_Y = np.histogram(
+            X[y == 0], bins=bins, density=True
+        )
         # averaging the bins
         impostors_Y = 0.5 * (impostors_Y[1:] + impostors_Y[:-1])
 
         # Binining genuies and impostors for the fit
-        genuines_X, genuines_Y = np.histogram(X[y == 1], bins=bins, density=True)
+        genuines_X, genuines_Y = np.histogram(
+            X[y == 1], bins=bins, density=True
+        )
         # averaging the bins
         genuines_Y = 0.5 * (genuines_Y[1:] + genuines_Y[:-1])
 
         # Weibull fit for impostor distribution
         impostors_popt, _ = curve_fit(
-            weibull_pdf_impostors, xdata=impostors_X, ydata=impostors_Y, p0=[1.0, 1.0]
+            weibull_pdf_impostors,
+            xdata=impostors_X,
+            ydata=impostors_Y,
+            p0=[1.0, 1.0],
         )
         impostors_c, impostors_scale = impostors_popt
 
         # Fitting weibull for genuines and impostors
         genuines_popt, _ = curve_fit(
-            weibull_pdf_genuines, xdata=genuines_X, ydata=genuines_Y, p0=[1.0, 1.0]
+            weibull_pdf_genuines,
+            xdata=genuines_X,
+            ydata=genuines_Y,
+            p0=[1.0, 1.0],
         )
         genuines_c, genuines_scale = genuines_popt
 
@@ -675,7 +690,8 @@ class WeibullCalibration(TransformerMixin, BaseEstimator):
     def predict_proba(self, X):
         epsilon = 1e-10
         return +1 * (
-            np.log10(self.gen_dist(X) + epsilon) - np.log10(self.imp_dist(X) + epsilon)
+            np.log10(self.gen_dist(X) + epsilon)
+            - np.log10(self.imp_dist(X) + epsilon)
         )
 
 
@@ -695,28 +711,40 @@ class GammaCalibration(TransformerMixin, BaseEstimator):
 
         bins = 100
 
-        impostors_X, impostors_Y = np.histogram(X[y == 0], bins=bins, density=True)
+        impostors_X, impostors_Y = np.histogram(
+            X[y == 0], bins=bins, density=True
+        )
         # averaging the bins
         impostors_Y = 0.5 * (impostors_Y[1:] + impostors_Y[:-1])
 
         # Binining genuies and impostors for the fit
-        genuines_X, genuines_Y = np.histogram(X[y == 1], bins=bins, density=True)
+        genuines_X, genuines_Y = np.histogram(
+            X[y == 1], bins=bins, density=True
+        )
         # averaging the bins
         genuines_Y = 0.5 * (genuines_Y[1:] + genuines_Y[:-1])
 
         # gamma fit for impostor distribution
         impostors_popt, _ = curve_fit(
-            gamma_pdf_impostors, xdata=impostors_X, ydata=impostors_Y, p0=[1.0, 1.0]
+            gamma_pdf_impostors,
+            xdata=impostors_X,
+            ydata=impostors_Y,
+            p0=[1.0, 1.0],
         )
         impostors_a, impostors_scale = impostors_popt
 
         # Fitting weibull for genuines and impostors
         genuines_popt, _ = curve_fit(
-            gamma_pdf_genuines, xdata=genuines_X, ydata=genuines_Y, p0=[1.0, 1.0]
+            gamma_pdf_genuines,
+            xdata=genuines_X,
+            ydata=genuines_Y,
+            p0=[1.0, 1.0],
         )
         genuines_a, genuines_scale = genuines_popt
 
-        self.gen_dist = partial(gamma_pdf_genuines, a=genuines_a, scale=genuines_scale)
+        self.gen_dist = partial(
+            gamma_pdf_genuines, a=genuines_a, scale=genuines_scale
+        )
         self.imp_dist = partial(
             gamma_pdf_impostors, a=impostors_a, scale=impostors_scale
         )
@@ -725,7 +753,8 @@ class GammaCalibration(TransformerMixin, BaseEstimator):
     def predict_proba(self, X):
         epsilon = 1e-10
         return +1 * (
-            np.log10(self.gen_dist(X) + epsilon) - np.log10(self.imp_dist(X) + epsilon)
+            np.log10(self.gen_dist(X) + epsilon)
+            - np.log10(self.imp_dist(X) + epsilon)
         )
 
 
@@ -742,12 +771,16 @@ class BetaCalibration(TransformerMixin, BaseEstimator):
 
         bins = 100
 
-        impostors_X, impostors_Y = np.histogram(X[y == 0], bins=bins, density=True)
+        impostors_X, impostors_Y = np.histogram(
+            X[y == 0], bins=bins, density=True
+        )
         # averaging the bins
         impostors_Y = 0.5 * (impostors_Y[1:] + impostors_Y[:-1])
 
         # Binining genuies and impostors for the fit
-        genuines_X, genuines_Y = np.histogram(X[y == 1], bins=bins, density=True)
+        genuines_X, genuines_Y = np.histogram(
+            X[y == 1], bins=bins, density=True
+        )
         # averaging the bins
         genuines_Y = 0.5 * (genuines_Y[1:] + genuines_Y[:-1])
 
@@ -770,12 +803,13 @@ class BetaCalibration(TransformerMixin, BaseEstimator):
     def predict_proba(self, X):
         epsilon = 1e-10
         return +1 * (
-            np.log10(self.gen_dist(X) + epsilon) - np.log10(self.imp_dist(X) + epsilon)
+            np.log10(self.gen_dist(X) + epsilon)
+            - np.log10(self.imp_dist(X) + epsilon)
         )
 
 
 class CategoricalCalibration(TransformerMixin, BaseEstimator):
-    """
+    r"""
     Implements an adaptation of the Categorical Calibration defined in:
 
     `Mandasari, Miranti Indar, et al. "Score calibration in face recognition." Iet Biometrics 3.4 (2014): 246-256.`
@@ -905,7 +939,7 @@ class CategoricalCalibration(TransformerMixin, BaseEstimator):
 
         for value in self.field_values:
 
-            ## Filtering genunines and impostors per group
+            # Filtering genunines and impostors per group
             impostors_per_group = (
                 impostors[
                     (impostors[f"probe_{self.field_name}"] == value)
@@ -915,7 +949,9 @@ class CategoricalCalibration(TransformerMixin, BaseEstimator):
                 .to_numpy()
             )
             genuines_per_group = (
-                genuines[(genuines[f"probe_{self.field_name}"] == value)]["score"]
+                genuines[(genuines[f"probe_{self.field_name}"] == value)][
+                    "score"
+                ]
                 .compute()
                 .to_numpy()
             )
@@ -925,7 +961,10 @@ class CategoricalCalibration(TransformerMixin, BaseEstimator):
 
             # Training the regressor
             y = np.hstack(
-                (np.zeros(len(impostors_per_group)), np.ones(len(genuines_per_group)))
+                (
+                    np.zeros(len(impostors_per_group)),
+                    np.ones(len(genuines_per_group)),
+                )
             )
             X = np.expand_dims(
                 np.hstack((impostors_per_group, genuines_per_group)), axis=1
@@ -962,9 +1001,14 @@ class CategoricalCalibration(TransformerMixin, BaseEstimator):
             X = dataframe["score"].to_numpy()
 
             calibrated_scores = np.vstack(
-                [fitter.predict_proba(X) for fitter in self._categorical_fitters]
+                [
+                    fitter.predict_proba(X)
+                    for fitter in self._categorical_fitters
+                ]
             ).T
-            calibrated_scores = self.reduction_function(calibrated_scores, axis=1)
+            calibrated_scores = self.reduction_function(
+                calibrated_scores, axis=1
+            )
             dataframe["score"] = calibrated_scores
 
             dataframe.to_csv(output_file_name, index=False)

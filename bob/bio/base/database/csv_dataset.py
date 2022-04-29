@@ -2,24 +2,29 @@
 # vim: set fileencoding=utf-8 :
 
 
-import os
-from bob.pipelines import DelayedSample, SampleSet
-from .legacy import check_parameters_for_validity
 import csv
-import bob.io.base
 import functools
-import numpy as np
 import itertools
 import logging
+import os
+
+import numpy as np
+
+import bob.io.base
+
 from bob.bio.base.pipelines.abstract_classes import Database
-from bob.extension.download import search_file, list_dir
+from bob.extension.download import list_dir, search_file
+from bob.pipelines import DelayedSample, SampleSet
 from bob.pipelines.sample_loaders import CSVToSampleLoader
 
+from .legacy import check_parameters_for_validity
 
 logger = logging.getLogger(__name__)
 
 
-def convert_samples_to_samplesets(samples, group_by_reference_id=True, references=None):
+def convert_samples_to_samplesets(
+    samples, group_by_reference_id=True, references=None
+):
     if group_by_reference_id:
 
         # Grouping sample sets
@@ -39,7 +44,9 @@ def convert_samples_to_samplesets(samples, group_by_reference_id=True, reference
         return (
             [SampleSet([s], parent=s) for s in samples]
             if references is None
-            else [SampleSet([s], parent=s, references=references) for s in samples]
+            else [
+                SampleSet([s], parent=s, references=references) for s in samples
+            ]
         )
 
 
@@ -78,7 +85,9 @@ class LSTToSampleLoader(CSVToSampleLoader):
         return DelayedSample(
             functools.partial(
                 self.data_loader,
-                os.path.join(self.dataset_original_directory, path + self.extension),
+                os.path.join(
+                    self.dataset_original_directory, path + self.extension
+                ),
             ),
             key=path,
             reference_id=reference_id,
@@ -132,7 +141,9 @@ class CSVToSampleLoaderBiometrics(CSVToSampleLoader):
         path = row[0]
         reference_id = row[1]
 
-        kwargs = dict([[str(h).lower(), r] for h, r in zip(header[2:], row[2:])])
+        kwargs = dict(
+            [[str(h).lower(), r] for h, r in zip(header[2:], row[2:])]
+        )
         if self.reference_id_equal_subject_id:
             kwargs["subject_id"] = reference_id
         else:
@@ -142,7 +153,9 @@ class CSVToSampleLoaderBiometrics(CSVToSampleLoader):
         return DelayedSample(
             functools.partial(
                 self.data_loader,
-                os.path.join(self.dataset_original_directory, path + self.extension),
+                os.path.join(
+                    self.dataset_original_directory, path + self.extension
+                ),
             ),
             key=path,
             reference_id=reference_id,
@@ -274,7 +287,9 @@ class CSVDataset(Database):
         def get_paths():
 
             if not os.path.exists(dataset_protocol_path):
-                raise ValueError(f"The path `{dataset_protocol_path}` was not found")
+                raise ValueError(
+                    f"The path `{dataset_protocol_path}` was not found"
+                )
 
             # Here we are handling the legacy
             train_csv = search_file(
@@ -293,7 +308,9 @@ class CSVDataset(Database):
                 ],
             )
 
-            legacy_probe = "for_scores.lst" if self.is_sparse else "for_probes.lst"
+            legacy_probe = (
+                "for_scores.lst" if self.is_sparse else "for_probes.lst"
+            )
             dev_probe_csv = search_file(
                 dataset_protocol_path,
                 [
@@ -381,13 +398,17 @@ class CSVDataset(Database):
             return self.cache[cache_key]
 
         # Getting samples from CSV
-        samples = self.csv_to_sample_loader.transform(self.__getattribute__(cache_key))
+        samples = self.csv_to_sample_loader.transform(
+            self.__getattribute__(cache_key)
+        )
 
         references = None
         if fetching_probes and is_sparse:
 
             # Checking if `is_sparse` was set properly
-            if len(samples) > 0 and not hasattr(samples[0], "compare_reference_id"):
+            if len(samples) > 0 and not hasattr(
+                samples[0], "compare_reference_id"
+            ):
                 ValueError(
                     f"Attribute `compare_reference_id` not found in `{samples[0]}`."
                     "Make sure this attribute exists in your dataset if `is_sparse=True`"
@@ -396,7 +417,9 @@ class CSVDataset(Database):
             sparse_samples = dict()
             for s in samples:
                 if s.key in sparse_samples:
-                    sparse_samples[s.key].references.append(s.compare_reference_id)
+                    sparse_samples[s.key].references.append(
+                        s.compare_reference_id
+                    )
                 else:
                     s.references = [s.compare_reference_id]
                     sparse_samples[s.key] = s
@@ -737,9 +760,9 @@ class CSVDatasetCrossValidation(Database):
 
             # Enrollment samples
             self.cache["dev_enroll_csv"].append(
-                convert_samples_to_samplesets(samples[0 : self.samples_for_enrollment])[
-                    0
-                ]
+                convert_samples_to_samplesets(
+                    samples[0 : self.samples_for_enrollment]
+                )[0]
             )
 
             self.cache["dev_probe_csv"] += convert_samples_to_samplesets(
@@ -794,8 +817,12 @@ class CSVDatasetCrossValidation(Database):
 
         # Get enroll and probe samples
         for group in groups:
-            samples = samples + [s for s_set in self.references(group) for s in s_set]
-            samples = samples + [s for s_set in self.probes(group) for s in s_set]
+            samples = samples + [
+                s for s_set in self.references(group) for s in s_set
+            ]
+            samples = samples + [
+                s for s_set in self.probes(group) for s in s_set
+            ]
         return samples
 
     def groups(self):

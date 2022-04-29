@@ -5,29 +5,29 @@
 """
 
 import os
-from bob.bio.base.pipelines.pipelines import PipelineSimple
+
+import nose.tools
+import numpy as np
+
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import FunctionTransformer
+
 import bob.io.base
 import bob.io.base.test_utils
+
 from bob.bio.base.database import (
     CSVDataset,
     CSVDatasetCrossValidation,
-    LSTToSampleLoader,
     CSVDatasetZTNorm,
     CSVToSampleLoaderBiometrics,
+    FileListBioDatabase,
+    LSTToSampleLoader,
 )
-import nose.tools
-from bob.pipelines import DelayedSample, SampleSet
-import numpy as np
-from bob.bio.base.pipelines.biometric_algorithms import (
-    Distance,
-)
-from bob.bio.base.database import FileListBioDatabase
-from sklearn.preprocessing import FunctionTransformer
-from sklearn.pipeline import make_pipeline
-from bob.pipelines import wrap
-from bob.pipelines.sample_loaders import AnnotationsLoader
+from bob.bio.base.pipelines.biometric_algorithms import Distance
+from bob.bio.base.pipelines.pipelines import PipelineSimple
 from bob.bio.base.test.dummy.database import database as ATNT_DATABASE
-
+from bob.pipelines import DelayedSample, SampleSet, wrap
+from bob.pipelines.sample_loaders import AnnotationsLoader
 
 legacy_example_dir = os.path.realpath(
     bob.io.base.test_utils.datafile(".", __name__, "data/")
@@ -38,14 +38,18 @@ legacy2_example_dir = os.path.realpath(
 )
 
 
-example_dir = os.path.realpath(bob.io.base.test_utils.datafile(".", __name__, "data/"))
+example_dir = os.path.realpath(
+    bob.io.base.test_utils.datafile(".", __name__, "data/")
+)
 atnt_protocol_path = os.path.realpath(
     bob.io.base.test_utils.datafile(".", __name__, "data/")
 )
 
 atnt_protocol_path_cross_validation = os.path.join(
     os.path.realpath(
-        bob.io.base.test_utils.datafile(".", __name__, "data/atnt/cross_validation")
+        bob.io.base.test_utils.datafile(
+            ".", __name__, "data/atnt/cross_validation"
+        )
     ),
     "metadata.csv",
 )
@@ -94,8 +98,12 @@ def test_csv_file_list_dev_only_metadata():
 
     assert len(dataset.references()) == 2
     assert check_all_true(dataset.references(), SampleSet)
-    assert np.alltrue(["metadata_1" in s.__dict__ for s in dataset.references()])
-    assert np.alltrue(["metadata_2" in s.__dict__ for s in dataset.references()])
+    assert np.alltrue(
+        ["metadata_1" in s.__dict__ for s in dataset.references()]
+    )
+    assert np.alltrue(
+        ["metadata_2" in s.__dict__ for s in dataset.references()]
+    )
 
     assert len(dataset.probes()) == 10
     assert check_all_true(dataset.probes(), SampleSet)
@@ -190,7 +198,9 @@ def test_csv_file_list_dev_eval_score_norm():
         )
 
         assert len(znorm_dataset.background_model_samples()) == 8
-        assert check_all_true(znorm_dataset.background_model_samples(), DelayedSample)
+        assert check_all_true(
+            znorm_dataset.background_model_samples(), DelayedSample
+        )
 
         assert len(znorm_dataset.references()) == 2
         assert check_all_true(znorm_dataset.references(), SampleSet)
@@ -205,7 +215,9 @@ def test_csv_file_list_dev_eval_score_norm():
         assert check_all_true(znorm_dataset.probes(group="eval"), SampleSet)
 
         assert len(znorm_dataset.all_samples(groups=None)) == 47
-        assert check_all_true(znorm_dataset.all_samples(groups=None), DelayedSample)
+        assert check_all_true(
+            znorm_dataset.all_samples(groups=None), DelayedSample
+        )
 
         # Check the annotations
         for s in znorm_dataset.all_samples(groups=None):
@@ -215,7 +227,7 @@ def test_csv_file_list_dev_eval_score_norm():
         assert len(znorm_dataset.reference_ids(group="eval")) == 6
         assert len(znorm_dataset.groups()) == 3
 
-        ## Checking ZT-Norm stuff
+        # Checking ZT-Norm stuff
         assert len(znorm_dataset.treferences()) == 2
         assert len(znorm_dataset.zprobes()) == 8
 
@@ -394,7 +406,9 @@ def test_lst_file_list_dev_sparse_filelist2():
 def test_csv_file_list_atnt():
 
     dataset = CSVDataset(
-        name="atnt", dataset_protocol_path=atnt_protocol_path, protocol="idiap_protocol"
+        name="atnt",
+        dataset_protocol_path=atnt_protocol_path,
+        protocol="idiap_protocol",
     )
     assert len(dataset.background_model_samples()) == 200
     assert len(dataset.references()) == 20
@@ -432,8 +446,10 @@ def run_experiment(dataset):
         X = np.asarray(X)
         return np.reshape(X, (X.shape[0], -1))
 
-    #### Testing it in a real recognition systems
-    transformer = wrap(["sample"], make_pipeline(FunctionTransformer(linearize)))
+    # Testing it in a real recognition systems
+    transformer = wrap(
+        ["sample"], make_pipeline(FunctionTransformer(linearize))
+    )
 
     pipeline_simple = PipelineSimple(transformer, Distance())
 
@@ -520,19 +536,31 @@ def test_query():
     assert len(db.client_ids(groups="dev")) == 2  # 2 client ids for dev
     assert len(db.client_ids(groups="eval")) == 2  # 2 client ids for eval
 
-    assert len(db.tclient_ids()) == 2  # 2 client ids for T-Norm score normalization
-    assert len(db.zclient_ids()) == 2  # 2 client ids for Z-Norm score normalization
+    assert (
+        len(db.tclient_ids()) == 2
+    )  # 2 client ids for T-Norm score normalization
+    assert (
+        len(db.zclient_ids()) == 2
+    )  # 2 client ids for Z-Norm score normalization
 
-    assert len(db.model_ids_with_protocol()) == 6  # 6 model ids for world, dev and eval
-    assert len(db.model_ids_with_protocol(groups="world")) == 2  # 2 model ids for world
+    assert (
+        len(db.model_ids_with_protocol()) == 6
+    )  # 6 model ids for world, dev and eval
+    assert (
+        len(db.model_ids_with_protocol(groups="world")) == 2
+    )  # 2 model ids for world
     assert (
         len(db.model_ids_with_protocol(groups="optional_world_1")) == 2
     )  # 2 model ids for optional world 1
     assert (
         len(db.model_ids_with_protocol(groups="optional_world_2")) == 2
     )  # 2 model ids for optional world 2
-    assert len(db.model_ids_with_protocol(groups="dev")) == 2  # 2 model ids for dev
-    assert len(db.model_ids_with_protocol(groups="eval")) == 2  # 2 model ids for eval
+    assert (
+        len(db.model_ids_with_protocol(groups="dev")) == 2
+    )  # 2 model ids for dev
+    assert (
+        len(db.model_ids_with_protocol(groups="eval")) == 2
+    )  # 2 model ids for eval
 
     assert (
         len(db.tmodel_ids_with_protocol()) == 2
@@ -559,14 +587,18 @@ def test_query():
         len(db.objects(groups="dev", purposes="probe", classes="impostor")) == 4
     )  # 4 samples as impostor probes in the dev set
 
-    assert len(db.tobjects(groups="dev")) == 8  # 8 samples for enrolling T-norm models
+    assert (
+        len(db.tobjects(groups="dev")) == 8
+    )  # 8 samples for enrolling T-norm models
     assert (
         len(db.tobjects(groups="dev", model_ids="7")) == 4
     )  # 4 samples for enrolling T-norm model '7'
     assert (
         len(db.tobjects(groups="dev", model_ids="3")) == 0
     )  # 0 samples for enrolling T-norm model '3' (no T-Norm model)
-    assert len(db.zobjects(groups="dev")) == 8  # 8 samples for Z-norm impostor accesses
+    assert (
+        len(db.zobjects(groups="dev")) == 8
+    )  # 8 samples for Z-norm impostor accesses
 
     assert db.client_id_from_model_id("1", group=None) == "1"
     assert db.client_id_from_model_id("3", group=None) == "3"
@@ -629,10 +661,16 @@ def test_query_protocol():
         == 2
     )  # 2 client ids for eval
 
-    assert len(db.tclient_ids()) == 2  # 2 client ids for T-Norm score normalization
-    assert len(db.zclient_ids()) == 2  # 2 client ids for Z-Norm score normalization
+    assert (
+        len(db.tclient_ids()) == 2
+    )  # 2 client ids for T-Norm score normalization
+    assert (
+        len(db.zclient_ids()) == 2
+    )  # 2 client ids for Z-Norm score normalization
 
-    assert len(db.model_ids_with_protocol()) == 6  # 6 model ids for world, dev and eval
+    assert (
+        len(db.model_ids_with_protocol()) == 6
+    )  # 6 model ids for world, dev and eval
     assert (
         len(
             db.model_ids_with_protocol(
@@ -772,7 +810,9 @@ def test_query_protocol():
         )
         == 0
     )  # 0 samples for enrolling T-norm model '3' (no T-Norm model)
-    assert len(db.zobjects(groups="dev")) == 8  # 8 samples for Z-norm impostor accesses
+    assert (
+        len(db.zobjects(groups="dev")) == 8
+    )  # 8 samples for Z-norm impostor accesses
 
     assert db.client_id_from_model_id("1", group=None) == "1"
     assert db.client_id_from_model_id("3", group=None) == "3"
@@ -824,7 +864,9 @@ def test_annotation():
         os.path.join(legacy_example_dir, "example_filelist"),
         "test",
         use_dense_probe_file_list=False,
-        annotation_directory=os.path.join(legacy_example_dir, "example_filelist"),
+        annotation_directory=os.path.join(
+            legacy_example_dir, "example_filelist"
+        ),
         annotation_type="json",
     )
     f = [o for o in db.objects() if o.path == "data/model4_session1_sample2"][0]

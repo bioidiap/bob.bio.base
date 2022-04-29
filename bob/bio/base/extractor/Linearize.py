@@ -3,8 +3,9 @@
 # @author: Manuel Guenther <Manuel.Guenther@idiap.ch>
 # @date: Fri Oct 26 17:05:40 CEST 2012
 
-from .Extractor import Extractor
 import numpy
+
+from .Extractor import Extractor
 
 
 class Linearize(Extractor):
@@ -32,7 +33,7 @@ class Linearize(Extractor):
 
         data : 1D :py:class:`numpy.ndarray`
           The extracted feature vector, of the desired ``dtype`` (if specified).
-        """        
+        """
         assert isinstance(data, numpy.ndarray)
 
         linear = numpy.reshape(data, data.size)
@@ -41,6 +42,8 @@ class Linearize(Extractor):
         return linear
 
     # re-define unused functions, just so that they do not get documented
-    def train(*args, **kwargs): raise NotImplementedError()
+    def train(*args, **kwargs):
+        raise NotImplementedError()
 
-    def load(*args, **kwargs): pass
+    def load(*args, **kwargs):
+        pass

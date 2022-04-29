@@ -1,12 +1,13 @@
 import scipy.spatial
+
 import bob.io.base
 
 from bob.bio.base.algorithm import Algorithm
 
-_data = [5., 6., 7., 8., 9.]
+_data = [5.0, 6.0, 7.0, 8.0, 9.0]
 
 
-class DummyAlgorithm (Algorithm):
+class DummyAlgorithm(Algorithm):
     """This class is used to test all the possible functions of the tool chain, but it does basically nothing."""
 
     def __init__(self, **kwargs):
@@ -14,9 +15,7 @@ class DummyAlgorithm (Algorithm):
 
         # call base class constructor registering that this tool performs everything.
         Algorithm.__init__(
-            self,
-            performs_projection=False,
-            requires_enroller_training=True
+            self, performs_projection=False, requires_enroller_training=True
         )
 
     def _test(self, file_name):
@@ -42,5 +41,6 @@ class DummyAlgorithm (Algorithm):
     def score(self, model, probe):
         """Returns the Euclidean distance between model and probe"""
         return scipy.spatial.distance.euclidean(model, probe)
+
 
 algorithm = DummyAlgorithm()

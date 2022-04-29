@@ -1,7 +1,9 @@
+import bob.io.base
+
 from bob.bio.base.utils.annotations import read_annotation_file
 from bob.pipelines.sample import _ReprMixin
+
 from .legacy import File as LegacyFile
-import bob.io.base
 
 
 class BioFile(LegacyFile, _ReprMixin):
@@ -84,7 +86,9 @@ class BioFile(LegacyFile, _ReprMixin):
         if original_extension is None:
             original_extension = self.original_extension
         # get the path
-        path = self.make_path(original_directory or "", original_extension or "")
+        path = self.make_path(
+            original_directory or "", original_extension or ""
+        )
         return bob.io.base.load(path)
 
     @property

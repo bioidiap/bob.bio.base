@@ -1,18 +1,14 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8 :
+import logging
 import os
-import six
 
+import six
 
 from bob.bio.base.utils.annotations import read_annotation_file
 
-
-from .. import ZTBioDatabase
-from .. import BioFile
-
+from .. import BioFile, ZTBioDatabase
 from .models import ListReader
-
-import logging
 
 logger = logging.getLogger("bob.bio.base")
 
@@ -166,7 +162,9 @@ class FileListBioDatabase(ZTBioDatabase):
 
         self.m_base_dir = os.path.abspath(filelists_directory)
         if not os.path.isdir(self.m_base_dir):
-            raise RuntimeError("Invalid directory specified %s." % (self.m_base_dir))
+            raise RuntimeError(
+                "Invalid directory specified %s." % (self.m_base_dir)
+            )
 
         # sub-directories for dev and eval set:
         self.m_dev_subdir = (
@@ -226,13 +224,17 @@ class FileListBioDatabase(ZTBioDatabase):
                         "The directory %s for the given protocol '%s' does not exist"
                         % (protocol_dir, protocol)
                     )
-            self.list_readers[protocol] = ListReader(self.keep_read_lists_in_memory)
+            self.list_readers[protocol] = ListReader(
+                self.keep_read_lists_in_memory
+            )
 
         return self.list_readers[protocol]
 
     def _make_bio(self, files):
         return [
-            self.bio_file_class(client_id=f.client_id, path=f.path, file_id=f.id)
+            self.bio_file_class(
+                client_id=f.client_id, path=f.path, file_id=f.id
+            )
             for f in files
         ]
 
@@ -263,7 +265,9 @@ class FileListBioDatabase(ZTBioDatabase):
             if add_zt_files:
                 if self.implements_zt(self.protocol, group):
                     files += self.tobjects(group, self.protocol)
-                    files += self.zobjects(group, self.protocol, **self.z_probe_options)
+                    files += self.zobjects(
+                        group, self.protocol, **self.z_probe_options
+                    )
                 else:
                     logger.warn(
                         "ZT score files are requested, but no such files are defined in group %s for protocol %s",
@@ -299,17 +303,23 @@ class FileListBioDatabase(ZTBioDatabase):
         protocol = protocol or self.protocol
         if protocol is not None:
             if os.path.isdir(
-                os.path.join(self.get_base_directory(), protocol, self.m_dev_subdir)
+                os.path.join(
+                    self.get_base_directory(), protocol, self.m_dev_subdir
+                )
             ):
                 groups.append("dev")
             if os.path.isdir(
-                os.path.join(self.get_base_directory(), protocol, self.m_eval_subdir)
+                os.path.join(
+                    self.get_base_directory(), protocol, self.m_eval_subdir
+                )
             ):
                 groups.append("eval")
             if add_world:
                 if os.path.isfile(
                     os.path.join(
-                        self.get_base_directory(), protocol, self.m_world_filename
+                        self.get_base_directory(),
+                        protocol,
+                        self.m_world_filename,
                     )
                 ):
                     groups.append("world")
@@ -341,19 +351,23 @@ class FileListBioDatabase(ZTBioDatabase):
                 groups.append("eval")
             if add_world:
                 if os.path.isfile(
-                    os.path.join(self.get_base_directory(), self.m_world_filename)
+                    os.path.join(
+                        self.get_base_directory(), self.m_world_filename
+                    )
                 ):
                     groups.append("world")
             if add_world and add_subworld:
                 if os.path.isfile(
                     os.path.join(
-                        self.get_base_directory(), self.m_optional_world_1_filename
+                        self.get_base_directory(),
+                        self.m_optional_world_1_filename,
                     )
                 ):
                     groups.append("optional_world_1")
                 if os.path.isfile(
                     os.path.join(
-                        self.get_base_directory(), self.m_optional_world_2_filename
+                        self.get_base_directory(),
+                        self.m_optional_world_2_filename,
                     )
                 ):
                     groups.append("optional_world_2")
@@ -436,11 +450,17 @@ class FileListBioDatabase(ZTBioDatabase):
         if group == "world":
             return os.path.join(base_directory, self.m_world_filename)
         elif group == "optional_world_1":
-            return os.path.join(base_directory, self.m_optional_world_1_filename)
+            return os.path.join(
+                base_directory, self.m_optional_world_1_filename
+            )
         elif group == "optional_world_2":
-            return os.path.join(base_directory, self.m_optional_world_2_filename)
+            return os.path.join(
+                base_directory, self.m_optional_world_2_filename
+            )
         else:
-            group_dir = self.m_dev_subdir if group == "dev" else self.m_eval_subdir
+            group_dir = (
+                self.m_dev_subdir if group == "dev" else self.m_eval_subdir
+            )
             list_name = {
                 "for_models": self.m_models_filename,
                 "for_probes": self.m_probes_filename,
@@ -483,7 +503,9 @@ class FileListBioDatabase(ZTBioDatabase):
 
         for group in groups:
             model_dict = self._list_reader(protocol).read_models(
-                self._get_list_file(group, "for_models", protocol), group, "for_models"
+                self._get_list_file(group, "for_models", protocol),
+                group,
+                "for_models",
             )
             if model_id in model_dict:
                 return model_dict[model_id]
@@ -520,7 +542,9 @@ class FileListBioDatabase(ZTBioDatabase):
 
         for group in groups:
             model_dict = self._list_reader(protocol).read_models(
-                self._get_list_file(group, "for_tnorm", protocol), group, "for_tnorm"
+                self._get_list_file(group, "for_tnorm", protocol),
+                group,
+                "for_tnorm",
             )
             if t_model_id in model_dict:
                 return model_dict[t_model_id]
@@ -782,7 +806,9 @@ class FileListBioDatabase(ZTBioDatabase):
                 if "enroll" in purposes:
                     lists.append(
                         self._list_reader(protocol).read_list(
-                            self._get_list_file(group, "for_models", protocol=protocol),
+                            self._get_list_file(
+                                group, "for_models", protocol=protocol
+                            ),
                             group,
                             "for_models",
                         )
@@ -841,9 +867,11 @@ class FileListBioDatabase(ZTBioDatabase):
                     if model_ids is None or file._model_id in model_ids:
                         # filter by class
                         if (
-                            "client" in classes and file.client_id == file.claimed_id
+                            "client" in classes
+                            and file.client_id == file.claimed_id
                         ) or (
-                            "impostor" in classes and file.client_id != file.claimed_id
+                            "impostor" in classes
+                            and file.client_id != file.claimed_id
                         ):
                             # check if we already have this file
                             if file.id not in file_ids:
@@ -888,7 +916,9 @@ class FileListBioDatabase(ZTBioDatabase):
         retval = []
         for group in groups:
             for file in self._list_reader(protocol).read_list(
-                self._get_list_file(group, "for_tnorm", protocol), group, "for_tnorm"
+                self._get_list_file(group, "for_tnorm", protocol),
+                group,
+                "for_tnorm",
             ):
                 if model_ids is None or file._model_id in model_ids:
                     retval.append(file)
@@ -991,7 +1021,9 @@ class FileListBioDatabase(ZTBioDatabase):
 
         if isinstance(self.original_extension, six.string_types):
             # extract file name
-            file_name = file.make_path(self.original_directory, self.original_extension)
+            file_name = file.make_path(
+                self.original_directory, self.original_extension
+            )
             if not check_existence or os.path.exists(file_name):
                 return file_name
 
@@ -1004,5 +1036,8 @@ class FileListBioDatabase(ZTBioDatabase):
         # None of the extensions matched
         raise IOError(
             "File '%s' does not exist with any of the extensions '%s'"
-            % (file.make_path(self.original_directory, None), self.original_extension)
+            % (
+                file.make_path(self.original_directory, None),
+                self.original_extension,
+            )
         )

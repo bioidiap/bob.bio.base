@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8 :
 
-from sklearn.base import TransformerMixin, BaseEstimator
+import os
+
+from sklearn.base import BaseEstimator, TransformerMixin
+
 from bob.bio.base.algorithm import Algorithm
 from bob.pipelines.utils import is_picklable
+
 from . import split_X_by_y
-import os
 
 
 class AlgorithmTransformer(TransformerMixin, BaseEstimator):

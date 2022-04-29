@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8 :
 
+import collections
 import json
 import logging
 import os
-import collections
+
 from bob.extension.download import search_file
 
 logger = logging.getLogger(__name__)
@@ -145,7 +146,9 @@ def read_annotation_file(file_name, annotation_type):
                 )
 
         elif str(annotation_type) == "json":
-            annotations = json.load(f, object_pairs_hook=collections.OrderedDict)
+            annotations = json.load(
+                f, object_pairs_hook=collections.OrderedDict
+            )
         else:
             raise ValueError(
                 "The given annotation type '%s' is not known, choose one of ('eyecenter', 'named', 'idiap')"
@@ -160,6 +163,8 @@ def read_annotation_file(file_name, annotation_type):
         and "reye" in annotations
         and annotations["leye"][1] < annotations["reye"][1]
     ):
-        logger.warn("The eye annotations in file '%s' might be exchanged!" % file_name)
+        logger.warn(
+            "The eye annotations in file '%s' might be exchanged!" % file_name
+        )
 
     return annotations

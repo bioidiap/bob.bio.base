@@ -9,17 +9,18 @@ for bob.bio experiments
 """
 
 import logging
-import numpy
-from .score_writers import FourColumnsScoreWriter
-from bob.pipelines.utils import isinstance_nested
-from sklearn.pipeline import Pipeline
+
 from sklearn.base import BaseEstimator
-from bob.pipelines import SampleWrapper, wrap
+from sklearn.pipeline import Pipeline
+
 from bob.bio.base.pipelines.abstract_classes import BioAlgorithm
+from bob.pipelines import SampleWrapper, wrap
+from bob.pipelines.utils import isinstance_nested
+
+from .score_writers import FourColumnsScoreWriter
 
 logger = logging.getLogger(__name__)
 import tempfile
-import os
 
 
 class PipelineSimple(object):
@@ -189,7 +190,7 @@ def check_valid_pipeline(pipeline_simple):
     Applying some checks in the PipelineSimple
     """
 
-    ## CHECKING THE TRANSFORMER
+    # CHECKING THE TRANSFORMER
     # Checking if it's a Scikit Pipeline or a estimator
     if isinstance(pipeline_simple.transformer, Pipeline):
 
@@ -202,7 +203,9 @@ def check_valid_pipeline(pipeline_simple):
     # Checking if it's sample wrapper, if not, do it
     elif isinstance_nested(
         pipeline_simple.transformer, "estimator", BaseEstimator
-    ) and isinstance_nested(pipeline_simple.transformer, "estimator", BaseEstimator):
+    ) and isinstance_nested(
+        pipeline_simple.transformer, "estimator", BaseEstimator
+    ):
         wrap(["sample"], pipeline_simple.transformer)
     else:
         raise ValueError(
@@ -210,7 +213,7 @@ def check_valid_pipeline(pipeline_simple):
             f"sklearn.base.BaseEstimator, not {pipeline_simple.transformer}"
         )
 
-    ## Checking the Biometric algorithm
+    # Checking the Biometric algorithm
     if not isinstance(pipeline_simple.biometric_algorithm, BioAlgorithm):
         raise ValueError(
             f"pipeline_simple.biometric_algorithm should be instance of `BioAlgorithm`"

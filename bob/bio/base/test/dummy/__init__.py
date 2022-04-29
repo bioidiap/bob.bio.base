@@ -1,3 +1,1 @@
-from . import preprocessor
-from . import extractor
-from . import algorithm
+from . import algorithm, extractor, preprocessor  # noqa: F401

@@ -1,17 +1,20 @@
 """The click-based vulnerability analysis commands.
 """
 
-import os
 import csv
-import numpy
-import logging
 import functools
+import logging
+import os
+
 import click
+
 from click.types import FLOAT
-from bob.measure.script import common_options
 from numpy import random
-from bob.io.base import create_directories_safe
+
 from bob.bio.base.score.load import split_csv_vuln
+from bob.io.base import create_directories_safe
+from bob.measure.script import common_options
+
 from . import vuln_figure as figure
 
 logger = logging.getLogger(__name__)
@@ -43,7 +46,9 @@ def vuln_plot_options(
             return decorator
 
         @click.command()
-        @common_options.scores_argument(min_arg=1, force_eval=force_eval, nargs=-1)
+        @common_options.scores_argument(
+            min_arg=1, force_eval=force_eval, nargs=-1
+        )
         @eval_if_not_forced(force_eval)
         @common_options.legends_option()
         @common_options.no_legend_option()
@@ -71,6 +76,7 @@ def vuln_plot_options(
 
     return custom_options_command
 
+
 def real_data_option(**kwargs):
     """Option to choose if input data is real or generated"""
     return common_options.bool_option(
@@ -81,6 +87,7 @@ def real_data_option(**kwargs):
         dflt=True,
         **kwargs,
     )
+
 
 def fnmr_at_option(dflt=" ", **kwargs):
     """Get option to draw const FNMR lines"""
@@ -168,7 +175,9 @@ def gen(outdir, mean_gen, mean_zei, mean_pa, **kwargs):
     """
     # Generate the data
     genuine_dev, zei_dev, pa_dev = gen_score_distr(mean_gen, mean_zei, mean_pa)
-    genuine_eval, zei_eval, pa_eval = gen_score_distr(mean_gen, mean_zei, mean_pa)
+    genuine_eval, zei_eval, pa_eval = gen_score_distr(
+        mean_gen, mean_zei, mean_pa
+    )
 
     # Write the data into files
     write_scores_to_file(
@@ -231,7 +240,9 @@ def metrics(ctx, scores, evaluation, **kwargs):
 @fnmr_at_option()
 @real_data_option()
 def roc(ctx, scores, evaluation, real_data, **kwargs):
-    process = figure.RocVuln(ctx, scores, evaluation, split_csv_vuln, real_data, False)
+    process = figure.RocVuln(
+        ctx, scores, evaluation, split_csv_vuln, real_data, False
+    )
     process.run()
 
 
@@ -268,7 +279,9 @@ def roc(ctx, scores, evaluation, real_data, **kwargs):
 @real_data_option()
 @fnmr_at_option()
 def det(ctx, scores, evaluation, real_data, **kwargs):
-    process = figure.DetVuln(ctx, scores, evaluation, split_csv_vuln, real_data, False)
+    process = figure.DetVuln(
+        ctx, scores, evaluation, split_csv_vuln, real_data, False
+    )
     process.run()
 
 
@@ -387,7 +400,9 @@ def epc(ctx, scores, **kwargs):
 def epsc(ctx, scores, criteria, var_param, three_d, sampling, **kwargs):
     if three_d:
         if ctx.meta["wer"] and ctx.meta["iapmr"]:
-            logger.info("Cannot plot both WER and IAPMR in 3D. Will turn IAPMR off.")
+            logger.info(
+                "Cannot plot both WER and IAPMR in 3D. Will turn IAPMR off."
+            )
             ctx.meta["iapmr"] = False
         ctx.meta["sampling"] = sampling
         process = figure.Epsc3D(

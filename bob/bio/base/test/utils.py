@@ -3,13 +3,15 @@
 # @author: Manuel Guenther <Manuel.Guenther@idiap.ch>
 # @date: Thu Jul 19 17:09:55 CEST 2012
 
-import numpy
+import functools
+import importlib
 import os
 import sys
-import functools
+
+import numpy
+
 from nose.plugins.skip import SkipTest
-import importlib
-from bob.extension.download import get_file
+
 
 # based on: http://stackoverflow.com/questions/6796492/temporarily-redirect-stdout-stderr
 class Quiet(object):
@@ -49,7 +51,8 @@ def random_training_set(shape, count, minimum=0, maximum=1, seed=42):
     # generate a random sequence of features
     numpy.random.seed(seed)
     return [
-        numpy.random.random(shape) * (maximum - minimum) + minimum for i in range(count)
+        numpy.random.random(shape) * (maximum - minimum) + minimum
+        for i in range(count)
     ]
 
 
@@ -69,7 +72,7 @@ def random_training_set_by_id(shape, count=50, minimum=0, maximum=1, seed=42):
 
 def db_available(dbname):
     """Decorator that checks if a given bob.db database is available.
-  This is a double-indirect decorator, see http://thecodeship.com/patterns/guide-to-python-function-decorators"""
+    This is a double-indirect decorator, see http://thecodeship.com/patterns/guide-to-python-function-decorators"""
 
     def wrapped_function(test):
         @functools.wraps(test)

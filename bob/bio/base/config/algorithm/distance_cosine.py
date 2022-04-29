@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-import bob.bio.base
 import scipy.spatial
 
+import bob.bio.base
+
 algorithm = bob.bio.base.algorithm.Distance(
-    distance_function = scipy.spatial.distance.cosine,
-    is_distance_function = True
+    distance_function=scipy.spatial.distance.cosine, is_distance_function=True
 )

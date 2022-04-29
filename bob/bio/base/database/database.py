@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8 :
 
-import os
 import abc
+import os
+
 import six
-from .legacy import FileDatabase as LegacyFileDatabase
+
 from .file import BioFile
+from .legacy import FileDatabase as LegacyFileDatabase
 
 
 class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
@@ -127,9 +129,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
                 purposes=test_value,
                 model_ids=(test_value,),
             )
-            self.annotations(
-                file=BioFile(test_value, test_value, test_value)
-            )
+            self.annotations(file=BioFile(test_value, test_value, test_value))
         except TypeError as e:
             # type error indicates that the given parameters are not valid.
             raise NotImplementedError(
@@ -139,7 +139,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
                 "arguments 'groups', 'protocol', 'purposes' and 'model_ids'\n - the annotations() "
                 "function with at least the arguments 'file_id'."
             )
-        except:
+        except Exception:
             # any other error is fine at this stage.
             pass
 
@@ -173,14 +173,19 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
             params += ", all_files_options=%s" % self.all_files_options
         if self.extractor_training_options:
             params += (
-                ", extractor_training_options=%s" % self.extractor_training_options
+                ", extractor_training_options=%s"
+                % self.extractor_training_options
             )
         if self.projector_training_options:
             params += (
-                ", projector_training_options=%s" % self.projector_training_options
+                ", projector_training_options=%s"
+                % self.projector_training_options
             )
         if self.enroller_training_options:
-            params += ", enroller_training_options=%s" % self.enroller_training_options
+            params += (
+                ", enroller_training_options=%s"
+                % self.enroller_training_options
+            )
 
         return "%s(%s)" % (str(self.__class__), params)
 
@@ -229,7 +234,9 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
 
         try:
             if self.annotation_directory in replacements:
-                self.annotation_directory = replacements[self.annotation_directory]
+                self.annotation_directory = replacements[
+                    self.annotation_directory
+                ]
         except AttributeError:
             pass
 
@@ -304,7 +311,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
             return [f.make_path(directory, extension) for f in files]
 
     #################################################################
-    ###### Methods to be overwritten by derived classes #############
+    # Methods to be overwritten by derived classes
     #################################################################
     @abc.abstractmethod
     def model_ids_with_protocol(self, groups=None, protocol=None, **kwargs):
@@ -324,7 +331,9 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
         ids : [int] or [str]
           The list of (unique) model ids for the given groups.
         """
-        raise NotImplementedError("Please implement this function in derived classes")
+        raise NotImplementedError(
+            "Please implement this function in derived classes"
+        )
 
     def groups(self, protocol=None):
         """
@@ -342,7 +351,12 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
 
     @abc.abstractmethod
     def objects(
-        self, groups=None, protocol=None, purposes=None, model_ids=None, **kwargs
+        self,
+        groups=None,
+        protocol=None,
+        purposes=None,
+        model_ids=None,
+        **kwargs
     ):
         """This function returns a list of :py:class:`bob.bio.base.database.BioFile` objects or the list
         of objects which inherit from this class. Returned files fulfill the given restrictions.
@@ -394,7 +408,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
         )
 
     #################################################################
-    ######### Methods to provide common functionality ###############
+    # Methods to provide common functionality
     #################################################################
 
     def model_ids(self, groups="dev"):
@@ -477,7 +491,9 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
             )
 
         files = self.sort(
-            self.objects(protocol=self.protocol, groups="world", **training_options)
+            self.objects(
+                protocol=self.protocol, groups="world", **training_options
+            )
         )
         if arrange_by_client:
             return self.arrange_by_client(files)
@@ -583,7 +599,12 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
         return self.sort(files)
 
     def object_sets(
-        self, groups=None, protocol=None, purposes=None, model_ids=None, **kwargs
+        self,
+        groups=None,
+        protocol=None,
+        purposes=None,
+        model_ids=None,
+        **kwargs
     ):
         """This function returns lists of FileSet objects, which fulfill the given restrictions.
 
@@ -660,7 +681,9 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
 class ZTBioDatabase(BioDatabase):
     """This class defines another set of abstract functions that need to be implemented if your database provides the interface for computing scores used for ZT-normalization."""
 
-    def __init__(self, name, z_probe_options={}, **kwargs):  # Limit the z-probes
+    def __init__(
+        self, name, z_probe_options={}, **kwargs
+    ):  # Limit the z-probes
         """**Construtctor Documentation**
 
         This constructor tests if all implemented functions take the correct arguments.
@@ -676,8 +699,12 @@ class ZTBioDatabase(BioDatabase):
             # create a value that is very unlikely a valid value for anything
             test_value = "#F9S%3*Y"
             # test if the parameters of the functions apply
-            self.tmodel_ids_with_protocol(groups=test_value, protocol=test_value)
-            self.tobjects(groups=test_value, protocol=test_value, model_ids=test_value)
+            self.tmodel_ids_with_protocol(
+                groups=test_value, protocol=test_value
+            )
+            self.tobjects(
+                groups=test_value, protocol=test_value, model_ids=test_value
+            )
             self.zobjects(groups=test_value, protocol=test_value)
         except TypeError as e:
             # type error indicates that the given parameters are not valid.
@@ -688,7 +715,7 @@ class ZTBioDatabase(BioDatabase):
                 "'groups', 'protocol' and 'model_ids'\n - the zobjects(...) function with at "
                 "least the arguments 'groups' and 'protocol'"
             )
-        except:
+        except Exception:
             # any other error is fine at this stage.
             pass
 
@@ -838,7 +865,9 @@ class ZTBioDatabase(BioDatabase):
           The sorted list of files used for to enroll the model with the given model id.
         """
         return self.sort(
-            self.tobjects(protocol=self.protocol, groups=group, model_ids=(t_model_id,))
+            self.tobjects(
+                protocol=self.protocol, groups=group, model_ids=(t_model_id,)
+            )
         )
 
     def z_probe_files(self, group="dev"):
@@ -858,7 +887,9 @@ class ZTBioDatabase(BioDatabase):
           The unique list of files used to compute the Z-norm.
         """
         return self.sort(
-            self.zobjects(protocol=self.protocol, groups=group, **self.z_probe_options)
+            self.zobjects(
+                protocol=self.protocol, groups=group, **self.z_probe_options
+            )
         )
 
     def z_probe_file_sets(self, group="dev"):
@@ -877,7 +908,9 @@ class ZTBioDatabase(BioDatabase):
         files : [:py:class:`bob.bio.base.database.BioFileSet`]
           The unique list of file sets used to compute the Z-norm.
         """
-        raise NotImplementedError("Please implement this function in derived classes")
+        raise NotImplementedError(
+            "Please implement this function in derived classes"
+        )
 
     def client_id_from_t_model_id(self, t_model_id, group="dev"):
         """client_id_from_t_model_id(t_model_id, group = 'dev') -> client_id

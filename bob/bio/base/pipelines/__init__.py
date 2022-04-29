@@ -1,8 +1,8 @@
-from .pipelines import PipelineSimple
-
 import gzip
-import pickle
 import os
+import pickle
+
+from .pipelines import PipelineSimple
 
 
 def pickle_compress(path, obj, attempts=5):
@@ -32,7 +32,7 @@ def pickle_compress(path, obj, attempts=5):
             # Testing unpression
             uncompress_unpickle(path)
             break
-        except:
+        except Exception:
             continue
     else:
         # If it fails in the 5 attemps
@@ -45,37 +45,33 @@ def uncompress_unpickle(path):
         return pickle.loads(f.read())
 
 
+from .abstract_classes import BioAlgorithm, Database, ScoreWriter
 from .biometric_algorithms import Distance
-from .score_writers import FourColumnsScoreWriter, CSVScoreWriter
+from .entry_points import (  # noqa: F401
+    execute_pipeline_score_norm,
+    execute_pipeline_simple,
+)
+from .legacy import BioAlgorithmLegacy, DatabaseConnector
+from .score_post_processor import (  # noqa: F401
+    BetaCalibration,
+    CategoricalCalibration,
+    GammaCalibration,
+    LLRCalibration,
+    PipelineScoreNorm,
+    TNormScores,
+    WeibullCalibration,
+    ZNormScores,
+    checkpoint_score_normalization_pipeline,
+    dask_score_normalization_pipeline,
+)
+from .score_writers import CSVScoreWriter, FourColumnsScoreWriter
 from .wrappers import (
     BioAlgorithmCheckpointWrapper,
     BioAlgorithmDaskWrapper,
     checkpoint_pipeline_simple,
     dask_pipeline_simple,
-    is_checkpointed,
     get_pipeline_simple_tags,
-)
-
-from .abstract_classes import BioAlgorithm, Database, ScoreWriter
-
-from .score_post_processor import (
-    PipelineScoreNorm,
-    ZNormScores,
-    TNormScores,
-    checkpoint_score_normalization_pipeline,
-    dask_score_normalization_pipeline,
-    CategoricalCalibration,
-    WeibullCalibration,
-    LLRCalibration,
-    GammaCalibration,
-    BetaCalibration,
-)
-
-from .legacy import BioAlgorithmLegacy, DatabaseConnector
-
-from .entry_points import (
-    execute_pipeline_simple,
-    execute_pipeline_score_norm,
+    is_checkpointed,
 )
 
 

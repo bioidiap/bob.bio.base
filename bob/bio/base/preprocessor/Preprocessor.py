@@ -3,11 +3,12 @@
 # @author: Manuel Guenther <Manuel.Guenther@idiap.ch>
 # @date: Tue Oct  2 12:12:39 CEST 2012
 
-from .. import utils
-
 import warnings
 
-class Preprocessor (object):
+from .. import utils
+
+
+class Preprocessor(object):
     """This is the base class for all preprocessors.
     It defines the minimum requirements for all derived proprocessor classes.
 
@@ -30,8 +31,13 @@ class Preprocessor (object):
       A list of keyword arguments to be written in the `__str__` function.
     """
 
-    def __init__(self, writes_data=True, read_original_data=None,
-                 min_preprocessed_file_size=1000, **kwargs):
+    def __init__(
+        self,
+        writes_data=True,
+        read_original_data=None,
+        min_preprocessed_file_size=1000,
+        **kwargs
+    ):
         # Each class needs to have a constructor taking
         # all the parameters that are required for the preprocessing as arguments
         self.writes_data = writes_data
@@ -41,10 +47,11 @@ class Preprocessor (object):
         self.min_preprocessed_file_size = min_preprocessed_file_size
         self._kwargs = kwargs
 
-        warnings.warn("`bob.bio.base.preprocessor.Preprocessor` will be deprecated in 01/01/2021. "\
-                      "Please, implement your biometric algorithm using `bob.pipelines` (https://gitlab.idiap.ch/bob/bob.pipelines).", DeprecationWarning)
-
-
+        warnings.warn(
+            "`bob.bio.base.preprocessor.Preprocessor` will be deprecated in 01/01/2021. "
+            "Please, implement your biometric algorithm using `bob.pipelines` (https://gitlab.idiap.ch/bob/bob.pipelines).",
+            DeprecationWarning,
+        )
 
     # The call function (i.e. the operator() in C++ terms)
     def __call__(self, data, annotations):
@@ -67,7 +74,9 @@ class Preprocessor (object):
         data : object
           The *preprocessed* data, usually a :py:class:`numpy.ndarray`, but might be different.
         """
-        raise NotImplementedError("Please overwrite this function in your derived class")
+        raise NotImplementedError(
+            "Please overwrite this function in your derived class"
+        )
 
     def __str__(self):
         """__str__() -> info
@@ -82,7 +91,7 @@ class Preprocessor (object):
         return utils.pretty_print(self, self._kwargs)
 
     ############################################################
-    ### Special functions that might be overwritten on need
+    # Special functions that might be overwritten on need
     ############################################################
 
     def write_data(self, data, data_file):

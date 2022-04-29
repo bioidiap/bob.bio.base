@@ -2,12 +2,16 @@
 # vim: set fileencoding=utf-8 :
 
 
-from abc import ABCMeta, abstractmethod
-from bob.pipelines.sample import Sample, SampleSet
-import numpy as np
-import os
 import logging
+import os
+
+from abc import ABCMeta, abstractmethod
+
+import numpy as np
+
 from sklearn.base import BaseEstimator
+
+from bob.pipelines.sample import Sample, SampleSet
 
 logger = logging.getLogger(__name__)
 
@@ -213,9 +217,12 @@ class BioAlgorithm(BaseEstimator, metaclass=ABCMeta):
                 for r in biometric_references:
                     if (
                         str(r.reference_id) in probe_refererences
-                        and str(r.reference_id) not in self.stacked_biometric_references
+                        and str(r.reference_id)
+                        not in self.stacked_biometric_references
                     ):
-                        self.stacked_biometric_references[str(r.reference_id)] = r.data
+                        self.stacked_biometric_references[
+                            str(r.reference_id)
+                        ] = r.data
 
             for probe_sample in sampleset:
                 cache_references(sampleset.references)
@@ -432,8 +439,8 @@ class ScoreWriter(metaclass=ABCMeta):
                         f.writelines(f2.readlines())
             return filename
 
-        import dask.bag
         import dask
+        import dask.bag
 
         if isinstance(score_paths, dask.bag.Bag):
             all_paths = dask.delayed(list)(score_paths)

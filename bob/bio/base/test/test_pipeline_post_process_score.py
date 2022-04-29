@@ -2,43 +2,36 @@
 # vim: set fileencoding=utf-8 :
 # @author: Tiago de Freitas Pereira <tiago.pereira@idiap.ch>
 
-from bob.pipelines import Sample, SampleSet, DelayedSample
+import copy
 import os
-import numpy as np
+import shutil
 import tempfile
+import uuid
+
+import numpy as np
+
+from scipy.spatial.distance import cdist, euclidean
 from sklearn.pipeline import make_pipeline
-from bob.bio.base.wrappers import wrap_bob_legacy
-
-from bob.bio.base.test.test_transformers import (
-    FakePreprocesor,
-    FakeExtractor,
-    FakeAlgorithm,
-)
-from bob.bio.base.test.test_pipeline_simple import DummyDatabase, _make_transformer
-
+from sklearn.preprocessing import FunctionTransformer
 
 from bob.bio.base.pipelines import (
-    Distance,
-    PipelineSimple,
-    ZNormScores,
-    TNormScores,
-    PipelineScoreNorm,
-    checkpoint_score_normalization_pipeline,
-    dask_score_normalization_pipeline,
     BioAlgorithmCheckpointWrapper,
-    dask_pipeline_simple,
-    BioAlgorithmLegacy,
     CSVScoreWriter,
+    Distance,
+    PipelineScoreNorm,
+    PipelineSimple,
+    TNormScores,
+    ZNormScores,
     checkpoint_pipeline_simple,
+    checkpoint_score_normalization_pipeline,
+    dask_pipeline_simple,
+    dask_score_normalization_pipeline,
 )
-
-import bob.pipelines as mario
-import uuid
-import shutil
-import itertools
-from scipy.spatial.distance import cdist, euclidean
-from sklearn.preprocessing import FunctionTransformer
-import copy
+from bob.bio.base.test.test_pipeline_simple import (
+    DummyDatabase,
+    _make_transformer,
+)
+from bob.pipelines import Sample, SampleSet
 
 
 def zt_norm_stubs(references, probes, t_references, z_probes):
@@ -72,9 +65,12 @@ def zt_norm_stubs(references, probes, t_references, z_probes):
             return (
                 scores
                 - np.tile(
-                    mu.reshape(norm_base_scores.shape[0], 1), (1, scores.shape[1])
+                    mu.reshape(norm_base_scores.shape[0], 1),
+                    (1, scores.shape[1]),
                 )
-            ) / np.tile(std.reshape(norm_base_scores.shape[0], 1), (1, scores.shape[1]))
+            ) / np.tile(
+                std.reshape(norm_base_scores.shape[0], 1), (1, scores.shape[1])
+            )
         else:
 
             std = np.sqrt(
@@ -95,9 +91,12 @@ def zt_norm_stubs(references, probes, t_references, z_probes):
             return (
                 scores
                 - np.tile(
-                    mu.reshape(1, norm_base_scores.shape[1]), (scores.shape[0], 1)
+                    mu.reshape(1, norm_base_scores.shape[1]),
+                    (scores.shape[0], 1),
                 )
-            ) / np.tile(std.reshape(1, norm_base_scores.shape[1]), (scores.shape[0], 1))
+            ) / np.tile(
+                std.reshape(1, norm_base_scores.shape[1]), (scores.shape[0], 1)
+            )
 
     n_reference = references.shape[0]
     n_probes = probes.shape[0]
@@ -147,7 +146,13 @@ def test_norm_mechanics():
         if references is None:
             return [
                 SampleSet(
-                    [Sample(s, reference_id=str(i + offset), key=str(uuid.uuid4()))],
+                    [
+                        Sample(
+                            s,
+                            reference_id=str(i + offset),
+                            key=str(uuid.uuid4()),
+                        )
+                    ],
                     key=str(i + offset),
                     reference_id=str(i + offset),
                     subject_id=str(i + offset),
@@ -157,7 +162,13 @@ def test_norm_mechanics():
         else:
             return [
                 SampleSet(
-                    [Sample(s, reference_id=str(i + offset), key=str(uuid.uuid4()))],
+                    [
+                        Sample(
+                            s,
+                            reference_id=str(i + offset),
+                            key=str(uuid.uuid4()),
+                        )
+                    ],
                     key=str(i + offset),
                     reference_id=str(i + offset),
                     subject_id=str(i + offset),
@@ -172,7 +183,9 @@ def test_norm_mechanics():
     def _dump_scores_from_samples(scores, shape):
         # We have to transpose because the tests are BIOMETRIC_REFERENCES vs PROBES
         # and bob.bio.base is PROBES vs BIOMETRIC_REFERENCES
-        return np.array([s.data for sset in scores for s in sset]).reshape(shape).T
+        return (
+            np.array([s.data for sset in scores for s in sset]).reshape(shape).T
+        )
 
     with tempfile.TemporaryDirectory() as dir_name:
 
@@ -214,11 +227,17 @@ def test_norm_mechanics():
             ############
 
             # Creating enrollment samples
-            biometric_reference_sample_sets = _create_sample_sets(references, offset=0)
-            t_reference_sample_sets = _create_sample_sets(t_references, offset=300)
+            biometric_reference_sample_sets = _create_sample_sets(
+                references, offset=0
+            )
+            t_reference_sample_sets = _create_sample_sets(
+                t_references, offset=300
+            )
 
             # Fetching ids
-            reference_ids = [r.reference_id for r in biometric_reference_sample_sets]
+            reference_ids = [
+                r.reference_id for r in biometric_reference_sample_sets
+            ]
             # t_reference_ids = [r.reference_id for r in t_reference_sample_sets]
             # ids = reference_ids + t_reference_ids
 
@@ -233,7 +252,9 @@ def test_norm_mechanics():
             # TESTING REGULAR SCORING
             #############
 
-            transformer = make_pipeline(FunctionTransformer(func=_do_nothing_fn))
+            transformer = make_pipeline(
+                FunctionTransformer(func=_do_nothing_fn)
+            )
             biometric_algorithm = Distance(euclidean, factor=1)
 
             if with_checkpoint:
@@ -256,7 +277,9 @@ def test_norm_mechanics():
             )
 
             if with_dask:
-                score_samples = score_samples.compute(scheduler="single-threaded")
+                score_samples = score_samples.compute(
+                    scheduler="single-threaded"
+                )
 
             raw_scores = _dump_scores_from_samples(
                 score_samples, shape=(n_probes, n_references)
@@ -270,7 +293,9 @@ def test_norm_mechanics():
             # """
             z_norm_postprocessor = ZNormScores(pipeline=pipeline_simple)
 
-            z_pipeline_simple = PipelineScoreNorm(pipeline_simple, z_norm_postprocessor)
+            z_pipeline_simple = PipelineScoreNorm(
+                pipeline_simple, z_norm_postprocessor
+            )
 
             if with_checkpoint:
                 z_pipeline_simple = checkpoint_score_normalization_pipeline(
@@ -278,7 +303,9 @@ def test_norm_mechanics():
                 )
 
             if with_dask:
-                z_pipeline_simple = dask_score_normalization_pipeline(z_pipeline_simple)
+                z_pipeline_simple = dask_score_normalization_pipeline(
+                    z_pipeline_simple
+                )
 
             _, z_normed_score_samples = z_pipeline_simple(
                 [],
@@ -299,7 +326,9 @@ def test_norm_mechanics():
 
             t_norm_postprocessor = TNormScores(pipeline=pipeline_simple)
 
-            t_pipeline_simple = PipelineScoreNorm(pipeline_simple, t_norm_postprocessor)
+            t_pipeline_simple = PipelineScoreNorm(
+                pipeline_simple, t_norm_postprocessor
+            )
 
             if with_checkpoint:
                 t_pipeline_simple = checkpoint_score_normalization_pipeline(
@@ -307,7 +336,9 @@ def test_norm_mechanics():
                 )
 
             if with_dask:
-                t_pipeline_simple = dask_score_normalization_pipeline(t_pipeline_simple)
+                t_pipeline_simple = dask_score_normalization_pipeline(
+                    t_pipeline_simple
+                )
 
             _, t_normed_score_samples = t_pipeline_simple(
                 [],
@@ -325,13 +356,13 @@ def test_norm_mechanics():
     # No dask
     run(False)  # On memory
 
-    ## With checkpoing
+    # With checkpoing
     run(False, with_checkpoint=True)
     run(False, with_checkpoint=True)
     shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
     os.makedirs(dir_name, exist_ok=True)
 
-    ## With dask
+    # With dask
     run(True)  # On memory
     run(True, with_checkpoint=True)
     run(True, with_checkpoint=True)
@@ -355,7 +386,9 @@ def test_znorm_on_memory():
 
             z_norm_postprocessor = ZNormScores(pipeline=pipeline_simple)
 
-            z_pipeline_simple = PipelineScoreNorm(pipeline_simple, z_norm_postprocessor)
+            z_pipeline_simple = PipelineScoreNorm(
+                pipeline_simple, z_norm_postprocessor
+            )
 
             # Checkpointing everything
 
@@ -368,8 +401,12 @@ def test_znorm_on_memory():
             )
 
             if with_dask:
-                pipeline_simple = dask_pipeline_simple(pipeline_simple, npartitions=2)
-                z_pipeline_simple = dask_score_normalization_pipeline(z_pipeline_simple)
+                pipeline_simple = dask_pipeline_simple(
+                    pipeline_simple, npartitions=2
+                )
+                z_pipeline_simple = dask_score_normalization_pipeline(
+                    z_pipeline_simple
+                )
 
             (raw_scores, z_scores) = z_pipeline_simple(
                 database.background_model_samples(),
@@ -401,7 +438,7 @@ def test_znorm_on_memory():
                     t_scores,
                     os.path.join(dir_name, "scores-dev", "t_scores"),
                 )
-                
+
                 zt_scores = _concatenate(
                     vanilla_biometrics_pipeline,
                     zt_scores,
@@ -427,7 +464,8 @@ def test_znorm_on_memory():
                 assert (
                     len(
                         open(
-                            os.path.join(dir_name, "scores-dev", "raw_scores"), "r"
+                            os.path.join(dir_name, "scores-dev", "raw_scores"),
+                            "r",
                         ).readlines()
                     )
                     == 101
@@ -435,7 +473,8 @@ def test_znorm_on_memory():
                 assert (
                     len(
                         open(
-                            os.path.join(dir_name, "scores-dev", "z_scores"), "r"
+                            os.path.join(dir_name, "scores-dev", "z_scores"),
+                            "r",
                         ).readlines()
                     )
                     == 101
@@ -476,19 +515,25 @@ def test_znorm_on_memory():
 
         run_pipeline(False)
         run_pipeline(False)  # Testing checkpoint
-        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        shutil.rmtree(
+            dir_name
+        )  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         run_pipeline(
             False, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
         )
-        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        shutil.rmtree(
+            dir_name
+        )  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         # With DASK
         run_pipeline(True)
         run_pipeline(True)  # Testing checkpoint
-        shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
+        shutil.rmtree(
+            dir_name
+        )  # Deleting the cache so it runs again from scratch
         os.makedirs(dir_name, exist_ok=True)
 
         run_pipeline(

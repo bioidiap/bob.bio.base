@@ -1,42 +1,25 @@
-from bob.pipelines import (
-    DelayedSample,
-    SampleSet,
-    Sample,
-    DelayedSampleSet,
-    DelayedSampleSetCached,
-)
-import os
-import dask
 import functools
-from .score_writers import FourColumnsScoreWriter
-from .abstract_classes import BioAlgorithm
-import bob.pipelines
-import numpy as np
-import h5py
+import logging
+import os
 
-# from .zt_norm import ZTNormPipeline, ZTNormDaskWrapper
+import dask
+import h5py
+import numpy as np
+
+import bob.pipelines
+
+from bob.bio.base.transformers import AlgorithmTransformer
+from bob.pipelines import DelayedSample, DelayedSampleSetCached
+from bob.pipelines.utils import isinstance_nested
+from bob.pipelines.wrappers import BaseWrapper, CheckpointWrapper, get_bob_tags
+
+from . import pickle_compress, uncompress_unpickle
+from .abstract_classes import BioAlgorithm
+from .legacy import BioAlgorithmLegacy
 from .score_post_processor import (
     PipelineScoreNorm,
     dask_score_normalization_pipeline,
 )
-from .legacy import BioAlgorithmLegacy
-from bob.bio.base.transformers import (
-    PreprocessorTransformer,
-    ExtractorTransformer,
-    AlgorithmTransformer,
-)
-from bob.pipelines.wrappers import (
-    SampleWrapper,
-    CheckpointWrapper,
-    get_bob_tags,
-    BaseWrapper,
-)
-from bob.pipelines.distributed.sge import SGEMultipleQueuesCluster
-import logging
-from bob.pipelines.utils import isinstance_nested
-import gc
-import time
-from . import pickle_compress, uncompress_unpickle
 
 logger = logging.getLogger(__name__)
 
@@ -188,7 +171,9 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
 
         if self.force or not os.path.exists(path):
 
-            enrolled_sample = self.biometric_algorithm._enroll_sample_set(sampleset)
+            enrolled_sample = self.biometric_algorithm._enroll_sample_set(
+                sampleset
+            )
 
             # saving the new sample
             os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -331,7 +316,9 @@ def dask_pipeline_simple(pipeline, npartitions=None, partition_size=None):
             npartitions=npartitions,
             partition_size=partition_size,
         )
-        pipeline.biometric_algorithm = pipeline.pipeline_simple.biometric_algorithm
+        pipeline.biometric_algorithm = (
+            pipeline.pipeline_simple.biometric_algorithm
+        )
         pipeline.transformer = pipeline.pipeline_simple.transformer
 
         pipeline = dask_score_normalization_pipeline(pipeline)
@@ -412,7 +399,8 @@ def checkpoint_pipeline_simple(
             isinstance(pipeline.transformer[-1], CheckpointWrapper)
             and hasattr(pipeline.transformer[-1].estimator, "estimator")
             and isinstance(
-                pipeline.transformer[-1].estimator.estimator, AlgorithmTransformer
+                pipeline.transformer[-1].estimator.estimator,
+                AlgorithmTransformer,
             )
         ):
 

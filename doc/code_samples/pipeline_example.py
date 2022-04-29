@@ -1,13 +1,14 @@
 import numpy as np
-from bob.bio.base.pipelines import BioAlgorithm
-from bob.bio.base.pipelines import PipelineSimple
-from bob.pipelines import wrap
+
 from sklearn.decomposition import PCA
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import check_array
 
-## Transformers
+from bob.bio.base.pipelines import BioAlgorithm, PipelineSimple
+from bob.pipelines import wrap
+
+# Transformers #
 pca = PCA(n_components=0.95)
 
 # the images are in shape of Nx112x92, we want to flatten to Nx10304 them so we can train a PCA on them.
@@ -27,7 +28,7 @@ transformer = make_pipeline(flatten_transformer, pca)
 # All transformers must be sample transformers
 transformer = wrap(["sample"], transformer)
 
-## Implementation of the BioAlgorithm
+# Implementation of the BioAlgorithm #
 # A better implementation is available in:
 # from bob.bio.base.pipelines.vanilla_biometrics import Distance
 class EuclideanDistance(BioAlgorithm):
@@ -44,7 +45,7 @@ class EuclideanDistance(BioAlgorithm):
 bio_algorithm = EuclideanDistance()
 
 
-## Creation of the pipeline
+# Creation of the pipeline #
 # `pipeline` will be used by the `bob bio pipelines vanilla` command
 pipeline = PipelineSimple(transformer, bio_algorithm)
 

@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8 :
 
-from bob.bio.base.transformers import (
-    PreprocessorTransformer,
-    ExtractorTransformer,
-    AlgorithmTransformer,
-)
-from bob.bio.base.preprocessor import Preprocessor
-from bob.bio.base.extractor import Extractor
-from bob.bio.base.algorithm import Algorithm
-import bob.pipelines as mario
 import os
+
+import bob.pipelines as mario
+
+from bob.bio.base.algorithm import Algorithm
+from bob.bio.base.extractor import Extractor
+from bob.bio.base.preprocessor import Preprocessor
+from bob.bio.base.transformers import (
+    AlgorithmTransformer,
+    ExtractorTransformer,
+    PreprocessorTransformer,
+)
 from bob.bio.base.utils import is_argument_available
 
 
@@ -20,11 +22,11 @@ def wrap_bob_legacy(
     fit_extra_arguments=None,
     transform_extra_arguments=None,
     dask_it=False,
-    **kwargs
+    **kwargs,
 ):
     """
     Wraps either :any:`bob.bio.base.preprocessor.Preprocessor`, :any:`bob.bio.base.extractor.Extractor`
-    or :any:`bob.bio.base.algorithm.Algorithm` with :any:`sklearn.base.TransformerMixin` 
+    or :any:`bob.bio.base.algorithm.Algorithm` with :any:`sklearn.base.TransformerMixin`
     and :any:`bob.pipelines.wrappers.CheckpointWrapper` and :any:`bob.pipelines.wrappers.SampleWrapper`
 
 
@@ -33,7 +35,7 @@ def wrap_bob_legacy(
 
     bob_object: object
         Instance of :any:`bob.bio.base.preprocessor.Preprocessor`, :any:`bob.bio.base.extractor.Extractor` and :any:`bob.bio.base.algorithm.Algorithm`
-        
+
     dir_name: str
         Directory name for the checkpoints
 
@@ -50,8 +52,9 @@ def wrap_bob_legacy(
 
     if isinstance(bob_object, Preprocessor):
         transformer = wrap_checkpoint_preprocessor(
-            bob_object, features_dir=os.path.join(dir_name, "preprocessor"),
-            **kwargs
+            bob_object,
+            features_dir=os.path.join(dir_name, "preprocessor"),
+            **kwargs,
         )
     elif isinstance(bob_object, Extractor):
         transformer = wrap_checkpoint_extractor(
@@ -60,7 +63,7 @@ def wrap_bob_legacy(
             model_path=dir_name,
             fit_extra_arguments=fit_extra_arguments,
             transform_extra_arguments=transform_extra_arguments,
-            **kwargs
+            **kwargs,
         )
     elif isinstance(bob_object, Algorithm):
         transformer = wrap_checkpoint_algorithm(
@@ -69,7 +72,7 @@ def wrap_bob_legacy(
             model_path=dir_name,
             fit_extra_arguments=fit_extra_arguments,
             transform_extra_arguments=transform_extra_arguments,
-            **kwargs
+            **kwargs,
         )
     else:
         raise ValueError(
@@ -85,13 +88,13 @@ def wrap_bob_legacy(
 def wrap_sample_preprocessor(
     preprocessor,
     transform_extra_arguments=(("annotations", "annotations"),),
-    **kwargs
+    **kwargs,
 ):
     """
-    Wraps :any:`bob.bio.base.preprocessor.Preprocessor` with 
+    Wraps :any:`bob.bio.base.preprocessor.Preprocessor` with
     :any:`bob.pipelines.wrappers.CheckpointWrapper` and :any:`bob.pipelines.wrappers.SampleWrapper`
 
-    .. warning:: 
+    .. warning::
        This wrapper doesn't checkpoint data
 
     Parameters
@@ -122,7 +125,7 @@ def wrap_checkpoint_preprocessor(
     extension=".hdf5",
 ):
     """
-    Wraps :any:`bob.bio.base.preprocessor.Preprocessor` with 
+    Wraps :any:`bob.bio.base.preprocessor.Preprocessor` with
     :any:`bob.pipelines.wrappers.CheckpointWrapper` and :any:`bob.pipelines.wrappers.SampleWrapper`
 
     Parameters
@@ -188,7 +191,7 @@ def wrap_sample_extractor(
     **kwargs,
 ):
     """
-    Wraps :any:`bob.bio.base.extractor.Extractor` with 
+    Wraps :any:`bob.bio.base.extractor.Extractor` with
     :any:`bob.pipelines.wrappers.CheckpointWrapper` and :any:`bob.pipelines.wrappers.SampleWrapper`
 
     Parameters
@@ -206,12 +209,17 @@ def wrap_sample_extractor(
     """
 
     extractor_file = (
-        os.path.join(model_path, "Extractor.hdf5") if model_path is not None else None
+        os.path.join(model_path, "Extractor.hdf5")
+        if model_path is not None
+        else None
     )
 
     transformer = ExtractorTransformer(extractor, model_path=extractor_file)
 
-    transform_extra_arguments, fit_extra_arguments = _prepare_extractor_sample_args(
+    (
+        transform_extra_arguments,
+        fit_extra_arguments,
+    ) = _prepare_extractor_sample_args(
         extractor, transform_extra_arguments, fit_extra_arguments
     )
 
@@ -236,7 +244,7 @@ def wrap_checkpoint_extractor(
     **kwargs,
 ):
     """
-    Wraps :any:`bob.bio.base.extractor.Extractor` with 
+    Wraps :any:`bob.bio.base.extractor.Extractor` with
     :any:`bob.pipelines.wrappers.CheckpointWrapper` and :any:`bob.pipelines.wrappers.SampleWrapper`
 
     Parameters
@@ -271,15 +279,22 @@ def wrap_checkpoint_extractor(
     """
 
     extractor_file = (
-        os.path.join(model_path, "Extractor.hdf5") if model_path is not None else None
+        os.path.join(model_path, "Extractor.hdf5")
+        if model_path is not None
+        else None
     )
 
     model_file = (
-        os.path.join(model_path, "Extractor.pkl") if model_path is not None else None
+        os.path.join(model_path, "Extractor.pkl")
+        if model_path is not None
+        else None
     )
     transformer = ExtractorTransformer(extractor, model_path=extractor_file)
 
-    transform_extra_arguments, fit_extra_arguments = _prepare_extractor_sample_args(
+    (
+        transform_extra_arguments,
+        fit_extra_arguments,
+    ) = _prepare_extractor_sample_args(
         extractor, transform_extra_arguments, fit_extra_arguments
     )
 
@@ -323,7 +338,7 @@ def wrap_sample_algorithm(
     **kwargs,
 ):
     """
-    Wraps :any:`bob.bio.base.algorithm.Algorithm` with 
+    Wraps :any:`bob.bio.base.algorithm.Algorithm` with
     :any:`bob.pipelines.wrappers.CheckpointWrapper` and :any:`bob.pipelines.wrappers.SampleWrapper`
 
     Parameters
@@ -344,12 +359,17 @@ def wrap_sample_algorithm(
     """
 
     projector_file = (
-        os.path.join(model_path, "Projector.hdf5") if model_path is not None else None
+        os.path.join(model_path, "Projector.hdf5")
+        if model_path is not None
+        else None
     )
 
     transformer = AlgorithmTransformer(algorithm, projector_file=projector_file)
 
-    transform_extra_arguments, fit_extra_arguments = _prepare_algorithm_sample_args(
+    (
+        transform_extra_arguments,
+        fit_extra_arguments,
+    ) = _prepare_algorithm_sample_args(
         algorithm, transform_extra_arguments, fit_extra_arguments
     )
 
@@ -373,7 +393,7 @@ def wrap_checkpoint_algorithm(
     **kwargs,
 ):
     """
-    Wraps :any:`bob.bio.base.algorithm.Algorithm` with 
+    Wraps :any:`bob.bio.base.algorithm.Algorithm` with
     :any:`bob.pipelines.wrappers.CheckpointWrapper` and :any:`bob.pipelines.wrappers.SampleWrapper`
 
     Parameters
@@ -409,15 +429,22 @@ def wrap_checkpoint_algorithm(
     """
 
     projector_file = (
-        os.path.join(model_path, "Projector.hdf5") if model_path is not None else None
+        os.path.join(model_path, "Projector.hdf5")
+        if model_path is not None
+        else None
     )
 
     model_file = (
-        os.path.join(model_path, "Projector.pkl") if model_path is not None else None
+        os.path.join(model_path, "Projector.pkl")
+        if model_path is not None
+        else None
     )
     transformer = AlgorithmTransformer(algorithm, projector_file=projector_file)
 
-    transform_extra_arguments, fit_extra_arguments = _prepare_algorithm_sample_args(
+    (
+        transform_extra_arguments,
+        fit_extra_arguments,
+    ) = _prepare_algorithm_sample_args(
         algorithm, transform_extra_arguments, fit_extra_arguments
     )
 

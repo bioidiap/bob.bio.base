@@ -1,6 +1,7 @@
 import logging
-from . import Annotator
+
 from .. import load_resource
+from . import Annotator
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,9 @@ class FailSafe(Annotator):
         If True, the annotations will only contain the ``required_keys``.
     """
 
-    def __init__(self, annotators, required_keys, only_required_keys=False, **kwargs):
+    def __init__(
+        self, annotators, required_keys, only_required_keys=False, **kwargs
+    ):
         super(FailSafe, self).__init__(**kwargs)
         self.annotators = []
         for annotator in annotators:
@@ -42,11 +45,15 @@ class FailSafe(Annotator):
                 )[0]
             except Exception:
                 logger.debug(
-                    "The annotator `%s' failed to annotate!", annotator, exc_info=True
+                    "The annotator `%s' failed to annotate!",
+                    annotator,
+                    exc_info=True,
                 )
                 annotations = None
             if not annotations:
-                logger.debug("Annotator `%s' returned empty annotations.", annotator)
+                logger.debug(
+                    "Annotator `%s' returned empty annotations.", annotator
+                )
             else:
                 logger.debug("Annotator `%s' succeeded!", annotator)
             kwargs["annotations"].update(annotations or {})
@@ -75,7 +82,9 @@ class FailSafe(Annotator):
         should contain ``[{<s1_annotations>}, {<s2_annotations>}, ...]``).
         """
         kwargs = translate_kwargs(kwargs, len(samples))
-        return [self.annotate(sample, **kw) for sample, kw in zip(samples, kwargs)]
+        return [
+            self.annotate(sample, **kw) for sample, kw in zip(samples, kwargs)
+        ]
 
 
 def translate_kwargs(kwargs, size):

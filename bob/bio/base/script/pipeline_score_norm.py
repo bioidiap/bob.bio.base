@@ -8,11 +8,13 @@
 import logging
 
 import click
-from bob.bio.base.pipelines.entry_points import execute_pipeline_score_norm
-from bob.extension.scripts.click_helper import ConfigCommand
-from bob.extension.scripts.click_helper import ResourceOption
-from bob.extension.scripts.click_helper import verbosity_option
 
+from bob.bio.base.pipelines.entry_points import execute_pipeline_score_norm
+from bob.extension.scripts.click_helper import (
+    ConfigCommand,
+    ResourceOption,
+    verbosity_option,
+)
 from bob.pipelines.distributed import VALID_DASK_CLIENT_STRINGS
 
 logger = logging.getLogger(__name__)

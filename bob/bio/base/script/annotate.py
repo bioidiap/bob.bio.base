@@ -1,16 +1,18 @@
 """A script to help annotate databases.
 """
-import logging
-import click
-import json
 import functools
+import json
+import logging
+
+import click
+
 from bob.extension.scripts.click_helper import (
-    verbosity_option,
     ConfigCommand,
     ResourceOption,
     log_parameters,
+    verbosity_option,
 )
-from bob.pipelines import wrap, ToDaskBag, DelayedSample
+from bob.pipelines import DelayedSample, ToDaskBag, wrap
 
 logger = logging.getLogger(__name__)
 

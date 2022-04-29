@@ -3,8 +3,9 @@
 # Fri Dec  7 12:33:37 CET 2012
 """Utility functions for computation of EPSC curve and related measurement"""
 
-from bob.measure import farfrr
 import numpy
+
+from bob.measure import farfrr
 
 
 def calc_pass_rate(threshold, attacks):
@@ -25,7 +26,9 @@ def calc_pass_rate(threshold, attacks):
     return (attacks >= threshold).mean()
 
 
-def weighted_neg_error_rate_criteria(data, weight, thres, beta=0.5, criteria="eer"):
+def weighted_neg_error_rate_criteria(
+    data, weight, thres, beta=0.5, criteria="eer"
+):
     """Given the single value for the weight parameter balancing between
     impostors and spoofing attacks and a threshold, calculates the error rates
     and their relationship depending on the criteria (difference in case of
@@ -84,7 +87,9 @@ def epsc_weights(licit_neg, licit_pos, spoof_neg, spoof_pos, points=100):
     return weights
 
 
-def recursive_thr_search(data, span_min, span_max, weight, beta=0.5, criteria="eer"):
+def recursive_thr_search(
+    data, span_min, span_max, weight, beta=0.5, criteria="eer"
+):
     """Recursive search for the optimal threshold given a criteria. It
       evaluates the full range of thresholds at 100 points, and computes the one
       which optimizes the threshold. In the next search iteration, it examines
@@ -113,10 +118,14 @@ def recursive_thr_search(data, span_min, span_max, weight, beta=0.5, criteria="e
         return span_max  # or span_min, it doesn't matter
     else:
         step_size = (span_max - span_min) / steps
-        thresholds = numpy.array([(i * step_size) + span_min for i in range(steps + 1)])
+        thresholds = numpy.array(
+            [(i * step_size) + span_min for i in range(steps + 1)]
+        )
         weighted_error_rates = numpy.array(
             [
-                weighted_neg_error_rate_criteria(data, weight, thr, beta, criteria)
+                weighted_neg_error_rate_criteria(
+                    data, weight, thr, beta, criteria
+                )
                 for thr in thresholds
             ]
         )
@@ -166,7 +175,9 @@ def weighted_negatives_threshold(
         spoof_neg,
         spoof_pos,
     )  # pack the data into a single list
-    return recursive_thr_search(data, span_min, span_max, weight, beta, criteria)
+    return recursive_thr_search(
+        data, span_min, span_max, weight, beta, criteria
+    )
 
 
 def epsc_thresholds(
@@ -230,7 +241,13 @@ def epsc_thresholds(
         thresholds[bindex, :] = numpy.array(
             [
                 weighted_negatives_threshold(
-                    licit_neg, licit_pos, spoof_neg, spoof_pos, w, b, criteria=criteria
+                    licit_neg,
+                    licit_pos,
+                    spoof_neg,
+                    spoof_pos,
+                    w,
+                    b,
+                    criteria=criteria,
                 )
                 for w in omega
             ],
@@ -465,7 +482,9 @@ def calc_aue(
     l_ind = numpy.where(weights >= l_bound)[0][0]
     h_ind = numpy.where(weights <= h_bound)[0][-1]
     aue = integrate.cumtrapz(wer_errors, weights)
-    aue = numpy.append([0], aue)  # for indexing purposes, aue is cumulative integration
+    aue = numpy.append(
+        [0], aue
+    )  # for indexing purposes, aue is cumulative integration
     aue = aue[h_ind] - aue[l_ind]
 
     return aue

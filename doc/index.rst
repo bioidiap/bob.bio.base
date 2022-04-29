@@ -115,4 +115,3 @@ Indices and tables
 * :ref:`search`
 
 .. include:: links.rst
-

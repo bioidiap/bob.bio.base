@@ -4,24 +4,26 @@
 # Roy Wallace <roy.wallace@idiap.ch>
 
 
-from .resources import *
-from .io import *
-import six
 import inspect
+
 import numpy
+import six
+
+from .io import *  # noqa: F401,F403
+from .resources import *  # noqa: F401,F403
 
 
 def score_fusion_strategy(strategy_name="average"):
     """Returns a function to compute a fusion strategy between different scores.
 
-  Different strategies are employed:
+    Different strategies are employed:
 
-  * ``'average'`` : The averaged score is computed using the :py:func:`numpy.average` function.
-  * ``'min'`` : The minimum score is computed using the :py:func:`min` function.
-  * ``'max'`` : The maximum score is computed using the :py:func:`max` function.
-  * ``'median'`` : The median score is computed using the :py:func:`numpy.median` function.
-  * ``None`` is also accepted, in which case ``None`` is returned.
-  """
+    * ``'average'`` : The averaged score is computed using the :py:func:`numpy.average` function.
+    * ``'min'`` : The minimum score is computed using the :py:func:`min` function.
+    * ``'max'`` : The maximum score is computed using the :py:func:`max` function.
+    * ``'median'`` : The median score is computed using the :py:func:`numpy.median` function.
+    * ``None`` is also accepted, in which case ``None`` is returned.
+    """
     try:
         return {
             "average": numpy.average,
@@ -37,7 +39,7 @@ def score_fusion_strategy(strategy_name="average"):
 
 def selected_indices(total_number_of_indices, desired_number_of_indices=None):
     """Returns a list of indices that will contain exactly the number of desired indices (or the number of total items in the list, if this is smaller).
-  These indices are selected such that they are evenly spread over the whole sequence."""
+    These indices are selected such that they are evenly spread over the whole sequence."""
     if (
         desired_number_of_indices is None
         or desired_number_of_indices >= total_number_of_indices
@@ -51,7 +53,7 @@ def selected_indices(total_number_of_indices, desired_number_of_indices=None):
 
 def selected_elements(list_of_elements, desired_number_of_elements=None):
     """Returns a list of elements that are sub-selected from the given list (or the list itself, if its length is smaller).
-  These elements are selected such that they are evenly spread over the whole list."""
+    These elements are selected such that they are evenly spread over the whole list."""
     total_number_of_elements = len(list_of_elements)
     if (
         desired_number_of_elements is None
@@ -62,7 +64,9 @@ def selected_elements(list_of_elements, desired_number_of_elements=None):
     # sub-select
     return [
         list_of_elements[i]
-        for i in selected_indices(total_number_of_elements, desired_number_of_elements)
+        for i in selected_indices(
+            total_number_of_elements, desired_number_of_elements
+        )
     ]
 
 
@@ -84,17 +88,17 @@ def pretty_print(obj, kwargs):
 
 def is_argument_available(argument, method):
     """
-  Check if an argument (or keyword argument) is available in a method
+    Check if an argument (or keyword argument) is available in a method
 
-  Attributes
-  ----------
-    argument: str
-      The name of the argument (or keyword argument).
+    Attributes
+    ----------
+      argument: str
+        The name of the argument (or keyword argument).
 
-    method:
-      Pointer to the method
+      method:
+        Pointer to the method
 
-  """
+    """
 
     if six.PY2:
         return argument in inspect.getargspec(method).args

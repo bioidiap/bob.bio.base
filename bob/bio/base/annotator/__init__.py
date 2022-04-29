@@ -1,6 +1,6 @@
 from .Annotator import Annotator
-from .FailSafe import FailSafe
 from .Callable import Callable
+from .FailSafe import FailSafe
 
 
 # gets sphinx autodoc done right - don't remove it
@@ -28,4 +28,4 @@ __appropriate__(
     Callable,
 )
 
-__all__ = [_ for _ in dir() if not _.startswith('_')]
+__all__ = [_ for _ in dir() if not _.startswith("_")]

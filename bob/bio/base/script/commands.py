@@ -1,13 +1,14 @@
 """ Click commands for ``bob.bio.base`` """
 
 import click
-from . import figure as bio_figure
-from bob.bio.base.score import iscsv
-import bob.measure.script.figure as measure_figure
-from ..score import load
-from bob.measure.script import common_options
-from bob.extension.scripts.click_helper import verbosity_option
 
+import bob.measure.script.figure as measure_figure
+
+from bob.extension.scripts.click_helper import verbosity_option
+from bob.measure.script import common_options
+
+from ..score import load
+from . import figure as bio_figure
 
 SCORE_FORMAT = (
     "Files must be 4- or 5- columns format, see "
@@ -61,7 +62,9 @@ def metrics(ctx, scores, evaluation, **kwargs):
 
 
 @common_options.roc_command(
-    common_options.ROC_HELP.format(score_format=SCORE_FORMAT, command="bob bio roc")
+    common_options.ROC_HELP.format(
+        score_format=SCORE_FORMAT, command="bob bio roc"
+    )
 )
 def roc(ctx, scores, evaluation, **kargs):
     process = bio_figure.Roc(ctx, scores, evaluation, load.split)
@@ -69,7 +72,9 @@ def roc(ctx, scores, evaluation, **kargs):
 
 
 @common_options.det_command(
-    common_options.DET_HELP.format(score_format=SCORE_FORMAT, command="bob bio det")
+    common_options.DET_HELP.format(
+        score_format=SCORE_FORMAT, command="bob bio det"
+    )
 )
 def det(ctx, scores, evaluation, **kargs):
     process = bio_figure.Det(ctx, scores, evaluation, load.split)
@@ -77,7 +82,9 @@ def det(ctx, scores, evaluation, **kargs):
 
 
 @common_options.epc_command(
-    common_options.EPC_HELP.format(score_format=SCORE_FORMAT, command="bob bio epc")
+    common_options.EPC_HELP.format(
+        score_format=SCORE_FORMAT, command="bob bio epc"
+    )
 )
 def epc(ctx, scores, **kargs):
     process = measure_figure.Epc(ctx, scores, True, load.split)
@@ -85,7 +92,9 @@ def epc(ctx, scores, **kargs):
 
 
 @common_options.hist_command(
-    common_options.HIST_HELP.format(score_format=SCORE_FORMAT, command="bob bio hist")
+    common_options.HIST_HELP.format(
+        score_format=SCORE_FORMAT, command="bob bio hist"
+    )
 )
 def hist(ctx, scores, evaluation, **kwargs):
     process = bio_figure.Hist(ctx, scores, evaluation, load.split)

@@ -2,14 +2,14 @@
 # vim: set fileencoding=utf-8 :
 
 
-import os
-from bob.pipelines import SampleSet, DelayedSample
-from bob.pipelines.sample import SAMPLE_DATA_ATTRS
-from .abstract_classes import ScoreWriter
-import functools
 import csv
+import os
 import uuid
-import shutil
+
+from bob.pipelines import DelayedSample
+from bob.pipelines.sample import SAMPLE_DATA_ATTRS
+
+from .abstract_classes import ScoreWriter
 
 
 class FourColumnsScoreWriter(ScoreWriter):
@@ -48,8 +48,8 @@ class FourColumnsScoreWriter(ScoreWriter):
                     f.writelines(lines)
             return [filename]
 
-        import dask.bag
         import dask
+        import dask.bag
 
         if isinstance(probe_sampleset, dask.bag.Bag):
             return probe_sampleset.map_partitions(_write)
@@ -74,7 +74,8 @@ class CSVScoreWriter(ScoreWriter):
     def __init__(
         self,
         path,
-        exclude_list=tuple(SAMPLE_DATA_ATTRS) + ("key", "references", "annotations"),
+        exclude_list=tuple(SAMPLE_DATA_ATTRS)
+        + ("key", "references", "annotations"),
     ):
         super().__init__(path)
         self.exclude_list = exclude_list
@@ -162,8 +163,8 @@ class CSVScoreWriter(ScoreWriter):
 
             return post_process_scores
 
-        import dask.bag
         import dask
+        import dask.bag
 
         if isinstance(score_paths, dask.bag.Bag):
             all_paths = dask.delayed(list)(score_paths)
