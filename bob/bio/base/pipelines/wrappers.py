@@ -26,14 +26,13 @@ logger = logging.getLogger(__name__)
 
 def default_save(data: np.ndarray, path: str):
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    f = h5py.File(path, "w")
-    f["data"] = data
-    f.close()
+    with h5py.File(path, "w") as f:
+        f["data"] = data
 
 
 def default_load(path: str) -> np.ndarray:
-    f = h5py.File(path, "r")
-    return f["data"]
+    with h5py.File(path, "r") as f:
+        return f["data"][()]
 
 
 def get_pipeline_simple_tags(estimator=None, force_tags=None):
