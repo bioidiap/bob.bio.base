@@ -1,5 +1,7 @@
-from . import filelist  # noqa: F401
-from .atnt import AtntBioDatabase  # noqa: F401
+# isort: skip_file
+from .file import BioFile, BioFileSet
+# import BioFile first to avoid circular import
+from .database import BioDatabase, ZTBioDatabase
 from .csv_dataset import (
     CSVDataset,
     CSVDatasetCrossValidation,
@@ -7,8 +9,8 @@ from .csv_dataset import (
     CSVToSampleLoaderBiometrics,
     LSTToSampleLoader,
 )
-from .database import BioDatabase, ZTBioDatabase
-from .file import BioFile, BioFileSet
+from .atnt import AtntBioDatabase  # noqa: F401
+from . import filelist  # noqa: F401
 from .filelist import FileListBioDatabase
 
 

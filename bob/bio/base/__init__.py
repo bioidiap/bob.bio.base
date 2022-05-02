@@ -1,3 +1,6 @@
+# isort: skip_file
+from . import database  # noqa: F401
+from .utils import *  # noqa: F401,F403
 from . import (  # noqa: F401
     algorithm,
     annotator,
@@ -9,7 +12,6 @@ from . import (  # noqa: F401
     script,
     test,
 )
-from .utils import *  # noqa: F401,F403
 
 
 def get_config():

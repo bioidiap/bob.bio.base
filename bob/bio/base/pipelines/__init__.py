@@ -47,9 +47,13 @@ def uncompress_unpickle(path):
 
 from .abstract_classes import BioAlgorithm, Database, ScoreWriter
 from .biometric_algorithms import Distance
-from .entry_points import (  # noqa: F401
-    execute_pipeline_score_norm,
-    execute_pipeline_simple,
+from .wrappers import (
+    BioAlgorithmCheckpointWrapper,
+    BioAlgorithmDaskWrapper,
+    checkpoint_pipeline_simple,
+    dask_pipeline_simple,
+    get_pipeline_simple_tags,
+    is_checkpointed,
 )
 from .legacy import BioAlgorithmLegacy, DatabaseConnector
 from .score_post_processor import (  # noqa: F401
@@ -65,14 +69,11 @@ from .score_post_processor import (  # noqa: F401
     dask_score_normalization_pipeline,
 )
 from .score_writers import CSVScoreWriter, FourColumnsScoreWriter
-from .wrappers import (
-    BioAlgorithmCheckpointWrapper,
-    BioAlgorithmDaskWrapper,
-    checkpoint_pipeline_simple,
-    dask_pipeline_simple,
-    get_pipeline_simple_tags,
-    is_checkpointed,
+from .entry_points import (  # noqa: F401
+    execute_pipeline_score_norm,
+    execute_pipeline_simple,
 )
+
 
 
 # gets sphinx autodoc done right - don't remove it
