@@ -4,7 +4,6 @@ from .utils import *  # noqa: F401,F403
 from . import (  # noqa: F401
     algorithm,
     annotator,
-    database,
     extractor,
     pipelines,
     preprocessor,

@@ -45,6 +45,7 @@ def uncompress_unpickle(path):
         return pickle.loads(f.read())
 
 
+# isort: skip_file
 from .abstract_classes import BioAlgorithm, Database, ScoreWriter
 from .biometric_algorithms import Distance
 from .wrappers import (
@@ -73,7 +74,6 @@ from .entry_points import (  # noqa: F401
     execute_pipeline_score_norm,
     execute_pipeline_simple,
 )
-
 
 
 # gets sphinx autodoc done right - don't remove it
