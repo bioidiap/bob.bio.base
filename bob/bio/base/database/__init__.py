@@ -1,18 +1,18 @@
 # isort: skip_file
-from .file import BioFile, BioFileSet
-
-# import BioFile first to avoid circular import
-from .database import BioDatabase, ZTBioDatabase
 from .csv_dataset import (
     CSVDataset,
-    CSVDatasetCrossValidation,
-    CSVDatasetZTNorm,
     CSVToSampleLoaderBiometrics,
+    CSVDatasetCrossValidation,
     LSTToSampleLoader,
+    CSVDatasetZTNorm,
 )
-from .atnt import AtntBioDatabase  # noqa: F401
-from . import filelist  # noqa: F401
+from .file import BioFile
+from .file import BioFileSet
+from .database import BioDatabase
+from .database import ZTBioDatabase
 from .filelist import FileListBioDatabase
+from . import filelist  # noqa: F401
+from .atnt import AtntBioDatabase  # noqa: F401
 
 
 # gets sphinx autodoc done right - don't remove it
@@ -37,10 +37,10 @@ __appropriate__(
     BioDatabase,
     ZTBioDatabase,
     CSVDataset,
-    CSVDatasetZTNorm,
     CSVToSampleLoaderBiometrics,
     CSVDatasetCrossValidation,
     FileListBioDatabase,
     LSTToSampleLoader,
+    CSVDatasetZTNorm,
 )
 __all__ = [_ for _ in dir() if not _.startswith("_")]

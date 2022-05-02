@@ -1,7 +1,6 @@
 # isort: skip_file
-from .query import FileListBioDatabase
 from .models import FileListFile
-
+from .query import FileListBioDatabase
 
 # gets sphinx autodoc done right - don't remove it
 def __appropriate__(*args):

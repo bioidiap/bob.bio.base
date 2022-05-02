@@ -2,15 +2,14 @@
 # vim: set fileencoding=utf-8 :
 # Laurent El Shafey <Laurent.El-Shafey@idiap.ch>
 # Roy Wallace <roy.wallace@idiap.ch>
+# isort: skip_file
 
 
-import inspect
-
-import numpy
-import six
-
-from .io import *  # noqa: F401,F403
 from .resources import *  # noqa: F401,F403
+from .io import *  # noqa: F401,F403
+import six
+import inspect
+import numpy
 
 
 def score_fusion_strategy(strategy_name="average"):

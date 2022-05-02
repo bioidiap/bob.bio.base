@@ -1,5 +1,6 @@
-from .Filename import Filename
+# isort: skip_file
 from .Preprocessor import Preprocessor
+from .Filename import Filename
 
 
 # gets sphinx autodoc done right - don't remove it
