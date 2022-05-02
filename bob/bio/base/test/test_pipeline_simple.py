@@ -16,7 +16,6 @@ from sklearn.pipeline import make_pipeline
 
 from bob.bio.base.pipelines import (
     BioAlgorithmCheckpointWrapper,
-    BioAlgorithmLegacy,
     CSVScoreWriter,
     Distance,
     FourColumnsScoreWriter,
@@ -491,79 +490,6 @@ def test_checkpoint_bioalg_with_tags():
         run_pipeline(
             True, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
         )  # Checking if the checkpointing works
-
-
-def test_checkpoint_bioalg_as_bioalg():
-
-    with tempfile.TemporaryDirectory() as dir_name:
-
-        def run_pipeline(
-            with_dask, score_writer=FourColumnsScoreWriter(dir_name)
-        ):
-            database = DummyDatabase()
-
-            transformer = _make_transformer_with_algorithm(dir_name)
-            projector_file = transformer[2].estimator.estimator.projector_file
-
-            biometric_algorithm = BioAlgorithmLegacy(
-                FakeAlgorithm(),
-                base_dir=dir_name,
-                score_writer=score_writer,
-                projector_file=projector_file,
-            )
-
-            pipeline_simple = PipelineSimple(transformer, biometric_algorithm)
-
-            if with_dask:
-                pipeline_simple = dask_pipeline_simple(
-                    pipeline_simple, npartitions=2
-                )
-
-            scores = pipeline_simple(
-                database.background_model_samples(),
-                database.references(),
-                database.probes(),
-                allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
-            )
-
-            if pipeline_simple.score_writer is None:
-                if with_dask:
-                    scores = scores.compute(scheduler="single-threaded")
-
-                assert len(scores) == 10
-                for sset in scores:
-                    if isinstance(sset[0], DelayedSample):
-                        for s in sset:
-                            assert len(s.data) == 10
-                    else:
-                        assert len(sset) == 10
-            else:
-                writed_scores = pipeline_simple.write_scores(scores)
-                concatenated_scores = pipeline_simple.post_process(
-                    writed_scores, os.path.join(dir_name, "scores-dev")
-                )
-
-                if with_dask:
-                    concatenated_scores = concatenated_scores.compute(
-                        scheduler="single-threaded"
-                    )
-
-                assert len(open(concatenated_scores).readlines()) == 100
-
-        run_pipeline(False)
-        run_pipeline(False)  # Checking if the checkpointing works
-        shutil.rmtree(
-            dir_name
-        )  # Deleting the cache so it runs again from scratch
-        os.makedirs(dir_name, exist_ok=True)
-
-        # Dask
-        run_pipeline(True)
-        run_pipeline(True)  # Checking if the checkpointing works
-        shutil.rmtree(
-            dir_name
-        )  # Deleting the cache so it runs again from scratch
-        os.makedirs(dir_name, exist_ok=True)
 
 
 def _run_with_failure(

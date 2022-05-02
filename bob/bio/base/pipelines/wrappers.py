@@ -8,14 +8,12 @@ import numpy as np
 
 import bob.pipelines
 
-from bob.bio.base.transformers import AlgorithmTransformer
 from bob.pipelines import DelayedSample, DelayedSampleSetCached
 from bob.pipelines.utils import isinstance_nested
-from bob.pipelines.wrappers import BaseWrapper, CheckpointWrapper, get_bob_tags
+from bob.pipelines.wrappers import BaseWrapper, get_bob_tags
 
 from . import pickle_compress, uncompress_unpickle
 from .abstract_classes import BioAlgorithm
-from .legacy import BioAlgorithmLegacy
 from .score_post_processor import (
     PipelineScoreNorm,
     dask_score_normalization_pipeline,
@@ -388,32 +386,12 @@ def checkpoint_pipeline_simple(
         force=force,
     )
 
-    if isinstance(pipeline.biometric_algorithm, BioAlgorithmLegacy):
-        pipeline.biometric_algorithm.base_dir = bio_ref_scores_dir
-
-        # Here we need to check if the LAST transformer is
-        # 1. is instance of CheckpointWrapper
-        # 2. Its estimator is instance of AlgorithmTransformer
-        if (
-            isinstance(pipeline.transformer[-1], CheckpointWrapper)
-            and hasattr(pipeline.transformer[-1].estimator, "estimator")
-            and isinstance(
-                pipeline.transformer[-1].estimator.estimator,
-                AlgorithmTransformer,
-            )
-        ):
-
-            pipeline.transformer[
-                -1
-            ].estimator.estimator.projector_file = bio_ref_scores_dir
-
-    else:
-        pipeline.biometric_algorithm = BioAlgorithmCheckpointWrapper(
-            pipeline.biometric_algorithm,
-            base_dir=bio_ref_scores_dir,
-            hash_fn=hash_fn,
-            force=force,
-        )
+    pipeline.biometric_algorithm = BioAlgorithmCheckpointWrapper(
+        pipeline.biometric_algorithm,
+        base_dir=bio_ref_scores_dir,
+        hash_fn=hash_fn,
+        force=force,
+    )
 
     return pipeline
 
@@ -431,11 +409,7 @@ def is_checkpointed(pipeline):
 
     """
 
-    # We have to check if is BioAlgorithmCheckpointWrapper OR
-    # If it BioAlgorithmLegacy and the transformer of BioAlgorithmLegacy is also checkpointable
+    # We have to check if is BioAlgorithmCheckpointWrapper
     return isinstance_nested(
         pipeline, "biometric_algorithm", BioAlgorithmCheckpointWrapper
-    ) or (
-        isinstance_nested(pipeline, "biometric_algorithm", BioAlgorithmLegacy)
-        and isinstance_nested(pipeline, "transformer", CheckpointWrapper)
     )

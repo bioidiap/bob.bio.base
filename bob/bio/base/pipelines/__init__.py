@@ -72,8 +72,6 @@ from .score_post_processor import (  # noqa: F401
     BetaCalibration,
 )
 
-from .legacy import BioAlgorithmLegacy, DatabaseConnector
-
 from .entry_points import (  # noqa: F401
     execute_pipeline_simple,
     execute_pipeline_score_norm,
@@ -110,8 +108,6 @@ __appropriate__(
     checkpoint_pipeline_simple,
     is_checkpointed,
     get_pipeline_simple_tags,
-    BioAlgorithmLegacy,
-    DatabaseConnector,
     execute_pipeline_simple,
     BioAlgorithm,
     Database,

@@ -9,6 +9,7 @@ import tempfile
 import uuid
 
 import numpy as np
+import pytest
 
 from scipy.spatial.distance import cdist, euclidean
 from sklearn.pipeline import make_pipeline
@@ -141,6 +142,7 @@ def zt_norm_stubs(references, probes, t_references, z_probes):
     )
 
 
+@pytest.mark.slow
 def test_norm_mechanics():
     def _create_sample_sets(raw_data, offset, references=None):
         if references is None:

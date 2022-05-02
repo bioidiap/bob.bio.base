@@ -70,27 +70,6 @@ def random_training_set_by_id(shape, count=50, minimum=0, maximum=1, seed=42):
     return train_set
 
 
-def db_available(dbname):
-    """Decorator that checks if a given bob.db database is available.
-    This is a double-indirect decorator, see http://thecodeship.com/patterns/guide-to-python-function-decorators"""
-
-    def wrapped_function(test):
-        @functools.wraps(test)
-        def wrapper(*args, **kwargs):
-            try:
-                __import__("bob.db.%s" % dbname)
-                return test(*args, **kwargs)
-            except ImportError as e:
-                raise SkipTest(
-                    "Skipping test since the database bob.db.%s seems not to be available: %s"
-                    % (dbname, e)
-                )
-
-        return wrapper
-
-    return wrapped_function
-
-
 def is_library_available(library):
     """Decorator to check if the mxnet is present, before running the test"""
 
