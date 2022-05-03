@@ -3,7 +3,6 @@
 import shutil
 
 import click
-import nose
 import numpy
 import pkg_resources
 
@@ -463,10 +462,10 @@ def test_sort():
         assert_click_runner_result(result, exit_code=0)
 
         # load dev1 and sort it and compare to path
-        dev1_sorted = sorted_scores(scores(dev1))
+        dev1_sorted = list(sorted_scores(scores(dev1)))
         path_scores = list(scores(path))
 
-        nose.tools.assert_list_equal(dev1_sorted, path_scores)
+        assert dev1_sorted == path_scores
 
 
 def test_metrics_vuln():

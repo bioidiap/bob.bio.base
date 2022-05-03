@@ -6,8 +6,8 @@
 
 import os
 
-import nose.tools
 import numpy as np
+import pytest
 
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
@@ -826,9 +826,9 @@ def test_query_protocol():
     assert (
         len(db.model_ids_with_protocol(protocol=prot)) == 3
     )  # 3 model ids for dev only
-    nose.tools.assert_raises(
-        ValueError, db.model_ids_with_protocol, protocol=prot, groups="eval"
-    )  # eval does not exist for this protocol
+    with pytest.raises(ValueError):
+        # eval does not exist for this protocol
+        db.model_ids_with_protocol(protocol=prot, groups="eval")
     assert len(db.objects(protocol=prot, groups="dev", purposes="enroll")) == 12
     assert len(db.objects(protocol=prot, groups="dev", purposes="probe")) == 9
 
@@ -917,4 +917,5 @@ def test_multiple_extensions():
     file = bob.bio.base.database.BioFile(
         4, "data/model4_session1_sample1", "data/model4_session1_sample1"
     )
-    nose.tools.assert_raises(IOError, db.original_file_name, file, False)
+    with pytest.raises(IOError):
+        db.original_file_name(file, False)

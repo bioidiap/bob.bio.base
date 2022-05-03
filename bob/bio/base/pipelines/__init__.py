@@ -1,8 +1,9 @@
-import gzip
-import os
-import pickle
+# isort: skip_file
+from .pipelines import PipelineSimple  # noqa: F401
 
-from .pipelines import PipelineSimple
+import gzip
+import pickle
+import os
 
 
 def pickle_compress(path, obj, attempts=5):
@@ -45,33 +46,35 @@ def uncompress_unpickle(path):
         return pickle.loads(f.read())
 
 
-from .abstract_classes import BioAlgorithm, Database, ScoreWriter
 from .biometric_algorithms import Distance
-from .entry_points import (  # noqa: F401
-    execute_pipeline_score_norm,
-    execute_pipeline_simple,
-)
-from .legacy import BioAlgorithmLegacy, DatabaseConnector
-from .score_post_processor import (  # noqa: F401
-    BetaCalibration,
-    CategoricalCalibration,
-    GammaCalibration,
-    LLRCalibration,
-    PipelineScoreNorm,
-    TNormScores,
-    WeibullCalibration,
-    ZNormScores,
-    checkpoint_score_normalization_pipeline,
-    dask_score_normalization_pipeline,
-)
-from .score_writers import CSVScoreWriter, FourColumnsScoreWriter
+from .score_writers import FourColumnsScoreWriter, CSVScoreWriter
 from .wrappers import (
     BioAlgorithmCheckpointWrapper,
     BioAlgorithmDaskWrapper,
     checkpoint_pipeline_simple,
     dask_pipeline_simple,
-    get_pipeline_simple_tags,
     is_checkpointed,
+    get_pipeline_simple_tags,
+)
+
+from .abstract_classes import BioAlgorithm, Database, ScoreWriter
+
+from .score_post_processor import (  # noqa: F401
+    PipelineScoreNorm,
+    ZNormScores,
+    TNormScores,
+    checkpoint_score_normalization_pipeline,
+    dask_score_normalization_pipeline,
+    CategoricalCalibration,
+    WeibullCalibration,
+    LLRCalibration,
+    GammaCalibration,
+    BetaCalibration,
+)
+
+from .entry_points import (  # noqa: F401
+    execute_pipeline_simple,
+    execute_pipeline_score_norm,
 )
 
 
@@ -105,8 +108,6 @@ __appropriate__(
     checkpoint_pipeline_simple,
     is_checkpointed,
     get_pipeline_simple_tags,
-    BioAlgorithmLegacy,
-    DatabaseConnector,
     execute_pipeline_simple,
     BioAlgorithm,
     Database,

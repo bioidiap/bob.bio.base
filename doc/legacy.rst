@@ -24,7 +24,7 @@ This adaptation consists of wrapper classes that take a legacy bob class as inpu
 Legacy FileList Database interface
 ----------------------------------
 
-This is a similar database interface to :ref:`the CSV file interface <bob.bio.base.database.csv_file_interface>`, but takes information from a series of two- or three-column files without header instead of CSV files and returns a legacy database (use a :ref:`Database Connector <bob.bio.base.legacy.database_connector>` to create a database interface).
+This is a similar database interface to :ref:`the CSV file interface <bob.bio.base.database.csv_file_interface>`, but takes information from a series of two- or three-column files without header instead of CSV files and returns a legacy database (use a ``Database Connector (was removed) <bob.bio.base.legacy.database_connector>`` to create a database interface).
 
 
 The files are separated into three sets: ``'world'`` (training; optional), ``'dev'`` (development; required) and ``'eval'`` (evaluation; optional) set to be used by the biometric verification algorithm.
@@ -147,42 +147,6 @@ The following list files need to be created:
   will be ignored.
 
 
-.. _bob.bio.base.legacy.database_connector:
-
-Legacy Database Connector
--------------------------
-
-This *legacy database wrapper* is used to translate an old ``bob.db`` package functions into a bob pipelines database interface.
-
-It uses :any:`bob.bio.base.database.BioDatabase.objects` to retrieve a list of
-files for each role (``world``, ``references``, and ``probes``) and specified
-group (``dev`` and ``eval``) and creates the matching :any:`bob.pipelines.Sample` and
-:any:`bob.pipelines.SampleSet` lists.
-
-
-This example shows the creation of the Mobio database interface in the bob.pipelines format from the legacy bob.db:
-
-.. code-block:: python
-
-    from bob.bio.face.database import MobioBioDatabase
-    from bob.bio.base.pipelines import DatabaseConnector
-    from bob.extension import rc
-
-    legacy_database = MobioBioDatabase(
-        original_directory=rc["bob.db.mobio.directory"],
-        annotation_directory=rc["bob.db.mobio.annotation_directory"],
-        original_extension=".png",
-        protocol="mobile0-male",
-    )
-
-    # Converts to a Database interface for bob.pipelines
-    database = DatabaseConnector(legacy_database)
-
-    # Sets the optimization flag
-    database.allow_scoring_with_all_biometric_references = True
-
-
-
 Legacy Preprocessor wrapper
 ---------------------------
 
@@ -233,7 +197,7 @@ Legacy Algorithm wrappers
 -------------------------
 
 Lastly, :py:class:`bob.bio.base.transformers.AlgorithmTransformer` and
-:any:`bob.bio.base.pipelines.BioAlgorithmLegacy`
+``bob.bio.base.pipelines.BioAlgorithmLegacy`` (BioAlgorithmLegacy is removed)
 are available to map correctly a legacy Algorithm to a Transformer and a
 :any:`bob.bio.base.pipelines.BioAlgorithm`.
 
@@ -259,13 +223,13 @@ Here is an example showing how to create the Transformer out of a bob.bio.base A
 And here is an example of the creation of the
 :any:`bob.bio.base.pipelines.BioAlgorithm` from the
 bob.bio.base Algorithm (:py:class:`bob.bio.base.algorithm.Distance`) with the
-:any:`bob.bio.base.pipelines.BioAlgorithmLegacy`. This will
+``bob.bio.base.pipelines.BioAlgorithmLegacy``. This will
 map correctly the ``enroll`` and ``score`` methods:
 
 .. code-block:: python
 
     from bob.bio.base.algorithm import Distance
-    from bob.bio.base.pipelines.legacy import BioAlgorithmLegacy
+    from bob.bio.base.pipelines.legacy import BioAlgorithmLegacy  # this class is removed! write a new BioAlgorithm!
     import scipy.spatial
 
     legacy_algorithm = Distance(

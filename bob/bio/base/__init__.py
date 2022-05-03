@@ -1,15 +1,15 @@
-from . import (  # noqa: F401
-    algorithm,
-    annotator,
-    database,
-    extractor,
-    pipelines,
-    preprocessor,
-    score,
-    script,
-    test,
-)
+# isort: skip_file
 from .utils import *  # noqa: F401,F403
+from . import database  # noqa: F401
+from . import preprocessor  # noqa: F401
+from . import extractor  # noqa: F401
+from . import algorithm  # noqa: F401
+from . import annotator  # noqa: F401
+from . import pipelines  # noqa: F401
+
+from . import script  # noqa: F401
+from . import test  # noqa: F401
+from . import score  # noqa: F401
 
 
 def get_config():

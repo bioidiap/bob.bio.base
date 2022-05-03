@@ -1,6 +1,7 @@
+# isort: skip_file
 from .Annotator import Annotator
-from .Callable import Callable
 from .FailSafe import FailSafe
+from .Callable import Callable
 
 
 # gets sphinx autodoc done right - don't remove it
