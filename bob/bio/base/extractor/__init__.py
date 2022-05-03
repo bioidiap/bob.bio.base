@@ -1,3 +1,4 @@
+# isort: skip_file
 from .Extractor import Extractor
 from .Linearize import Linearize
 

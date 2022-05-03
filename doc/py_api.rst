@@ -52,16 +52,6 @@ Assembling the pipeline
   bob.bio.base.pipelines.PipelineScoreNorm
 
 
-Building Pipelines from Legacy constructs
------------------------------------------
-
-Creating Database interfaces from legacy
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autosummary::
-
-  bob.bio.base.pipelines.DatabaseConnector
-
 Creating Transformers from legacy constructs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -70,14 +60,6 @@ Creating Transformers from legacy constructs
   bob.bio.base.transformers.PreprocessorTransformer
   bob.bio.base.transformers.ExtractorTransformer
   bob.bio.base.transformers.AlgorithmTransformer
-
-Creating BioAlgorithms from legacy Algorithm
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autosummary::
-
-  bob.bio.base.pipelines.BioAlgorithmLegacy
-
 
 
 Legacy Constructs

@@ -113,30 +113,29 @@ class CSVScoreWriter(ScoreWriter):
         header, probe_dict, bioref_dict = create_csv_header(probe_sampleset[0])
 
         filename = os.path.join(self.path, str(uuid.uuid4()))
-        f = open(filename, "w")
-        csv_writer = csv.writer(f)
-        rows = []
-        for i, probe in enumerate(probe_sampleset):
+        with open(filename, "w") as f:
+            csv_writer = csv.writer(f)
+            rows = []
+            for i, probe in enumerate(probe_sampleset):
 
-            # Writing the header
-            if i == 0:
-                csv_writer.writerow(header)
+                # Writing the header
+                if i == 0:
+                    csv_writer.writerow(header)
 
-            probe_row = [str(probe.key)] + [
-                str(getattr(probe, k)) for k in probe_dict.keys()
-            ]
-
-            # Iterating over the biometric references
-            for biometric_reference in probe:
-                bio_ref_row = [
-                    str(getattr(biometric_reference, k))
-                    for k in list(bioref_dict.keys()) + ["data"]
+                probe_row = [str(probe.key)] + [
+                    str(getattr(probe, k)) for k in probe_dict.keys()
                 ]
 
-                rows.append(probe_row + bio_ref_row)
+                # Iterating over the biometric references
+                for biometric_reference in probe:
+                    bio_ref_row = [
+                        str(getattr(biometric_reference, k))
+                        for k in list(bioref_dict.keys()) + ["data"]
+                    ]
 
-        csv_writer.writerows(rows)
-        f.close()
+                    rows.append(probe_row + bio_ref_row)
+
+            csv_writer.writerows(rows)
         return [filename]
 
     def post_process(self, score_paths, path):
