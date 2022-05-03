@@ -62,7 +62,6 @@ The ``database`` object defined in ``my_database.py`` is an instance of either:
 - A :py:class:`bob.bio.base.database.CSVDataset` (see :ref:`here <bob.bio.base.database.csv_file_interface>`),
 - A :py:class:`bob.bio.base.database.CSVDatasetCrossValidation` (see :ref:`here <bob.bio.base.database.csv_cross_validation>`),
 - Your implementation of a :ref:`Database Interface <bob.bio.base.database.interface_class>`,
-- A :ref:`legacy Database connector <bob.bio.base.legacy.database_connector>`.
 
 
 .. _bob.bio.base.database.csv_file_interface:

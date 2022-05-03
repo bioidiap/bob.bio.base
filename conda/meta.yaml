@@ -57,13 +57,14 @@ test:
     - bob bio pipeline simple --help
     - bob bio pipeline score-norm --help
     - bob bio pipeline transform --help
-    - nosetests --with-coverage --cover-package={{ name }} -sv {{ name }}
+    - pytest --verbose --cov {{ name }} --cov-report term-missing --cov-report html:{{ project_dir }}/sphinx/coverage --cov-report xml:{{ project_dir }}/coverage.xml --pyargs {{ name }}
     - sphinx-build -aEW {{ project_dir }}/doc {{ project_dir }}/sphinx
     - sphinx-build -aEb doctest {{ project_dir }}/doc sphinx
     - conda inspect linkages -p $PREFIX {{ name }}  # [not win]
     - conda inspect objects -p $PREFIX {{ name }}  # [osx]
   requires:
-    - nose {{ nose }}
+    - pytest {{ pytest }}
+    - pytest-cov {{ pytest_cov }}
     - coverage {{ coverage }}
     - sphinx {{ sphinx }}
     - sphinx_rtd_theme {{ sphinx_rtd_theme }}

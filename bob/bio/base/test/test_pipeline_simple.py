@@ -9,9 +9,9 @@ import tempfile
 import uuid
 
 import numpy as np
+import pytest
 
 from h5py import File as HDF5File
-from nose.tools import raises
 from sklearn.pipeline import make_pipeline
 
 from bob.bio.base.pipelines import (
@@ -531,6 +531,6 @@ def test_database_sporadic_failure():
     _run_with_failure(True, sporadic_fail=True)
 
 
-@raises(ValueError)
 def test_database_full_failure():
-    _run_with_failure(False, sporadic_fail=False)
+    with pytest.raises(ValueError):
+        _run_with_failure(False, sporadic_fail=False)

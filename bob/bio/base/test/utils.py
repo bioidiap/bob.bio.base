@@ -7,10 +7,9 @@ import functools
 import importlib
 import os
 import sys
+import unittest
 
 import numpy
-
-from nose.plugins.skip import SkipTest
 
 
 # based on: http://stackoverflow.com/questions/6796492/temporarily-redirect-stdout-stderr
@@ -81,7 +80,8 @@ def is_library_available(library):
 
                 return function(*args, **kwargs)
             except ImportError as e:
-                raise SkipTest(
+                # unittest.SkipTest is compatible with both nose and pytest
+                raise unittest.SkipTest(
                     f"Skipping test since `{library}` is not available: %s" % e
                 )
 

@@ -24,7 +24,7 @@ This adaptation consists of wrapper classes that take a legacy bob class as inpu
 Legacy FileList Database interface
 ----------------------------------
 
-This is a similar database interface to :ref:`the CSV file interface <bob.bio.base.database.csv_file_interface>`, but takes information from a series of two- or three-column files without header instead of CSV files and returns a legacy database (use a :ref:`Database Connector <bob.bio.base.legacy.database_connector>` to create a database interface).
+This is a similar database interface to :ref:`the CSV file interface <bob.bio.base.database.csv_file_interface>`, but takes information from a series of two- or three-column files without header instead of CSV files and returns a legacy database (use a ``Database Connector (was removed) <bob.bio.base.legacy.database_connector>`` to create a database interface).
 
 
 The files are separated into three sets: ``'world'`` (training; optional), ``'dev'`` (development; required) and ``'eval'`` (evaluation; optional) set to be used by the biometric verification algorithm.
