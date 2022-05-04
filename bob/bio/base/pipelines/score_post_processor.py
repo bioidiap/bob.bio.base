@@ -116,28 +116,36 @@ class PipelineScoreNorm(PipelineSimple):
         )
 
         # Training the score transformer
-        if isinstance_nested(
-            self.post_processor, "estimator", ZNormScores
-        ) or isinstance(self.post_processor, ZNormScores):
-            self.post_processor.fit(
-                [post_process_samples, biometric_references]
-            )
-            # Transformer
-            post_processed_scores = self.post_processor.transform(raw_scores)
+        # if isinstance_nested(
+        #     self.post_processor, "estimator", ZNormScores
+        # ) or isinstance(self.post_processor, ZNormScores):
+        #     self.post_processor.fit(
+        #         [post_process_samples, biometric_references]
+        #     )
+        #     # Transformer
+        #     post_processed_scores = self.post_processor.transform(raw_scores)
 
-        elif isinstance_nested(
-            self.post_processor, "estimator", TNormScores
-        ) or isinstance(self.post_processor, TNormScores):
-            # self.post_processor.fit([post_process_samples, probe_features])
-            self.post_processor.fit([post_process_samples, probe_samples])
-            # Transformer
+        # elif isinstance_nested(
+        #     self.post_processor, "estimator", TNormScores
+        # ) or isinstance(self.post_processor, TNormScores):
+        #     # self.post_processor.fit([post_process_samples, probe_features])
+        #     self.post_processor.fit([post_process_samples, probe_samples])
+        #     # Transformer
+        #     post_processed_scores = self.post_processor.transform(raw_scores)
+        # else:
+        #     logger.warning(
+        #         f"Invalid post-processor {self.post_processor}. Returning the raw_scores"
+        #     )
+        #     post_processed_scores = raw_scores
+        try:
+            self.post_processor.fit([post_process_samples, biometric_references,probe_samples])
             post_processed_scores = self.post_processor.transform(raw_scores)
-        else:
+        except:
             logger.warning(
                 f"Invalid post-processor {self.post_processor}. Returning the raw_scores"
             )
-            post_processed_scores = raw_scores
-
+            post_processed_scores = raw_scores  
+            
         return raw_scores, post_processed_scores
 
     def train_background_model(self, background_model_samples):
