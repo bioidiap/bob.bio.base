@@ -117,13 +117,15 @@ class PipelineScoreNorm(PipelineSimple):
 
         # Training the score transformer
         try:
-            self.post_processor.fit([post_process_samples, biometric_references,probe_samples])
+            self.post_processor.fit(
+                [post_process_samples, biometric_references, probe_samples]
+            )
             post_processed_scores = self.post_processor.transform(raw_scores)
         except Exception:
             logger.warning(
                 f"Invalid post-processor {self.post_processor}. Returning the raw_scores"
             )
-            post_processed_scores = raw_scores  
+            post_processed_scores = raw_scores
 
         return raw_scores, post_processed_scores
 
