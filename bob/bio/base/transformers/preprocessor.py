@@ -40,7 +40,6 @@ class PreprocessorTransformer(TransformerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {
-            "stateless": True,
             "requires_fit": False,
             "bob_features_save_fn": self.instance.write_data,
             "bob_features_load_fn": self.instance.read_data,

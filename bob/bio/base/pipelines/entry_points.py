@@ -19,7 +19,7 @@ from bob.bio.base.pipelines import (
 )
 from bob.pipelines.distributed import dask_get_partition_size
 from bob.pipelines.distributed.sge import SGEMultipleQueuesCluster
-from bob.pipelines.utils import is_estimator_stateless, isinstance_nested
+from bob.pipelines.utils import estimator_requires_fit, isinstance_nested
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +147,9 @@ def execute_pipeline_simple(
         )
 
     # Load the background model samples only if the transformer requires fitting
-    if all([is_estimator_stateless(step) for step in pipeline.transformer]):
+    if all(
+        [(not estimator_requires_fit(step)) for step in pipeline.transformer]
+    ):
         background_model_samples = []
     else:
         background_model_samples = database.background_model_samples()
