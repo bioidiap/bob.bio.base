@@ -18,6 +18,7 @@ from bob.bio.base.pipelines import (
     is_checkpointed,
 )
 from bob.pipelines.distributed import dask_get_partition_size
+from bob.pipelines.distributed.sge import SGEMultipleQueuesCluster
 from bob.pipelines.utils import is_estimator_stateless, isinstance_nested
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,7 @@ def execute_pipeline_simple(
     output,
     write_metadata_scores,
     checkpoint,
+    dask_n_partitions,
     dask_partition_size,
     dask_n_workers,
     checkpoint_dir=None,
@@ -64,6 +66,18 @@ def execute_pipeline_simple(
     Dask instance, allowing chaining multiple experiments while keeping the
     workers alive.
 
+    When using Dask, something to keep in mind is that we want to split our data and
+    processing time on multiple workers. There is no recipe to make everything work on
+    any system. So if you encounter some balancing error (a few of all the available
+    workers actually working while the rest waits, or the scheduler being overloaded
+    trying to organise millions of tiny tasks), you can specify ``dask_n_partitions``
+    or ``dask_partition_size``.
+    The first will try to split any set of data into a number of chunks (ideally, we
+    would want one per worker), and the second creates similar-sized partitions in each
+    set.
+    If the memory on the workers is not sufficient, try reducing the size of the
+    partitions (or increasing the number of partitions).
+
     Parameters
     ----------
 
@@ -77,6 +91,17 @@ def execute_pipeline_simple(
         A Dask client instance used to run the experiment in parallel on multiple
         machines, or locally.
         Basic configs can be found in ``bob.pipelines.config.distributed``.
+
+    dask_n_partitions: int or None
+        Specifies a number of partitions to split the data into.
+
+    dask_partition_size: int or None
+        Specifies a data partition size when using dask. Ignored when dask_n_partitions
+        is set.
+
+    dask_n_workers: int or None
+        Sets the starting number of Dask workers. Does not prevent Dask from requesting
+        more or releasing workers depending on load.
 
     groups: list of str
         Groups of the dataset that will be requested from the database interface.
@@ -152,23 +177,50 @@ def execute_pipeline_simple(
             if dask_n_workers is not None and not isinstance(dask_client, str):
                 dask_client.cluster.scale(dask_n_workers)
 
-            n_objects = max(
-                len(background_model_samples),
-                len(biometric_references),
-                len(probes),
-            )
-            partition_size = None
-            if not isinstance(dask_client, str):
-                partition_size = dask_get_partition_size(
-                    dask_client.cluster, n_objects
-                )
+            # Data partitioning.
+            # - Too many small partitions: the scheduler takes more time scheduling
+            #   than the computations.
+            # - Too few big partitions: We don't use all the available workers and thus
+            #   run slower.
             if dask_partition_size is not None:
-                partition_size = dask_partition_size
-
-            pipeline = dask_pipeline_simple(
-                pipeline,
-                partition_size=partition_size,
-            )
+                # Create partitions of the same defined size for each Set
+                n_objects = max(
+                    len(background_model_samples),
+                    len(biometric_references),
+                    len(probes),
+                )
+                partition_size = None
+                if not isinstance(dask_client, str):
+                    partition_size = dask_get_partition_size(
+                        dask_client.cluster, n_objects, dask_partition_size
+                    )
+                logger.debug("Splitting data with fixed size partitions.")
+                pipeline = dask_pipeline_simple(
+                    pipeline,
+                    partition_size=partition_size,
+                )
+            elif dask_n_partitions is not None or dask_n_workers is not None:
+                # Divide each Set in a user-defined number of partitions
+                logger.debug("Splitting data with fixed number of partitions.")
+                pipeline = dask_pipeline_simple(
+                    pipeline,
+                    npartitions=dask_n_partitions or dask_n_workers,
+                )
+            else:
+                # Split in max_jobs partitions or revert to the default behavior of
+                # dask.Bag from_sequence: partition_size = 100
+                n_jobs = None
+                if not isinstance(dask_client, str) and isinstance(
+                    dask_client.cluster, SGEMultipleQueuesCluster
+                ):
+                    logger.debug(
+                        "Splitting data according to the number of available workers."
+                    )
+                    n_jobs = dask_client.cluster.sge_job_spec["default"][
+                        "max_jobs"
+                    ]
+                    logger.debug(f"{n_jobs} partitions will be created.")
+                pipeline = dask_pipeline_simple(pipeline, npartitions=n_jobs)
 
         logger.info(f"Running the PipelineSimple for group {group}")
         allow_scoring_with_all_biometric_references = (

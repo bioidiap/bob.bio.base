@@ -97,8 +97,8 @@ It is possible to do it via configuration file
     cls=ResourceOption,
 )
 @click.option(
-    "-o",
     "--output",
+    "-o",
     show_default=True,
     default="results",
     help="Name of output directory where output scores will be saved.",
@@ -106,7 +106,7 @@ It is possible to do it via configuration file
 )
 @click.option(
     "--write-metadata-scores/--write-column-scores",
-    "-m/-nm",
+    "-meta/-nmeta",
     default=True,
     help="If set, all the scores will be written with all their metadata using the `CSVScoreWriter`",
     cls=ResourceOption,
@@ -119,8 +119,8 @@ It is possible to do it via configuration file
     cls=ResourceOption,
 )
 @click.option(
-    "-c",
     "--checkpoint-dir",
+    "-c",
     show_default=True,
     default=None,
     help="Name of output directory where the checkpoints will be saved. In case --checkpoint is set, checkpoints will be saved in this directory.",
@@ -129,8 +129,19 @@ It is possible to do it via configuration file
 @click.option(
     "--dask-partition-size",
     "-s",
-    help="If using Dask, this option defines the size of each dask.bag.partition."
-    "Use this option if the current heuristic that sets this value doesn't suit your experiment."
+    help="If using Dask, this option defines the max size of each dask.bag.partition. "
+    "Use this option if the current heuristic that sets this value doesn't suit your experiment. "
+    "(https://docs.dask.org/en/latest/bag-api.html?highlight=partition_size#dask.bag.from_sequence).",
+    default=None,
+    type=click.INT,
+    cls=ResourceOption,
+)
+@click.option(
+    "--dask-n-partitions",
+    "-n",
+    help="If using Dask, this option defines a fixed number of dask.bag.partition for "
+    "each set of data. Use this option if the current heuristic that sets this value "
+    "doesn't suit your experiment."
     "(https://docs.dask.org/en/latest/bag-api.html?highlight=partition_size#dask.bag.from_sequence).",
     default=None,
     type=click.INT,
@@ -138,9 +149,9 @@ It is possible to do it via configuration file
 )
 @click.option(
     "--dask-n-workers",
-    "-n",
-    help="If using Dask, this option defines the number of workers to start your experiment."
-    "Dask automatically scales up/down the number of workers due to the current load of tasks to be solved."
+    "-w",
+    help="If using Dask, this option defines the number of workers to start your experiment. "
+    "Dask automatically scales up/down the number of workers due to the current load of tasks to be solved. "
     "Use this option if the current amount of workers set to start an experiment doesn't suit you.",
     default=None,
     type=click.INT,
@@ -171,6 +182,7 @@ def pipeline_simple(
     checkpoint_dir,
     dask_partition_size,
     dask_n_workers,
+    dask_n_partitions,
     force,
     no_dask,
     **kwargs,
@@ -229,6 +241,30 @@ def pipeline_simple(
         :py:func:`bob.bio.base.pipelines.execute_pipeline_simple`
         instead.
 
+
+    Using Dask
+    ----------
+
+    Vanilla-biometrics is intended to work with Dask to split the load of work between
+    processes on a machine or workers on a distributed grid system. By default, the
+    local machine is used in single-threaded mode. However, by specifying the
+    `--dask-client` option, you specify a Dask Client.
+
+    When using multiple workers, a few things have to be considered:
+    - The number of partitions in the data.
+    - The number of workers to process the data.
+
+    Ideally, (and this is the default behavior) you want to split all the data between
+    many available workers, and all the workers work at the same time on all the data.
+    But the number of workers may be limited, or one partition of data may be filling
+    the memory of one worker. Moreover, having many small tasks (by splitting the data
+    into many partitions) is not recommended as the scheduler will then spend more time
+    organizing and communicating with the workers.
+
+    To solve speed or memory issues, options are available to split the data
+    differently (`--dask-n-partitions` or `--dask-partition-size`). If you encounter
+    memory issues on a worker, try augmenting the number of partitions, and if your
+    scheduler is not keeping up, try reducing that number.
     """
     if no_dask:
         dask_client = None
@@ -246,6 +282,7 @@ def pipeline_simple(
         write_metadata_scores=write_metadata_scores,
         checkpoint=checkpoint,
         dask_partition_size=dask_partition_size,
+        dask_n_partitions=dask_n_partitions,
         dask_n_workers=dask_n_workers,
         checkpoint_dir=checkpoint_dir,
         force=force,
