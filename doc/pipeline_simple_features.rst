@@ -693,7 +693,7 @@ like the example below:
 
     class MyTransformer(TransformerMixin, BaseEstimator):
         def _more_tags(self):
-            return {"stateless": True, "requires_fit": False}
+            return {"requires_fit": False}
 
         def transform(self, X):
             # do something

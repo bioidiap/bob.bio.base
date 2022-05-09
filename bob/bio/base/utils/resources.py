@@ -216,9 +216,9 @@ def load_resource(
 
     except Exception as e:
         raise ImportError(
-            "The given command line option '%s' is neither a resource for a '%s', nor an existing configuration file, nor could be interpreted as a command (error: %s)"
-            % (resource, keyword, str(e))
-        )
+            "The given command line option '%s' is neither a resource for a '%s', nor an existing configuration file, nor could be interpreted as a command"
+            % (resource, keyword)
+        ) from e
 
 
 def extensions(keywords=valid_keywords, package_prefix="bob.bio."):

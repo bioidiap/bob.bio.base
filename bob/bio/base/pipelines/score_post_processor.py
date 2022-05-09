@@ -27,7 +27,7 @@ import bob.bio.base
 
 from bob.bio.base.score.load import get_split_dataframe
 from bob.pipelines import Sample, SampleSet
-from bob.pipelines.utils import is_estimator_stateless, isinstance_nested
+from bob.pipelines.utils import estimator_requires_fit, isinstance_nested
 from bob.pipelines.wrappers import CheckpointWrapper, DaskWrapper
 
 from . import pickle_compress, uncompress_unpickle
@@ -240,7 +240,7 @@ class CheckpointPostProcessor(CheckpointWrapper):
 
     def fit(self, samples, y=None):
 
-        if is_estimator_stateless(self.estimator):
+        if not estimator_requires_fit(self.estimator):
             return self
 
         # if the estimator needs to be fitted.
