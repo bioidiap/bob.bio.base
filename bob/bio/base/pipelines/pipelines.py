@@ -137,7 +137,7 @@ class PipelineSimple(object):
         if len(background_model_samples) <= 0:
             logger.warning(
                 "There's no data to train background model."
-                "For the rest of the execution it will be assumed that the pipeline is stateless."
+                "For the rest of the execution it will be assumed that the pipeline does not require fit."
             )
             return self.transformer
 

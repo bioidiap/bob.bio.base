@@ -52,7 +52,7 @@ from bob.pipelines import wrap \n
 
 class MyTransformer(TransformerMixin, BaseEstimator): \n
     def _more_tags(self): \n
-        return {"stateless": True, "requires_fit": False} \n
+        return {"requires_fit": False} \n
 
     def transform(self, X): \n
         # do something \n
