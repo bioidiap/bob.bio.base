@@ -185,21 +185,12 @@ def execute_pipeline_simple(
             # - Too few big partitions: We don't use all the available workers and thus
             #   run slower.
             if dask_partition_size is not None:
-                # Create partitions of the same defined size for each Set
-                n_objects = max(
-                    len(background_model_samples),
-                    len(biometric_references),
-                    len(probes),
+                logger.debug(
+                    f"Splitting data with fixed size partitions: {dask_partition_size}."
                 )
-                partition_size = None
-                if not isinstance(dask_client, str):
-                    partition_size = dask_get_partition_size(
-                        dask_client.cluster, n_objects, dask_partition_size
-                    )
-                logger.debug("Splitting data with fixed size partitions.")
                 pipeline = dask_pipeline_simple(
                     pipeline,
-                    partition_size=partition_size,
+                    partition_size=dask_partition_size,
                 )
             elif dask_n_partitions is not None or dask_n_workers is not None:
                 # Divide each Set in a user-defined number of partitions
