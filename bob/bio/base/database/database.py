@@ -8,7 +8,7 @@ from .file import BioFile
 from .legacy import FileDatabase as LegacyFileDatabase
 
 
-class BioDatabase(LegacyFileDatabase, meta=abc.ABCMeta):
+class BioDatabase(LegacyFileDatabase, metaclass=abc.ABCMeta):
     """This class represents the basic API for database access.
     Please use this class as a base class for your database access classes.
     Do not forget to call the constructor of this base class in your derived class.
