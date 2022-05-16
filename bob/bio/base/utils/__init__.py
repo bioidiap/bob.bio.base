@@ -7,7 +7,6 @@
 
 from .resources import *  # noqa: F401,F403
 from .io import *  # noqa: F401,F403
-import six
 import inspect
 import numpy
 
@@ -76,7 +75,7 @@ def pretty_print(obj, kwargs):
         ", ".join(
             [
                 "%s='%s'" % (key, value)
-                if isinstance(value, six.string_types)
+                if isinstance(value, str)
                 else "%s=%s" % (key, value)
                 for key, value in kwargs.items()
                 if value is not None
@@ -98,8 +97,4 @@ def is_argument_available(argument, method):
         Pointer to the method
 
     """
-
-    if six.PY2:
-        return argument in inspect.getargspec(method).args
-    else:
-        return argument in inspect.signature(method).parameters.keys()
+    return argument in inspect.signature(method).parameters.keys()

@@ -4,13 +4,11 @@
 import abc
 import os
 
-import six
-
 from .file import BioFile
 from .legacy import FileDatabase as LegacyFileDatabase
 
 
-class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
+class BioDatabase(LegacyFileDatabase, meta=abc.ABCMeta):
     """This class represents the basic API for database access.
     Please use this class as a base class for your database access classes.
     Do not forget to call the constructor of this base class in your derived class.
@@ -91,7 +89,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
         **kwargs
     ):
 
-        assert isinstance(name, six.string_types)
+        assert isinstance(name, str)
 
         super(BioDatabase, self).__init__(
             original_directory=original_directory,
@@ -215,7 +213,7 @@ class BioDatabase(six.with_metaclass(abc.ABCMeta, LegacyFileDatabase)):
         """
         if replacements is None:
             return
-        if isinstance(replacements, six.string_types):
+        if isinstance(replacements, str):
             if not os.path.exists(replacements):
                 return
             # Open the database replacement file and reads its content
