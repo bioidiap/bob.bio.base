@@ -1,13 +1,13 @@
 bob.extension > 5.0.1
 bob.io.base
+bob.learn.em
 bob.measure
 bob.pipelines
-bob.pipelines
-tabulate
 click
 click-plugins
+dask
 numpy
+pandas
 scipy
 setuptools
-six
-pandas
+tabulate

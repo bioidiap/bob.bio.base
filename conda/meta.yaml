@@ -24,19 +24,26 @@ requirements:
     - pip {{ pip }}
     - bob.extension >5.0.1
     - bob.io.base
+    - bob.learn.em
     - bob.measure
     - bob.pipelines
-    - tabulate {{ tabulate }}
+    - click {{ click }}
+    - click-plugins {{ click_plugins }}
+    - dask {{ dask }}
+    - numpy {{ numpy }}
     - pandas {{ pandas }}
     - scipy {{ scipy }}
-    - six {{ six }}
+    - tabulate {{ tabulate }}
   run:
     - python
     - setuptools
-    - {{ pin_compatible('tabulate') }}
+    - {{ pin_compatible('click') }}
+    - {{ pin_compatible('click-plugins') }}
+    - {{ pin_compatible('dask') }}
+    - {{ pin_compatible('numpy') }}
     - {{ pin_compatible('pandas') }}
     - {{ pin_compatible('scipy') }}
-    - {{ pin_compatible('six') }}
+    - {{ pin_compatible('tabulate') }}
 
 test:
   imports:

@@ -3,8 +3,6 @@
 import logging
 import os
 
-import six
-
 from bob.bio.base.utils.annotations import read_annotation_file
 
 from .. import BioFile, ZTBioDatabase
@@ -774,7 +772,7 @@ class FileListBioDatabase(ZTBioDatabase):
             classes, "class", ("client", "impostor")
         )
 
-        if isinstance(model_ids, six.string_types):
+        if isinstance(model_ids, str):
             model_ids = (model_ids,)
 
         # first, collect all the lists that we want to process
@@ -908,7 +906,7 @@ class FileListBioDatabase(ZTBioDatabase):
             groups, "group", self.groups(protocol, add_world=False)
         )
 
-        if isinstance(model_ids, six.string_types):
+        if isinstance(model_ids, str):
             model_ids = (model_ids,)
 
         # iterate over the lists and extract the files
@@ -1019,7 +1017,7 @@ class FileListBioDatabase(ZTBioDatabase):
           The full path of the original data file.
         """
 
-        if isinstance(self.original_extension, six.string_types):
+        if isinstance(self.original_extension, str):
             # extract file name
             file_name = file.make_path(
                 self.original_directory, self.original_extension

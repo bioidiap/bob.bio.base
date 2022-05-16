@@ -1,6 +1,9 @@
 # isort: skip_file
 from .Algorithm import Algorithm
 from .Distance import Distance
+from .gmm import GMM
+from .isv import ISV
+from .jfa import JFA
 
 # gets sphinx autodoc done right - don't remove it
 def __appropriate__(*args):
@@ -21,6 +24,9 @@ def __appropriate__(*args):
 __appropriate__(
     Algorithm,
     Distance,
+    GMM,
+    ISV,
+    JFA,
 )
 
 __all__ = [_ for _ in dir() if not _.startswith("_")]

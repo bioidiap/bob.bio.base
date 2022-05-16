@@ -9,7 +9,6 @@ import logging
 import os
 
 import pkg_resources
-import six
 
 import bob.extension.config
 
@@ -210,7 +209,7 @@ def load_resource(
         for i in imports:
             exec("import %s" % i)
         # now, evaluate the resource (re-evaluate if the resource is still a string)
-        while isinstance(resource, six.string_types):
+        while isinstance(resource, str):
             resource = eval(resource)
         return resource
 
