@@ -116,23 +116,12 @@ class PipelineScoreNorm(PipelineSimple):
         )
 
         # Training the score transformer
-        if isinstance_nested(
-            self.post_processor, "estimator", ZNormScores
-        ) or isinstance(self.post_processor, ZNormScores):
+        try:
             self.post_processor.fit(
-                [post_process_samples, biometric_references]
+                [post_process_samples, biometric_references, probe_samples]
             )
-            # Transformer
             post_processed_scores = self.post_processor.transform(raw_scores)
-
-        elif isinstance_nested(
-            self.post_processor, "estimator", TNormScores
-        ) or isinstance(self.post_processor, TNormScores):
-            # self.post_processor.fit([post_process_samples, probe_features])
-            self.post_processor.fit([post_process_samples, probe_samples])
-            # Transformer
-            post_processed_scores = self.post_processor.transform(raw_scores)
-        else:
+        except Exception:
             logger.warning(
                 f"Invalid post-processor {self.post_processor}. Returning the raw_scores"
             )
@@ -513,7 +502,7 @@ class TNormScores(TransformerMixin, BaseEstimator):
         treference_samples = X[0]
 
         # TODO: We need to pass probe samples instead of probe features
-        probe_samples = X[1]  # Probes to be normalized
+        probe_samples = X[2]  # Probes to be normalized
 
         probe_features = self.pipeline.transformer.transform(probe_samples)
 
