@@ -106,6 +106,9 @@ Below is an example implementing a very simple Transformer applying a custom fun
       def fit(self, X, y=None):
           return self
 
+      def _more_tags(self):
+          return {"requires_fit": False}
+
 or using :any:`sklearn.preprocessing.FunctionTransformer`:
 
 .. code-block:: python
@@ -212,9 +215,9 @@ The ATNT database is included in this package.
   We do not and cannot provide a script that downloads a biometric database automatically.
 
 For each database, you need to configure Bob to specify the location of its
-files. To do so for ATNT (no need for ATNT database below), run the following command::
+files. To do so for e.g. the MOBIO database (no need for ATNT database), run the following command::
 
-  $ bob config set bob.db.atnt.directory ~/bob_data/datasets/atnt
+  $ bob config set bob.db.mobio.directory ~/datasets/mobio
 
 .. note::
     Since the original files of the ATNT database is included in this package, you can skip the step above.

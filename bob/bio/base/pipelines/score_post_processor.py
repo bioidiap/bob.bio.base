@@ -26,9 +26,14 @@ from sklearn.linear_model import LogisticRegression
 import bob.bio.base
 
 from bob.bio.base.score.load import get_split_dataframe
-from bob.pipelines import Sample, SampleSet
-from bob.pipelines.utils import estimator_requires_fit, isinstance_nested
-from bob.pipelines.wrappers import CheckpointWrapper, DaskWrapper
+from bob.pipelines import (
+    CheckpointWrapper,
+    DaskWrapper,
+    Sample,
+    SampleSet,
+    estimator_requires_fit,
+    is_instance_nested,
+)
 
 from . import pickle_compress, uncompress_unpickle
 from .pipelines import PipelineSimple
@@ -116,7 +121,7 @@ class PipelineScoreNorm(PipelineSimple):
         )
 
         # Training the score transformer
-        if isinstance_nested(
+        if is_instance_nested(
             self.post_processor, "estimator", ZNormScores
         ) or isinstance(self.post_processor, ZNormScores):
             self.post_processor.fit(
@@ -125,7 +130,7 @@ class PipelineScoreNorm(PipelineSimple):
             # Transformer
             post_processed_scores = self.post_processor.transform(raw_scores)
 
-        elif isinstance_nested(
+        elif is_instance_nested(
             self.post_processor, "estimator", TNormScores
         ) or isinstance(self.post_processor, TNormScores):
             # self.post_processor.fit([post_process_samples, probe_features])
@@ -332,13 +337,13 @@ class ZNormScores(TransformerMixin, BaseEstimator):
 
         # TODO: I know this is ugly, but I don't want to create on pipeline for every single
         # normalization strategy
-        if isinstance_nested(
+        if is_instance_nested(
             self.pipeline,
             "biometric_algorithm",
             bob.bio.base.pipelines.wrappers.BioAlgorithmCheckpointWrapper,
         ):
 
-            if isinstance_nested(
+            if is_instance_nested(
                 self.pipeline,
                 "biometric_algorithm",
                 bob.bio.base.pipelines.wrappers.BioAlgorithmDaskWrapper,
@@ -478,13 +483,13 @@ class TNormScores(TransformerMixin, BaseEstimator):
 
         # TODO: I know this is ugly, but I don't want to create on pipeline for every single
         # normalization strategy
-        if isinstance_nested(
+        if is_instance_nested(
             self.pipeline,
             "biometric_algorithm",
             bob.bio.base.pipelines.wrappers.BioAlgorithmCheckpointWrapper,
         ):
 
-            if isinstance_nested(
+            if is_instance_nested(
                 self.pipeline,
                 "biometric_algorithm",
                 bob.bio.base.pipelines.wrappers.BioAlgorithmDaskWrapper,

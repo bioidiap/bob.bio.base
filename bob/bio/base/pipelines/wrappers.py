@@ -8,8 +8,11 @@ import numpy as np
 
 import bob.pipelines
 
-from bob.pipelines import DelayedSample, DelayedSampleSetCached
-from bob.pipelines.utils import isinstance_nested
+from bob.pipelines import (
+    DelayedSample,
+    DelayedSampleSetCached,
+    is_instance_nested,
+)
 from bob.pipelines.wrappers import BaseWrapper, get_bob_tags
 
 from . import pickle_compress, uncompress_unpickle
@@ -410,6 +413,6 @@ def is_checkpointed(pipeline):
     """
 
     # We have to check if is BioAlgorithmCheckpointWrapper
-    return isinstance_nested(
+    return is_instance_nested(
         pipeline, "biometric_algorithm", BioAlgorithmCheckpointWrapper
     )

@@ -14,8 +14,7 @@ from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
 
 from bob.bio.base.pipelines.abstract_classes import BioAlgorithm
-from bob.pipelines import SampleWrapper, wrap
-from bob.pipelines.utils import isinstance_nested
+from bob.pipelines import SampleWrapper, is_instance_nested, wrap
 
 from .score_writers import FourColumnsScoreWriter
 
@@ -54,7 +53,7 @@ class PipelineSimple(object):
        >>> pipeline(samples_for_training_back_ground_model, samplesets_for_enroll, samplesets_for_scoring)  # doctest: +SKIP
 
 
-    To run this pipeline using Dask, used the function :py:func:`dask_vanilla_biometrics`.
+    To run this pipeline using Dask, used the function :py:func:`dask_pipeline_simple`.
 
     Example
     -------
@@ -196,14 +195,14 @@ def check_valid_pipeline(pipeline_simple):
 
         # Checking if all steps are wrapped as samples, if not, we should wrap them
         for p in pipeline_simple.transformer:
-            if not isinstance_nested(p, "estimator", SampleWrapper):
+            if not is_instance_nested(p, "estimator", SampleWrapper):
                 wrap(["sample"], p)
 
     # In this case it can be a simple estimator. AND
     # Checking if it's sample wrapper, if not, do it
-    elif isinstance_nested(
+    elif is_instance_nested(
         pipeline_simple.transformer, "estimator", BaseEstimator
-    ) and isinstance_nested(
+    ) and is_instance_nested(
         pipeline_simple.transformer, "estimator", BaseEstimator
     ):
         wrap(["sample"], pipeline_simple.transformer)
