@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 def save_json(data, path):
     """
-    Saves a dictionnary ``data`` in a json file at ``path``.
+    Saves a dictionary ``data`` in a json file at ``path``.
     """
     with open(path, "w") as f:
         json.dump(data, f)
@@ -27,7 +27,7 @@ def save_json(data, path):
 
 def load_json(path):
     """
-    Returns a dictionnary from a json file at ``path``.
+    Returns a dictionary from a json file at ``path``.
     """
     with open(path, "r") as f:
         return json.load(f)

@@ -9,7 +9,6 @@ import logging
 
 import click
 
-from bob.bio.base.pipelines.entry_points import execute_pipeline_score_norm
 from bob.extension.scripts.click_helper import (
     ConfigCommand,
     ResourceOption,
@@ -17,42 +16,14 @@ from bob.extension.scripts.click_helper import (
 )
 from bob.pipelines.distributed import VALID_DASK_CLIENT_STRINGS
 
+from .pipeline_simple import EPILOG as _SIMPLE_EPILOG
+
 logger = logging.getLogger(__name__)
 
 
-EPILOG = """\b
-
-
- Command line examples\n
- -----------------------
-
-$ bob bio pipeline score-norm DATABASE PIPELINE -vv
-
- Check out all PIPELINE available by running:
-  `resource.py --types pipeline`
-\b
-
-  and all available databases by running:
-  `resource.py --types database`
-
-\b
-
-It is possible to do it via configuration file
-
- $ bob bio pipeline score-norm -p my_experiment.py -vv
-
-
- my_experiment.py must contain the following elements:
-
-   >>> transformer = ... # A scikit-learn pipeline\n
-   >>> algorithm   = ... # `An BioAlgorithm`\n
-   >>> pipeline = PipelineSimple(transformer,algorithm)\n
-   >>> database = .... # Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)"
-
-\b
-
-
-"""
+EPILOG = _SIMPLE_EPILOG.replace(
+    "bob bio pipeline simple", "bob bio pipeline score-norm"
+)
 
 
 @click.command(
@@ -244,6 +215,7 @@ def pipeline_score_norm(
     This pipeline runs: `BioAlgorithm.score(Pipeline.transform(DATA_SCORE, biometric_references))` >> biometric_references
 
     """
+    from bob.bio.base.pipelines.entry_points import execute_pipeline_score_norm
 
     logger.debug("Executing PipelineScoreNorm")
 

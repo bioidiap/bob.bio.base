@@ -37,13 +37,13 @@ def weighted_neg_error_rate_criteria(
 
       - data - the development data used to determine the threshold. List on 4
       numpy.arrays containing: negatives (licit), positives (licit),
-      negatives (spoof), positivies (spoof)
+      negatives (spoof), positives (spoof)
       - weight - the weight parameter balancing between impostors and spoofing
       attacks
       - thres - the given threshold
       - beta - the weight parameter balancing between real accesses and all the
       negative samples (impostors and spoofing attacks). Note that this
-      parameter will be overriden and not considered if the selected criteria
+      parameter will be overridden and not considered if the selected criteria
       is 'min-hter'.
       - criteria - 'eer', 'wer' or 'min-hter' criteria for decision threshold
     """
@@ -99,7 +99,7 @@ def recursive_thr_search(
     Keyword arguments:
       - data - the development data used to determine the threshold. List on 4
       numpy.arrays containing: negatives (licit), positives (licit), negatives
-      (spoof), positivies (spoof)
+      (spoof), positives (spoof)
       - span_min - the minimum of the search range
       - span_max - the maximum of the search range
       - weight - the weight parameter balancing between impostors and spoofing

@@ -252,7 +252,7 @@ You can observe the distributions histograms in a pdf file with:
     default=0,
     type=click.INT,
     show_default=True,
-    help="Number of unknown subjects (useful for openset plots)",
+    help="Number of unknown subjects (useful for open-set plots)",
 )
 @click.option(
     "-f",

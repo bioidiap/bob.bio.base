@@ -17,9 +17,9 @@ from bob.bio.base.pipelines import (
     dask_pipeline_simple,
     is_checkpointed,
 )
+from bob.pipelines import estimator_requires_fit, is_instance_nested
 from bob.pipelines.distributed import dask_get_partition_size
 from bob.pipelines.distributed.sge import SGEMultipleQueuesCluster
-from bob.pipelines.utils import estimator_requires_fit, isinstance_nested
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +170,7 @@ def execute_pipeline_simple(
             )
             continue
 
-        if dask_client is not None and not isinstance_nested(
+        if dask_client is not None and not is_instance_nested(
             pipeline.biometric_algorithm,
             "biometric_algorithm",
             BioAlgorithmDaskWrapper,
@@ -390,7 +390,7 @@ def execute_pipeline_score_norm(
             )
             continue
 
-        if dask_client is not None and not isinstance_nested(
+        if dask_client is not None and not is_instance_nested(
             pipeline.biometric_algorithm,
             "biometric_algorithm",
             BioAlgorithmDaskWrapper,
