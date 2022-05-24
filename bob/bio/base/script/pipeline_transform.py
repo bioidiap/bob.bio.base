@@ -41,7 +41,7 @@ Creating my own transformer\n
 ---------------------------\n
 
 This command accepts configuration file as input.\n
-For example, if you desire to customize your transfomer, you can use the following configuration file:\n
+For example, if you desire to customize your transformer, you can use the following configuration file:\n
 \b\b
 
 
