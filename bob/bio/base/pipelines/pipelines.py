@@ -48,9 +48,9 @@ class PipelineSimple(object):
        >>> from bob.bio.base.pipelines import Distance, PipelineSimple
        >>> from bob.pipelines import wrap
        >>> estimator_1 = FunctionTransformer(lambda x: x.reshape([x.shape[0], -1]), validate=False)
-       >>> transformer = make_pipeline(wrap(["sample"], estimator_1)
-       >>> biometric_algoritm = Distance()
-       >>> pipeline = PipelineSimple(transformer, biometric_algoritm)
+       >>> transformer = make_pipeline(wrap(["sample"], estimator_1))
+       >>> biometric_algorithm = Distance()
+       >>> pipeline = PipelineSimple(transformer, biometric_algorithm)
        >>> pipeline(samples_for_training_back_ground_model, samplesets_for_enroll, samplesets_for_scoring)  # doctest: +SKIP
 
 
@@ -59,7 +59,7 @@ class PipelineSimple(object):
     Example
     -------
       >>> from bob.bio.base.pipelines import dask_pipeline_simple
-      >>> pipeline = PipelineSimple(transformer, biometric_algoritm)
+      >>> pipeline = PipelineSimple(transformer, biometric_algorithm)
       >>> pipeline = dask_pipeline_simple(pipeline)
       >>> pipeline(samples_for_training_back_ground_model, samplesets_for_enroll, samplesets_for_scoring).compute()  # doctest: +SKIP
 
