@@ -12,8 +12,6 @@ from bob.pipelines import wrap
 pca = PCA(n_components=0.95)
 
 # the images are in shape of Nx112x92, we want to flatten to Nx10304 them so we can train a PCA on them.
-# A similar implementation is available in:
-# from bob.pipelines.transformers import Linearize
 def flatten(images):
     images = check_array(images, allow_nd=True)
     new_shape = [images.shape[0], -1]
