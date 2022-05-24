@@ -56,10 +56,12 @@ class PipelineScoreNorm(PipelineSimple):
        >>> from sklearn.pipeline import make_pipeline
        >>> from bob.bio.base.pipelines import Distance, PipelineSimple, PipelineScoreNorm, ZNormScores
        >>> from bob.pipelines import wrap
-       >>> estimator_1 = FunctionTransformer(lambda x: x.reshape([x.shape[0], -1]), validate=False)
-       >>> transformer = make_pipeline(wrap(["sample"], estimator_1))
+       >>> import numpy
+       >>> linearize = lambda samples: [numpy.reshape(x, (-1,)) for x in samples]
+       >>> transformer = wrap(["sample"], FunctionTransformer(linearize))
+       >>> transformer_pipeline = make_pipeline(transformer)
        >>> biometric_algorithm = Distance()
-       >>> pipeline_simple = PipelineSimple(transformer, biometric_algorithm)
+       >>> pipeline_simple = PipelineSimple(transformer_pipeline, biometric_algorithm)
        >>> z_norm_postprocessor = ZNormScores(pipeline=pipeline_simple)
        >>> z_pipeline = PipelineScoreNorm(pipeline_simple, z_norm_postprocessor)
        >>> zt_pipeline(...) #doctest: +SKIP

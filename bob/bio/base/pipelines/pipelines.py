@@ -47,10 +47,12 @@ class PipelineSimple(object):
        >>> from sklearn.pipeline import make_pipeline
        >>> from bob.bio.base.pipelines import Distance, PipelineSimple
        >>> from bob.pipelines import wrap
-       >>> estimator_1 = FunctionTransformer(lambda x: x.reshape([x.shape[0], -1]), validate=False)
-       >>> transformer = make_pipeline(wrap(["sample"], estimator_1))
+       >>> import numpy
+       >>> linearize = lambda samples: [numpy.reshape(x, (-1,)) for x in samples]
+       >>> transformer = wrap(["sample"], FunctionTransformer(linearize))
+       >>> transformer_pipeline = make_pipeline(transformer)
        >>> biometric_algorithm = Distance()
-       >>> pipeline = PipelineSimple(transformer, biometric_algorithm)
+       >>> pipeline = PipelineSimple(transformer_pipeline, biometric_algorithm)
        >>> pipeline(samples_for_training_back_ground_model, samplesets_for_enroll, samplesets_for_scoring)  # doctest: +SKIP
 
 
@@ -59,7 +61,7 @@ class PipelineSimple(object):
     Example
     -------
       >>> from bob.bio.base.pipelines import dask_pipeline_simple
-      >>> pipeline = PipelineSimple(transformer, biometric_algorithm)
+      >>> pipeline = PipelineSimple(transformer_pipeline, biometric_algorithm)
       >>> pipeline = dask_pipeline_simple(pipeline)
       >>> pipeline(samples_for_training_back_ground_model, samplesets_for_enroll, samplesets_for_scoring).compute()  # doctest: +SKIP
 
