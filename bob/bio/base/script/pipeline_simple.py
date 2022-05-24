@@ -9,7 +9,6 @@ import logging
 
 import click
 
-from bob.bio.base.pipelines import execute_pipeline_simple
 from bob.extension.scripts.click_helper import (
     ConfigCommand,
     ResourceOption,
@@ -22,37 +21,30 @@ logger = logging.getLogger(__name__)
 
 EPILOG = """\b
 
+Command line examples\n
+-----------------------
 
- Command line examples\n
- -----------------------
+$ bob bio pipeline simple -vv DATABASE PIPELINE
 
-$ bob bio pipeline simple DATABASE PIPELINE -vv
+See the help of the CONFIG argument on top of this help message
+for a list of available configurations.
 
- Check out all PIPELINE available by running:
-  `resource.py --types pipeline`
-\b
+It is possible to provide database and pipeline through a configuration file.
+Generate an example configuration file with:
 
-  and all available databases by running:
-  `resource.py --types database`
+$ bob bio pipeline simple --dump-config my_experiment.py
 
-\b
+and execute it with:
 
-It is possible to do it via configuration file
+$ bob bio pipeline simple -vv my_experiment.py
 
- $ bob bio pipeline simple -p my_experiment.py -vv
+my_experiment.py must contain the following elements:
 
-
- my_experiment.py must contain the following elements:
-
-   >>> transformer = ... # A scikit-learn pipeline\n
+   >>> transformer = ... # A scikit-learn pipeline wrapped with bob.pipelines' SampleWrapper\n
    >>> algorithm   = ... # `An BioAlgorithm`\n
    >>> pipeline = PipelineSimple(transformer,algorithm)\n
-   >>> database = .... # Biometric Database connector (class that implements the methods: `background_model_samples`, `references` and `probes`)"
-
-\b
-
-
-"""
+   >>> database = .... # Biometric Database (class that implements the methods: `background_model_samples`, `references` and `probes`)"
+\b"""
 
 
 @click.command(
@@ -245,7 +237,7 @@ def pipeline_simple(
     Using Dask
     ----------
 
-    Vanilla-biometrics is intended to work with Dask to split the load of work between
+    This pipeline is intended to work with Dask to split the load of work between
     processes on a machine or workers on a distributed grid system. By default, the
     local machine is used in single-threaded mode. However, by specifying the
     `--dask-client` option, you specify a Dask Client.
@@ -266,6 +258,8 @@ def pipeline_simple(
     memory issues on a worker, try augmenting the number of partitions, and if your
     scheduler is not keeping up, try reducing that number.
     """
+    from bob.bio.base.pipelines import execute_pipeline_simple
+
     if no_dask:
         dask_client = None
 

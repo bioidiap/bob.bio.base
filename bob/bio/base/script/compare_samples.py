@@ -52,7 +52,7 @@ EPILOG = """\n
     "-l",
     required=False,
     cls=ResourceOption,
-    entry_point_group="bob.pipeline.dask_client",
+    entry_point_group="dask.client",
     help="Dask client for the execution of the pipeline.",
 )
 @verbosity_option()

@@ -43,11 +43,11 @@ def rank_option(**kwargs):
 
 @common_options.metrics_command(
     common_options.METRICS_HELP.format(
-        names="FtA, FAR, FRR, FMR, FMNR, HTER",
+        names="FtA, FAR, FRR, FMR, FNMR, HTER",
         criteria=CRITERIA,
         score_format=SCORE_FORMAT,
-        hter_note="Note that FAR = FMR * (1 - FtA), FRR = FtA + FMNR * (1 - FtA) "
-        "and HTER = (FMR + FMNR) / 2",
+        hter_note="Note that FAR = FMR * (1 - FtA), FRR = FtA + FNMR * (1 - FtA) "
+        "and HTER = (FMR + FNMR) / 2",
         command="bob bio metrics",
     ),
     criteria=CRITERIA,
@@ -66,7 +66,7 @@ def metrics(ctx, scores, evaluation, **kwargs):
         score_format=SCORE_FORMAT, command="bob bio roc"
     )
 )
-def roc(ctx, scores, evaluation, **kargs):
+def roc(ctx, scores, evaluation, **kwargs):
     process = bio_figure.Roc(ctx, scores, evaluation, load.split)
     process.run()
 
@@ -76,7 +76,7 @@ def roc(ctx, scores, evaluation, **kargs):
         score_format=SCORE_FORMAT, command="bob bio det"
     )
 )
-def det(ctx, scores, evaluation, **kargs):
+def det(ctx, scores, evaluation, **kwargs):
     process = bio_figure.Det(ctx, scores, evaluation, load.split)
     process.run()
 
@@ -86,7 +86,7 @@ def det(ctx, scores, evaluation, **kargs):
         score_format=SCORE_FORMAT, command="bob bio epc"
     )
 )
-def epc(ctx, scores, **kargs):
+def epc(ctx, scores, **kwargs):
     process = measure_figure.Epc(ctx, scores, True, load.split)
     process.run()
 
@@ -116,7 +116,7 @@ def evaluate(ctx, scores, evaluation, **kwargs):
 
 @common_options.multi_metrics_command(
     common_options.MULTI_METRICS_HELP.format(
-        names="FtA, FAR, FRR, FMR, FMNR, HTER",
+        names="FtA, FAR, FRR, FMR, FNMR, HTER",
         criteria=CRITERIA,
         score_format=SCORE_FORMAT,
         command="bob bio multi-metrics",
@@ -145,7 +145,7 @@ def multi_metrics(ctx, scores, evaluation, protocols_number, **kwargs):
 @common_options.figsize_option()
 @verbosity_option()
 @click.pass_context
-def cmc(ctx, scores, evaluation, **kargs):
+def cmc(ctx, scores, evaluation, **kwargs):
     """Plot CMC (cumulative match characteristic curve).
     graphical presentation of results of an identification task eval, plotting
     rank values on the x-axis and the probability of correct identification at
@@ -190,7 +190,7 @@ def cmc(ctx, scores, evaluation, **kargs):
 @common_options.min_far_option()
 @verbosity_option()
 @click.pass_context
-def dir(ctx, scores, evaluation, **kargs):
+def dir(ctx, scores, evaluation, **kwargs):
     """Plots the Detection & Identification Rate curve over the FAR.
 
     This curve is designed to be used in an open set identification protocol,

@@ -23,17 +23,20 @@ Get Started
 
 This package defines the structure of biometric experiments. After installing the necessary environment, you can try out a simple comparison between two (or more) samples using a face recognition algorithm from `bob.bio.face <http://gitlab.idiap.ch/bob/bob.bio.face>`__, for example. Run the following command::
 
-$ bob bio compare-samples --pipeline gabor_graph me.png not_me.png
+  $ bob bio compare-samples --pipeline arcface-insightface me.png not_me.png
 
-The -p option indicates which algorithm should be used to compare the pictures.
-You can list all the available algorithms with::
+The ``--pipeline`` option indicates which algorithm should be used to compare the pictures.
+The list of all available pipelines is available in the help text of the ``--pipeline`` option::
 
-$ resources.py --type pipeline
-
-
-.. todo::
-
-  The name of the `resource.py` command should change.
+  $ bob bio compare-samples --help
+    ...
+    Options:
+      -p, --pipeline CUSTOM     Vanilla biometrics pipeline composed of a scikit-
+                                learn Pipeline and a BioAlgorithm Can be a
+                                ``bob.bio.pipeline`` entry point, a module name,
+                                or a path to a Python file which contains a
+                                variable named `pipeline`.Available entry points
+                                are: ..., arcface-insightface, ...
 
 
 Of course, with that command, you can run every possible biometric experiment by *headbutting* the problem and executing everything by hand.
