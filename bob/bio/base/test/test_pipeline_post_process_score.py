@@ -11,20 +11,19 @@ import uuid
 import numpy as np
 import pytest
 
-from scipy.spatial.distance import cdist, euclidean
+from scipy.spatial.distance import cdist
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
 
+from bob.bio.base.algorithm import Distance
 from bob.bio.base.pipelines import (
-    BioAlgorithmCheckpointWrapper,
+    CheckpointWrapper,
     CSVScoreWriter,
-    Distance,
     PipelineScoreNorm,
     PipelineSimple,
     TNormScores,
     ZNormScores,
     checkpoint_pipeline_simple,
-    checkpoint_score_normalization_pipeline,
     dask_pipeline_simple,
     dask_score_normalization_pipeline,
 )
@@ -257,11 +256,11 @@ def test_norm_mechanics():
             transformer = make_pipeline(
                 FunctionTransformer(func=_do_nothing_fn)
             )
-            biometric_algorithm = Distance(euclidean, factor=1)
+            biometric_algorithm = Distance("euclidean", factor=1)
 
             if with_checkpoint:
-                biometric_algorithm = BioAlgorithmCheckpointWrapper(
-                    Distance(distance_function=euclidean, factor=1),
+                biometric_algorithm = CheckpointWrapper(
+                    Distance(distance_function="euclidean", factor=1),
                     dir_name,
                 )
 
@@ -275,7 +274,7 @@ def test_norm_mechanics():
                 [],
                 biometric_reference_sample_sets,
                 probe_sample_sets,
-                allow_scoring_with_all_biometric_references=True,
+                score_all_vs_all=True,
             )
 
             if with_dask:
@@ -298,11 +297,6 @@ def test_norm_mechanics():
             z_pipeline_simple = PipelineScoreNorm(
                 pipeline_simple, z_norm_postprocessor
             )
-
-            if with_checkpoint:
-                z_pipeline_simple = checkpoint_score_normalization_pipeline(
-                    z_pipeline_simple, dir_name, sub_dir="znorm"
-                )
 
             if with_dask:
                 z_pipeline_simple = dask_score_normalization_pipeline(
@@ -331,11 +325,6 @@ def test_norm_mechanics():
             t_pipeline_simple = PipelineScoreNorm(
                 pipeline_simple, t_norm_postprocessor
             )
-
-            if with_checkpoint:
-                t_pipeline_simple = checkpoint_score_normalization_pipeline(
-                    t_pipeline_simple, dir_name, sub_dir="tnorm"
-                )
 
             if with_dask:
                 t_pipeline_simple = dask_score_normalization_pipeline(
@@ -398,10 +387,6 @@ def test_znorm_on_memory():
                 pipeline_simple, base_dir=dir_name
             )
 
-            z_pipeline_simple = checkpoint_score_normalization_pipeline(
-                z_pipeline_simple, dir_name, sub_dir="znorm"
-            )
-
             if with_dask:
                 pipeline_simple = dask_pipeline_simple(
                     pipeline_simple, npartitions=2
@@ -415,7 +400,7 @@ def test_znorm_on_memory():
                 database.references(),
                 database.probes(),
                 database.zprobes(),
-                allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
+                score_all_vs_all=database.score_all_vs_all,
             )
 
             def _concatenate(pipeline, scores, path):

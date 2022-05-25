@@ -5,29 +5,16 @@ import os
 import tempfile
 
 import numpy as np
-import scipy
-
-from sklearn.pipeline import make_pipeline
 
 import bob.io.base
 
-from bob.bio.base.algorithm import Algorithm
 from bob.bio.base.extractor import Extractor
 from bob.bio.base.preprocessor import Preprocessor
 from bob.bio.base.transformers import (
-    AlgorithmTransformer,
     ExtractorTransformer,
     PreprocessorTransformer,
 )
-from bob.bio.base.wrappers import (
-    wrap_checkpoint_algorithm,
-    wrap_checkpoint_extractor,
-    wrap_checkpoint_preprocessor,
-    wrap_sample_algorithm,
-    wrap_sample_extractor,
-    wrap_sample_preprocessor,
-)
-from bob.pipelines import CheckpointWrapper, Sample, SampleWrapper, wrap
+from bob.pipelines import CheckpointWrapper, Sample, SampleWrapper
 
 
 class FakePreprocesor(Preprocessor):
@@ -53,30 +40,6 @@ class FakeExtractorFittable(Extractor):
     def train(self, training_data, extractor_file):
         self.model = np.vstack(training_data)
         bob.io.base.save(self.model, extractor_file)
-
-
-class FakeAlgorithm(Algorithm):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.requires_projector_training = True
-        self.split_training_features_by_client = True
-        self.model = None
-
-    def project(self, data):
-        return data + self.model
-
-    def train_projector(self, training_features, projector_file):
-        self.model = np.sum(np.vstack(training_features), axis=0)
-        bob.io.base.save(self.model, projector_file)
-
-    def load_projector(self, projector_file):
-        self.model = bob.io.base.load(projector_file)
-
-    def enroll(self, enroll_features):
-        return np.mean(enroll_features, axis=0)
-
-    def score(self, model, data):
-        return scipy.spatial.distance.euclidean(model, data)
 
 
 def generate_samples(
@@ -213,118 +176,3 @@ def test_extractor_fittable():
         transformed_sample = checkpointing_transformer.transform(test_sample)
         assert assert_sample(transformed_sample, oracle)
         assert assert_checkpoints(transformed_sample, dir_name)
-
-
-def test_algorithm():
-
-    with tempfile.TemporaryDirectory() as dir_name:
-
-        projector_file = os.path.join(dir_name, "Projector.hdf5")
-        projector_pkl = os.path.join(
-            dir_name, "Projector.pkl"
-        )  # Testing pickling
-
-        algorithm = FakeAlgorithm()
-        algorithm_transformer = AlgorithmTransformer(
-            algorithm, projector_file=projector_file
-        )
-
-        # Testing sample
-        fit_extra_arguments = [("y", "subject")]
-        sample_transformer = SampleWrapper(
-            algorithm_transformer, fit_extra_arguments=fit_extra_arguments
-        )
-
-        n_subjects = 2
-        n_samples_per_subject = 2
-        shape = (2, 2)
-        training_samples = generate_samples(
-            n_subjects, n_samples_per_subject, shape=shape
-        )
-        sample_transformer = sample_transformer.fit(training_samples)
-
-        oracle = np.zeros(shape) + n_subjects
-        test_sample = generate_samples(1, 1)
-        transformed_sample = sample_transformer.transform(test_sample)
-        assert assert_sample(transformed_sample, [oracle])
-        assert os.path.exists(projector_file)
-
-        # Testing checkpoint
-        checkpointing_transformer = CheckpointWrapper(
-            sample_transformer,
-            features_dir=dir_name,
-            load_func=algorithm.read_feature,
-            save_func=algorithm.write_feature,
-            model_path=projector_pkl,
-        )
-        # Fitting again to assert if it loads again
-        checkpointing_transformer = checkpointing_transformer.fit(
-            training_samples
-        )
-        transformed_sample = checkpointing_transformer.transform(test_sample)
-
-        # Fitting again
-        assert assert_sample(transformed_sample, oracle)
-        transformed_sample = checkpointing_transformer.transform(test_sample)
-        assert assert_checkpoints(transformed_sample, dir_name)
-        assert os.path.exists(projector_pkl)
-
-
-def test_wrap_bob_pipeline():
-    def run_pipeline(with_dask, with_checkpoint):
-        fit_extra_arguments = (("y", "subject"),)
-        with tempfile.TemporaryDirectory() as dir_name:
-            if with_checkpoint:
-                pipeline = make_pipeline(
-                    wrap_checkpoint_preprocessor(
-                        FakePreprocesor(),
-                        dir_name,
-                    ),
-                    wrap_checkpoint_extractor(
-                        FakeExtractor(),
-                        dir_name,
-                    ),
-                    wrap_checkpoint_algorithm(
-                        FakeAlgorithm(),
-                        dir_name,
-                        fit_extra_arguments=fit_extra_arguments,
-                    ),
-                )
-            else:
-                pipeline = make_pipeline(
-                    wrap_sample_preprocessor(FakePreprocesor()),
-                    wrap_sample_extractor(
-                        FakeExtractor(),
-                        dir_name,
-                    ),
-                    wrap_sample_algorithm(
-                        FakeAlgorithm(),
-                        dir_name,
-                        fit_extra_arguments=fit_extra_arguments,
-                    ),
-                )
-
-            oracle = [7.0, 7.0, 7.0, 7.0]
-            training_samples = generate_samples(
-                n_subjects=2, n_samples_per_subject=2
-            )
-            test_samples = generate_samples(
-                n_subjects=1, n_samples_per_subject=1
-            )
-            if with_dask:
-                pipeline = wrap(["dask"], pipeline)
-                transformed_samples = (
-                    pipeline.fit(training_samples)
-                    .transform(test_samples)
-                    .compute(scheduler="single-threaded")
-                )
-            else:
-                transformed_samples = pipeline.fit(training_samples).transform(
-                    test_samples
-                )
-            assert assert_sample(transformed_samples, oracle)
-
-    run_pipeline(False, False)
-    run_pipeline(False, True)
-    run_pipeline(True, False)
-    run_pipeline(True, True)

@@ -5,11 +5,9 @@ import os
 
 import bob.pipelines as mario
 
-from bob.bio.base.algorithm import Algorithm
 from bob.bio.base.extractor import Extractor
 from bob.bio.base.preprocessor import Preprocessor
 from bob.bio.base.transformers import (
-    AlgorithmTransformer,
     ExtractorTransformer,
     PreprocessorTransformer,
 )
@@ -25,29 +23,33 @@ def wrap_bob_legacy(
     **kwargs,
 ):
     """
-    Wraps either :any:`bob.bio.base.preprocessor.Preprocessor`, :any:`bob.bio.base.extractor.Extractor`
-    or :any:`bob.bio.base.algorithm.Algorithm` with :any:`sklearn.base.TransformerMixin`
-    and :any:`bob.pipelines.wrappers.CheckpointWrapper` and :any:`bob.pipelines.wrappers.SampleWrapper`
+    Wraps either :any:`bob.bio.base.preprocessor.Preprocessor` or
+    :any:`bob.bio.base.extractor.Extractor` with
+    :any:`sklearn.base.TransformerMixin` and
+    :any:`bob.pipelines.wrappers.CheckpointWrapper` and
+    :any:`bob.pipelines.wrappers.SampleWrapper`
 
 
     Parameters
     ----------
 
     bob_object: object
-        Instance of :any:`bob.bio.base.preprocessor.Preprocessor`, :any:`bob.bio.base.extractor.Extractor` and :any:`bob.bio.base.algorithm.Algorithm`
+        Instance of :any:`bob.bio.base.preprocessor.Preprocessor` or
+        :any:`bob.bio.base.extractor.Extractor`
 
     dir_name: str
         Directory name for the checkpoints
 
     fit_extra_arguments: [tuple]
-        Same behavior as in Check :any:`bob.pipelines.wrappers.fit_extra_arguments`
+        Same behavior as in Check
+        :any:`bob.pipelines.wrappers.fit_extra_arguments`
 
     transform_extra_arguments: [tuple]
-        Same behavior as in Check :any:`bob.pipelines.wrappers.transform_extra_arguments`
+        Same behavior as in Check
+        :any:`bob.pipelines.wrappers.transform_extra_arguments`
 
     dask_it: bool
         If True, the transformer will be a dask graph
-
     """
 
     if isinstance(bob_object, Preprocessor):
@@ -60,15 +62,6 @@ def wrap_bob_legacy(
         transformer = wrap_checkpoint_extractor(
             bob_object,
             features_dir=os.path.join(dir_name, "extractor"),
-            model_path=dir_name,
-            fit_extra_arguments=fit_extra_arguments,
-            transform_extra_arguments=transform_extra_arguments,
-            **kwargs,
-        )
-    elif isinstance(bob_object, Algorithm):
-        transformer = wrap_checkpoint_algorithm(
-            bob_object,
-            features_dir=os.path.join(dir_name, "algorithm"),
             model_path=dir_name,
             fit_extra_arguments=fit_extra_arguments,
             transform_extra_arguments=transform_extra_arguments,
@@ -308,153 +301,4 @@ def wrap_checkpoint_extractor(
         transform_extra_arguments=transform_extra_arguments,
         fit_extra_arguments=fit_extra_arguments,
         **kwargs,
-    )
-
-
-def _prepare_algorithm_sample_args(
-    algorithm, transform_extra_arguments, fit_extra_arguments
-):
-
-    if transform_extra_arguments is None and is_argument_available(
-        "metadata", algorithm.project
-    ):
-        transform_extra_arguments = (("metadata", "metadata"),)
-
-    if (
-        fit_extra_arguments is None
-        and algorithm.requires_projector_training
-        and algorithm.split_training_features_by_client
-    ):
-        fit_extra_arguments = (("y", "subject"),)
-
-    return transform_extra_arguments, fit_extra_arguments
-
-
-def wrap_sample_algorithm(
-    algorithm,
-    model_path=None,
-    fit_extra_arguments=None,
-    transform_extra_arguments=None,
-    **kwargs,
-):
-    """
-    Wraps :any:`bob.bio.base.algorithm.Algorithm` with
-    :any:`bob.pipelines.wrappers.CheckpointWrapper` and :any:`bob.pipelines.wrappers.SampleWrapper`
-
-    Parameters
-    ----------
-
-    algorithm_transformer: :any:`bob.bio.base.algorithm.Algorithm`
-       Instance of :any:`bob.bio.base.transformers.AlgorithmTransformer` to be wrapped
-
-    model_path: str
-        Path to `projector_file` in :any:`bob.bio.base.algorithm.Algorithm`
-
-    fit_extra_arguments: [tuple]
-        Same behavior as in Check :any:`bob.pipelines.wrappers.fit_extra_arguments`
-
-    transform_extra_arguments: [tuple]
-        Same behavior as in Check :any:`bob.pipelines.wrappers.transform_extra_arguments`
-
-    """
-
-    projector_file = (
-        os.path.join(model_path, "Projector.hdf5")
-        if model_path is not None
-        else None
-    )
-
-    transformer = AlgorithmTransformer(algorithm, projector_file=projector_file)
-
-    (
-        transform_extra_arguments,
-        fit_extra_arguments,
-    ) = _prepare_algorithm_sample_args(
-        algorithm, transform_extra_arguments, fit_extra_arguments
-    )
-
-    return mario.wrap(
-        ["sample"],
-        transformer,
-        transform_extra_arguments=transform_extra_arguments,
-        fit_extra_arguments=fit_extra_arguments,
-    )
-
-
-def wrap_checkpoint_algorithm(
-    algorithm,
-    model_path=None,
-    features_dir=None,
-    extension=".hdf5",
-    fit_extra_arguments=None,
-    transform_extra_arguments=None,
-    load_func=None,
-    save_func=None,
-    **kwargs,
-):
-    """
-    Wraps :any:`bob.bio.base.algorithm.Algorithm` with
-    :any:`bob.pipelines.wrappers.CheckpointWrapper` and :any:`bob.pipelines.wrappers.SampleWrapper`
-
-    Parameters
-    ----------
-
-    algorithm_transformer: :any:`bob.bio.base.algorithm.Algorithm`
-       Instance of :any:`bob.bio.base.transformers.AlgorithmTransformer` to be wrapped
-
-    features_dir: str
-       Features directory to be checkpointed (see :any:bob.pipelines.CheckpointWrapper`).
-
-    model_path: str
-       Path to checkpoint the model
-
-    extension : str, optional
-        Extension o preprocessed files (see :any:bob.pipelines.CheckpointWrapper`).
-
-    fit_extra_arguments: [tuple]
-        Same behavior as in Check :any:`bob.pipelines.wrappers.fit_extra_arguments`
-
-    transform_extra_arguments: [tuple]
-        Same behavior as in Check :any:`bob.pipelines.wrappers.transform_extra_arguments`
-
-    load_func : None, optional
-        Function that loads data to be preprocessed.
-        The default is :any:`bob.bio.base.extractor.Extractor.read_feature`
-
-    save_func : None, optional
-        Function that saves preprocessed data.
-        The default is :any:`bob.bio.base.extractor.Extractor.write_feature`
-
-
-    """
-
-    projector_file = (
-        os.path.join(model_path, "Projector.hdf5")
-        if model_path is not None
-        else None
-    )
-
-    model_file = (
-        os.path.join(model_path, "Projector.pkl")
-        if model_path is not None
-        else None
-    )
-    transformer = AlgorithmTransformer(algorithm, projector_file=projector_file)
-
-    (
-        transform_extra_arguments,
-        fit_extra_arguments,
-    ) = _prepare_algorithm_sample_args(
-        algorithm, transform_extra_arguments, fit_extra_arguments
-    )
-
-    return mario.wrap(
-        ["sample", "checkpoint"],
-        transformer,
-        load_func=load_func or algorithm.read_feature,
-        save_func=save_func or algorithm.write_feature,
-        model_path=model_file,
-        features_dir=features_dir,
-        transform_extra_arguments=transform_extra_arguments,
-        fit_extra_arguments=fit_extra_arguments,
     )

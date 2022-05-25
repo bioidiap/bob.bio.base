@@ -14,19 +14,15 @@ import pytest
 from h5py import File as HDF5File
 from sklearn.pipeline import make_pipeline
 
+from bob.bio.base.algorithm import Distance
 from bob.bio.base.pipelines import (
-    BioAlgorithmCheckpointWrapper,
+    CheckpointWrapper,
     CSVScoreWriter,
-    Distance,
     FourColumnsScoreWriter,
     PipelineSimple,
     dask_pipeline_simple,
 )
-from bob.bio.base.test.test_transformers import (
-    FakeAlgorithm,
-    FakeExtractor,
-    FakePreprocesor,
-)
+from bob.bio.base.test.test_transformers import FakeExtractor, FakePreprocesor
 from bob.bio.base.wrappers import wrap_bob_legacy
 from bob.pipelines import DelayedSample, Sample, SampleSet
 
@@ -157,7 +153,7 @@ class DummyDatabase:
         return t_sset
 
     @property
-    def allow_scoring_with_all_biometric_references(self):
+    def score_all_vs_all(self):
         return True
 
 
@@ -165,14 +161,16 @@ def _custom_save_function(data, path):
     base_path, ext = path.rsplit(".", 1)
     filename = base_path + "_with_custom_f." + ext
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    HDF5File(filename, "w")["data"] = data
+    with HDF5File(filename, "w") as f:
+        f["data"] = data
 
 
 def _custom_load_function(path):
     base_path, ext = path.rsplit(".", 1)
     filename = base_path + "_with_custom_f." + ext
     assert os.path.isfile(filename)
-    return HDF5File(filename, "r")["data"]
+    with HDF5File(filename, "r") as f:
+        return f["data"][()]
 
 
 class DistanceWithTags(Distance):
@@ -200,31 +198,11 @@ def _make_transformer(dir_name):
     return pipeline
 
 
-def _make_transformer_with_algorithm(dir_name):
-    pipeline = make_pipeline(
-        wrap_bob_legacy(
-            FakePreprocesor(),
-            dir_name,
-            transform_extra_arguments=(("annotations", "annotations"),),
-        ),
-        wrap_bob_legacy(FakeExtractor(), dir_name),
-        wrap_bob_legacy(
-            FakeAlgorithm(),
-            dir_name,
-            fit_extra_arguments=[("y", "reference_id")],
-        ),
-    )
-
-    return pipeline
-
-
 def test_on_memory():
 
     with tempfile.TemporaryDirectory() as dir_name:
 
-        def run_pipeline(
-            with_dask, allow_scoring_with_all_biometric_references
-        ):
+        def run_pipeline(with_dask, score_all_vs_all):
             database = DummyDatabase()
 
             transformer = _make_transformer(dir_name)
@@ -246,7 +224,7 @@ def test_on_memory():
                 database.background_model_samples(),
                 database.references(),
                 database.probes(),
-                allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+                score_all_vs_all=score_all_vs_all,
             )
 
             if with_dask:
@@ -280,7 +258,7 @@ def test_checkpoint_bioalg_as_transformer():
 
             transformer = _make_transformer(dir_name)
 
-            biometric_algorithm = BioAlgorithmCheckpointWrapper(
+            biometric_algorithm = CheckpointWrapper(
                 Distance(), base_dir=dir_name
             )
 
@@ -297,7 +275,7 @@ def test_checkpoint_bioalg_as_transformer():
                 database.background_model_samples(),
                 database.references(),
                 database.probes(),
-                allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
+                score_all_vs_all=database.score_all_vs_all,
             )
 
             if pipeline_simple.score_writer is None:
@@ -399,7 +377,7 @@ def test_checkpoint_bioalg_with_tags():
 
             transformer = _make_transformer(dir_name)
 
-            biometric_algorithm = BioAlgorithmCheckpointWrapper(
+            biometric_algorithm = CheckpointWrapper(
                 DistanceWithTags(), base_dir=dir_name
             )
 
@@ -416,7 +394,7 @@ def test_checkpoint_bioalg_with_tags():
                 database.background_model_samples(),
                 database.references(),
                 database.probes(),
-                allow_scoring_with_all_biometric_references=database.allow_scoring_with_all_biometric_references,
+                score_all_vs_all=database.score_all_vs_all,
             )
 
             written_scores = pipeline_simple.write_scores(scores)
@@ -492,9 +470,7 @@ def test_checkpoint_bioalg_with_tags():
         )  # Checking if the checkpointing works
 
 
-def _run_with_failure(
-    allow_scoring_with_all_biometric_references, sporadic_fail
-):
+def _run_with_failure(score_all_vs_all, sporadic_fail):
 
     with tempfile.TemporaryDirectory() as dir_name:
 
@@ -516,7 +492,7 @@ def _run_with_failure(
             database.background_model_samples(),
             database.references(),
             database.probes(),
-            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+            score_all_vs_all=score_all_vs_all,
         )
 
         assert len(scores) == 10
@@ -532,5 +508,5 @@ def test_database_sporadic_failure():
 
 
 def test_database_full_failure():
-    with pytest.raises(ValueError):
+    with pytest.raises(NotImplementedError):
         _run_with_failure(False, sporadic_fail=False)

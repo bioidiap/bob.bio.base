@@ -245,7 +245,7 @@ class CSVDataset(Database):
             If True, will look for a `for_scores.lst` file instead of a `for_probes.lst`
             (legacy format)
 
-        allow_scoring_with_all_biometric_references: bool
+        score_all_vs_all: bool
             Optimization trick for Dask. If True, all references will be passed for
             scoring against the probes.
 
@@ -264,14 +264,14 @@ class CSVDataset(Database):
         dataset_protocol_path,
         csv_to_sample_loader=None,
         is_sparse=False,
-        allow_scoring_with_all_biometric_references=False,
+        score_all_vs_all=False,
         group_probes_by_reference_id=False,
         **kwargs,
     ):
         super().__init__(
             name=name,
             protocol=protocol,
-            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+            score_all_vs_all=score_all_vs_all,
             **kwargs,
         )
         self.dataset_protocol_path = dataset_protocol_path
@@ -688,14 +688,14 @@ class CSVDatasetCrossValidation(Database):
         test_size=0.8,
         samples_for_enrollment=1,
         csv_to_sample_loader=None,
-        allow_scoring_with_all_biometric_references=True,
+        score_all_vs_all=True,
         group_probes_by_reference_id=False,
         **kwargs,
     ):
         super().__init__(
             name=name,
             protocol=protocol,
-            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+            score_all_vs_all=score_all_vs_all,
             **kwargs,
         )
         if csv_to_sample_loader is None:
