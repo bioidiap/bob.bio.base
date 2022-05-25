@@ -6,14 +6,13 @@ import dask.bag
 from dask.delayed import Delayed
 
 from bob.bio.base.pipelines import (
-    BioAlgorithmDaskWrapper,
     CSVScoreWriter,
+    DaskWrapper,
     FourColumnsScoreWriter,
     PipelineScoreNorm,
     TNormScores,
     ZNormScores,
     checkpoint_pipeline_simple,
-    checkpoint_score_normalization_pipeline,
     dask_pipeline_simple,
     is_checkpointed,
 )
@@ -54,7 +53,6 @@ def execute_pipeline_simple(
     dask_n_workers,
     checkpoint_dir=None,
     force=False,
-    **kwargs,
 ):
     """
     Function that executes the PipelineSimple.
@@ -147,12 +145,10 @@ def execute_pipeline_simple(
         )
 
     # Load the background model samples only if the transformer requires fitting
-    if all(
-        [(not estimator_requires_fit(step)) for step in pipeline.transformer]
-    ):
-        background_model_samples = []
-    else:
+    if estimator_requires_fit(pipeline.transformer):
         background_model_samples = database.background_model_samples()
+    else:
+        background_model_samples = []
 
     for group in groups:
 
@@ -173,7 +169,7 @@ def execute_pipeline_simple(
         if dask_client is not None and not is_instance_nested(
             pipeline.biometric_algorithm,
             "biometric_algorithm",
-            BioAlgorithmDaskWrapper,
+            DaskWrapper,
         ):
             # Scaling up
             if dask_n_workers is not None and not isinstance(dask_client, str):
@@ -216,9 +212,9 @@ def execute_pipeline_simple(
                 pipeline = dask_pipeline_simple(pipeline, npartitions=n_jobs)
 
         logger.info(f"Running the PipelineSimple for group {group}")
-        allow_scoring_with_all_biometric_references = (
-            database.allow_scoring_with_all_biometric_references
-            if hasattr(database, "allow_scoring_with_all_biometric_references")
+        score_all_vs_all = (
+            database.score_all_vs_all
+            if hasattr(database, "score_all_vs_all")
             else False
         )
 
@@ -226,13 +222,13 @@ def execute_pipeline_simple(
             background_model_samples,
             biometric_references,
             probes,
-            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+            score_all_vs_all=score_all_vs_all,
         )
 
         post_processed_scores = post_process_scores(
             pipeline, result, score_file_name
         )
-        _ = compute_scores(post_processed_scores, dask_client)
+        compute_scores(post_processed_scores, dask_client)
 
 
 def execute_pipeline_score_norm(
@@ -358,16 +354,6 @@ def execute_pipeline_score_norm(
         pipeline, post_processor, CSVScoreWriter(os.path.join(output, "./tmp"))
     )
 
-    if checkpoint:
-
-        # checkpoint_score_normalization_pipeline,
-        # dask_score_normalization_pipeline,
-
-        pipeline = checkpoint_score_normalization_pipeline(
-            pipeline,
-            os.path.join(checkpoint_dir, f"{score_normalization_type}-scores"),
-        )
-
     background_model_samples = database.background_model_samples()
 
     # treferences = database.treferences(proportion=ztnorm_cohort_proportion)
@@ -393,7 +379,7 @@ def execute_pipeline_score_norm(
         if dask_client is not None and not is_instance_nested(
             pipeline.biometric_algorithm,
             "biometric_algorithm",
-            BioAlgorithmDaskWrapper,
+            DaskWrapper,
         ):
             # Scaling up
             if dask_n_workers is not None and not isinstance(dask_client, str):
@@ -418,9 +404,9 @@ def execute_pipeline_score_norm(
             )
 
         logger.info(f"Running PipelineSimple for group {group}")
-        allow_scoring_with_all_biometric_references = (
-            database.allow_scoring_with_all_biometric_references
-            if hasattr(database, "allow_scoring_with_all_biometric_references")
+        score_all_vs_all = (
+            database.score_all_vs_all
+            if hasattr(database, "score_all_vs_all")
             else False
         )
 
@@ -445,7 +431,7 @@ def execute_pipeline_score_norm(
             biometric_references,
             probes,
             score_normalization_samples,
-            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+            score_all_vs_all=score_all_vs_all,
         )
 
         def _build_filename(score_file_name, suffix):

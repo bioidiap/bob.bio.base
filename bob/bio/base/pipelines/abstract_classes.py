@@ -11,306 +11,298 @@ import numpy as np
 
 from sklearn.base import BaseEstimator
 
-from bob.pipelines.sample import Sample, SampleSet
+from bob.pipelines import Sample, SampleBatch, SampleSet
+from bob.pipelines.wrappers import _frmt
 
 logger = logging.getLogger(__name__)
 
 
-def reduce_scores(scores, fn=np.max):
+def reduce_scores(scores, axis, fn=np.max):
     """
-    Given a :any:`numpy.ndarray` coming from multiple probes,
-    average them.
+    Reduce scores using a function.
 
-    ``reduce_scores`` needs to handle 2 cases:
-    The first case is when one Sample (not a `SampleSet`) points to one score
-    The second case is when one Sample points to several scores (while dealing with `VideoLikeContainer`)
+    Parameters:
+    -----------
+    scores: numpy.ndarray
+        Scores to reduce.
 
+    fn: function
+        Function to use for reduction.
+
+    Returns:
+    --------
+    numpy.ndarray
+        Reduced scores.
     """
+    if isinstance(fn, str):
+        fn = {
+            "max": np.max,
+            "min": np.min,
+            "mean": np.mean,
+            "median": np.median,
+            "sum": np.sum,
+        }[fn]
+    return fn(scores, axis=axis)
 
-    # axis=0 points to each probe sample in a probe sampleset
-    # axis=1 points to the score w.r.t each biometric reference
-    # axis=2 points to each individual score of a sample: e.g.:
-    #   - image-based: axis 2 is one score per sample (scores.shape[2] == 1)
-    #   - video-based: axis 2 can contain multiple scores (scores.shape[2] > 1)
 
-    # First we have to average w.r.t individual samples, then between samples
+def _data_valid(data):
+    """Check if data is valid.
 
-    # The result is an array of scores, one score for each biometric reference.
-    # (same length as scores.shape[1])
+    Parameters:
+    -----------
+    data: object
+        Data to check.
 
-    return fn(np.array([fn(x, axis=1) for x in scores]), axis=0)
+    Returns:
+    --------
+    bool
+        True if data is valid, False otherwise.
+    """
+    return (data is not None) and (
+        isinstance(data, np.ndarray) and data.size > 0
+    )
 
 
 class BioAlgorithm(BaseEstimator, metaclass=ABCMeta):
-    """Describes a base biometric comparator for the PipelineSimple :ref:`bob.bio.base.biometric_algorithm`.
+    """Describes a base biometric comparator for the PipelineSimple
+    :ref:`bob.bio.base.biometric_algorithm`.
 
-    biometric model enrollment, via ``enroll()`` and scoring, with
-    ``score()``.
+    A biometric algorithm converts each SampleSet (which is a list of
+    samples/features) into a single template. Template creation is done for both
+    enroll and probe samples but the format of the templates can be different
+    between enrollment and probe samples. After the creation of the templates,
+    the algorithm computes one similarity score for comparison of an enroll
+    template with a probe template.
 
-    Parameters
-    ----------
-
-        score_reduction_operation: ``collections.callable``
-           Callable containing the score reduction function to be applied in the samples in a sampleset
-
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from bob.bio.base.pipelines import BioAlgorithm
+    >>> class MyAlgorithm(BioAlgorithm):
+    ...
+    ...     def create_templates(self, list_of_feature_sets, enroll):
+            # you cannot call np.mean(list_of_feature_sets, axis=1) because the
+            # number of features in each feature set may vary.
+    ...         return [np.mean(feature_set, axis=0) for feature_set in list_of_feature_sets]
+    ...
+    ...     def compare(self, enroll_templates, probe_templates):
+    ...         scores = []
+    ...         for enroll_template in enroll_templates:
+    ...             scores.append([])
+    ...             for probe_template in probe_templates:
+    ...                 similarity = 1 / np.linalg.norm(model - probe)
+    ...                 scores[-1].append(similarity)
+    ...         scores = np.array(scores, dtype=float)
+    ...         return scores
     """
 
-    def __init__(self, score_reduction_operation=reduce_scores, **kwargs):
-        self.stacked_biometric_references = None
-        self.score_reduction_operation = score_reduction_operation
+    def __init__(
+        self, probes_score_fusion="max", enrolls_score_fusion="max", **kwargs
+    ) -> None:
+        super().__init__(**kwargs)
+        self.probes_score_fusion = probes_score_fusion
+        self.enrolls_score_fusion = enrolls_score_fusion
 
-    def clear_caches(self):
-        """
-        Clean all cached objects from BioAlgorithm
-        """
-        self.stacked_biometric_references = None
+    def fuse_probe_scores(self, scores, axis):
+        return reduce_scores(scores, axis, self.probes_score_fusion)
 
-    def enroll_samples(self, biometric_references):
-        """This method should implement the enrollment sub-pipeline of the PipelineSimple
-
-        It handles the creation of biometric references
-
-        Parameters
-        ----------
-            biometric_references : list
-                A list of :any:`bob.pipelines.SampleSet` objects to be used for
-                creating biometric references.  The sets must be identified
-                with a unique id and a path, for eventual checkpointing.
-        """
-
-        retval = []
-        for k in biometric_references:
-            # compute on-the-fly
-            retval.append(self._enroll_sample_set(k))
-
-        return retval
-
-    def _enroll_sample_set(self, sampleset):
-
-        # Unpack the sampleset
-        data = [s.data for s in sampleset.samples]
-
-        valid_data = [d for d in data if d is not None]
-        if len(data) != len(valid_data):
-            logger.warning(
-                f"Removed {len(data)-len(valid_data)} invalid enrollment samples."
-            )
-        if not valid_data:
-            raise ValueError(
-                f"None of the enrollment samples were valid for {sampleset}."
-            )
-
-        # Enroll
-        return Sample(self.enroll(valid_data), parent=sampleset)
+    def fuse_enroll_scores(self, scores, axis):
+        return reduce_scores(scores, axis, self.enrolls_score_fusion)
 
     @abstractmethod
-    def enroll(self, data):
-        """
-        It handles the creation of ONE biometric reference
+    def create_templates(self, list_of_feature_sets, enroll):
+        """Creates enroll or probe templates from multiple sets of features.
+
+        The enroll template format can be different from the probe templates.
 
         Parameters
         ----------
-
-            data:
-                Data used for the creation of ONE BIOMETRIC REFERENCE
-
-        """
-        pass
-
-    def score_samples(
-        self,
-        probe_features,
-        biometric_references,
-        allow_scoring_with_all_biometric_references=True,
-    ):
-        """Scores a new sample against multiple (potential) references
-
-        Parameters
-        ----------
-
-            probes : list
-                A list of :any:`bob.pipelines.SampleSet` objects to be used for
-                scoring the input references
-
-            biometric_references : list
-                A list of :any:`bob.pipelines.Sample` objects to be used for
-                scoring the input probes, must have an ``id`` attribute that
-                will be used to cross-reference which probes need to be scored.
-
-            allow_scoring_with_all_biometric_references: bool
-                If true will call `self.score_multiple_biometric_references`, at scoring time, to compute scores in one shot with multiple probes.
-                This optimization is useful when all probes needs to be compared with all biometric references AND
-                your scoring function allows this broadcast computation.
-
+        list_of_feature_sets : list
+            A list of list of features with the shape of Nx?xD. N templates
+            should be computed. Note that you cannot call
+            np.array(list_of_feature_sets) because the number of features per
+            set can be different depending on the database.
+        enroll : bool
+            If True, the features are for enrollment. If False, the features are
+            for probe.
 
         Returns
         -------
-
-            scores : list
-                For each sample in a probe, returns as many scores as there are
-                samples in the probe, together with the probes and the
-                relevant reference's subject identifiers.
-
+        templates : list
+            A list of templates which has the same length as
+            ``list_of_feature_sets``.
         """
+        pass
 
-        retval = []
-        for p in probe_features:
-            retval.append(
-                self._score_sample_set(
-                    p,
-                    biometric_references,
-                    allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+    @abstractmethod
+    def compare(self, enroll_templates, probe_templates):
+        """Computes the similarity score between all enrollment and probe templates.
+
+        Parameters
+        ----------
+        enroll_templates : list
+            A list (length N) of enrollment templates.
+
+        probe_templates : list
+            A list (length M) of probe templates.
+
+        Returns
+        -------
+        scores : numpy.ndarray
+            A matrix of shape (N, M) containing the similarity scores.
+        """
+        pass
+
+    def create_templates_from_samplesets(self, list_of_samplesets, enroll):
+        """Creates enroll or probe templates from multiple SampleSets.
+
+        Parameters
+        ----------
+        list_of_samplesets : list
+            A list (length N) of SampleSets.
+
+        enroll : bool
+            If True, the SampleSets are for enrollment. If False, the SampleSets
+            are for probe.
+
+        Returns
+        -------
+        templates : list
+            A list of Samples which has the same length as ``list_of_samplesets``.
+            Each Sample contains a template.
+        """
+        logger.debug(
+            f"{_frmt(self)}.create_templates_from_samplesets(... enroll={enroll})"
+        )
+        # create templates from .data attribute of samples inside sample_sets
+        list_of_feature_sets = []
+        for sampleset in list_of_samplesets:
+            data = [s.data for s in sampleset.samples]
+            valid_data = [d for d in data if d is not None]
+            if len(data) != len(valid_data):
+                logger.warning(
+                    f"Removed {len(data)-len(valid_data)} invalid enrollment samples."
                 )
-            )
-        self.clear_caches()
-        return retval
+            if not valid_data and enroll:
+                # we do not support failure to enroll cases currently
+                raise NotImplementedError(
+                    f"None of the enrollment samples were valid for {sampleset}."
+                )
+            list_of_feature_sets.append(valid_data)
 
-    def _score_sample_set(
-        self,
-        sampleset,
-        biometric_references,
-        allow_scoring_with_all_biometric_references,
+        templates = self.create_templates(list_of_feature_sets, enroll)
+        expected_size = len(list_of_samplesets)
+        assert len(templates) == expected_size, (
+            "The number of (%s) templates (%d) created by the algorithm does not match "
+            "the number of sample sets (%d)"
+            % (
+                "enroll" if enroll else "probe",
+                len(templates),
+                expected_size,
+            )
+        )
+        # return a list of Samples (one per template)
+        templates = [
+            Sample(t, parent=sampleset)
+            for t, sampleset in zip(templates, list_of_samplesets)
+        ]
+        return templates
+
+    def score_sample_templates(
+        self, probe_samples, enroll_samples, score_all_vs_all
     ):
-        """Given one sampleset for probing, compute the scores and returns a sample set with the scores"""
-        scores_biometric_references = []
-        if allow_scoring_with_all_biometric_references:
-            # Optimized scoring
-            # This is useful when you scoring function can be compared with a
-            # static batch of biometric references
-            total_scores = []
-            for probe_sample in sampleset:
-                # Multiple scoring
-                if self.stacked_biometric_references is None:
-                    self.stacked_biometric_references = [
-                        ref.data for ref in biometric_references
-                    ]
-                if probe_sample.data is None:
-                    # Probe processing has failed. Mark invalid scores for FTA count
-                    scores = [[None]] * len(self.stacked_biometric_references)
-                else:
-                    scores = self.score_multiple_biometric_references(
-                        self.stacked_biometric_references, probe_sample.data
-                    )
-                total_scores.append(scores)
+        """Computes the similarity score between all probe and enroll templates.
 
-            # Reducing them
-            total_scores = self.score_reduction_operation(
-                np.array(total_scores, dtype=np.float)
+        Parameters
+        ----------
+        probe_samples : list
+            A list (length N) of Samples containing probe templates.
+
+        enroll_samples : list
+            A list (length M) of Samples containing enroll templates.
+
+        score_all_vs_all : bool
+            If True, the similarity scores between all probe and enroll templates
+            are computed. If False, the similarity scores between the probes and
+            their associated enroll templates are computed.
+
+        Returns
+        -------
+        score_samplesets : list
+            A list of N SampleSets each containing a list of M score Samples if score_all_vs_all
+            is True. Otherwise, a list of N SampleSets each containing a list of <=M score Samples
+            depending on the database.
+        """
+        logger.debug(
+            f"{_frmt(self)}.score_sample_templates(... score_all_vs_all={score_all_vs_all})"
+        )
+        # Returns a list of SampleSets where a Sampleset for each probe
+        # SampleSet where each Sample inside the SampleSets contains the score
+        # for one enroll SampleSet
+        score_samplesets = []
+        if score_all_vs_all:
+            probe_data = [s.data for s in probe_samples]
+            valid_probe_indices = [
+                i for i, d in enumerate(probe_data) if _data_valid(d)
+            ]
+            valid_probe_data = [probe_data[i] for i in valid_probe_indices]
+            scores = self.compare(SampleBatch(enroll_samples), valid_probe_data)
+            scores = np.asarray(scores, dtype=float)
+
+            if len(valid_probe_indices) != len(probe_data):
+                # inject None scores for invalid probe samples
+                scores: list = scores.T.tolist()
+                for i in range(len(probe_data)):
+                    if i not in valid_probe_indices:
+                        scores.insert(i, [None] * len(enroll_samples))
+                # transpose back to original shape
+                scores = np.array(scores, dtype=float).T
+
+            expected_shape = (len(enroll_samples), len(probe_samples))
+            assert scores.shape == expected_shape, (
+                "The shape of the similarity scores (%s) does not match the expected shape (%s)"
+                % (scores.shape, expected_shape)
             )
-
-            # Wrapping the scores in samples
-            for ref, score in zip(biometric_references, total_scores):
-                scores_biometric_references.append(Sample(score, parent=ref))
-
+            for j, probe in enumerate(probe_samples):
+                samples = []
+                for i, enroll in enumerate(enroll_samples):
+                    samples.append(Sample(scores[i, j], parent=enroll))
+                score_samplesets.append(SampleSet(samples, parent=probe))
         else:
-            # Non optimizing scoring
-            # There are some protocols where each probe has
-            # to be scored with a specific list of biometric_references
-            total_scores = []
-            if self.stacked_biometric_references is None:
-                self.stacked_biometric_references = dict()
-
-            def cache_references(probe_refererences):
-                """
-                Stack references in a dictionary
-                """
-                for r in biometric_references:
-                    if (
-                        str(r.reference_id) in probe_refererences
-                        and str(r.reference_id)
-                        not in self.stacked_biometric_references
-                    ):
-                        self.stacked_biometric_references[
-                            str(r.reference_id)
-                        ] = r.data
-
-            for probe_sample in sampleset:
-                cache_references(sampleset.references)
-                references = [
-                    self.stacked_biometric_references[str(r.reference_id)]
-                    for r in biometric_references
-                    if str(r.reference_id) in sampleset.references
+            for probe in probe_samples:
+                references = [str(ref) for ref in probe.references]
+                # get the indices of references for enroll samplesets
+                indices = [
+                    i
+                    for i, enroll in enumerate(enroll_samples)
+                    if str(enroll.reference_id) in references
                 ]
-
-                if len(references) == 0:
+                if not indices:
                     raise ValueError(
-                        f"The probe {sampleset} can't be compared with any biometric reference. "
-                        "Something is probably wrong with your database interface."
+                        f"No enroll sampleset found for probe {probe} and its required references {references}. "
+                        "Did you mean to set score_all_vs_all=True?"
                     )
-
-                if probe_sample.data is None:
-                    # Probe processing has failed
-                    scores = [[None]] * len(self.stacked_biometric_references)
+                if not _data_valid(probe.data):
+                    scores = [[None]] * len(indices)
                 else:
-                    scores = self.score_multiple_biometric_references(
-                        references, probe_sample.data
+                    scores = self.compare(
+                        SampleBatch([enroll_samples[i] for i in indices]),
+                        SampleBatch([probe]),
                     )
+                scores = np.asarray(scores, dtype=float)
+                expected_shape = (len(indices), 1)
+                assert scores.shape == expected_shape, (
+                    "The shape of the similarity scores (%s) does not match the expected shape (%s)"
+                    % (scores.shape, expected_shape)
+                )
+                samples = []
+                for i, j in enumerate(indices):
+                    samples.append(
+                        Sample(scores[i, 0], parent=enroll_samples[j])
+                    )
+                score_samplesets.append(SampleSet(samples, parent=probe))
 
-                total_scores.append(scores)
-
-            total_scores = self.score_reduction_operation(
-                np.array(total_scores, dtype=np.float)
-            )
-
-            for ref, score in zip(
-                [
-                    r
-                    for r in biometric_references
-                    if str(r.reference_id) in sampleset.references
-                ],
-                total_scores,
-            ):
-
-                scores_biometric_references.append(Sample(score, parent=ref))
-
-        return SampleSet(scores_biometric_references, parent=sampleset)
-
-    @abstractmethod
-    def score(self, biometric_reference, data):
-        """It handles the score computation for one sample
-
-        Scores a probe (containing possibly multiple samples) against one model (one
-        identity)
-
-        Parameters
-        ----------
-
-            biometric_reference : list
-                Biometric reference to be compared
-
-            data : list
-                Data to be compared
-
-        Returns
-        -------
-
-            scores : list
-                For each sample in a probe, returns as many scores as there are
-                samples in the probe, together with the probe's and the
-                relevant reference's subject identifiers.
-
-        """
-        pass
-
-    def score_multiple_biometric_references(self, biometric_references, data):
-        """Score one probe against multiple biometric references (models).
-        This method is called if `allow_scoring_multiple_references` is set to true.
-        You may want to override this method to improve the performance of computations.
-
-        Parameters
-        ----------
-        biometric_references : list
-            List of biometric references (models) to be scored
-            [description]
-        data
-            Data used for the creation of ONE biometric probe.
-
-        Returns
-        -------
-        list
-            A list of scores for the comparison of the probe against multiple models.
-        """
-        return [self.score(model, data) for model in biometric_references]
+        return score_samplesets
 
 
 class Database(metaclass=ABCMeta):
@@ -320,7 +312,7 @@ class Database(metaclass=ABCMeta):
         self,
         name,
         protocol,
-        allow_scoring_with_all_biometric_references=False,
+        score_all_vs_all=False,
         annotation_type=None,
         fixed_positions=None,
         memory_demanding=False,
@@ -329,12 +321,20 @@ class Database(metaclass=ABCMeta):
         super().__init__(**kwargs)
         self.name = name
         self.protocol = protocol
-        self.allow_scoring_with_all_biometric_references = (
-            allow_scoring_with_all_biometric_references
-        )
+        self.score_all_vs_all = score_all_vs_all
         self.annotation_type = annotation_type
         self.fixed_positions = fixed_positions
         self.memory_demanding = memory_demanding
+
+    def __str__(self):
+        args = ", ".join(
+            [
+                "{}={}".format(k, v)
+                for k, v in self.__dict__.items()
+                if not k.startswith("_")
+            ]
+        )
+        return f"{self.__class__.__name__}({args})"
 
     @abstractmethod
     def background_model_samples(self):

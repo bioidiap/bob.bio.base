@@ -12,11 +12,11 @@ from bob.extension.scripts.click_helper import (
     ResourceOption,
     verbosity_option,
 )
+from bob.pipelines import is_pipeline_wrapped
 from bob.pipelines.distributed import (
     VALID_DASK_CLIENT_STRINGS,
     dask_get_partition_size,
 )
-from bob.pipelines.utils import is_pipeline_wrapped
 
 logger = logging.getLogger(__name__)
 from bob.pipelines.wrappers import CheckpointWrapper, DaskWrapper, wrap

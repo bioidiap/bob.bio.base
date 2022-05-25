@@ -1,6 +1,5 @@
 # isort: skip_file
-from .Algorithm import Algorithm
-from .Distance import Distance
+from .distance import Distance
 from .gmm import GMM
 from .isv import ISV
 from .jfa import JFA
@@ -22,7 +21,6 @@ def __appropriate__(*args):
 
 
 __appropriate__(
-    Algorithm,
     Distance,
     GMM,
     ISV,

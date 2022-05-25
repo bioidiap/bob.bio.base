@@ -27,34 +27,33 @@ import bob.bio.base
 
 from bob.bio.base.score.load import get_split_dataframe
 from bob.pipelines import (
-    CheckpointWrapper,
     DaskWrapper,
     Sample,
     SampleSet,
-    estimator_requires_fit,
+    getattr_nested,
     is_instance_nested,
 )
 
-from . import pickle_compress, uncompress_unpickle
 from .pipelines import PipelineSimple
 from .score_writers import FourColumnsScoreWriter
 
 logger = logging.getLogger(__name__)
 
 
-class PipelineScoreNorm(PipelineSimple):
+class PipelineScoreNorm:
     """
     Apply Z, T or ZT Score normalization on top of Pimple Pipeline
 
-    Reference bibliography from: A Generative Model for Score Normalization in Speaker Recognition
-    https://arxiv.org/pdf/1709.09868.pdf
+    Reference bibliography from: A Generative Model for Score Normalization in
+    Speaker Recognition https://arxiv.org/pdf/1709.09868.pdf
 
 
     Example
     -------
        >>> from bob.pipelines.transformers import Linearize
        >>> from sklearn.pipeline import make_pipeline
-       >>> from bob.bio.base.pipelines import Distance, PipelineSimple, PipelineScoreNorm, ZNormScores
+       >>> from bob.bio.base.algorithm import Distance
+       >>> from bob.bio.base.pipelines import PipelineSimple, PipelineScoreNorm, ZNormScores
        >>> estimator_1 = Linearize()
        >>> transformer = make_pipeline(estimator_1)
        >>> biometric_algorithm = Distance()
@@ -65,28 +64,27 @@ class PipelineScoreNorm(PipelineSimple):
 
     Parameters
     ----------
+    pipeline_simple: :any:`PipelineSimple`
+        An instance :any:`PipelineSimple` to the wrapped with score
+        normalization
 
-        pipeline_simple: :any:`PipelineSimple`
-          An instance :any:`PipelineSimple` to the wrapped with score normalization
+    post_processor: :py:class`sklearn.pipeline.Pipeline` or a `sklearn.base.BaseEstimator`
+        Transformer that will post process the scores
 
-        post_processor: :py:class`sklearn.pipeline.Pipeline` or a `sklearn.base.BaseEstimator`
-            Transformer that will post process the scores
-
-        score_writer:
-
-
+    score_writer
+        A ScoreWriter to write the scores
     """
 
     def __init__(
         self,
-        pipeline_simple,
+        pipeline_simple: PipelineSimple,
         post_processor,
         score_writer=None,
     ):
 
         self.pipeline_simple = pipeline_simple
-        self.biometric_algorithm = self.pipeline_simple.biometric_algorithm
-        self.transformer = self.pipeline_simple.transformer
+        # self.biometric_algorithm = self.pipeline_simple.biometric_algorithm
+        # self.transformer = self.pipeline_simple.transformer
 
         self.post_processor = post_processor
         self.score_writer = score_writer
@@ -104,69 +102,48 @@ class PipelineScoreNorm(PipelineSimple):
         biometric_reference_samples,
         probe_samples,
         post_process_samples,
-        allow_scoring_with_all_biometric_references=False,
+        score_all_vs_all=False,
     ):
-
-        self.transformer = self.train_background_model(background_model_samples)
-
-        # Create biometric samples
-        biometric_references = self.create_biometric_reference(
-            biometric_reference_samples
+        raw_scores, enroll_templates, probe_templates = self.pipeline_simple(
+            background_model_samples=background_model_samples,
+            biometric_reference_samples=biometric_reference_samples,
+            probe_samples=probe_samples,
+            score_all_vs_all=score_all_vs_all,
+            return_templates=True,
         )
 
-        raw_scores, probe_features = self.compute_scores(
-            probe_samples,
-            biometric_references,
-            allow_scoring_with_all_biometric_references,
+        template_format = getattr_nested(
+            self.post_processor, "post_process_template"
         )
-
-        # Training the score transformer
-        if is_instance_nested(
-            self.post_processor, "estimator", ZNormScores
-        ) or isinstance(self.post_processor, ZNormScores):
-            self.post_processor.fit(
-                [post_process_samples, biometric_references]
+        if template_format == "probe":
+            post_process_templates = self.pipeline_simple.probe_templates(
+                post_process_samples
             )
-            # Transformer
-            post_processed_scores = self.post_processor.transform(raw_scores)
-
-        elif is_instance_nested(
-            self.post_processor, "estimator", TNormScores
-        ) or isinstance(self.post_processor, TNormScores):
-            # self.post_processor.fit([post_process_samples, probe_features])
-            self.post_processor.fit([post_process_samples, probe_samples])
-            # Transformer
-            post_processed_scores = self.post_processor.transform(raw_scores)
+            post_process_scores = self.pipeline_simple.compute_scores(
+                probe_templates=post_process_templates,
+                enroll_templates=enroll_templates,
+                score_all_vs_all=False,
+            )
+        elif template_format == "enroll":
+            post_process_templates = self.pipeline_simple.enroll_templates(
+                post_process_samples
+            )
+            post_process_scores = self.pipeline_simple.compute_scores(
+                probe_templates=probe_templates,
+                enroll_templates=post_process_templates,
+                score_all_vs_all=True,
+            )
         else:
-            logger.warning(
-                f"Invalid post-processor {self.post_processor}. Returning the raw_scores"
+            raise ValueError(
+                "post_process_template must be either 'probe' or 'enroll', got {}".format(
+                    template_format
+                )
             )
-            post_processed_scores = raw_scores
+
+        self.post_processor.fit(post_process_scores)
+        post_processed_scores = self.post_processor.transform(raw_scores)
 
         return raw_scores, post_processed_scores
-
-    def train_background_model(self, background_model_samples):
-        return self.pipeline_simple.train_background_model(
-            background_model_samples
-        )
-
-    def create_biometric_reference(self, biometric_reference_samples):
-        return self.pipeline_simple.create_biometric_reference(
-            biometric_reference_samples
-        )
-
-    def compute_scores(
-        self,
-        probe_samples,
-        biometric_references,
-        allow_scoring_with_all_biometric_references=False,
-    ):
-
-        return self.pipeline_simple.compute_scores(
-            probe_samples,
-            biometric_references,
-            allow_scoring_with_all_biometric_references,
-        )
 
     def write_scores(self, scores):
         return self.pipeline_simple.write_scores(scores)
@@ -180,122 +157,6 @@ def copy_learned_attributes(from_estimator, to_estimator):
 
     for k, v in attrs.items():
         setattr(to_estimator, k, v)
-
-
-class CheckpointPostProcessor(CheckpointWrapper):
-    """
-    This class creates pickle checkpoints of post-processed scores.
-
-
-    .. Note::
-       We can't use the `CheckpointWrapper` from bob.pipelines to create these checkpoints.
-       Because there, each sample is checkpointed, and here we can have checkpoints for SampleSets
-
-    Parameters
-    ----------
-
-    estimator
-       The scikit-learn estimator to be wrapped.
-
-    model_path: str
-       Saves the estimator state in this directory if the `estimator` is stateful
-
-    features_dir: str
-       Saves the transformed data in this directory
-
-    hash_fn
-       Pointer to a hash function. This hash function maps
-       `sample.key` to a hash code and this hash code corresponds a relative directory
-       where a single `sample` will be checkpointed.
-       This is useful when is desirable file directories with less than
-       a certain number of files.
-
-    attempts
-       Number of checkpoint attempts. Sometimes, because of network/disk issues
-       files can't be saved. This argument sets the maximum number of attempts
-       to checkpoint a sample.
-
-    """
-
-    def __init__(
-        self,
-        estimator,
-        model_path=None,
-        features_dir=None,
-        extension=".pkl",
-        hash_fn=None,
-        attempts=10,
-        force=True,
-        **kwargs,
-    ):
-
-        self.estimator = estimator
-        self.model_path = model_path
-        self.features_dir = features_dir
-        self.extension = extension
-
-        self.hash_fn = hash_fn
-        self.attempts = attempts
-        self.force = force
-        if model_path is None and features_dir is None:
-            logger.warning(
-                "Both model_path and features_dir are None. "
-                f"Nothing will be checkpointed. From: {self}"
-            )
-
-    def fit(self, samples, y=None):
-
-        if not estimator_requires_fit(self.estimator):
-            return self
-
-        # if the estimator needs to be fitted.
-        logger.debug("CheckpointPostProcessor.fit")
-
-        if not self.force and (
-            self.model_path is not None and os.path.isfile(self.model_path)
-        ):
-            logger.info("Found a checkpoint for model. Loading ...")
-            return self.load_model()
-
-        self.estimator = self.estimator.fit(samples, y=y)
-        copy_learned_attributes(self.estimator, self)
-        return self.save_model()
-
-    def transform(self, sample_sets, y=None):
-
-        logger.debug("CheckpointPostProcessor.transform")
-        transformed_sample_sets = []
-        for s in sample_sets:
-
-            path = self.make_path(s)
-            if os.path.exists(path):
-                sset = uncompress_unpickle(path)
-            else:
-                sset = self.estimator.transform([s])[0]
-                pickle_compress(path, sset)
-
-            transformed_sample_sets.append(sset)
-
-        return transformed_sample_sets
-
-
-def checkpoint_score_normalization_pipeline(
-    pipeline, base_dir, sub_dir="norm", hash_fn=None
-):
-
-    model_path = os.path.join(base_dir, sub_dir, "stats.pkl")
-    features_dir = os.path.join(base_dir, sub_dir, "normed_scores")
-
-    # Checkpointing only the post processor
-    pipeline.post_processor = CheckpointPostProcessor(
-        pipeline.post_processor,
-        model_path=model_path,
-        features_dir=features_dir,
-        hash_fn=hash_fn,
-        extension=".pkl",
-    )
-
-    return pipeline
 
 
 def dask_score_normalization_pipeline(pipeline):
@@ -331,6 +192,7 @@ class ZNormScores(TransformerMixin, BaseEstimator):
         super().__init__(**kwargs)
         self.top_norm_score_fraction = top_norm_score_fraction
         self.top_norm = top_norm
+        self.post_process_template = "probe"
 
         # Copying the pipeline and possibly chaning the biometric_algoritm paths
         self.pipeline = copy.deepcopy(pipeline)
@@ -340,13 +202,13 @@ class ZNormScores(TransformerMixin, BaseEstimator):
         if is_instance_nested(
             self.pipeline,
             "biometric_algorithm",
-            bob.bio.base.pipelines.wrappers.BioAlgorithmCheckpointWrapper,
+            bob.bio.base.pipelines.wrappers.CheckpointWrapper,
         ):
 
             if is_instance_nested(
                 self.pipeline,
                 "biometric_algorithm",
-                bob.bio.base.pipelines.wrappers.BioAlgorithmDaskWrapper,
+                bob.bio.base.pipelines.wrappers.DaskWrapper,
             ):
                 self.pipeline.biometric_algorithm.biometric_algorithm.score_dir = os.path.join(
                     self.pipeline.biometric_algorithm.biometric_algorithm.score_dir,
@@ -366,22 +228,7 @@ class ZNormScores(TransformerMixin, BaseEstimator):
                     "score-norm",
                 )
 
-    def fit(self, X, y=None):
-
-        # JUst for the sake of readability
-        zprobe_samples = X[0]
-        biometric_references = X[1]
-
-        # Compute the ZScores
-
-        # Computing the features
-        zprobe_features = self.pipeline.transformer.transform(zprobe_samples)
-
-        z_scores, _ = self.pipeline.compute_scores(
-            zprobe_features,
-            biometric_references,
-            allow_scoring_with_all_biometric_references=False,
-        )
+    def fit(self, z_scores, y=None):
 
         # TODO: THIS IS SUPER INNEFICIENT, BUT
         # IT'S THE MOST READABLE SOLUTION
@@ -477,6 +324,7 @@ class TNormScores(TransformerMixin, BaseEstimator):
         super().__init__(**kwargs)
         self.top_norm_score_fraction = top_norm_score_fraction
         self.top_norm = top_norm
+        self.post_process_template = "enroll"
 
         # Copying the pipeline and possibly chaning the biometric_algoritm paths
         self.pipeline = copy.deepcopy(pipeline)
@@ -486,13 +334,13 @@ class TNormScores(TransformerMixin, BaseEstimator):
         if is_instance_nested(
             self.pipeline,
             "biometric_algorithm",
-            bob.bio.base.pipelines.wrappers.BioAlgorithmCheckpointWrapper,
+            bob.bio.base.pipelines.wrappers.CheckpointWrapper,
         ):
 
             if is_instance_nested(
                 self.pipeline,
                 "biometric_algorithm",
-                bob.bio.base.pipelines.wrappers.BioAlgorithmDaskWrapper,
+                bob.bio.base.pipelines.wrappers.DaskWrapper,
             ):
                 self.pipeline.biometric_algorithm.biometric_algorithm.score_dir = os.path.join(
                     self.pipeline.biometric_algorithm.biometric_algorithm.score_dir,
@@ -512,35 +360,7 @@ class TNormScores(TransformerMixin, BaseEstimator):
                     "score-norm",
                 )
 
-    def fit(self, X, y=None):
-
-        # JUst for the sake of readability
-        treference_samples = X[0]
-
-        # TODO: We need to pass probe samples instead of probe features
-        probe_samples = X[1]  # Probes to be normalized
-
-        probe_features = self.pipeline.transformer.transform(probe_samples)
-
-        # Creating T-Models
-        treferences = self.pipeline.create_biometric_reference(
-            treference_samples
-        )
-
-        # t_references_ids = [s.reference_id for s in treferences]
-
-        # probes[0].reference_id
-
-        # Scoring the T-Models
-        t_scores = self.pipeline.biometric_algorithm.score_samples(
-            probe_features,
-            treferences,
-            allow_scoring_with_all_biometric_references=True,
-        )
-
-        # t_scores, _ = self.pipeline.compute_scores(
-        #    probes, treferences, allow_scoring_with_all_biometric_references=True,
-        # )
+    def fit(self, t_scores, y=None):
 
         # TODO: THIS IS SUPER INNEFICIENT, BUT
         # IT'S THE MOST READABLE SOLUTION

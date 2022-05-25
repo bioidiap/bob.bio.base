@@ -52,9 +52,8 @@ It's composed of:
   output of the previous one.
 
 * A :ref:`Biometric Algorithm <bob.bio.base.biometric_algorithm>`: Instance of
-  :any:`bob.bio.base.pipelines.BioAlgorithm`
-  that implements the methods ``enroll`` and ``score`` to generate
-  biometric experiment results.
+  :any:`bob.bio.base.pipelines.BioAlgorithm` that implements the methods
+  ``create_templates`` and ``compare`` to generate biometric experiment results.
 
 Running the PipelineSimple will retrieve samples from a dataset and generate score files.
 It does not encompass the analysis of those scores (Error rates, ROC, DET). This can be done with other utilities of the ``bob.bio`` packages.
@@ -76,7 +75,7 @@ A Transformer must implement the following methods:
 
 .. py:method:: Transformer.transform(X)
 
-  This method takes data (``X``) as input and returns the corresponding transformed data. It is used for preprocessing and extraction.
+  This method takes data (``X``, N samples) as input and returns the corresponding transformed data. It is used for preprocessing and extraction.
 
 
 .. py:method:: Transformer.fit(X, y=None)
@@ -96,72 +95,93 @@ Below is an example implementing a very simple Transformer applying a custom fun
 
 .. code-block:: python
 
-  from sklearn.base import TransformerMixin, BaseEstimator
+    from sklearn.base import TransformerMixin, BaseEstimator
 
-  class CustomTransformer(TransformerMixin, BaseEstimator):
-      def transform(self, X):
-          transformed_X = my_function(X)
-          return transformed_X
+    class CustomTransformer(TransformerMixin, BaseEstimator):
+        def transform(self, X):
+            transformed_X = my_function(X)
+            return transformed_X
 
-      def fit(self, X, y=None):
-          return self
+        def fit(self, X, y=None):
+            return self
 
-      def _more_tags(self):
-          return {"requires_fit": False}
+        def _more_tags(self):
+            return {"requires_fit": False}
 
 or using :any:`sklearn.preprocessing.FunctionTransformer`:
 
 .. code-block:: python
 
-  from sklearn.preprocessing import FunctionTransformer
+    from sklearn.preprocessing import FunctionTransformer
 
-  def CustomTransformer(**kwargs):
-      return FunctionTransformer(my_function, **kwargs)
+    def CustomTransformer(**kwargs):
+        return FunctionTransformer(my_function, **kwargs)
 
 .. _bob.bio.base.biometric_algorithm:
 
 Biometric Algorithm
 ^^^^^^^^^^^^^^^^^^^
 
-A biometric algorithm represents the enrollment and scoring phase of a biometric experiment.
+A biometric algorithm takes as input features of one or more samples to create a
+template. Note that in many biometric databases, one template is generated from
+multiple samples such as several face images; This is true for both enrollment
+and probing templates. Once templates are generated, the biometric algorithm can
+compare the probe template to the enrollment template to generate a similarity
+score. These two operations are implemented in
+:py:meth:`bob.bio.base.pipelines.BioAlgorithm.create_templates` and
+:py:meth:`bob.bio.base.pipelines.BioAlgorithm.compare` methods.
 
-A biometric algorithm is a class implementing the method
-:py:meth:`bob.bio.base.pipelines.BioAlgorithm.enroll` that
-allows to save the identity representation of a subject, and
-:py:meth:`bob.bio.base.pipelines.BioAlgorithm.score`
-that computes the score of a subject's sample against a previously enrolled
-model.
+A common example of a biometric algorithm class would compute the mean vector of
+a feature set (features of several samples to create one template) to generate
+a template, and would compare the scoring would be done by measuring the distance between the
+unknown mean vector and the enrolled mean vector.
 
-A common example of a biometric algorithm class would compute the mean vector of the features of each enrolled subject, and the scoring would be done by measuring the distance between the unknown identity vector and the enrolled mean vector.
+.. py:method:: BiometricAlgorithm.create_templates(list_of_feature_sets, enroll):
 
-.. py:method:: BiometricAlgorithm.enroll(reference_sample)
-
-  The :py:meth:`bob.bio.base.pipelines.BioAlgorithm.enroll` method takes extracted features (data that went through transformers) of the *reference* samples as input.
-  It should save (on memory or disk) a representation of the identity of each subject for later comparison with the :py:meth:`bob.bio.base.pipelines.BioAlgorithm.score` method.
-
-
-.. py:method:: BiometricAlgorithm.score(model,probe_sample)
-
-  The :any:`bob.bio.base.pipelines.BioAlgorithm.score`
-  method also takes extracted features (data that went through transformers) as
-  input but coming from the *probe* samples. It should compare the probe sample
-  to the model and output a similarity score.
+  The :py:meth:`bob.bio.base.pipelines.BioAlgorithm.create_templates` method
+  takes a list of feature sets (a feature set is composed of features of several
+  samples, e.g. images, that will be used to create one template) and returns a
+  list of templates. The features are the output of the Transformer. The
+  ``enroll`` parameter is a boolean that indicates if the templates are used for
+  enrollment or for probing. Some algorithms may create a different template
+  format for enrollment and for probing. For example, in the UBM-GMM algorithm (
+  see :any:`bob.bio.base.algorithm.GMM`), the enrollment templates are adapted
+  GMMs, while probing templates are statistics computed on the UBM.
 
 
-Here is a simple example of a custom :py:class:`bob.bio.base.pipelines.BioAlgorithm` implementation that computes a model with the mean of multiple reference samples, and measures the inverse of the distance as a similarity score.
+.. py:method:: BiometricAlgorithm.compare(enroll_templates, probe_templates)
+
+  The :py:meth:`bob.bio.base.pipelines.BioAlgorithm.compare` method takes N
+  enroll templates and M probe templates as input and returns an NxM matrix of
+  similarity scores by comparing each probe template to each enroll template.
+  The templates are the output of the ``create_templates`` method.
+
+
+Here is a simple example of a custom
+:py:class:`bob.bio.base.pipelines.BioAlgorithm` implementation that computes the
+mean of multiple samples to create a template, and measures the inverse of the
+distance as a similarity score.
 
 .. code-block:: python
 
-  from bob.bio.base.pipelines import BioAlgorithm
+    import numpy as np
+    from bob.bio.base.pipelines import BioAlgorithm
+    class MyAlgorithm(BioAlgorithm):
 
-  class CustomDistance(BioAlgorithm):
-      def enroll(self, enroll_features):
-          model = numpy.mean(enroll_features, axis=0)
-          return model
+        def create_templates(self, list_of_feature_sets, enroll):
+            # you cannot call np.mean(list_of_feature_sets, axis=1) because the
+            # number of features in each feature set may vary.
+            return [np.mean(feature_set, axis=0) for feature_set in list_of_feature_sets]
 
-      def score(self, model, probe):
-          distance = 1/numpy.linalg.norm(model-probe)
-          return distance
+        def compare(self, enroll_templates, probe_templates):
+            scores = []
+            for enroll_template in enroll_templates:
+                scores.append([])
+                for probe_template in probe_templates:
+                    similarity = 1 / np.linalg.norm(model - probe)
+                    scores[-1].append(similarity)
+            scores = np.array(scores, dtype=float)
+            return scores
 
 
 Constructing the pipeline
@@ -211,8 +231,8 @@ To run a minimal example, let's use the ATNT faces database and execute this pip
 The ATNT database is included in this package.
 
 .. note::
-  Usually, you need to download the files of each database manually yourself.
-  We do not and cannot provide a script that downloads a biometric database automatically.
+    Usually, you need to download the files of each database manually yourself.
+    We do not and cannot provide a script that downloads a biometric database automatically due to legal restrictions.
 
 For each database, you need to configure Bob to specify the location of its
 files. To do so for e.g. the MOBIO database (no need for ATNT database), run the following command::
@@ -232,7 +252,9 @@ Find below a complete file containing a Transformer, a Biometric Algorithm, and 
 
 To run the simple example above, save that code in a file ``my_pipeline.py`` and enter this command in a terminal::
 
-  $ bob bio pipeline simple /path/to/my_pipeline.py
+  $ bob bio pipeline simple -vv /path/to/my_pipeline.py
+
+This will create a file ``results/scores-dev`` containing the distance between each pair of *probe* and *reference* template.
 
 .. note::
 
@@ -240,9 +262,8 @@ To run the simple example above, save that code in a file ``my_pipeline.py`` and
   providing the config file as an argument, like the example.
   To create a sample config file, run::
 
-    $ bob bio pipeline simple -H sample_config.py
+    $ bob bio pipeline simple --dump-config sample_config.py
 
-This will create a file ``results/scores-dev`` containing the distance between each pair of *probe* and *reference* sample.
 
 Structure of a pipeline
 -----------------------
@@ -253,25 +274,32 @@ can be swapped more easily.
 
 
 bob.bio packages also provide commonly used pipelines and databases that you can use.
-You can list them with the following command::
+You can list them with either of the following commands::
 
-$ resources.py
+  $ bob bio pipeline simple --help
+  $ bob bio pipeline simple --dump-config sample_config.py
 
-For example, to test the gabor graph pipeline on the ATNT database, run::
+For example, to test the iresnet100 pipeline on the ATNT database, run::
 
   $ bob bio pipeline simple -vv atnt iresnet100
 
 The command above is equivalent to the following command::
 
   $ bob bio pipeline simple -vv \
-    bob.bio.face.config.database.atnt \
-    bob.bio.face.config.baseline.gabor_graph
+    bob.bio.base.config.database.atnt \
+    bob.bio.face.config.baseline.iresnet100
 
-This information can obtained using ``resources.py``::
+This information can be obtained by either inspecting the ``setup.py`` of the
+relevant pacakge or using the following code snippet:
 
-  $ resources.py --type config
-    + atnt                             --> bob.bio.face.config.database.atnt
-    + gabor_graph                      --> bob.bio.face.config.baseline.gabor_graph
+.. code-block:: python
+
+    import pkg_resources
+
+    for entry_point in pkg_resources.iter_entry_points("bob.bio.config"):
+        if entry_point.name not in ("atnt", "iresnet100"):
+            continue
+        print(entry_point)
 
 See :ref:`bob.extension.framework` for more information.
 

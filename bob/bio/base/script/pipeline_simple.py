@@ -265,7 +265,11 @@ def pipeline_simple(
 
     checkpoint = not memory
 
-    logger.debug("Executing PipelineSimple")
+    logger.debug("Executing PipelineSimple with:")
+    logger.debug(f"pipeline: {pipeline}")
+    logger.debug(f"  transformer: {pipeline.transformer}")
+    logger.debug(f"  biometric_algorithm: {pipeline.biometric_algorithm}")
+    logger.debug(f"database: {database}")
 
     execute_pipeline_simple(
         pipeline=pipeline,
@@ -280,7 +284,6 @@ def pipeline_simple(
         dask_n_workers=dask_n_workers,
         checkpoint_dir=checkpoint_dir,
         force=force,
-        **kwargs,
     )
 
     logger.info("Experiment finished !")

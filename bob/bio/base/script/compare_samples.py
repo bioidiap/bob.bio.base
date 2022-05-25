@@ -76,7 +76,7 @@ def compare_samples(samples, pipeline, dask_client, verbose):
 
     table = [[s for s in samples]]
     biometric_references = pipeline.create_biometric_reference(sample_sets)
-    scores, _ = pipeline.compute_scores(sample_sets, biometric_references)
+    scores = pipeline.compute_scores(sample_sets, biometric_references)
     if dask_client is not None:
         scores = scores.compute(scheduler=dask_client)
     for sset in scores:

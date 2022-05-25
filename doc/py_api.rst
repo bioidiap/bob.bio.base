@@ -31,8 +31,8 @@ Biometric Algorithm
 .. autosummary::
 
   bob.bio.base.pipelines.BioAlgorithm
-  bob.bio.base.pipelines.BioAlgorithm.score
-  bob.bio.base.pipelines.BioAlgorithm.enroll
+  bob.bio.base.pipelines.BioAlgorithm.create_templates
+  bob.bio.base.pipelines.BioAlgorithm.compare
 
 Writing Scores
 ~~~~~~~~~~~~~~
@@ -59,7 +59,6 @@ Creating Transformers from legacy constructs
 
   bob.bio.base.transformers.PreprocessorTransformer
   bob.bio.base.transformers.ExtractorTransformer
-  bob.bio.base.transformers.AlgorithmTransformer
 
 
 Legacy Constructs
@@ -72,7 +71,6 @@ Base classes
 
   bob.bio.base.preprocessor.Preprocessor
   bob.bio.base.extractor.Extractor
-  bob.bio.base.algorithm.Algorithm
 
 Implementations
 ~~~~~~~~~~~~~~~

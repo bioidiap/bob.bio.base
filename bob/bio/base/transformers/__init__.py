@@ -12,7 +12,6 @@ def split_X_by_y(X, y):
 
 from .preprocessor import PreprocessorTransformer
 from .extractor import ExtractorTransformer
-from .algorithm import AlgorithmTransformer
 from .preprocessing import ReferenceIdEncoder
 
 # gets sphinx autodoc done right - don't remove it
@@ -37,7 +36,6 @@ def __appropriate__(*args):
 __appropriate__(
     PreprocessorTransformer,
     ExtractorTransformer,
-    AlgorithmTransformer,
     ReferenceIdEncoder,
 )
 
