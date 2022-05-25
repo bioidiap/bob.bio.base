@@ -52,7 +52,8 @@ class PipelineScoreNorm:
     -------
        >>> from sklearn.preprocessing import FunctionTransformer
        >>> from sklearn.pipeline import make_pipeline
-       >>> from bob.bio.base.pipelines import Distance, PipelineSimple, PipelineScoreNorm, ZNormScores
+       >>> from bob.bio.base.algorithm import Distance
+       >>> from bob.bio.base.pipelines import PipelineSimple, PipelineScoreNorm, ZNormScores
        >>> from bob.pipelines import wrap
        >>> import numpy
        >>> linearize = lambda samples: [numpy.reshape(x, (-1,)) for x in samples]

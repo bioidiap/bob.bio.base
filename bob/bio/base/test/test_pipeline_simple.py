@@ -508,5 +508,5 @@ def test_database_sporadic_failure():
 
 
 def test_database_full_failure():
-    with pytest.raises(ValueError):
+    with pytest.raises(NotImplementedError):
         _run_with_failure(False, sporadic_fail=False)

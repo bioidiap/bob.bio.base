@@ -81,8 +81,8 @@ class BioAlgorithm(BaseEstimator, metaclass=ABCMeta):
     >>> class MyAlgorithm(BioAlgorithm):
     ...
     ...     def create_templates(self, list_of_feature_sets, enroll):
-            # you cannot call np.mean(list_of_feature_sets, axis=1) because the
-            # number of features in each feature set may vary.
+    ...         # you cannot call np.mean(list_of_feature_sets, axis=1) because the
+    ...         # number of features in each feature set may vary.
     ...         return [np.mean(feature_set, axis=0) for feature_set in list_of_feature_sets]
     ...
     ...     def compare(self, enroll_templates, probe_templates):
