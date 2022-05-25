@@ -16,7 +16,7 @@ from bob.bio.base.pipelines import (
     dask_pipeline_simple,
     is_checkpointed,
 )
-from bob.pipelines import estimator_requires_fit, is_instance_nested
+from bob.pipelines import estimator_requires_fit, is_instance_nested, wrap
 from bob.pipelines.distributed import dask_get_partition_size
 from bob.pipelines.distributed.sge import SGEMultipleQueuesCluster
 
@@ -348,6 +348,18 @@ def execute_pipeline_score_norm(
     else:
         raise ValueError(
             f"score_normalization_type {score_normalization_type} is not valid"
+        )
+
+    if checkpoint and not is_checkpointed(post_processor):
+        model_path = os.path.join(
+            checkpoint_dir,
+            f"{score_normalization_type}-scores",
+            "norm",
+            "stats.pkl",
+        )
+        # we cannot checkpoint "features" because sample.keys are not unique.
+        post_processor = wrap(
+            ["checkpoint"], post_processor, model_path=model_path, force=force
         )
 
     pipeline = PipelineScoreNorm(

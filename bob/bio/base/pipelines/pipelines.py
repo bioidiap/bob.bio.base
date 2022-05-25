@@ -32,34 +32,40 @@ class PipelineSimple:
      - :py:class:`PipelineSimple.train_background_model`: Initializes or trains your transformer.
         It will run :py:meth:`sklearn.base.BaseEstimator.fit`
 
-     - :py:class:`PipelineSimple.create_biometric_reference`: Creates biometric references
+     - :py:class:`PipelineSimple.enroll_templates`: Creates enrollment templates
         It will run :py:meth:`sklearn.base.BaseEstimator.transform` followed by a sequence of
-        :py:meth:`bob.bio.base.pipelines.abstract_classes.BioAlgorithm.enroll`
+        :py:meth:`bob.bio.base.pipelines.abstract_classes.BioAlgorithm.create_templates`
+
+     - :py:class:`PipelineSimple.probe_templates`: Creates probe templates
+        It will run :py:meth:`sklearn.base.BaseEstimator.transform` followed by a sequence of
+        :py:meth:`bob.bio.base.pipelines.abstract_classes.BioAlgorithm.create_templates`
 
      - :py:class:`PipelineSimple.compute_scores`: Computes scores
-        It will run :py:meth:`sklearn.base.BaseEstimator.transform` followed by a sequence of
-        :py:meth:`bob.bio.base.pipelines.abstract_classes.BioAlgorithm.score`
+        It will run :py:meth:`bob.bio.base.pipelines.abstract_classes.BioAlgorithm.compare`
 
 
     Example
     -------
-       >>> from bob.pipelines.transformers import Linearize
+       >>> from sklearn.preprocessing import FunctionTransformer
        >>> from sklearn.pipeline import make_pipeline
-       >>> from bob.bio.base.algorithm import Distance
-       >>> from bob.bio.base.pipelines import PipelineSimple
-       >>> estimator_1 = Linearize()
-       >>> transformer = make_pipeline(estimator_1)
-       >>> biometric_algoritm = Distance()
-       >>> pipeline = PipelineSimple(transformer, biometric_algoritm)
+       >>> from bob.bio.base.pipelines import Distance, PipelineSimple
+       >>> from bob.pipelines import wrap
+       >>> import numpy
+       >>> linearize = lambda samples: [numpy.reshape(x, (-1,)) for x in samples]
+       >>> transformer = wrap(["sample"], FunctionTransformer(linearize))
+       >>> transformer_pipeline = make_pipeline(transformer)
+       >>> biometric_algorithm = Distance()
+       >>> pipeline = PipelineSimple(transformer_pipeline, biometric_algorithm)
        >>> pipeline(samples_for_training_back_ground_model, samplesets_for_enroll, samplesets_for_scoring)  # doctest: +SKIP
 
 
-    To run this pipeline using Dask, used the function :py:func:`dask_pipeline_simple`.
+    To run this pipeline using Dask, used the function
+    :py:func:`dask_pipeline_simple`.
 
     Example
     -------
       >>> from bob.bio.base.pipelines import dask_pipeline_simple
-      >>> pipeline = PipelineSimple(transformer, biometric_algoritm)
+      >>> pipeline = PipelineSimple(transformer_pipeline, biometric_algorithm)
       >>> pipeline = dask_pipeline_simple(pipeline)
       >>> pipeline(samples_for_training_back_ground_model, samplesets_for_enroll, samplesets_for_scoring).compute()  # doctest: +SKIP
 
@@ -67,14 +73,16 @@ class PipelineSimple:
     Parameters
     ----------
 
-      transformer: :py:class`sklearn.pipeline.Pipeline` or a `sklearn.base.BaseEstimator`
+    transformer: :py:class`sklearn.pipeline.Pipeline` or a `sklearn.base.BaseEstimator`
         Transformer that will preprocess your data
 
-      biometric_algorithm: :py:class:`bob.bio.base.pipelines.abstract_classes.BioAlgorithm`
-        Biometrics algorithm object that implements the methods `enroll` and `score` methods
+    biometric_algorithm: :py:class:`bob.bio.base.pipelines.abstract_classes.BioAlgorithm`
+        Biometrics algorithm object that implements the methods `enroll` and
+        `score` methods
 
-      score_writer: :any:`bob.bio.base.pipelines.ScoreWriter`
-          Format to write scores. Default to :any:`bob.bio.base.pipelines.FourColumnsScoreWriter`
+    score_writer: :any:`bob.bio.base.pipelines.ScoreWriter`
+        Format to write scores. Default to
+        :any:`bob.bio.base.pipelines.FourColumnsScoreWriter`
 
     """
 

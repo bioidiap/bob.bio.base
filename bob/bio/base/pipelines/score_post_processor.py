@@ -50,14 +50,16 @@ class PipelineScoreNorm:
 
     Example
     -------
-       >>> from bob.pipelines.transformers import Linearize
+       >>> from sklearn.preprocessing import FunctionTransformer
        >>> from sklearn.pipeline import make_pipeline
-       >>> from bob.bio.base.algorithm import Distance
-       >>> from bob.bio.base.pipelines import PipelineSimple, PipelineScoreNorm, ZNormScores
-       >>> estimator_1 = Linearize()
-       >>> transformer = make_pipeline(estimator_1)
+       >>> from bob.bio.base.pipelines import Distance, PipelineSimple, PipelineScoreNorm, ZNormScores
+       >>> from bob.pipelines import wrap
+       >>> import numpy
+       >>> linearize = lambda samples: [numpy.reshape(x, (-1,)) for x in samples]
+       >>> transformer = wrap(["sample"], FunctionTransformer(linearize))
+       >>> transformer_pipeline = make_pipeline(transformer)
        >>> biometric_algorithm = Distance()
-       >>> pipeline_simple = PipelineSimple(transformer, biometric_algorithm)
+       >>> pipeline_simple = PipelineSimple(transformer_pipeline, biometric_algorithm)
        >>> z_norm_postprocessor = ZNormScores(pipeline=pipeline_simple)
        >>> z_pipeline = PipelineScoreNorm(pipeline_simple, z_norm_postprocessor)
        >>> zt_pipeline(...) #doctest: +SKIP
@@ -161,7 +163,8 @@ def copy_learned_attributes(from_estimator, to_estimator):
 
 def dask_score_normalization_pipeline(pipeline):
 
-    # Checkpointing only the post processor
+    # cannot use the wrap function here as the input to post processor is
+    # already a dask bag.
     pipeline.post_processor = DaskWrapper(
         pipeline.post_processor,
     )

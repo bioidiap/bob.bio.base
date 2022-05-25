@@ -17,7 +17,7 @@ from bob.pipelines.wrappers import _frmt
 logger = logging.getLogger(__name__)
 
 
-def reduce_scores(scores, axis, fn=np.max):
+def reduce_scores(scores, axis, fn="max"):
     """
     Reduce scores using a function.
 
