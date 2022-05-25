@@ -14,6 +14,25 @@ class ISV(ISVMachine, BioAlgorithm):
         """Passthrough"""
         return X
 
+    def create_templates(self, list_of_feature_sets, enroll):
+        if enroll:
+            return [
+                self.enroll(feature_set) for feature_set in list_of_feature_sets
+            ]
+        else:
+            # TODO: We should compute these parts of self.score:
+            # x = self.estimate_x(data)
+            # Ux = self._U @ x
+            # here to make scoring faster
+            return list_of_feature_sets
+
+    def compare(self, enroll_templates, probe_templates):
+        # TODO: The underlying score method actually supports batched scoring
+        return [
+            [self.score(enroll, probe) for probe in probe_templates]
+            for enroll in enroll_templates
+        ]
+
     @classmethod
     def custom_enrolled_save_fn(cls, data, path):
         pickle.dump(data, open(path, "wb"))
