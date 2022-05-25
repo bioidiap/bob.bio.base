@@ -15,6 +15,7 @@ from sklearn.preprocessing import FunctionTransformer
 import bob.io.base
 import bob.io.base.test_utils
 
+from bob.bio.base.algorithm import Distance
 from bob.bio.base.database import (
     CSVDataset,
     CSVDatasetCrossValidation,
@@ -23,7 +24,6 @@ from bob.bio.base.database import (
     FileListBioDatabase,
     LSTToSampleLoader,
 )
-from bob.bio.base.pipelines.biometric_algorithms import Distance
 from bob.bio.base.pipelines.pipelines import PipelineSimple
 from bob.bio.base.test.dummy.database import database as ATNT_DATABASE
 from bob.pipelines import DelayedSample, SampleSet, wrap

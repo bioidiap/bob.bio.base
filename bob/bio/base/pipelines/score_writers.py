@@ -145,12 +145,12 @@ class CSVScoreWriter(ScoreWriter):
         """
 
         def _post_process(score_paths, path):
-            post_process_scores = []
+            post_processed_scores = []
             os.makedirs(os.path.dirname(path), exist_ok=True)
             with open(path, "w") as f:
 
                 for i, score in enumerate(score_paths):
-                    post_process_scores.append(score)
+                    post_processed_scores.append(score)
 
                     # Not memory intensive score writing
                     with open(score, "r") as f1:
@@ -160,7 +160,7 @@ class CSVScoreWriter(ScoreWriter):
                             f.write(line)
                     os.remove(score)
 
-            return post_process_scores
+            return post_processed_scores
 
         import dask
         import dask.bag

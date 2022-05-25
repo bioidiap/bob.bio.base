@@ -319,7 +319,7 @@ Here is a code snippet of a simple database interface:
 
 .. note::
 
-  For optimization reasons, an ``allow_scoring_with_all_biometric_references``
+  For optimization reasons, an ``score_all_vs_all``
   flag can be set in the database interface (see
   :any:`bob.bio.base.pipelines.Database`) to allow scoring
   with all biometric references. This will be much faster when your algorithm

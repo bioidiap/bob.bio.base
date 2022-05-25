@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 import tempfile
 
 
-class PipelineSimple(object):
+class PipelineSimple:
     """
     The simplest possible pipeline
 
@@ -32,20 +32,24 @@ class PipelineSimple(object):
      - :py:class:`PipelineSimple.train_background_model`: Initializes or trains your transformer.
         It will run :py:meth:`sklearn.base.BaseEstimator.fit`
 
-     - :py:class:`PipelineSimple.create_biometric_reference`: Creates biometric references
+     - :py:class:`PipelineSimple.enroll_templates`: Creates enrollment templates
         It will run :py:meth:`sklearn.base.BaseEstimator.transform` followed by a sequence of
-        :py:meth:`bob.bio.base.pipelines.abstract_classes.BioAlgorithm.enroll`
+        :py:meth:`bob.bio.base.pipelines.abstract_classes.BioAlgorithm.create_templates`
+
+     - :py:class:`PipelineSimple.probe_templates`: Creates probe templates
+        It will run :py:meth:`sklearn.base.BaseEstimator.transform` followed by a sequence of
+        :py:meth:`bob.bio.base.pipelines.abstract_classes.BioAlgorithm.create_templates`
 
      - :py:class:`PipelineSimple.compute_scores`: Computes scores
-        It will run :py:meth:`sklearn.base.BaseEstimator.transform` followed by a sequence of
-        :py:meth:`bob.bio.base.pipelines.abstract_classes.BioAlgorithm.score`
+        It will run :py:meth:`bob.bio.base.pipelines.abstract_classes.BioAlgorithm.compare`
 
 
     Example
     -------
        >>> from sklearn.preprocessing import FunctionTransformer
        >>> from sklearn.pipeline import make_pipeline
-       >>> from bob.bio.base.pipelines import Distance, PipelineSimple
+       >>> from bob.bio.base.algorithm import Distance
+       >>> from bob.bio.base.pipelines import PipelineSimple
        >>> from bob.pipelines import wrap
        >>> import numpy
        >>> linearize = lambda samples: [numpy.reshape(x, (-1,)) for x in samples]
@@ -56,7 +60,8 @@ class PipelineSimple(object):
        >>> pipeline(samples_for_training_back_ground_model, samplesets_for_enroll, samplesets_for_scoring)  # doctest: +SKIP
 
 
-    To run this pipeline using Dask, used the function :py:func:`dask_pipeline_simple`.
+    To run this pipeline using Dask, used the function
+    :py:func:`dask_pipeline_simple`.
 
     Example
     -------
@@ -69,21 +74,23 @@ class PipelineSimple(object):
     Parameters
     ----------
 
-      transformer: :py:class`sklearn.pipeline.Pipeline` or a `sklearn.base.BaseEstimator`
+    transformer: :py:class`sklearn.pipeline.Pipeline` or a `sklearn.base.BaseEstimator`
         Transformer that will preprocess your data
 
-      biometric_algorithm: :py:class:`bob.bio.base.pipelines.abstract_classes.BioAlgorithm`
-        Biometrics algorithm object that implements the methods `enroll` and `score` methods
+    biometric_algorithm: :py:class:`bob.bio.base.pipelines.abstract_classes.BioAlgorithm`
+        Biometrics algorithm object that implements the methods `enroll` and
+        `score` methods
 
-      score_writer: :any:`bob.bio.base.pipelines.ScoreWriter`
-          Format to write scores. Default to :any:`bob.bio.base.pipelines.FourColumnsScoreWriter`
+    score_writer: :any:`bob.bio.base.pipelines.ScoreWriter`
+        Format to write scores. Default to
+        :any:`bob.bio.base.pipelines.FourColumnsScoreWriter`
 
     """
 
     def __init__(
         self,
-        transformer,
-        biometric_algorithm,
+        transformer: Pipeline,
+        biometric_algorithm: BioAlgorithm,
         score_writer=None,
     ):
         self.transformer = transformer
@@ -100,80 +107,78 @@ class PipelineSimple(object):
         background_model_samples,
         biometric_reference_samples,
         probe_samples,
-        allow_scoring_with_all_biometric_references=True,
+        score_all_vs_all=True,
+        return_templates=False,
     ):
-        logger.info(
-            f" >> PipelineSimple: Training background model with pipeline {self.transformer}"
+        logger.info(" >> PipelineSimple: Training background model")
+        self.train_background_model(background_model_samples)
+
+        logger.info(" >> PipelineSimple: Creating enroll templates")
+        enroll_templates = self.enroll_templates(biometric_reference_samples)
+
+        logger.info(" >> PipelineSimple: Creating probe templates")
+        probe_templates = self.probe_templates(probe_samples)
+
+        logger.info(" >> PipelineSimple: Computing scores")
+        scores = self.compute_scores(
+            probe_templates,
+            enroll_templates,
+            score_all_vs_all,
         )
 
-        # Training background model (fit will return even if samples is ``None``,
-        # in which case we suppose the algorithm is not trainable in any way)
-        self.transformer = self.train_background_model(background_model_samples)
-
-        logger.info(
-            f" >> Creating biometric references with the biometric algorithm {self.biometric_algorithm}"
-        )
-
-        # Create biometric samples
-        biometric_references = self.create_biometric_reference(
-            biometric_reference_samples
-        )
-
-        logger.info(
-            f" >> Computing scores with the biometric algorithm {self.biometric_algorithm}"
-        )
-
-        # Scores all probes
-        scores, _ = self.compute_scores(
-            probe_samples,
-            biometric_references,
-            allow_scoring_with_all_biometric_references,
-        )
-
-        return scores
+        if return_templates:
+            return scores, enroll_templates, probe_templates
+        else:
+            return scores
 
     def train_background_model(self, background_model_samples):
         # background_model_samples is a list of Samples
 
         # We might have algorithms that has no data for training
-        if len(background_model_samples) <= 0:
+        if len(background_model_samples) > 0:
+            self.transformer.fit(background_model_samples)
+        else:
             logger.warning(
-                "There's no data to train background model."
+                "There's no data to train background model. "
                 "For the rest of the execution it will be assumed that the pipeline does not require fit."
             )
-            return self.transformer
+        return self.transformer
 
-        return self.transformer.fit(background_model_samples)
-
-    def create_biometric_reference(self, biometric_reference_samples):
+    def enroll_templates(self, biometric_reference_samples):
         biometric_reference_features = self.transformer.transform(
             biometric_reference_samples
         )
 
-        biometric_references = self.biometric_algorithm.enroll_samples(
-            biometric_reference_features
+        enroll_templates = (
+            self.biometric_algorithm.create_templates_from_samplesets(
+                biometric_reference_features, enroll=True
+            )
         )
 
-        # models is a list of Samples
-        return biometric_references
+        # a list of Samples
+        return enroll_templates
+
+    def probe_templates(self, probe_samples):
+        probe_features = self.transformer.transform(probe_samples)
+
+        probe_templates = (
+            self.biometric_algorithm.create_templates_from_samplesets(
+                probe_features, enroll=False
+            )
+        )
+
+        # a list of Samples
+        return probe_templates
 
     def compute_scores(
         self,
-        probe_samples,
-        biometric_references,
-        allow_scoring_with_all_biometric_references=True,
+        probe_templates,
+        enroll_templates,
+        score_all_vs_all,
     ):
-
-        # probes is a list of SampleSets
-        probe_features = self.transformer.transform(probe_samples)
-        scores = self.biometric_algorithm.score_samples(
-            probe_features,
-            biometric_references,
-            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+        return self.biometric_algorithm.score_sample_templates(
+            probe_templates, enroll_templates, score_all_vs_all
         )
-
-        # scores is a list of Samples
-        return scores, probe_features
 
     def write_scores(self, scores):
         if self.score_writer is None:

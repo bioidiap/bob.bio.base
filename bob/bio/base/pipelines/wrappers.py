@@ -11,9 +11,10 @@ import bob.pipelines
 from bob.pipelines import (
     DelayedSample,
     DelayedSampleSetCached,
+    Sample,
     is_instance_nested,
 )
-from bob.pipelines.wrappers import BaseWrapper, get_bob_tags
+from bob.pipelines.wrappers import BaseWrapper, _frmt, get_bob_tags
 
 from . import pickle_compress, uncompress_unpickle
 from .abstract_classes import BioAlgorithm
@@ -48,7 +49,17 @@ def get_pipeline_simple_tags(estimator=None, force_tags=None):
     return {**bob_tags, **default_tags, **estimator_tags, **force_tags}
 
 
-class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
+class BioAlgorithmBaseWrapper(BioAlgorithm, BaseWrapper):
+    def create_templates(self, feature_sets, enroll):
+        return self.biometric_algorithm.create_templates(feature_sets, enroll)
+
+    def compare(self, enroll_templates, probe_templates):
+        return self.biometric_algorithm.compare(
+            enroll_templates, probe_templates
+        )
+
+
+class CheckpointWrapper(BioAlgorithmBaseWrapper):
     """Wrapper used to checkpoint enrolled and Scoring samples.
 
     Parameters
@@ -88,9 +99,10 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
     Examples
     --------
 
-    >>> from bob.bio.base.pipelines import BioAlgorithmCheckpointWrapper, Distance
-    >>> biometric_algorithm = BioAlgorithmCheckpointWrapper(Distance(), base_dir="./")
-    >>> biometric_algorithm.enroll(sample) # doctest: +SKIP
+    >>> from bob.bio.base.algorithm import Distance
+    >>> from bob.bio.base.pipelines import CheckpointWrapper
+    >>> biometric_algorithm = CheckpointWrapper(Distance(), base_dir="./")
+    >>> biometric_algorithm.create_templates(samples, enroll=True) # doctest: +SKIP
 
     """
 
@@ -104,7 +116,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
         group=None,
         force=False,
         hash_fn=None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(**kwargs)
 
@@ -136,22 +148,14 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
             )
             self.score_dir = os.path.join(self.base_dir, group, "scores")
 
-    def enroll(self, enroll_features):
-        return self.biometric_algorithm.enroll(enroll_features)
-
-    def score(self, biometric_reference, data):
-        return self.biometric_algorithm.score(biometric_reference, data)
-
-    def score_multiple_biometric_references(self, biometric_references, data):
-        return self.biometric_algorithm.score_multiple_biometric_references(
-            biometric_references, data
-        )
-
     def write_biometric_reference(self, sample, path):
+        data = sample.data
+        if data is None:
+            raise RuntimeError("Cannot checkpoint template of None")
         return self.save_func(sample.data, path)
 
     def write_scores(self, samples, path):
-        pickle_compress(path, samples)
+        pickle_compress(samples, path)
 
     def _enroll_sample_set(self, sampleset):
         """
@@ -171,8 +175,10 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
 
         if self.force or not os.path.exists(path):
 
-            enrolled_sample = self.biometric_algorithm._enroll_sample_set(
-                sampleset
+            enrolled_sample = (
+                self.biometric_algorithm.create_templates_from_samplesets(
+                    [sampleset], enroll=True
+                )[0]
             )
 
             # saving the new sample
@@ -186,11 +192,26 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
 
         return delayed_enrolled_sample
 
+    def create_templates_from_samplesets(self, list_of_samplesets, enroll):
+        logger.debug(
+            f"{_frmt(self, attr='biometric_algorithm')}.create_templates_from_samplesets(... enroll={enroll})"
+        )
+        if not enroll:
+            return self.biometric_algorithm.create_templates_from_samplesets(
+                list_of_samplesets, enroll
+            )
+        retval = []
+        for sampleset in list_of_samplesets:
+            # if it exists, load it!
+            sample = self._enroll_sample_set(sampleset)
+            retval.append(sample)
+        return retval
+
     def _score_sample_set(
         self,
         sampleset,
         biometric_references,
-        allow_scoring_with_all_biometric_references=False,
+        score_all_vs_all,
     ):
         """Given a sampleset for probing, compute the scores and returns a sample set with the scores"""
 
@@ -223,7 +244,7 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
             scored_sample_set = self.biometric_algorithm._score_sample_set(
                 sampleset,
                 biometric_references,
-                allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+                score_all_vs_all=score_all_vs_all,
             )
             self.write_scores(scored_sample_set.samples, path)
             parent = scored_sample_set
@@ -235,60 +256,49 @@ class BioAlgorithmCheckpointWrapper(BioAlgorithm, BaseWrapper):
         return scored_sample_set
 
 
-class BioAlgorithmDaskWrapper(BioAlgorithm, BaseWrapper):
+class DaskWrapper(BioAlgorithmBaseWrapper):
     """
     Wrap :any:`bob.bio.base.pipelines.BioAlgorithm` to work with DASK
     """
 
-    def __init__(self, biometric_algorithm, **kwargs):
+    def __init__(self, biometric_algorithm: BioAlgorithm, **kwargs):
         self.biometric_algorithm = biometric_algorithm
 
-    def clear_caches(self):
-        self.biometric_algorithm.clear_caches()
+    def create_templates_from_samplesets(self, list_of_samplesets, enroll):
+        logger.debug(
+            f"{_frmt(self, attr='biometric_algorithm')}.create_templates_from_samplesets(... enroll={enroll})"
+        )
+        templates = list_of_samplesets.map_partitions(
+            self.biometric_algorithm.create_templates_from_samplesets,
+            enroll=enroll,
+        )
+        return templates
 
-    def enroll_samples(self, biometric_reference_features):
-
-        biometric_references = biometric_reference_features.map_partitions(
-            self.biometric_algorithm.enroll_samples
+    def score_sample_templates(
+        self, probe_samples, enroll_samples, score_all_vs_all
+    ):
+        logger.debug(
+            f"{_frmt(self, attr='biometric_algorithm')}.score_sample_templates(... score_all_vs_all={score_all_vs_all})"
+        )
+        # load the templates into memory because they could be delayed samples
+        enroll_samples = enroll_samples.map_partitions(
+            _delayed_samples_to_samples
+        )
+        probe_samples = probe_samples.map_partitions(
+            _delayed_samples_to_samples
         )
 
-        return biometric_references
-
-    def score_samples(
-        self,
-        probe_features,
-        biometric_references,
-        allow_scoring_with_all_biometric_references=False,
-    ):
-
-        # TODO: Here, we are sending all computed biometric references to all
-        # probes.  It would be more efficient if only the models related to each
-        # probe are sent to the probing split.  An option would be to use caching
-        # and allow the ``score`` function above to load the required data from
-        # the disk, directly.  A second option would be to generate named delays
-        # for each model and then associate them here.
-
-        all_references = dask.delayed(list)(biometric_references)
-        scores = probe_features.map_partitions(
-            self.biometric_algorithm.score_samples,
+        all_references = dask.delayed(list)(enroll_samples)
+        scores = probe_samples.map_partitions(
+            self.biometric_algorithm.score_sample_templates,
             all_references,
-            allow_scoring_with_all_biometric_references=allow_scoring_with_all_biometric_references,
+            score_all_vs_all=score_all_vs_all,
         )
         return scores
 
-    def enroll(self, data):
-        return self.biometric_algorithm.enroll(data)
 
-    def score(self, biometric_reference, data):
-        return self.biometric_algorithm.score(biometric_reference, data)
-
-    def score_multiple_biometric_references(self, biometric_references, data):
-        return self.biometric_algorithm.score_multiple_biometric_references(
-            biometric_references, data
-        )
-
-    def set_score_references_path(self, group):
-        self.biometric_algorithm.set_score_references_path(group)
+def _delayed_samples_to_samples(delayed_samples):
+    return [Sample(sample.data, parent=sample) for sample in delayed_samples]
 
 
 def dask_pipeline_simple(pipeline, npartitions=None, partition_size=None):
@@ -333,9 +343,7 @@ def dask_pipeline_simple(pipeline, npartitions=None, partition_size=None):
             pipeline.transformer = bob.pipelines.wrap(
                 ["dask"], pipeline.transformer, partition_size=partition_size
             )
-        pipeline.biometric_algorithm = BioAlgorithmDaskWrapper(
-            pipeline.biometric_algorithm
-        )
+        pipeline.biometric_algorithm = DaskWrapper(pipeline.biometric_algorithm)
 
         def _write_scores(scores):
             return scores.map_partitions(pipeline.write_scores_on_dask)
@@ -389,7 +397,7 @@ def checkpoint_pipeline_simple(
         force=force,
     )
 
-    pipeline.biometric_algorithm = BioAlgorithmCheckpointWrapper(
+    pipeline.biometric_algorithm = CheckpointWrapper(
         pipeline.biometric_algorithm,
         base_dir=bio_ref_scores_dir,
         hash_fn=hash_fn,
@@ -412,7 +420,7 @@ def is_checkpointed(pipeline):
 
     """
 
-    # We have to check if is BioAlgorithmCheckpointWrapper
+    # We have to check if is CheckpointWrapper
     return is_instance_nested(
-        pipeline, "biometric_algorithm", BioAlgorithmCheckpointWrapper
+        pipeline, "biometric_algorithm", CheckpointWrapper
     )

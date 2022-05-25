@@ -209,6 +209,25 @@ class GMM(GMMMachine, BioAlgorithm):
         gmm.fit(data)
         return gmm
 
+    def create_templates(self, list_of_feature_sets, enroll):
+        if enroll:
+            return [
+                self.enroll(feature_set) for feature_set in list_of_feature_sets
+            ]
+        else:
+            return [
+                self.project(feature_set)
+                for feature_set in list_of_feature_sets
+            ]
+
+    def compare(self, enroll_templates, probe_templates):
+        return self.scoring_function(
+            models_means=enroll_templates,
+            ubm=self,
+            test_stats=probe_templates,
+            frame_length_normalization=True,
+        )
+
     def read_biometric_reference(self, model_file):
         """Reads an enrolled reference model, which is a MAP GMMMachine."""
         return GMMMachine.from_hdf5(HDF5File(model_file, "r"), ubm=self)
@@ -216,50 +235,6 @@ class GMM(GMMMachine, BioAlgorithm):
     def write_biometric_reference(self, model: GMMMachine, model_file):
         """Write the enrolled reference (MAP GMMMachine) into a file."""
         return model.save(model_file)
-
-    def score(self, biometric_reference: GMMMachine, probe):
-        """Computes the score for the given model and the given probe.
-
-        Uses the scoring function passed during initialization.
-
-        Parameters
-        ----------
-        biometric_reference:
-            The model to score against.
-        probe:
-            The probe data to compare to the model.
-        """
-
-        probe = self.project(probe)
-        return self.scoring_function(
-            models_means=[biometric_reference],
-            ubm=self,
-            test_stats=probe,
-            frame_length_normalization=True,
-        )[0]
-
-    def score_multiple_biometric_references(
-        self, biometric_references: "list[GMMMachine]", probe: GMMStats
-    ):
-        """Computes the score between multiple models and one probe.
-
-        Uses the scoring function passed during initialization.
-
-        Parameters
-        ----------
-        biometric_references:
-            The models to score against.
-        probe:
-            The probe data to compare to the models.
-        """
-
-        stats = self.project(probe)
-        return self.scoring_function(
-            models_means=biometric_references,
-            ubm=self,
-            test_stats=stats,
-            frame_length_normalization=True,
-        )
 
     def fit(self, X, y=None, **kwargs):
         """Trains the UBM."""

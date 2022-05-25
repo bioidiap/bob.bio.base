@@ -6,7 +6,7 @@ import pickle
 import os
 
 
-def pickle_compress(path, obj, attempts=5):
+def pickle_compress(obj, path, attempts=5):
     """
     Pickle an object, compressed it and save it
 
@@ -46,11 +46,10 @@ def uncompress_unpickle(path):
         return pickle.loads(f.read())
 
 
-from .biometric_algorithms import Distance
 from .score_writers import FourColumnsScoreWriter, CSVScoreWriter
 from .wrappers import (
-    BioAlgorithmCheckpointWrapper,
-    BioAlgorithmDaskWrapper,
+    CheckpointWrapper,
+    DaskWrapper,
     checkpoint_pipeline_simple,
     dask_pipeline_simple,
     is_checkpointed,
@@ -63,7 +62,6 @@ from .score_post_processor import (  # noqa: F401
     PipelineScoreNorm,
     ZNormScores,
     TNormScores,
-    checkpoint_score_normalization_pipeline,
     dask_score_normalization_pipeline,
     CategoricalCalibration,
     WeibullCalibration,
@@ -99,11 +97,10 @@ def __appropriate__(*args):
 
 __appropriate__(
     PipelineSimple,
-    Distance,
     FourColumnsScoreWriter,
     CSVScoreWriter,
-    BioAlgorithmCheckpointWrapper,
-    BioAlgorithmDaskWrapper,
+    CheckpointWrapper,
+    DaskWrapper,
     dask_pipeline_simple,
     checkpoint_pipeline_simple,
     is_checkpointed,
