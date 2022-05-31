@@ -58,9 +58,15 @@ def _data_valid(data):
     bool
         True if data is valid, False otherwise.
     """
-    return (data is not None) and (
-        isinstance(data, np.ndarray) and data.size > 0
-    )
+    if data is None:
+        return False
+    if isinstance(data, np.ndarray):
+        return data.size > 0
+    # we also have to check for [[]]
+    if isinstance(data, list) and len(data) > 0:
+        if isinstance(data[0], (list, tuple)):
+            return len(data[0]) > 0
+    return bool(data)
 
 
 class BioAlgorithm(BaseEstimator, metaclass=ABCMeta):
