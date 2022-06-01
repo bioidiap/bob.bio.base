@@ -27,7 +27,9 @@ def reduce_scores(scores, axis, fn="max"):
         Scores to reduce.
 
     fn: function
-        Function to use for reduction.
+        Function to use for reduction. You can also provide a string like
+        ``max`` to use the corresponding function from numpy. Some possible
+        values are: ``max``, ``min``, ``mean``, ``median``, ``sum``.
 
     Returns:
     --------
@@ -35,13 +37,7 @@ def reduce_scores(scores, axis, fn="max"):
         Reduced scores.
     """
     if isinstance(fn, str):
-        fn = {
-            "max": np.max,
-            "min": np.min,
-            "mean": np.mean,
-            "median": np.median,
-            "sum": np.sum,
-        }[fn]
+        fn = getattr(np, fn)
     return fn(scores, axis=axis)
 
 

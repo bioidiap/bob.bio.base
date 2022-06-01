@@ -1,6 +1,4 @@
 # isort: skip_file
-from .pipelines import PipelineSimple  # noqa: F401
-
 import gzip
 import pickle
 import os
@@ -46,8 +44,9 @@ def uncompress_unpickle(path):
         return pickle.loads(f.read())
 
 
+from .pipelines import PipelineSimple  # noqa: F401
 from .score_writers import FourColumnsScoreWriter, CSVScoreWriter
-from .wrappers import (
+from .wrappers import (  # noqa: F401
     CheckpointWrapper,
     DaskWrapper,
     checkpoint_pipeline_simple,
@@ -62,7 +61,6 @@ from .score_post_processor import (  # noqa: F401
     PipelineScoreNorm,
     ZNormScores,
     TNormScores,
-    dask_score_normalization_pipeline,
     CategoricalCalibration,
     WeibullCalibration,
     LLRCalibration,
@@ -101,11 +99,6 @@ __appropriate__(
     CSVScoreWriter,
     CheckpointWrapper,
     DaskWrapper,
-    dask_pipeline_simple,
-    checkpoint_pipeline_simple,
-    is_checkpointed,
-    get_pipeline_simple_tags,
-    execute_pipeline_simple,
     BioAlgorithm,
     Database,
     ScoreWriter,

@@ -11,9 +11,12 @@ import uuid
 import numpy as np
 import pytest
 
+from click.testing import CliRunner
 from scipy.spatial.distance import cdist
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
+
+import bob.pipelines
 
 from bob.bio.base.algorithm import Distance
 from bob.bio.base.pipelines import (
@@ -25,12 +28,15 @@ from bob.bio.base.pipelines import (
     ZNormScores,
     checkpoint_pipeline_simple,
     dask_pipeline_simple,
-    dask_score_normalization_pipeline,
+)
+from bob.bio.base.script.pipeline_score_norm import (
+    pipeline_score_norm as pipeline_score_norm_cli,
 )
 from bob.bio.base.test.test_pipeline_simple import (
     DummyDatabase,
     _make_transformer,
 )
+from bob.extension.scripts.click_helper import assert_click_runner_result
 from bob.pipelines import Sample, SampleSet
 
 
@@ -299,9 +305,7 @@ def test_norm_mechanics():
             )
 
             if with_dask:
-                z_pipeline_simple = dask_score_normalization_pipeline(
-                    z_pipeline_simple
-                )
+                z_pipeline_simple = bob.pipelines.DaskWrapper(z_pipeline_simple)
 
             _, z_normed_score_samples = z_pipeline_simple(
                 [],
@@ -327,9 +331,7 @@ def test_norm_mechanics():
             )
 
             if with_dask:
-                t_pipeline_simple = dask_score_normalization_pipeline(
-                    t_pipeline_simple
-                )
+                t_pipeline_simple = bob.pipelines.DaskWrapper(t_pipeline_simple)
 
             _, t_normed_score_samples = t_pipeline_simple(
                 [],
@@ -391,9 +393,7 @@ def test_znorm_on_memory():
                 pipeline_simple = dask_pipeline_simple(
                     pipeline_simple, npartitions=2
                 )
-                z_pipeline_simple = dask_score_normalization_pipeline(
-                    z_pipeline_simple
-                )
+                z_pipeline_simple = bob.pipelines.DaskWrapper(z_pipeline_simple)
 
             (raw_scores, z_scores) = z_pipeline_simple(
                 database.background_model_samples(),
@@ -526,3 +526,30 @@ def test_znorm_on_memory():
         run_pipeline(
             True, CSVScoreWriter(os.path.join(dir_name, "concatenated_scores"))
         )
+
+
+def test_pipeline_score_norm_click_cli():
+    from .test_pipeline_simple import _create_test_config
+
+    # open a click isolated environment
+    runner = CliRunner()
+
+    for options in [
+        [],
+        ["--score-normalization-type", "tnorm"],
+        ["--memory"],
+        ["--no-dask"],
+        ["--no-dask", "--memory"],
+    ]:
+        with runner.isolated_filesystem():
+
+            _create_test_config("config.py")
+            result = runner.invoke(
+                pipeline_score_norm_cli,
+                [
+                    "-vv",
+                    "config.py",
+                ]
+                + options,
+            )
+            assert_click_runner_result(result)

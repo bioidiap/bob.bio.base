@@ -26,13 +26,7 @@ from sklearn.linear_model import LogisticRegression
 import bob.bio.base
 
 from bob.bio.base.score.load import get_split_dataframe
-from bob.pipelines import (
-    DaskWrapper,
-    Sample,
-    SampleSet,
-    getattr_nested,
-    is_instance_nested,
-)
+from bob.pipelines import Sample, SampleSet, getattr_nested, is_instance_nested
 
 from .pipelines import PipelineSimple
 from .score_writers import FourColumnsScoreWriter
@@ -86,8 +80,6 @@ class PipelineScoreNorm:
     ):
 
         self.pipeline_simple = pipeline_simple
-        # self.biometric_algorithm = self.pipeline_simple.biometric_algorithm
-        # self.transformer = self.pipeline_simple.transformer
 
         self.post_processor = post_processor
         self.score_writer = score_writer
@@ -98,6 +90,22 @@ class PipelineScoreNorm:
 
         # TODO: ACTIVATE THAT
         # check_valid_pipeline(self)
+
+    @property
+    def biometric_algorithm(self):
+        return self.pipeline_simple.biometric_algorithm
+
+    @biometric_algorithm.setter
+    def biometric_algorithm(self, value):
+        self.pipeline_simple.biometric_algorithm = value
+
+    @property
+    def transformer(self):
+        return self.pipeline_simple.transformer
+
+    @transformer.setter
+    def transformer(self, value):
+        self.pipeline_simple.transformer = value
 
     def __call__(
         self,
@@ -160,17 +168,6 @@ def copy_learned_attributes(from_estimator, to_estimator):
 
     for k, v in attrs.items():
         setattr(to_estimator, k, v)
-
-
-def dask_score_normalization_pipeline(pipeline):
-
-    # cannot use the wrap function here as the input to post processor is
-    # already a dask bag.
-    pipeline.post_processor = DaskWrapper(
-        pipeline.post_processor,
-    )
-
-    return pipeline
 
 
 class ZNormScores(TransformerMixin, BaseEstimator):

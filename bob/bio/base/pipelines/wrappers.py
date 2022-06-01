@@ -18,10 +18,6 @@ from bob.pipelines.wrappers import BaseWrapper, _frmt, get_bob_tags
 
 from . import pickle_compress, uncompress_unpickle
 from .abstract_classes import BioAlgorithm
-from .score_post_processor import (
-    PipelineScoreNorm,
-    dask_score_normalization_pipeline,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -318,38 +314,28 @@ def dask_pipeline_simple(pipeline, npartitions=None, partition_size=None):
     partition_size: int
        Size of the partition for the initial `dask.bag`
     """
-
-    if isinstance(pipeline, PipelineScoreNorm):
-        # Dasking the first part of the pipelines
-        pipeline.pipeline_simple = dask_pipeline_simple(
-            pipeline.pipeline_simple,
-            npartitions=npartitions,
-            partition_size=partition_size,
-        )
-        pipeline.biometric_algorithm = (
-            pipeline.pipeline_simple.biometric_algorithm
-        )
-        pipeline.transformer = pipeline.pipeline_simple.transformer
-
-        pipeline = dask_score_normalization_pipeline(pipeline)
-
+    dask_wrapper_kw = {}
+    if partition_size is None:
+        dask_wrapper_kw["npartitions"] = npartitions
     else:
+        dask_wrapper_kw["partition_size"] = partition_size
 
-        if partition_size is None:
-            pipeline.transformer = bob.pipelines.wrap(
-                ["dask"], pipeline.transformer, npartitions=npartitions
-            )
-        else:
-            pipeline.transformer = bob.pipelines.wrap(
-                ["dask"], pipeline.transformer, partition_size=partition_size
-            )
-        pipeline.biometric_algorithm = DaskWrapper(pipeline.biometric_algorithm)
+    pipeline.transformer = bob.pipelines.wrap(
+        ["dask"], pipeline.transformer, **dask_wrapper_kw
+    )
+    pipeline.biometric_algorithm = DaskWrapper(pipeline.biometric_algorithm)
 
-        def _write_scores(scores):
-            return scores.map_partitions(pipeline.write_scores_on_dask)
+    def _write_scores(scores):
+        return scores.map_partitions(pipeline.write_scores_on_dask)
 
-        pipeline.write_scores_on_dask = pipeline.write_scores
-        pipeline.write_scores = _write_scores
+    pipeline.write_scores_on_dask = pipeline.write_scores
+    pipeline.write_scores = _write_scores
+
+    if hasattr(pipeline, "post_processor"):
+        # cannot use bob.pipelines.wrap here because the input is already a dask bag.
+        pipeline.post_processor = bob.pipelines.DaskWrapper(
+            pipeline.post_processor
+        )
 
     return pipeline
 

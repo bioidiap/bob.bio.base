@@ -11,6 +11,7 @@ import uuid
 import numpy as np
 import pytest
 
+from click.testing import CliRunner
 from h5py import File as HDF5File
 from sklearn.pipeline import make_pipeline
 
@@ -22,8 +23,12 @@ from bob.bio.base.pipelines import (
     PipelineSimple,
     dask_pipeline_simple,
 )
+from bob.bio.base.script.pipeline_simple import (
+    pipeline_simple as pipeline_simple_cli,
+)
 from bob.bio.base.test.test_transformers import FakeExtractor, FakePreprocesor
 from bob.bio.base.wrappers import wrap_bob_legacy
+from bob.extension.scripts.click_helper import assert_click_runner_result
 from bob.pipelines import DelayedSample, Sample, SampleSet
 
 
@@ -116,12 +121,12 @@ class DummyDatabase:
         ]
         return list(itertools.chain(*samples))
 
-    def references(self):
+    def references(self, group=None):
         return self._create_random_sample_set(
             self.n_references, self.dim, seed=11
         )
 
-    def probes(self):
+    def probes(self, group=None):
         probes = []
 
         probes = self._create_random_sample_set(
@@ -132,7 +137,7 @@ class DummyDatabase:
 
         return probes
 
-    def zprobes(self):
+    def zprobes(self, group=None):
         zprobes = []
 
         zprobes = self._create_random_sample_set(
@@ -510,3 +515,50 @@ def test_database_sporadic_failure():
 def test_database_full_failure():
     with pytest.raises(NotImplementedError):
         _run_with_failure(False, sporadic_fail=False)
+
+
+def _create_test_config(path):
+    with open(path, "w") as f:
+        f.write(
+            """
+from bob.bio.base.test.test_pipeline_simple import DummyDatabase, _make_transformer
+from bob.bio.base.pipelines import PipelineSimple
+from bob.bio.base.algorithm import Distance
+
+database = DummyDatabase()
+
+transformer = _make_transformer(".")
+
+biometric_algorithm = Distance()
+
+pipeline = PipelineSimple(
+    transformer,
+    biometric_algorithm,
+    None,
+)
+"""
+        )
+
+
+def test_pipeline_simple_click_cli():
+    # open a click isolated environment
+    runner = CliRunner()
+
+    for options in [
+        [],
+        ["--memory"],
+        ["--no-dask"],
+        ["--no-dask", "--memory"],
+    ]:
+        with runner.isolated_filesystem():
+
+            _create_test_config("config.py")
+            result = runner.invoke(
+                pipeline_simple_cli,
+                [
+                    "-vv",
+                    "config.py",
+                ]
+                + options,
+            )
+            assert_click_runner_result(result)
