@@ -8,20 +8,10 @@ import numpy as np
 
 import bob.pipelines
 
-from bob.pipelines import (
-    DelayedSample,
-    DelayedSampleSetCached,
-    Sample,
-    is_instance_nested,
-)
+from bob.pipelines import DelayedSample, Sample, is_instance_nested
 from bob.pipelines.wrappers import BaseWrapper, _frmt, get_bob_tags
 
-from . import pickle_compress, uncompress_unpickle
 from .abstract_classes import BioAlgorithm
-from .score_post_processor import (
-    PipelineScoreNorm,
-    dask_score_normalization_pipeline,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +27,7 @@ def default_load(path: str) -> np.ndarray:
         return f["data"][()]
 
 
-def get_pipeline_simple_tags(estimator=None, force_tags=None):
+def get_bio_alg_tags(estimator=None, force_tags=None):
     bob_tags = get_bob_tags(estimator=estimator, force_tags=force_tags)
     default_tags = {
         "bob_enrolled_extension": ".h5",
@@ -59,7 +49,7 @@ class BioAlgorithmBaseWrapper(BioAlgorithm, BaseWrapper):
         )
 
 
-class CheckpointWrapper(BioAlgorithmBaseWrapper):
+class BioAlgCheckpointWrapper(BioAlgorithmBaseWrapper):
     """Wrapper used to checkpoint enrolled and Scoring samples.
 
     Parameters
@@ -100,8 +90,8 @@ class CheckpointWrapper(BioAlgorithmBaseWrapper):
     --------
 
     >>> from bob.bio.base.algorithm import Distance
-    >>> from bob.bio.base.pipelines import CheckpointWrapper
-    >>> biometric_algorithm = CheckpointWrapper(Distance(), base_dir="./")
+    >>> from bob.bio.base.pipelines import BioAlgCheckpointWrapper
+    >>> biometric_algorithm = BioAlgCheckpointWrapper(Distance(), base_dir="./")
     >>> biometric_algorithm.create_templates(samples, enroll=True) # doctest: +SKIP
 
     """
@@ -126,36 +116,26 @@ class CheckpointWrapper(BioAlgorithmBaseWrapper):
         self.biometric_algorithm = biometric_algorithm
         self.force = force
         self.hash_fn = hash_fn
-        bob_tags = get_pipeline_simple_tags(self.biometric_algorithm)
+        bob_tags = get_bio_alg_tags(self.biometric_algorithm)
         self.extension = extension or bob_tags["bob_enrolled_extension"]
         self.save_func = save_func or bob_tags["bob_enrolled_save_fn"]
         self.load_func = load_func or bob_tags["bob_enrolled_load_fn"]
-
-        self._score_extension = ".pickle.gz"
-
-    def clear_caches(self):
-        self.biometric_algorithm.clear_caches()
 
     def set_score_references_path(self, group):
         if group is None:
             self.biometric_reference_dir = os.path.join(
                 self.base_dir, "biometric_references"
             )
-            self.score_dir = os.path.join(self.base_dir, "scores")
         else:
             self.biometric_reference_dir = os.path.join(
                 self.base_dir, group, "biometric_references"
             )
-            self.score_dir = os.path.join(self.base_dir, group, "scores")
 
     def write_biometric_reference(self, sample, path):
         data = sample.data
         if data is None:
             raise RuntimeError("Cannot checkpoint template of None")
         return self.save_func(sample.data, path)
-
-    def write_scores(self, samples, path):
-        pickle_compress(samples, path)
 
     def _enroll_sample_set(self, sampleset):
         """
@@ -207,56 +187,8 @@ class CheckpointWrapper(BioAlgorithmBaseWrapper):
             retval.append(sample)
         return retval
 
-    def _score_sample_set(
-        self,
-        sampleset,
-        biometric_references,
-        score_all_vs_all,
-    ):
-        """Given a sampleset for probing, compute the scores and returns a sample set with the scores"""
 
-        def _load(path):
-            return uncompress_unpickle(path)
-
-        def _make_name(sampleset, biometric_references):
-            # The score file name is composed by sampleset key and the
-            # first 3 biometric_references
-            reference_id = str(sampleset.reference_id)
-            name = str(sampleset.key)
-            suffix = "_".join([str(s.key) for s in biometric_references[0:3]])
-            return os.path.join(reference_id, name + suffix)
-
-        # Amending `models` directory
-        hash_dir_name = (
-            self.hash_fn(str(sampleset.key)) if self.hash_fn is not None else ""
-        )
-
-        path = os.path.join(
-            self.score_dir,
-            hash_dir_name,
-            _make_name(sampleset, biometric_references) + self._score_extension,
-        )
-
-        parent = sampleset
-        if self.force or not os.path.exists(path):
-
-            # Computing score
-            scored_sample_set = self.biometric_algorithm._score_sample_set(
-                sampleset,
-                biometric_references,
-                score_all_vs_all=score_all_vs_all,
-            )
-            self.write_scores(scored_sample_set.samples, path)
-            parent = scored_sample_set
-
-        scored_sample_set = DelayedSampleSetCached(
-            functools.partial(_load, path), parent=parent
-        )
-
-        return scored_sample_set
-
-
-class DaskWrapper(BioAlgorithmBaseWrapper):
+class BioAlgDaskWrapper(BioAlgorithmBaseWrapper):
     """
     Wrap :any:`bob.bio.base.pipelines.BioAlgorithm` to work with DASK
     """
@@ -301,7 +233,7 @@ def _delayed_samples_to_samples(delayed_samples):
     return [Sample(sample.data, parent=sample) for sample in delayed_samples]
 
 
-def dask_pipeline_simple(pipeline, npartitions=None, partition_size=None):
+def dask_bio_pipeline(pipeline, npartitions=None, partition_size=None):
     """
     Given a :any:`bob.bio.base.pipelines.PipelineSimple`, wraps :any:`bob.bio.base.pipelines.PipelineSimple` and
     :any:`bob.bio.base.pipelines.BioAlgorithm` to be executed with dask
@@ -318,38 +250,30 @@ def dask_pipeline_simple(pipeline, npartitions=None, partition_size=None):
     partition_size: int
        Size of the partition for the initial `dask.bag`
     """
-
-    if isinstance(pipeline, PipelineScoreNorm):
-        # Dasking the first part of the pipelines
-        pipeline.pipeline_simple = dask_pipeline_simple(
-            pipeline.pipeline_simple,
-            npartitions=npartitions,
-            partition_size=partition_size,
-        )
-        pipeline.biometric_algorithm = (
-            pipeline.pipeline_simple.biometric_algorithm
-        )
-        pipeline.transformer = pipeline.pipeline_simple.transformer
-
-        pipeline = dask_score_normalization_pipeline(pipeline)
-
+    dask_wrapper_kw = {}
+    if partition_size is None:
+        dask_wrapper_kw["npartitions"] = npartitions
     else:
+        dask_wrapper_kw["partition_size"] = partition_size
 
-        if partition_size is None:
-            pipeline.transformer = bob.pipelines.wrap(
-                ["dask"], pipeline.transformer, npartitions=npartitions
-            )
-        else:
-            pipeline.transformer = bob.pipelines.wrap(
-                ["dask"], pipeline.transformer, partition_size=partition_size
-            )
-        pipeline.biometric_algorithm = DaskWrapper(pipeline.biometric_algorithm)
+    pipeline.transformer = bob.pipelines.wrap(
+        ["dask"], pipeline.transformer, **dask_wrapper_kw
+    )
+    pipeline.biometric_algorithm = BioAlgDaskWrapper(
+        pipeline.biometric_algorithm
+    )
 
-        def _write_scores(scores):
-            return scores.map_partitions(pipeline.write_scores_on_dask)
+    def _write_scores(scores):
+        return scores.map_partitions(pipeline.write_scores_on_dask)
 
-        pipeline.write_scores_on_dask = pipeline.write_scores
-        pipeline.write_scores = _write_scores
+    pipeline.write_scores_on_dask = pipeline.write_scores
+    pipeline.write_scores = _write_scores
+
+    if hasattr(pipeline, "post_processor"):
+        # cannot use bob.pipelines.wrap here because the input is already a dask bag.
+        pipeline.post_processor = bob.pipelines.DaskWrapper(
+            pipeline.post_processor
+        )
 
     return pipeline
 
@@ -397,7 +321,7 @@ def checkpoint_pipeline_simple(
         force=force,
     )
 
-    pipeline.biometric_algorithm = CheckpointWrapper(
+    pipeline.biometric_algorithm = BioAlgCheckpointWrapper(
         pipeline.biometric_algorithm,
         base_dir=bio_ref_scores_dir,
         hash_fn=hash_fn,
@@ -407,7 +331,7 @@ def checkpoint_pipeline_simple(
     return pipeline
 
 
-def is_checkpointed(pipeline):
+def is_biopipeline_checkpointed(pipeline):
     """
     Check if :any:`bob.bio.base.pipelines.PipelineSimple` is checkpointed
 
@@ -420,7 +344,7 @@ def is_checkpointed(pipeline):
 
     """
 
-    # We have to check if is CheckpointWrapper
+    # We have to check if biomtric_algorithm is checkpointed
     return is_instance_nested(
-        pipeline, "biometric_algorithm", CheckpointWrapper
+        pipeline, "biometric_algorithm", BioAlgCheckpointWrapper
     )

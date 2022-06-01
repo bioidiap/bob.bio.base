@@ -147,6 +147,12 @@ EPILOG = _SIMPLE_EPILOG.replace(
     help="If set, it will force generate all the checkpoints of an experiment. This option doesn't work if `--memory` is set",
     cls=ResourceOption,
 )
+@click.option(
+    "--no-dask",
+    is_flag=True,
+    help="If set, it will not use Dask to run the experiment.",
+    cls=ResourceOption,
+)
 @verbosity_option(cls=ResourceOption)
 def pipeline_score_norm(
     pipeline,
@@ -163,6 +169,7 @@ def pipeline_score_norm(
     top_norm_score_fraction,
     score_normalization_type,
     force,
+    no_dask,
     **kwargs,
 ):
     """Runs the PipelineSimple with score normalization strategies
@@ -218,6 +225,9 @@ def pipeline_score_norm(
     from bob.bio.base.pipelines.entry_points import execute_pipeline_score_norm
 
     logger.debug("Executing PipelineScoreNorm")
+
+    if no_dask:
+        dask_client = None
 
     checkpoint = not memory
 

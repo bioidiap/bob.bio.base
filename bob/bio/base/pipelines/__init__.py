@@ -1,59 +1,13 @@
 # isort: skip_file
 from .pipelines import PipelineSimple  # noqa: F401
-
-import gzip
-import pickle
-import os
-
-
-def pickle_compress(obj, path, attempts=5):
-    """
-    Pickle an object, compressed it and save it
-
-    Parameters
-    ----------
-
-       path: str
-          Path where to save the object
-
-       obj:
-          Object to be saved
-
-       attempts: Serialization attempts
-
-    """
-    for i in range(attempts):
-        try:
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            # Trying to get writting right
-            # This might fail in our file system
-            with gzip.open(path, "wb") as f:
-                f.write(pickle.dumps(obj))
-
-            # Testing unpression
-            uncompress_unpickle(path)
-            break
-        except Exception:
-            continue
-    else:
-        # If it fails in the 5 attemps
-        raise EOFError(f"Failed to serialize/desserialize {path}")
-
-
-def uncompress_unpickle(path):
-
-    with gzip.open(path, "rb") as f:
-        return pickle.loads(f.read())
-
-
 from .score_writers import FourColumnsScoreWriter, CSVScoreWriter
-from .wrappers import (
-    CheckpointWrapper,
-    DaskWrapper,
+from .wrappers import (  # noqa: F401
+    BioAlgCheckpointWrapper,
+    BioAlgDaskWrapper,
     checkpoint_pipeline_simple,
-    dask_pipeline_simple,
-    is_checkpointed,
-    get_pipeline_simple_tags,
+    dask_bio_pipeline,
+    is_biopipeline_checkpointed,
+    get_bio_alg_tags,
 )
 
 from .abstract_classes import BioAlgorithm, Database, ScoreWriter
@@ -62,7 +16,6 @@ from .score_post_processor import (  # noqa: F401
     PipelineScoreNorm,
     ZNormScores,
     TNormScores,
-    dask_score_normalization_pipeline,
     CategoricalCalibration,
     WeibullCalibration,
     LLRCalibration,
@@ -99,16 +52,19 @@ __appropriate__(
     PipelineSimple,
     FourColumnsScoreWriter,
     CSVScoreWriter,
-    CheckpointWrapper,
-    DaskWrapper,
-    dask_pipeline_simple,
-    checkpoint_pipeline_simple,
-    is_checkpointed,
-    get_pipeline_simple_tags,
-    execute_pipeline_simple,
+    BioAlgCheckpointWrapper,
+    BioAlgDaskWrapper,
     BioAlgorithm,
     Database,
     ScoreWriter,
+    PipelineScoreNorm,
+    ZNormScores,
+    TNormScores,
+    CategoricalCalibration,
+    WeibullCalibration,
+    LLRCalibration,
+    GammaCalibration,
+    BetaCalibration,
 )
 
 __all__ = [_ for _ in dir() if not _.startswith("_")]
