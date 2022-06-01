@@ -7,10 +7,8 @@ Implementation of a pipeline that post process scores
 
 """
 
-import copy
 import logging
 import os
-import tempfile
 
 from functools import partial
 
@@ -26,16 +24,9 @@ from sklearn.linear_model import LogisticRegression
 import bob.bio.base
 
 from bob.bio.base.score.load import get_split_dataframe
-from bob.pipelines import (
-    DaskWrapper,
-    Sample,
-    SampleSet,
-    getattr_nested,
-    is_instance_nested,
-)
+from bob.pipelines import Sample, SampleSet, getattr_nested, is_instance_nested
 
 from .pipelines import PipelineSimple
-from .score_writers import FourColumnsScoreWriter
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +52,7 @@ class PipelineScoreNorm:
        >>> transformer_pipeline = make_pipeline(transformer)
        >>> biometric_algorithm = Distance()
        >>> pipeline_simple = PipelineSimple(transformer_pipeline, biometric_algorithm)
-       >>> z_norm_postprocessor = ZNormScores(pipeline=pipeline_simple)
+       >>> z_norm_postprocessor = ZNormScores()
        >>> z_pipeline = PipelineScoreNorm(pipeline_simple, z_norm_postprocessor)
        >>> zt_pipeline(...) #doctest: +SKIP
 
@@ -82,22 +73,37 @@ class PipelineScoreNorm:
         self,
         pipeline_simple: PipelineSimple,
         post_processor,
-        score_writer=None,
     ):
 
         self.pipeline_simple = pipeline_simple
-        # self.biometric_algorithm = self.pipeline_simple.biometric_algorithm
-        # self.transformer = self.pipeline_simple.transformer
-
         self.post_processor = post_processor
-        self.score_writer = score_writer
-
-        if self.score_writer is None:
-            tempdir = tempfile.TemporaryDirectory()
-            self.score_writer = FourColumnsScoreWriter(tempdir.name)
 
         # TODO: ACTIVATE THAT
         # check_valid_pipeline(self)
+
+    @property
+    def biometric_algorithm(self):
+        return self.pipeline_simple.biometric_algorithm
+
+    @biometric_algorithm.setter
+    def biometric_algorithm(self, value):
+        self.pipeline_simple.biometric_algorithm = value
+
+    @property
+    def transformer(self):
+        return self.pipeline_simple.transformer
+
+    @transformer.setter
+    def transformer(self, value):
+        self.pipeline_simple.transformer = value
+
+    @property
+    def score_writer(self):
+        return self.pipeline_simple.score_writer
+
+    @score_writer.setter
+    def score_writer(self, value):
+        self.pipeline_simple.score_writer = value
 
     def __call__(
         self,
@@ -114,6 +120,30 @@ class PipelineScoreNorm:
             score_all_vs_all=score_all_vs_all,
             return_templates=True,
         )
+
+        # TODO: I know this is ugly, but I don't want to create one pipeline for every single
+        # normalization strategy
+        if is_instance_nested(
+            self,
+            "biometric_algorithm",
+            bob.bio.base.pipelines.BioAlgCheckpointWrapper,
+        ):
+
+            if is_instance_nested(
+                self,
+                "biometric_algorithm",
+                bob.bio.base.pipelines.BioAlgDaskWrapper,
+            ):
+                self.biometric_algorithm.biometric_algorithm.biometric_reference_dir = os.path.join(
+                    self.biometric_algorithm.biometric_algorithm.biometric_reference_dir,
+                    "score-norm",
+                )
+
+            else:
+                self.biometric_algorithm.biometric_reference_dir = os.path.join(
+                    self.biometric_algorithm.biometric_reference_dir,
+                    "score-norm",
+                )
 
         template_format = getattr_nested(
             self.post_processor, "post_process_template"
@@ -162,17 +192,6 @@ def copy_learned_attributes(from_estimator, to_estimator):
         setattr(to_estimator, k, v)
 
 
-def dask_score_normalization_pipeline(pipeline):
-
-    # cannot use the wrap function here as the input to post processor is
-    # already a dask bag.
-    pipeline.post_processor = DaskWrapper(
-        pipeline.post_processor,
-    )
-
-    return pipeline
-
-
 class ZNormScores(TransformerMixin, BaseEstimator):
     """
     Apply Z-Norm Score normalization on top of Simple Pipeline
@@ -186,51 +205,17 @@ class ZNormScores(TransformerMixin, BaseEstimator):
 
     """
 
+    post_process_template = "probe"
+
     def __init__(
         self,
-        pipeline,
         top_norm=False,
         top_norm_score_fraction=0.8,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.top_norm_score_fraction = top_norm_score_fraction
         self.top_norm = top_norm
-        self.post_process_template = "probe"
-
-        # Copying the pipeline and possibly chaning the biometric_algoritm paths
-        self.pipeline = copy.deepcopy(pipeline)
-
-        # TODO: I know this is ugly, but I don't want to create on pipeline for every single
-        # normalization strategy
-        if is_instance_nested(
-            self.pipeline,
-            "biometric_algorithm",
-            bob.bio.base.pipelines.wrappers.CheckpointWrapper,
-        ):
-
-            if is_instance_nested(
-                self.pipeline,
-                "biometric_algorithm",
-                bob.bio.base.pipelines.wrappers.DaskWrapper,
-            ):
-                self.pipeline.biometric_algorithm.biometric_algorithm.score_dir = os.path.join(
-                    self.pipeline.biometric_algorithm.biometric_algorithm.score_dir,
-                    "score-norm",
-                )
-                self.pipeline.biometric_algorithm.biometric_algorithm.biometric_reference_dir = os.path.join(
-                    self.pipeline.biometric_algorithm.biometric_algorithm.biometric_reference_dir,
-                    "score-norm",
-                )
-
-            else:
-                self.pipeline.biometric_algorithm.score_dir = os.path.join(
-                    self.pipeline.biometric_algorithm.score_dir, "score-norm"
-                )
-                self.pipeline.biometric_algorithm.biometric_reference_dir = os.path.join(
-                    self.pipeline.biometric_algorithm.biometric_reference_dir,
-                    "score-norm",
-                )
+        self.top_norm_score_fraction = top_norm_score_fraction
 
     def fit(self, z_scores, y=None):
 
@@ -318,51 +303,17 @@ class TNormScores(TransformerMixin, BaseEstimator):
 
     """
 
+    post_process_template = "enroll"
+
     def __init__(
         self,
-        pipeline,
         top_norm=False,
         top_norm_score_fraction=0.8,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.top_norm_score_fraction = top_norm_score_fraction
         self.top_norm = top_norm
-        self.post_process_template = "enroll"
-
-        # Copying the pipeline and possibly chaning the biometric_algoritm paths
-        self.pipeline = copy.deepcopy(pipeline)
-
-        # TODO: I know this is ugly, but I don't want to create on pipeline for every single
-        # normalization strategy
-        if is_instance_nested(
-            self.pipeline,
-            "biometric_algorithm",
-            bob.bio.base.pipelines.wrappers.CheckpointWrapper,
-        ):
-
-            if is_instance_nested(
-                self.pipeline,
-                "biometric_algorithm",
-                bob.bio.base.pipelines.wrappers.DaskWrapper,
-            ):
-                self.pipeline.biometric_algorithm.biometric_algorithm.score_dir = os.path.join(
-                    self.pipeline.biometric_algorithm.biometric_algorithm.score_dir,
-                    "score-norm",
-                )
-                self.pipeline.biometric_algorithm.biometric_algorithm.biometric_reference_dir = os.path.join(
-                    self.pipeline.biometric_algorithm.biometric_algorithm.biometric_reference_dir,
-                    "score-norm",
-                )
-
-            else:
-                self.pipeline.biometric_algorithm.score_dir = os.path.join(
-                    self.pipeline.biometric_algorithm.score_dir, "score-norm"
-                )
-                self.pipeline.biometric_algorithm.biometric_reference_dir = os.path.join(
-                    self.pipeline.biometric_algorithm.biometric_reference_dir,
-                    "score-norm",
-                )
+        self.top_norm_score_fraction = top_norm_score_fraction
 
     def fit(self, t_scores, y=None):
 

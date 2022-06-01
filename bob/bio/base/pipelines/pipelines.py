@@ -61,13 +61,13 @@ class PipelineSimple:
 
 
     To run this pipeline using Dask, used the function
-    :py:func:`dask_pipeline_simple`.
+    :py:func:`dask_bio_pipeline`.
 
     Example
     -------
-      >>> from bob.bio.base.pipelines import dask_pipeline_simple
+      >>> from bob.bio.base.pipelines import dask_bio_pipeline
       >>> pipeline = PipelineSimple(transformer_pipeline, biometric_algorithm)
-      >>> pipeline = dask_pipeline_simple(pipeline)
+      >>> pipeline = dask_bio_pipeline(pipeline)
       >>> pipeline(samples_for_training_back_ground_model, samplesets_for_enroll, samplesets_for_scoring).compute()  # doctest: +SKIP
 
 

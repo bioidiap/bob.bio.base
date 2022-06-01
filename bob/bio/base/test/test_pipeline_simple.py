@@ -2,6 +2,7 @@
 # vim: set fileencoding=utf-8 :
 # @author: Tiago de Freitas Pereira <tiago.pereira@idiap.ch>
 
+import glob
 import itertools
 import os
 import shutil
@@ -11,19 +12,24 @@ import uuid
 import numpy as np
 import pytest
 
+from click.testing import CliRunner
 from h5py import File as HDF5File
 from sklearn.pipeline import make_pipeline
 
 from bob.bio.base.algorithm import Distance
 from bob.bio.base.pipelines import (
-    CheckpointWrapper,
+    BioAlgCheckpointWrapper,
     CSVScoreWriter,
     FourColumnsScoreWriter,
     PipelineSimple,
-    dask_pipeline_simple,
+    dask_bio_pipeline,
+)
+from bob.bio.base.script.pipeline_simple import (
+    pipeline_simple as pipeline_simple_cli,
 )
 from bob.bio.base.test.test_transformers import FakeExtractor, FakePreprocesor
 from bob.bio.base.wrappers import wrap_bob_legacy
+from bob.extension.scripts.click_helper import assert_click_runner_result
 from bob.pipelines import DelayedSample, Sample, SampleSet
 
 
@@ -116,12 +122,12 @@ class DummyDatabase:
         ]
         return list(itertools.chain(*samples))
 
-    def references(self):
+    def references(self, group=None):
         return self._create_random_sample_set(
             self.n_references, self.dim, seed=11
         )
 
-    def probes(self):
+    def probes(self, group=None):
         probes = []
 
         probes = self._create_random_sample_set(
@@ -132,7 +138,7 @@ class DummyDatabase:
 
         return probes
 
-    def zprobes(self):
+    def zprobes(self, group=None):
         zprobes = []
 
         zprobes = self._create_random_sample_set(
@@ -216,7 +222,7 @@ def test_on_memory():
             )
 
             if with_dask:
-                pipeline_simple = dask_pipeline_simple(
+                pipeline_simple = dask_bio_pipeline(
                     pipeline_simple, npartitions=2
                 )
 
@@ -258,7 +264,7 @@ def test_checkpoint_bioalg_as_transformer():
 
             transformer = _make_transformer(dir_name)
 
-            biometric_algorithm = CheckpointWrapper(
+            biometric_algorithm = BioAlgCheckpointWrapper(
                 Distance(), base_dir=dir_name
             )
 
@@ -267,7 +273,7 @@ def test_checkpoint_bioalg_as_transformer():
             )
 
             if with_dask:
-                pipeline_simple = dask_pipeline_simple(
+                pipeline_simple = dask_bio_pipeline(
                     pipeline_simple, npartitions=2
                 )
 
@@ -377,7 +383,7 @@ def test_checkpoint_bioalg_with_tags():
 
             transformer = _make_transformer(dir_name)
 
-            biometric_algorithm = CheckpointWrapper(
+            biometric_algorithm = BioAlgCheckpointWrapper(
                 DistanceWithTags(), base_dir=dir_name
             )
 
@@ -386,7 +392,7 @@ def test_checkpoint_bioalg_with_tags():
             )
 
             if with_dask:
-                pipeline_simple = dask_pipeline_simple(
+                pipeline_simple = dask_bio_pipeline(
                     pipeline_simple, npartitions=2
                 )
 
@@ -510,3 +516,63 @@ def test_database_sporadic_failure():
 def test_database_full_failure():
     with pytest.raises(NotImplementedError):
         _run_with_failure(False, sporadic_fail=False)
+
+
+def _create_test_config(path):
+    with open(path, "w") as f:
+        f.write(
+            """
+from bob.bio.base.test.test_pipeline_simple import DummyDatabase, _make_transformer
+from bob.bio.base.pipelines import PipelineSimple
+from bob.bio.base.algorithm import Distance
+
+database = DummyDatabase()
+
+transformer = _make_transformer(".")
+
+biometric_algorithm = Distance()
+
+pipeline = PipelineSimple(
+    transformer,
+    biometric_algorithm,
+    None,
+)
+"""
+        )
+
+
+def _test_pipeline_click_cli(
+    cli, options, expected_outputs=("results/scores-dev.csv",)
+):
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+
+        _create_test_config("config.py")
+        result = runner.invoke(
+            cli,
+            [
+                "-vv",
+                "config.py",
+            ]
+            + options,
+        )
+        assert_click_runner_result(result)
+        # check for expected_output
+        output_files = glob.glob("results/**", recursive=True)
+        err_msg = "Found only:\n{output_files}\nin output directory given the options: {options}".format(
+            output_files="\n".join(output_files), options=options
+        )
+        for out in expected_outputs:
+            assert os.path.isfile(out), err_msg
+
+
+def test_pipeline_simple_click_cli():
+    # open a click isolated environment
+
+    for options in [
+        ["--no-dask", "--memory"],
+        ["--no-dask"],
+        ["--memory"],
+        [],
+    ]:
+        _test_pipeline_click_cli(pipeline_simple_cli, options)

@@ -6,15 +6,15 @@ import dask.bag
 from dask.delayed import Delayed
 
 from bob.bio.base.pipelines import (
+    BioAlgDaskWrapper,
     CSVScoreWriter,
-    DaskWrapper,
     FourColumnsScoreWriter,
     PipelineScoreNorm,
     TNormScores,
     ZNormScores,
     checkpoint_pipeline_simple,
-    dask_pipeline_simple,
-    is_checkpointed,
+    dask_bio_pipeline,
+    is_biopipeline_checkpointed,
 )
 from bob.pipelines import estimator_requires_fit, is_instance_nested, wrap
 from bob.pipelines.distributed import dask_get_partition_size
@@ -138,7 +138,7 @@ def execute_pipeline_simple(
         )
 
     # Checkpoint if it's already checkpointed
-    if checkpoint and not is_checkpointed(pipeline):
+    if checkpoint and not is_biopipeline_checkpointed(pipeline):
         hash_fn = database.hash_fn if hasattr(database, "hash_fn") else None
         pipeline = checkpoint_pipeline_simple(
             pipeline, checkpoint_dir, hash_fn=hash_fn, force=force
@@ -169,7 +169,7 @@ def execute_pipeline_simple(
         if dask_client is not None and not is_instance_nested(
             pipeline.biometric_algorithm,
             "biometric_algorithm",
-            DaskWrapper,
+            BioAlgDaskWrapper,
         ):
             # Scaling up
             if dask_n_workers is not None and not isinstance(dask_client, str):
@@ -184,14 +184,14 @@ def execute_pipeline_simple(
                 logger.debug(
                     f"Splitting data with fixed size partitions: {dask_partition_size}."
                 )
-                pipeline = dask_pipeline_simple(
+                pipeline = dask_bio_pipeline(
                     pipeline,
                     partition_size=dask_partition_size,
                 )
             elif dask_n_partitions is not None or dask_n_workers is not None:
                 # Divide each Set in a user-defined number of partitions
                 logger.debug("Splitting data with fixed number of partitions.")
-                pipeline = dask_pipeline_simple(
+                pipeline = dask_bio_pipeline(
                     pipeline,
                     npartitions=dask_n_partitions or dask_n_workers,
                 )
@@ -209,7 +209,7 @@ def execute_pipeline_simple(
                         "max_jobs"
                     ]
                     logger.debug(f"{n_jobs} partitions will be created.")
-                pipeline = dask_pipeline_simple(pipeline, npartitions=n_jobs)
+                pipeline = dask_bio_pipeline(pipeline, npartitions=n_jobs)
 
         logger.info(f"Running the PipelineSimple for group {group}")
         score_all_vs_all = (
@@ -246,7 +246,6 @@ def execute_pipeline_score_norm(
     top_norm_score_fraction=0.8,
     score_normalization_type="znorm",
     force=False,
-    **kwargs,
 ):
     """
     Function that extends the capabilities of the PipelineSimple to run score normalization.
@@ -298,17 +297,6 @@ def execute_pipeline_score_norm(
 
     """
 
-    # def _merge_references_ztnorm(biometric_references, probes, zprobes, treferences):
-    #    treferences_sub = [t.reference_id for t in treferences]
-    #    biometric_references_sub = [t.reference_id for t in biometric_references]
-    #    for i in range(len(probes)):
-    #        probes[i].references += treferences_sub
-
-    #    for i in range(len(zprobes)):
-    #        zprobes[i].references = biometric_references_sub + treferences_sub
-
-    #    return probes, zprobes
-
     if not os.path.exists(output):
         os.makedirs(output, exist_ok=True)
 
@@ -327,7 +315,7 @@ def execute_pipeline_score_norm(
         )
 
     # Check if it's already checkpointed
-    if checkpoint and not is_checkpointed(pipeline):
+    if checkpoint and not is_biopipeline_checkpointed(pipeline):
         pipeline = checkpoint_pipeline_simple(
             pipeline, checkpoint_dir, force=force
         )
@@ -335,13 +323,11 @@ def execute_pipeline_score_norm(
     # PICKING THE TYPE OF POST-PROCESSING
     if score_normalization_type == "znorm":
         post_processor = ZNormScores(
-            pipeline=pipeline,
             top_norm=top_norm,
             top_norm_score_fraction=top_norm_score_fraction,
         )
     elif score_normalization_type == "tnorm":
         post_processor = TNormScores(
-            pipeline=pipeline,
             top_norm=top_norm,
             top_norm_score_fraction=top_norm_score_fraction,
         )
@@ -350,7 +336,7 @@ def execute_pipeline_score_norm(
             f"score_normalization_type {score_normalization_type} is not valid"
         )
 
-    if checkpoint and not is_checkpointed(post_processor):
+    if checkpoint and not is_biopipeline_checkpointed(post_processor):
         model_path = os.path.join(
             checkpoint_dir,
             f"{score_normalization_type}-scores",
@@ -362,9 +348,7 @@ def execute_pipeline_score_norm(
             ["checkpoint"], post_processor, model_path=model_path, force=force
         )
 
-    pipeline = PipelineScoreNorm(
-        pipeline, post_processor, CSVScoreWriter(os.path.join(output, "./tmp"))
-    )
+    pipeline = PipelineScoreNorm(pipeline, post_processor)
 
     background_model_samples = database.background_model_samples()
 
@@ -391,7 +375,7 @@ def execute_pipeline_score_norm(
         if dask_client is not None and not is_instance_nested(
             pipeline.biometric_algorithm,
             "biometric_algorithm",
-            DaskWrapper,
+            BioAlgDaskWrapper,
         ):
             # Scaling up
             if dask_n_workers is not None and not isinstance(dask_client, str):
@@ -410,7 +394,7 @@ def execute_pipeline_score_norm(
             if dask_partition_size is not None:
                 partition_size = dask_partition_size
 
-            pipeline = dask_pipeline_simple(
+            pipeline = dask_bio_pipeline(
                 pipeline,
                 partition_size=partition_size,
             )
@@ -421,22 +405,6 @@ def execute_pipeline_score_norm(
             if hasattr(database, "score_all_vs_all")
             else False
         )
-
-        # if consider_genuines:
-        #    z_probes_cpy = copy.deepcopy(zprobes)
-        #    zprobes += copy.deepcopy(treferences)
-        #    treferences += z_probes_cpy
-
-        # probes, zprobes = _merge_references_ztnorm(
-        # biometric_references, probes, zprobes, treferences
-        # )
-
-        # probes, score_normalization_samples = _merge_references_ztnorm(
-        #    biometric_references,
-        #    probes,
-        #    score_normalization_samples,
-        #    score_normalization_samples,
-        # )
 
         (raw_scores, score_normed_scores,) = pipeline(
             background_model_samples,
