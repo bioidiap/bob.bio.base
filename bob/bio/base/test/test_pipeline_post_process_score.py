@@ -11,23 +11,19 @@ import uuid
 import numpy as np
 import pytest
 
-from click.testing import CliRunner
 from scipy.spatial.distance import cdist
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
 
-import bob.pipelines
-
 from bob.bio.base.algorithm import Distance
 from bob.bio.base.pipelines import (
-    CheckpointWrapper,
     CSVScoreWriter,
     PipelineScoreNorm,
     PipelineSimple,
     TNormScores,
     ZNormScores,
     checkpoint_pipeline_simple,
-    dask_pipeline_simple,
+    dask_bio_pipeline,
 )
 from bob.bio.base.script.pipeline_score_norm import (
     pipeline_score_norm as pipeline_score_norm_cli,
@@ -36,7 +32,6 @@ from bob.bio.base.test.test_pipeline_simple import (
     DummyDatabase,
     _make_transformer,
 )
-from bob.extension.scripts.click_helper import assert_click_runner_result
 from bob.pipelines import Sample, SampleSet
 
 
@@ -147,218 +142,215 @@ def zt_norm_stubs(references, probes, t_references, z_probes):
     )
 
 
+def _create_sample_sets(raw_data, offset, references=None):
+    if references is None:
+        return [
+            SampleSet(
+                [
+                    Sample(
+                        s,
+                        reference_id=str(i + offset),
+                        key=str(uuid.uuid4()),
+                    )
+                ],
+                key=str(i + offset),
+                reference_id=str(i + offset),
+                subject_id=str(i + offset),
+            )
+            for i, s in enumerate(raw_data)
+        ]
+    else:
+        return [
+            SampleSet(
+                [
+                    Sample(
+                        s,
+                        reference_id=str(i + offset),
+                        key=str(uuid.uuid4()),
+                    )
+                ],
+                key=str(i + offset),
+                reference_id=str(i + offset),
+                subject_id=str(i + offset),
+                references=references,
+            )
+            for i, s in enumerate(raw_data)
+        ]
+
+
+def _do_nothing_fn(x):
+    return x
+
+
+def _dump_scores_from_samples(scores, shape):
+    # We have to transpose because the tests are BIOMETRIC_REFERENCES vs PROBES
+    # and bob.bio.base is PROBES vs BIOMETRIC_REFERENCES
+    return np.array([s.data for sset in scores for s in sset]).reshape(shape).T
+
+
+def _make_pipeline_simple():
+    transformer = make_pipeline(FunctionTransformer(func=_do_nothing_fn))
+    biometric_algorithm = Distance("euclidean", factor=1)
+    pipeline_simple = PipelineSimple(
+        transformer, biometric_algorithm, score_writer=None
+    )
+    return pipeline_simple
+
+
+def _run_norm_mechanics(with_dask, with_checkpoint=False, dir_name=None):
+    ############
+    # Prepating stubs
+    ############
+
+    n_references = 2
+    n_probes = 3
+    n_t_references = 4
+    n_z_probes = 5
+    dim = 5
+
+    references = np.arange(n_references * dim).reshape(
+        n_references, dim
+    )  # two references (each row different identity)
+    probes = (
+        np.arange(n_probes * dim).reshape(n_probes, dim) * 10
+    )  # three probes (each row different identity matching with references)
+
+    t_references = np.arange(n_t_references * dim).reshape(
+        n_t_references, dim
+    )  # four T-REFERENCES (each row different identity)
+    z_probes = (
+        np.arange(n_z_probes * dim).reshape(n_z_probes, dim) * 10
+    )  # five Z-PROBES (each row different identity matching with t references)
+
+    (
+        raw_scores_ref,
+        z_normed_scores_ref,
+        t_normed_scores_ref,
+        zt_normed_scores_ref,
+        s_normed_scores_ref,
+    ) = zt_norm_stubs(references, probes, t_references, z_probes)
+
+    ############
+    # Preparing the samples
+    ############
+
+    # Creating enrollment samples
+    biometric_reference_sample_sets = _create_sample_sets(references, offset=0)
+    t_reference_sample_sets = _create_sample_sets(t_references, offset=300)
+
+    # Fetching ids
+    reference_ids = [r.reference_id for r in biometric_reference_sample_sets]
+    # t_reference_ids = [r.reference_id for r in t_reference_sample_sets]
+    # ids = reference_ids + t_reference_ids
+
+    probe_sample_sets = _create_sample_sets(
+        probes, offset=600, references=reference_ids
+    )
+    z_probe_sample_sets = _create_sample_sets(
+        z_probes, offset=900, references=reference_ids
+    )
+
+    ############
+    # TESTING REGULAR SCORING
+    #############
+
+    pipeline_simple = _make_pipeline_simple()
+    if with_checkpoint:
+        pipeline_simple = checkpoint_pipeline_simple(pipeline_simple, dir_name)
+
+    if with_dask:
+        pipeline_simple = dask_bio_pipeline(pipeline_simple)
+
+    score_samples = pipeline_simple(
+        [],
+        biometric_reference_sample_sets,
+        probe_sample_sets,
+        score_all_vs_all=True,
+    )
+
+    if with_dask:
+        score_samples = score_samples.compute(scheduler="single-threaded")
+
+    raw_scores = _dump_scores_from_samples(
+        score_samples, shape=(n_probes, n_references)
+    )
+
+    assert np.allclose(raw_scores, raw_scores_ref)
+
+    ############
+    # TESTING Z-NORM
+    #############
+    # """
+    pipeline_simple = _make_pipeline_simple()
+    z_norm_postprocessor = ZNormScores()
+
+    z_pipeline_simple = PipelineScoreNorm(pipeline_simple, z_norm_postprocessor)
+
+    if with_dask:
+        z_pipeline_simple = dask_bio_pipeline(z_pipeline_simple)
+
+    _, z_normed_score_samples = z_pipeline_simple(
+        [],
+        biometric_reference_sample_sets,
+        copy.deepcopy(probe_sample_sets),
+        z_probe_sample_sets,
+    )
+
+    z_normed_scores = _dump_scores_from_samples(
+        z_normed_score_samples, shape=(n_probes, n_references)
+    )
+
+    np.testing.assert_allclose(z_normed_scores, z_normed_scores_ref)
+    # """
+    ############
+    # TESTING T-NORM
+    #############
+
+    pipeline_simple = _make_pipeline_simple()
+    t_norm_postprocessor = TNormScores()
+
+    t_pipeline_simple = PipelineScoreNorm(pipeline_simple, t_norm_postprocessor)
+
+    if with_dask:
+        t_pipeline_simple = dask_bio_pipeline(t_pipeline_simple)
+
+    _, t_normed_score_samples = t_pipeline_simple(
+        [],
+        biometric_reference_sample_sets,
+        copy.deepcopy(probe_sample_sets),
+        t_reference_sample_sets,
+    )
+
+    t_normed_scores = _dump_scores_from_samples(
+        t_normed_score_samples, shape=(n_probes, n_references)
+    )
+
+    np.testing.assert_allclose(t_normed_scores, t_normed_scores_ref)
+
+
 @pytest.mark.slow
 def test_norm_mechanics():
-    def _create_sample_sets(raw_data, offset, references=None):
-        if references is None:
-            return [
-                SampleSet(
-                    [
-                        Sample(
-                            s,
-                            reference_id=str(i + offset),
-                            key=str(uuid.uuid4()),
-                        )
-                    ],
-                    key=str(i + offset),
-                    reference_id=str(i + offset),
-                    subject_id=str(i + offset),
-                )
-                for i, s in enumerate(raw_data)
-            ]
-        else:
-            return [
-                SampleSet(
-                    [
-                        Sample(
-                            s,
-                            reference_id=str(i + offset),
-                            key=str(uuid.uuid4()),
-                        )
-                    ],
-                    key=str(i + offset),
-                    reference_id=str(i + offset),
-                    subject_id=str(i + offset),
-                    references=references,
-                )
-                for i, s in enumerate(raw_data)
-            ]
-
-    def _do_nothing_fn(x):
-        return x
-
-    def _dump_scores_from_samples(scores, shape):
-        # We have to transpose because the tests are BIOMETRIC_REFERENCES vs PROBES
-        # and bob.bio.base is PROBES vs BIOMETRIC_REFERENCES
-        return (
-            np.array([s.data for sset in scores for s in sset]).reshape(shape).T
-        )
-
-    with tempfile.TemporaryDirectory() as dir_name:
-
-        def run(with_dask, with_checkpoint=False):
-            ############
-            # Prepating stubs
-            ############
-
-            n_references = 2
-            n_probes = 3
-            n_t_references = 4
-            n_z_probes = 5
-            dim = 5
-
-            references = np.arange(n_references * dim).reshape(
-                n_references, dim
-            )  # two references (each row different identity)
-            probes = (
-                np.arange(n_probes * dim).reshape(n_probes, dim) * 10
-            )  # three probes (each row different identity matching with references)
-
-            t_references = np.arange(n_t_references * dim).reshape(
-                n_t_references, dim
-            )  # four T-REFERENCES (each row different identity)
-            z_probes = (
-                np.arange(n_z_probes * dim).reshape(n_z_probes, dim) * 10
-            )  # five Z-PROBES (each row different identity matching with t references)
-
-            (
-                raw_scores_ref,
-                z_normed_scores_ref,
-                t_normed_scores_ref,
-                zt_normed_scores_ref,
-                s_normed_scores_ref,
-            ) = zt_norm_stubs(references, probes, t_references, z_probes)
-
-            ############
-            # Preparing the samples
-            ############
-
-            # Creating enrollment samples
-            biometric_reference_sample_sets = _create_sample_sets(
-                references, offset=0
-            )
-            t_reference_sample_sets = _create_sample_sets(
-                t_references, offset=300
-            )
-
-            # Fetching ids
-            reference_ids = [
-                r.reference_id for r in biometric_reference_sample_sets
-            ]
-            # t_reference_ids = [r.reference_id for r in t_reference_sample_sets]
-            # ids = reference_ids + t_reference_ids
-
-            probe_sample_sets = _create_sample_sets(
-                probes, offset=600, references=reference_ids
-            )
-            z_probe_sample_sets = _create_sample_sets(
-                z_probes, offset=900, references=reference_ids
-            )
-
-            ############
-            # TESTING REGULAR SCORING
-            #############
-
-            transformer = make_pipeline(
-                FunctionTransformer(func=_do_nothing_fn)
-            )
-            biometric_algorithm = Distance("euclidean", factor=1)
-
-            if with_checkpoint:
-                biometric_algorithm = CheckpointWrapper(
-                    Distance(distance_function="euclidean", factor=1),
-                    dir_name,
-                )
-
-            pipeline_simple = PipelineSimple(
-                transformer, biometric_algorithm, score_writer=None
-            )
-            if with_dask:
-                pipeline_simple = dask_pipeline_simple(pipeline_simple)
-
-            score_samples = pipeline_simple(
-                [],
-                biometric_reference_sample_sets,
-                probe_sample_sets,
-                score_all_vs_all=True,
-            )
-
-            if with_dask:
-                score_samples = score_samples.compute(
-                    scheduler="single-threaded"
-                )
-
-            raw_scores = _dump_scores_from_samples(
-                score_samples, shape=(n_probes, n_references)
-            )
-
-            assert np.allclose(raw_scores, raw_scores_ref)
-
-            ############
-            # TESTING Z-NORM
-            #############
-            # """
-            z_norm_postprocessor = ZNormScores(pipeline=pipeline_simple)
-
-            z_pipeline_simple = PipelineScoreNorm(
-                pipeline_simple, z_norm_postprocessor
-            )
-
-            if with_dask:
-                z_pipeline_simple = bob.pipelines.DaskWrapper(z_pipeline_simple)
-
-            _, z_normed_score_samples = z_pipeline_simple(
-                [],
-                biometric_reference_sample_sets,
-                copy.deepcopy(probe_sample_sets),
-                z_probe_sample_sets,
-            )
-
-            z_normed_scores = _dump_scores_from_samples(
-                z_normed_score_samples, shape=(n_probes, n_references)
-            )
-
-            np.testing.assert_allclose(z_normed_scores, z_normed_scores_ref)
-            # """
-            ############
-            # TESTING T-NORM
-            #############
-
-            t_norm_postprocessor = TNormScores(pipeline=pipeline_simple)
-
-            t_pipeline_simple = PipelineScoreNorm(
-                pipeline_simple, t_norm_postprocessor
-            )
-
-            if with_dask:
-                t_pipeline_simple = bob.pipelines.DaskWrapper(t_pipeline_simple)
-
-            _, t_normed_score_samples = t_pipeline_simple(
-                [],
-                biometric_reference_sample_sets,
-                copy.deepcopy(probe_sample_sets),
-                t_reference_sample_sets,
-            )
-
-            t_normed_scores = _dump_scores_from_samples(
-                t_normed_score_samples, shape=(n_probes, n_references)
-            )
-
-            np.testing.assert_allclose(t_normed_scores, t_normed_scores_ref)
-
     # No dask
-    run(False)  # On memory
+    _run_norm_mechanics(with_dask=False)  # On memory
 
     # With checkpoing
-    run(False, with_checkpoint=True)
-    run(False, with_checkpoint=True)
-    shutil.rmtree(dir_name)  # Deleting the cache so it runs again from scratch
-    os.makedirs(dir_name, exist_ok=True)
+    with tempfile.TemporaryDirectory() as dir_name:
+        _run_norm_mechanics(
+            with_dask=False, with_checkpoint=True, dir_name=dir_name
+        )
+        _run_norm_mechanics(
+            with_dask=False, with_checkpoint=True, dir_name=dir_name
+        )
 
     # With dask
-    run(True)  # On memory
-    run(True, with_checkpoint=True)
-    run(True, with_checkpoint=True)
+    _run_norm_mechanics(with_dask=True)  # On memory
+    with tempfile.TemporaryDirectory() as dir_name:
+        _run_norm_mechanics(
+            with_dask=True, with_checkpoint=True, dir_name=dir_name
+        )
+        _run_norm_mechanics(
+            with_dask=True, with_checkpoint=True, dir_name=dir_name
+        )
 
 
 def test_znorm_on_memory():
@@ -377,7 +369,7 @@ def test_znorm_on_memory():
                 transformer, biometric_algorithm, score_writer
             )
 
-            z_norm_postprocessor = ZNormScores(pipeline=pipeline_simple)
+            z_norm_postprocessor = ZNormScores()
 
             z_pipeline_simple = PipelineScoreNorm(
                 pipeline_simple, z_norm_postprocessor
@@ -390,10 +382,9 @@ def test_znorm_on_memory():
             )
 
             if with_dask:
-                pipeline_simple = dask_pipeline_simple(
-                    pipeline_simple, npartitions=2
+                z_pipeline_simple = dask_bio_pipeline(
+                    z_pipeline_simple, npartitions=2
                 )
-                z_pipeline_simple = bob.pipelines.DaskWrapper(z_pipeline_simple)
 
             (raw_scores, z_scores) = z_pipeline_simple(
                 database.background_model_samples(),
@@ -529,27 +520,21 @@ def test_znorm_on_memory():
 
 
 def test_pipeline_score_norm_click_cli():
-    from .test_pipeline_simple import _create_test_config
-
-    # open a click isolated environment
-    runner = CliRunner()
+    from .test_pipeline_simple import _test_pipeline_click_cli
 
     for options in [
+        ["--no-dask", "--memory"],
+        ["--no-dask"],
+        ["--memory"],
         [],
         ["--score-normalization-type", "tnorm"],
-        ["--memory"],
-        ["--no-dask"],
-        ["--no-dask", "--memory"],
     ]:
-        with runner.isolated_filesystem():
-
-            _create_test_config("config.py")
-            result = runner.invoke(
-                pipeline_score_norm_cli,
-                [
-                    "-vv",
-                    "config.py",
-                ]
-                + options,
-            )
-            assert_click_runner_result(result)
+        norm_output = "tnorm" if "tnorm" in options else "znorm"
+        _test_pipeline_click_cli(
+            pipeline_score_norm_cli,
+            options,
+            expected_outputs=[
+                "results/scores-dev/raw_scores.csv",
+                f"results/scores-dev/{norm_output}.csv",
+            ],
+        )

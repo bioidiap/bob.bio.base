@@ -2,6 +2,7 @@
 # vim: set fileencoding=utf-8 :
 # @author: Tiago de Freitas Pereira <tiago.pereira@idiap.ch>
 
+import glob
 import itertools
 import os
 import shutil
@@ -17,11 +18,11 @@ from sklearn.pipeline import make_pipeline
 
 from bob.bio.base.algorithm import Distance
 from bob.bio.base.pipelines import (
-    CheckpointWrapper,
+    BioAlgCheckpointWrapper,
     CSVScoreWriter,
     FourColumnsScoreWriter,
     PipelineSimple,
-    dask_pipeline_simple,
+    dask_bio_pipeline,
 )
 from bob.bio.base.script.pipeline_simple import (
     pipeline_simple as pipeline_simple_cli,
@@ -221,7 +222,7 @@ def test_on_memory():
             )
 
             if with_dask:
-                pipeline_simple = dask_pipeline_simple(
+                pipeline_simple = dask_bio_pipeline(
                     pipeline_simple, npartitions=2
                 )
 
@@ -263,7 +264,7 @@ def test_checkpoint_bioalg_as_transformer():
 
             transformer = _make_transformer(dir_name)
 
-            biometric_algorithm = CheckpointWrapper(
+            biometric_algorithm = BioAlgCheckpointWrapper(
                 Distance(), base_dir=dir_name
             )
 
@@ -272,7 +273,7 @@ def test_checkpoint_bioalg_as_transformer():
             )
 
             if with_dask:
-                pipeline_simple = dask_pipeline_simple(
+                pipeline_simple = dask_bio_pipeline(
                     pipeline_simple, npartitions=2
                 )
 
@@ -382,7 +383,7 @@ def test_checkpoint_bioalg_with_tags():
 
             transformer = _make_transformer(dir_name)
 
-            biometric_algorithm = CheckpointWrapper(
+            biometric_algorithm = BioAlgCheckpointWrapper(
                 DistanceWithTags(), base_dir=dir_name
             )
 
@@ -391,7 +392,7 @@ def test_checkpoint_bioalg_with_tags():
             )
 
             if with_dask:
-                pipeline_simple = dask_pipeline_simple(
+                pipeline_simple = dask_bio_pipeline(
                     pipeline_simple, npartitions=2
                 )
 
@@ -540,25 +541,38 @@ pipeline = PipelineSimple(
         )
 
 
+def _test_pipeline_click_cli(
+    cli, options, expected_outputs=("results/scores-dev.csv",)
+):
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+
+        _create_test_config("config.py")
+        result = runner.invoke(
+            cli,
+            [
+                "-vv",
+                "config.py",
+            ]
+            + options,
+        )
+        assert_click_runner_result(result)
+        # check for expected_output
+        output_files = glob.glob("results/**", recursive=True)
+        err_msg = "Found only:\n{output_files}\nin output directory given the options: {options}".format(
+            output_files="\n".join(output_files), options=options
+        )
+        for out in expected_outputs:
+            assert os.path.isfile(out), err_msg
+
+
 def test_pipeline_simple_click_cli():
     # open a click isolated environment
-    runner = CliRunner()
 
     for options in [
-        [],
-        ["--memory"],
-        ["--no-dask"],
         ["--no-dask", "--memory"],
+        ["--no-dask"],
+        ["--memory"],
+        [],
     ]:
-        with runner.isolated_filesystem():
-
-            _create_test_config("config.py")
-            result = runner.invoke(
-                pipeline_simple_cli,
-                [
-                    "-vv",
-                    "config.py",
-                ]
-                + options,
-            )
-            assert_click_runner_result(result)
+        _test_pipeline_click_cli(pipeline_simple_cli, options)

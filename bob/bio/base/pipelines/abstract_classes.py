@@ -424,7 +424,8 @@ class ScoreWriter(metaclass=ABCMeta):
     for :any:`bob.bio.base.pipelines.BioAlgorithm`
     """
 
-    def __init__(self, path, extension=".txt"):
+    def __init__(self, path, extension=".txt", **kwargs):
+        super().__init__(**kwargs)
         self.path = path
         self.extension = extension
 

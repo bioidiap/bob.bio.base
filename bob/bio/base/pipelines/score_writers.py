@@ -18,6 +18,9 @@ class FourColumnsScoreWriter(ScoreWriter):
     :py:func:`bob.bio.base.score.load.four_column`
     """
 
+    def __init__(self, path, extension=".txt", **kwargs):
+        super().__init__(path, extension, **kwargs)
+
     def write(self, probe_sampleset):
         """
         Write scores and returns a :py:class:`bob.pipelines.DelayedSample`
@@ -76,8 +79,9 @@ class CSVScoreWriter(ScoreWriter):
         path,
         exclude_list=tuple(SAMPLE_DATA_ATTRS)
         + ("key", "references", "annotations"),
+        **kwargs,
     ):
-        super().__init__(path)
+        super().__init__(path, **kwargs)
         self.exclude_list = exclude_list
 
     def write(self, probe_sampleset):
