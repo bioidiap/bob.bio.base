@@ -67,11 +67,11 @@ class BioFile(LegacyFile, _ReprMixin):
         Parameters
         ----------
 
-        original_directory: str (optional)
+        original_directory: :obj:`str` (optional)
             The path to the root of the dataset structure.
             If `None`, will try to use `self.original_directory`.
 
-        original_extension: str (optional)
+        original_extension: :obj:`str` (optional)
             The filename extension of every files in the dataset.
             If `None`, will try to use `self.original_extension`.
 

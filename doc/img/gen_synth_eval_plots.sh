@@ -38,25 +38,25 @@ if [ "${SKIP_GEN}" = "YES" ]; then
 else
     echo "Generating scores for 4 different systems in ${OUTPUT_FOLDER}..."
     echo "  >> Random"
-    ../../bin/bob bio gen -mm  0 -mnm   0 -sp  5 -sn  5 -s 50 -p 5 "${OUTPUT_FOLDER}/random_system/"
+    bob bio gen -mm  0 -mnm   0 -sp  5 -sn  5 -s 50 -p 5 "${OUTPUT_FOLDER}/random_system/"
     echo "  >> Bad"
-    ../../bin/bob bio gen -mm 10 -mnm -10 -sp 10 -sn 10 -s 50 -p 5 "${OUTPUT_FOLDER}/bad_system/"
+    bob bio gen -mm 10 -mnm -10 -sp 10 -sn 10 -s 50 -p 5 "${OUTPUT_FOLDER}/bad_system/"
     echo "  >> Good"
-    ../../bin/bob bio gen -mm 10 -mnm -10 -sp  5 -sn  5 -s 50 -p 5 "${OUTPUT_FOLDER}/good_system/"
+    bob bio gen -mm 10 -mnm -10 -sp  5 -sn  5 -s 50 -p 5 "${OUTPUT_FOLDER}/good_system/"
     echo "  >> Perfect"
-    ../../bin/bob bio gen -mm 10 -mnm -10 -sp  2 -sn  2 -s 50 -p 5 "${OUTPUT_FOLDER}/perfect_system/"
+    bob bio gen -mm 10 -mnm -10 -sp  2 -sn  2 -s 50 -p 5 "${OUTPUT_FOLDER}/perfect_system/"
     echo "Done."
     echo
 
     echo "Generating scores for 4 different systems with unknown probes in ${OUTPUT_FOLDER}/dir..."
     echo "  >> Random"
-    ../../bin/bob bio gen -mm  0 -mnm   0 -sp  5 -sn  5 -s 50 -p 5 -u 50 "${OUTPUT_FOLDER}/dir/random_system/"
+    bob bio gen -mm  0 -mnm   0 -sp  5 -sn  5 -s 50 -p 5 -u 50 "${OUTPUT_FOLDER}/dir/random_system/"
     echo "  >> Bad"
-    ../../bin/bob bio gen -mm 10 -mnm -10 -sp 10 -sn 10 -s 50 -p 5 -u 50 "${OUTPUT_FOLDER}/dir/bad_system/"
+    bob bio gen -mm 10 -mnm -10 -sp 10 -sn 10 -s 50 -p 5 -u 50 "${OUTPUT_FOLDER}/dir/bad_system/"
     echo "  >> Good"
-    ../../bin/bob bio gen -mm 10 -mnm -10 -sp  5 -sn  5 -s 50 -p 5 -u 50 "${OUTPUT_FOLDER}/dir/good_system/"
+    bob bio gen -mm 10 -mnm -10 -sp  5 -sn  5 -s 50 -p 5 -u 50 "${OUTPUT_FOLDER}/dir/good_system/"
     echo "  >> Perfect"
-    ../../bin/bob bio gen -mm 10 -mnm -10 -sp  2 -sn  2 -s 50 -p 5 -u 50 "${OUTPUT_FOLDER}/dir/perfect_system/"
+    bob bio gen -mm 10 -mnm -10 -sp  2 -sn  2 -s 50 -p 5 -u 50 "${OUTPUT_FOLDER}/dir/perfect_system/"
     echo "Done."
 fi
 echo

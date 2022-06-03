@@ -47,7 +47,7 @@ Using a database interface
 
 You may list the currently available databases (and pipelines) using the following command::
 
-  $ resources.py --type config
+  $ bob bio pipeline simple --help
 
 You can use such a dataset with the following command (example with the AT&T dataset)::
 
