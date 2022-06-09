@@ -86,15 +86,9 @@ setup(
             "linearize         = bob.bio.base.config.extractor.linearize:extractor",
         ],
         "bob.bio.algorithm": [
-            "dummy             = bob.bio.base.test.dummy.algorithm:algorithm",  # for test purposes only
-            "dummy_metadata    = bob.bio.base.test.dummy.algorithm:algorithm_metadata",
             "distance-euclidean = bob.bio.base.config.algorithm.distance_euclidean:algorithm",
             "distance-cosine   = bob.bio.base.config.algorithm.distance_cosine:algorithm",
             "distance-hamming   = bob.bio.base.config.algorithm.distance_hamming:algorithm",
-        ],
-        # declare database to bob
-        "bob.db": [
-            "bio_filelist      = bob.bio.base.database.filelist.driver:Interface",
         ],
         # main entry for bob bio cli
         "bob.cli": [
