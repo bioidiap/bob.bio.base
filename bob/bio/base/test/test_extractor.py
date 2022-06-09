@@ -10,9 +10,7 @@ from . import utils
 
 def test_linearize():
     # load extractor
-    extractor = bob.bio.base.load_resource(
-        "linearize", "extractor", preferred_package="bob.bio.base"
-    )
+    extractor = bob.bio.base.extractor.Linearize()
 
     # generate input
     data = utils.random_training_set((10, 10), 1)[0]

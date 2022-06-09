@@ -3,9 +3,7 @@ import bob.bio.base
 
 def test_filename():
     # load extractor
-    preprocessor = bob.bio.base.load_resource(
-        "filename", "preprocessor", preferred_package="bob.bio.base"
-    )
+    preprocessor = bob.bio.base.preprocessor.Filename()
     assert isinstance(preprocessor, bob.bio.base.preprocessor.Preprocessor)
     assert isinstance(preprocessor, bob.bio.base.preprocessor.Filename)
 
