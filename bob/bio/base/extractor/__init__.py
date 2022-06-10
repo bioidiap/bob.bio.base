@@ -1,6 +1,5 @@
 # isort: skip_file
 from .Extractor import Extractor
-from .Linearize import Linearize
 
 
 # gets sphinx autodoc done right - don't remove it
@@ -21,6 +20,5 @@ def __appropriate__(*args):
 
 __appropriate__(
     Extractor,
-    Linearize,
 )
 __all__ = [_ for _ in dir() if not _.startswith("_")]

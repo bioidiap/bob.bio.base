@@ -16,9 +16,7 @@ def test_distance_algorithm():
     # test the two registered distance functions
 
     # euclidean distance
-    euclidean = bob.bio.base.load_resource(
-        "distance-euclidean", "algorithm", preferred_package="bob.bio.base"
-    )
+    euclidean = bob.bio.base.algorithm.Distance(distance_function="euclidean")
     assert isinstance(euclidean, bob.bio.base.algorithm.Distance)
 
     # test distance computation
@@ -31,9 +29,7 @@ def test_distance_algorithm():
     np.testing.assert_almost_equal(score, -np.sqrt(10))
 
     # test cosine distance
-    cosine = bob.bio.base.load_resource(
-        "distance-cosine", "algorithm", preferred_package="bob.bio.base"
-    )
+    cosine = bob.bio.base.algorithm.Distance(distance_function="cosine")
     models = cosine.create_templates([[f1, f1]], enroll=True)
     probes = cosine.create_templates([[f2, f2]], enroll=False)
     score = cosine.compare(models, probes)[0, 0]
