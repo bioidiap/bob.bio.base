@@ -75,27 +75,6 @@ setup(
             "dummy             = bob.bio.base.test.dummy.database:database",  # for test purposes only
             "atnt              = bob.bio.base.config.database.atnt:database",
         ],
-        "bob.bio.preprocessor": [
-            "dummy             = bob.bio.base.test.dummy.preprocessor:preprocessor",  # for test purposes only
-            "filename          = bob.bio.base.config.preprocessor.filename:preprocessor",
-            "dummy_metadata    = bob.bio.base.test.dummy.preprocessor:preprocessor_metadata",
-        ],
-        "bob.bio.extractor": [
-            "dummy             = bob.bio.base.test.dummy.extractor:extractor",  # for test purposes only
-            "dummy_metadata    = bob.bio.base.test.dummy.extractor:extractor_metadata",  # for test purposes only
-            "linearize         = bob.bio.base.config.extractor.linearize:extractor",
-        ],
-        "bob.bio.algorithm": [
-            "dummy             = bob.bio.base.test.dummy.algorithm:algorithm",  # for test purposes only
-            "dummy_metadata    = bob.bio.base.test.dummy.algorithm:algorithm_metadata",
-            "distance-euclidean = bob.bio.base.config.algorithm.distance_euclidean:algorithm",
-            "distance-cosine   = bob.bio.base.config.algorithm.distance_cosine:algorithm",
-            "distance-hamming   = bob.bio.base.config.algorithm.distance_hamming:algorithm",
-        ],
-        # declare database to bob
-        "bob.db": [
-            "bio_filelist      = bob.bio.base.database.filelist.driver:Interface",
-        ],
         # main entry for bob bio cli
         "bob.cli": [
             "bio               = bob.bio.base.script.bio:bio",
