@@ -5,10 +5,11 @@ ATNT database implementation
 
 from pathlib import Path
 
+import pkg_resources
+
 from sklearn.pipeline import make_pipeline
 
 import bob.io.base
-import bob.io.base.test_utils
 
 from bob.bio.base.database import CSVDataset, CSVToSampleLoaderBiometrics
 from bob.extension.download import get_file
@@ -32,8 +33,8 @@ class AtntBioDatabase(CSVDataset):
     ):
 
         # Downloading model if not exists
-        dataset_protocol_path = bob.io.base.test_utils.datafile(
-            "atnt", "bob.bio.base.test", "data"
+        dataset_protocol_path = pkg_resources.resource_filename(
+            "bob.bio.base", "test/data"
         )
         if dataset_original_directory is None:
             path = get_file(
