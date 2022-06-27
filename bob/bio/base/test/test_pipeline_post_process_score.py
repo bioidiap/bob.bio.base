@@ -149,12 +149,12 @@ def _create_sample_sets(raw_data, offset, references=None):
                 [
                     Sample(
                         s,
-                        reference_id=str(i + offset),
+                        template_id=str(i + offset),
                         key=str(uuid.uuid4()),
                     )
                 ],
                 key=str(i + offset),
-                reference_id=str(i + offset),
+                template_id=str(i + offset),
                 subject_id=str(i + offset),
             )
             for i, s in enumerate(raw_data)
@@ -165,12 +165,12 @@ def _create_sample_sets(raw_data, offset, references=None):
                 [
                     Sample(
                         s,
-                        reference_id=str(i + offset),
+                        template_id=str(i + offset),
                         key=str(uuid.uuid4()),
                     )
                 ],
                 key=str(i + offset),
-                reference_id=str(i + offset),
+                template_id=str(i + offset),
                 subject_id=str(i + offset),
                 references=references,
             )
@@ -239,15 +239,15 @@ def _run_norm_mechanics(with_dask, with_checkpoint=False, dir_name=None):
     t_reference_sample_sets = _create_sample_sets(t_references, offset=300)
 
     # Fetching ids
-    reference_ids = [r.reference_id for r in biometric_reference_sample_sets]
-    # t_reference_ids = [r.reference_id for r in t_reference_sample_sets]
-    # ids = reference_ids + t_reference_ids
+    template_ids = [r.template_id for r in biometric_reference_sample_sets]
+    # t_template_ids = [r.template_id for r in t_reference_sample_sets]
+    # ids = template_ids + t_template_ids
 
     probe_sample_sets = _create_sample_sets(
-        probes, offset=600, references=reference_ids
+        probes, offset=600, references=template_ids
     )
     z_probe_sample_sets = _create_sample_sets(
-        z_probes, offset=900, references=reference_ids
+        z_probes, offset=900, references=template_ids
     )
 
     ############

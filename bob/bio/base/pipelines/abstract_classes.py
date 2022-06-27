@@ -277,7 +277,7 @@ class BioAlgorithm(BaseEstimator, metaclass=ABCMeta):
                 indices = [
                     i
                     for i, enroll in enumerate(enroll_samples)
-                    if str(enroll.reference_id) in references
+                    if str(enroll.template_id) in references
                 ]
                 if not indices:
                     raise ValueError(
@@ -312,8 +312,8 @@ class Database(metaclass=ABCMeta):
 
     def __init__(
         self,
-        name,
-        protocol,
+        name=None,
+        protocol=None,
         score_all_vs_all=False,
         annotation_type=None,
         fixed_positions=None,
@@ -321,8 +321,9 @@ class Database(metaclass=ABCMeta):
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.name = name
-        self.protocol = protocol
+        for attr, value in (("name", name), ("protocol", protocol)):
+            if not hasattr(self, attr):
+                setattr(self, attr, value)
         self.score_all_vs_all = score_all_vs_all
         self.annotation_type = annotation_type
         self.fixed_positions = fixed_positions
@@ -414,8 +415,8 @@ class Database(metaclass=ABCMeta):
     def protocols(self):
         pass
 
-    def reference_ids(self, group):
-        return [s.reference_id for s in self.references(group=group)]
+    def template_ids(self, group):
+        return [s.template_id for s in self.references(group=group)]
 
 
 class ScoreWriter(metaclass=ABCMeta):

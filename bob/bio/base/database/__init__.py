@@ -1,11 +1,5 @@
 # isort: skip_file
-from .csv_dataset import (
-    CSVDataset,
-    CSVToSampleLoaderBiometrics,
-    CSVDatasetCrossValidation,
-    LSTToSampleLoader,
-    CSVDatasetZTNorm,
-)
+from .csv_dataset import CSVDatabase, FileSampleLoader, AnnotationsLoader
 from .file import BioFile
 from .file import BioFileSet
 from .database import BioDatabase
@@ -36,11 +30,10 @@ __appropriate__(
     BioFileSet,
     BioDatabase,
     ZTBioDatabase,
-    CSVDataset,
-    CSVToSampleLoaderBiometrics,
-    CSVDatasetCrossValidation,
+    CSVDatabase,
+    FileSampleLoader,
     FileListBioDatabase,
-    LSTToSampleLoader,
-    CSVDatasetZTNorm,
+    AtntBioDatabase,
+    AnnotationsLoader,
 )
 __all__ = [_ for _ in dir() if not _.startswith("_")]

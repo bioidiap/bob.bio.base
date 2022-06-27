@@ -226,10 +226,10 @@ class ZNormScores(TransformerMixin, BaseEstimator):
         self.z_stats = dict()
         for sset in z_scores:
             for s in sset:
-                if s.reference_id not in self.z_stats:
-                    self.z_stats[s.reference_id] = Sample([], parent=s)
+                if s.template_id not in self.z_stats:
+                    self.z_stats[s.template_id] = Sample([], parent=s)
 
-                self.z_stats[s.reference_id].data.append(s.data)
+                self.z_stats[s.template_id].data.append(s.data)
 
         # Now computing the statistics in place
 
@@ -265,8 +265,8 @@ class ZNormScores(TransformerMixin, BaseEstimator):
             for no_normed_score in X:
                 score = (
                     no_normed_score.data
-                    - self.z_stats[no_normed_score.reference_id].mu
-                ) / self.z_stats[no_normed_score.reference_id].std
+                    - self.z_stats[no_normed_score.template_id].mu
+                ) / self.z_stats[no_normed_score.template_id].std
 
                 z_score = Sample(score, parent=no_normed_score)
                 scores.append(z_score)
@@ -324,7 +324,7 @@ class TNormScores(TransformerMixin, BaseEstimator):
 
         for sset in t_scores:
 
-            self.t_stats[sset.reference_id] = Sample(
+            self.t_stats[sset.template_id] = Sample(
                 [s.data for s in sset], parent=sset
             )
 
@@ -372,7 +372,7 @@ class TNormScores(TransformerMixin, BaseEstimator):
 
             for probe_scores in X:
 
-                stats = self.t_stats[probe_scores.reference_id]
+                stats = self.t_stats[probe_scores.template_id]
 
                 t_normed_scores.append(
                     SampleSet(

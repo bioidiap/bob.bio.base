@@ -22,8 +22,7 @@ Database implementations
 
 .. autosummary::
 
-..  bob.bio.base.database.CSVDataset
-..  bob.bio.base.database.CSVDatasetCrossValidation
+..  bob.bio.base.database.CSVDatabase
 
 Biometric Algorithm
 ~~~~~~~~~~~~~~~~~~~

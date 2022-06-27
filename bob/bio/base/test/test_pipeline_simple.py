@@ -60,7 +60,7 @@ class DummyDatabase:
                 np.random.rand(dim),
                 key=str(uuid.uuid4()),
                 annotations=1,
-                reference_id=str(i),
+                template_id=str(i),
                 subject_id=str(i),
             )
             for i in range(offset, offset + n_samples)
@@ -72,7 +72,7 @@ class DummyDatabase:
                 np.random.rand(dim, dim),
                 key=str(uuid.uuid4()),
                 annotations=1,
-                reference_id=str(i),
+                template_id=str(i),
                 subject_id=str(i),
             )
             for i in range(offset, offset + n_samples)
@@ -86,7 +86,7 @@ class DummyDatabase:
             SampleSet(
                 samples=[],
                 key=str(i),
-                reference_id=str(i),
+                template_id=str(i),
                 subject_id=str(i),
                 gender=np.random.choice(self.gender_choices),
                 metadata_1=np.random.choice(self.metadata_1_choices),
@@ -145,7 +145,7 @@ class DummyDatabase:
             n_sample_set=10, n_samples=1, seed=14
         )
         for p in zprobes:
-            p.reference_id = "z-" + str(p.reference_id)
+            p.template_id = "z-" + str(p.template_id)
             p.references = [str(r) for r in list(range(self.n_references))]
 
         return zprobes
@@ -155,7 +155,7 @@ class DummyDatabase:
             self.n_references, self.dim, seed=15
         )
         for t in t_sset:
-            t.reference_id = "t_" + str(t.reference_id)
+            t.template_id = "t_" + str(t.template_id)
         return t_sset
 
     @property

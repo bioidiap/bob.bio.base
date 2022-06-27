@@ -1,4 +1,4 @@
-PATH,REFERENCE_ID,COMPARE_REFERENCE_ID
+PATH,TEMPLATE_ID,COMPARE_TEMPLATE_ID
 data/model3_session1_sample1,5,5
 data/model3_session1_sample2,5,5
 data/model3_session1_sample3,6,5
