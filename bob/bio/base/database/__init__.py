@@ -1,5 +1,5 @@
 # isort: skip_file
-from .csv_dataset import CSVDatabase, FileSampleLoader, AnnotationsLoader
+from .csv_database import CSVDatabase, FileSampleLoader, AnnotationsLoader
 from .file import BioFile
 from .file import BioFileSet
 from .database import BioDatabase

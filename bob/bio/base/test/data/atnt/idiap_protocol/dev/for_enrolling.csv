@@ -1,4 +1,4 @@
-path,subject_id,enroll_template_id
+path,subject_id,template_id
 s3/9,3,3
 s3/2,3,3
 s3/4,3,3

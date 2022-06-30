@@ -179,7 +179,7 @@ In this example, ``my_dataset_csv_folder`` would be the base path given to the `
       name="my_dataset",
       dataset_protocols_path="my_dataset_csv_folder",
       protocol="my_protocol_1",
-      csv_to_sample_loader=my_sample_loader
+      transformer=my_sample_loader
     )
 
 This will create a database interface with:

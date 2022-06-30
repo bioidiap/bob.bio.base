@@ -337,7 +337,7 @@ def test_atnt_experiment():
         name="atnt",
         dataset_protocols_path=atnt_protocol_path,
         protocol="idiap_protocol",
-        csv_to_sample_loader=FileSampleLoader(
+        transformer=FileSampleLoader(
             data_loader=data_loader,
             dataset_original_directory=ATNT_DATABASE.original_directory,
             extension=".pgm",

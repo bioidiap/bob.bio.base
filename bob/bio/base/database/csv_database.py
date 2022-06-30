@@ -37,6 +37,11 @@ def validate_bio_samples(samples):
                     f"SampleSet must have a template_id attribute, got {sample}"
                 )
 
+            if not hasattr(sample, "subject_id"):
+                raise ValueError(
+                    f"SampleSet must have a subject_id attribute, got {sample}"
+                )
+
             continue
 
         if not hasattr(sample, "key"):
@@ -102,7 +107,7 @@ class CSVDatabase(FileListDatabase, Database):
 
     The ``for_enrolling.csv`` file should contain the following columns::
 
-        key,subject_id,enroll_template_id
+        key,subject_id,template_id
         subject3_image1.png,3,template_1
         subject3_image2.png,3,template_1
         subject3_image3.png,3,template_2
@@ -114,7 +119,7 @@ class CSVDatabase(FileListDatabase, Database):
 
     The ``for_probing.csv`` file should contain the following columns::
 
-        key,subject_id,probe_template_id
+        key,subject_id,template_id
         subject5_image1.png,5,template_5
         subject5_image2.png,5,template_5
         subject5_image3.png,5,template_6
@@ -210,7 +215,7 @@ class CSVDatabase(FileListDatabase, Database):
     def background_model_samples(self):
         return self._background_model_samples(self.protocol)
 
-    def _sample_sets(self, group, name, attr):
+    def _sample_sets(self, group, name):
         # we need protocol as input so we can cache the result
         reader = self.get_reader(group, name)
         if reader is None:
@@ -218,16 +223,22 @@ class CSVDatabase(FileListDatabase, Database):
         samples = list(reader)
         # create Sample_sets from samples given their unique enroll_template_id/probe_template_id
         samples_grouped_by_template_id = itertools.groupby(
-            samples, lambda x: getattr(x, attr)
+            samples, lambda x: x.template_id
         )
         sample_sets = []
         for (
             template_id,
             samples_for_template_id,
         ) in samples_grouped_by_template_id:
+            # since all samples inside one sampleset have the same subject_id,
+            # we add that as well.
+            samples = list(samples_for_template_id)
+            subject_id = samples[0].subject_id
             sample_sets.append(
                 SampleSet(
-                    list(samples_for_template_id), template_id=template_id
+                    samples,
+                    template_id=template_id,
+                    subject_id=subject_id,
                 )
             )
         validate_bio_samples(sample_sets)
@@ -236,9 +247,7 @@ class CSVDatabase(FileListDatabase, Database):
     # cached methods should be based on protocol as well
     @functools.lru_cache(maxsize=None)
     def _references(self, protocol, group):
-        return self._sample_sets(
-            group, "for_enrolling", attr="enroll_template_id"
-        )
+        return self._sample_sets(group, "for_enrolling")
 
     def references(self, group="dev"):
         return self._references(self.protocol, group)
@@ -251,9 +260,7 @@ class CSVDatabase(FileListDatabase, Database):
     # cached methods should be based on protocol as well
     @functools.lru_cache(maxsize=None)
     def _probes(self, protocol, group):
-        sample_sets = self._sample_sets(
-            group, "for_probing", attr="probe_template_id"
-        )
+        sample_sets = self._sample_sets(group, "for_probing")
 
         # if there are no probes
         if not sample_sets:
@@ -326,9 +333,7 @@ class CSVDatabase(FileListDatabase, Database):
 
     @functools.lru_cache(maxsize=None)
     def _zprobes(self, protocol, group):
-        sample_sets = self._sample_sets(
-            "train", "for_znorm", attr="probe_template_id"
-        )
+        sample_sets = self._sample_sets("train", "for_znorm")
         if not sample_sets:
             return sample_sets
 
@@ -346,9 +351,7 @@ class CSVDatabase(FileListDatabase, Database):
 
     @functools.lru_cache(maxsize=None)
     def _treferences(self, protocol):
-        sample_sets = self._sample_sets(
-            "train", "for_tnorm", attr="enroll_template_id"
-        )
+        sample_sets = self._sample_sets("train", "for_tnorm")
         return sample_sets
 
     def treferences(self, proportion=1.0):
@@ -361,30 +364,21 @@ class CSVDatabase(FileListDatabase, Database):
 
 
 class FileSampleLoader(BaseEstimator, TransformerMixin):
-    """
-    Base class that converts the lines of a CSV file, like the one below to
-    :any:`bob.pipelines.DelayedSample` or :any:`bob.pipelines.SampleSet`
-
-    .. code-block:: text
-
-       PATH,REFERENCE_ID
-       path_1,reference_id_1
-       path_2,reference_id_2
-       path_i,reference_id_j
-       ...
+    """Loads file-based samples.
+    Given the ``sample.path`` attribute and ``dataset_original_directory`` and the
+    ``extension``, this transformer will load the samples from the file.
+    The ``data_loader`` is used to load the data.
 
     Parameters
     ----------
+    data_loader : :obj:`callable`
+        A callable to load the sample, given the full path to the file.
 
-        data_loader:
-            A callable to load the sample, given the ``sample.path``.
+    dataset_original_directory : str
+        Path of where data is stored
 
-        dataset_original_directory: str
-            Path of where data is stored
-
-        extension: str
-            Default file extension
-
+    extension : str
+        Default file extension
     """
 
     def __init__(
@@ -402,6 +396,7 @@ class FileSampleLoader(BaseEstimator, TransformerMixin):
         self.extension = extension
 
     def transform(self, samples):
+        """Transform samples to delayed samples with data givent their path."""
         output = []
         for sample in samples:
             path = getattr(sample, "path")
@@ -429,19 +424,18 @@ class FileSampleLoader(BaseEstimator, TransformerMixin):
 
 class AnnotationsLoader(TransformerMixin, BaseEstimator):
     """
-    Metadata loader that loads annotations in the Idiap format using the function
+    Metadata loader that loads annotations using the function
     :any:`read_annotation_file`
 
     Parameters
     ----------
-
-    annotation_directory: str
+    annotation_directory : str
         Path where the annotations are store
 
-    annotation_extension: str
+    annotation_extension : str
         Extension of the annotations
 
-    annotation_type: str
+    annotation_type : str
         Annotations type
 
     """
@@ -463,7 +457,9 @@ class AnnotationsLoader(TransformerMixin, BaseEstimator):
         annotated_samples = []
         for x in X:
 
-            # since the file id is equal to the file name, we can simply use it
+            # we use .key here because .path might not be unique for all
+            # samples. Also, the ``bob bio annotate-samples`` command dictates
+            # how annotations are stored.
             annotation_file = os.path.join(
                 self.annotation_directory, x.key + self.annotation_extension
             )
