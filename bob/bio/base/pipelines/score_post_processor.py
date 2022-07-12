@@ -15,6 +15,12 @@ from functools import partial
 import dask.dataframe
 import numpy as np
 
+from collections import defaultdict
+# import libmr
+
+import math
+# import json
+
 from scipy.optimize import curve_fit
 from scipy.special import expit
 from scipy.stats import beta, gamma, weibull_min
@@ -217,41 +223,100 @@ class ZNormScores(TransformerMixin, BaseEstimator):
         self.top_norm = top_norm
         self.top_norm_score_fraction = top_norm_score_fraction
 
+        # Basic Parameters
+        self.tech = "subject_demo" # "demo": demographic-based normalization, None: subject-based normalization (default version), "subject_demo": subject-demographic-based normalization
+        self.demo = "race" # the demographics that we rely on, should be changed according to datasets
+
     def fit(self, z_scores, y=None):
 
-        # TODO: THIS IS SUPER INNEFICIENT, BUT
-        # IT'S THE MOST READABLE SOLUTION
+        if self.tech == "subject_demo":
+            self.z_stats = defaultdict(lambda: defaultdict(list))
+             # re-organize the zscores into subject by race format
+            for sset in z_scores:
+                for s in sset:       
+                      
+                    if not vars(sset)[self.demo] in self.z_stats[s.reference_id]:
+                        self.z_stats[s.reference_id][vars(sset)[self.demo]] = Sample([], parent=s)
+                    
+                    self.z_stats[s.reference_id][vars(sset)[self.demo]].data.append(s.data)
+           
+            # Computing the mean and std for each race of each subject
+            for key in self.z_stats:
+                for demo in self.z_stats[key].keys():
+                    data = self.z_stats[key][demo].data
+                    ## Selecting the top scores
+                    if self.top_norm:
+                        # Sorting in ascending order
+                        data = -np.sort(-data)
+                        proportion = int(np.floor(len(data) * self.top_norm_score_fraction))
+                        data = data[0:proportion]
 
-        # Stacking scores by biometric reference
-        self.z_stats = dict()
-        for sset in z_scores:
-            for s in sset:
-                if s.reference_id not in self.z_stats:
-                    self.z_stats[s.reference_id] = Sample([], parent=s)
+                  
+                    self.z_stats[key][demo].mu = np.mean(self.z_stats[key][demo].data)
+                    self.z_stats[key][demo].std = np.std(self.z_stats[key][demo].data)
 
-                self.z_stats[s.reference_id].data.append(s.data)
+                    self.z_stats[key][demo].data = [] 
+        
+        elif self.tech == "demo":
+            self.z_stats = dict()
+            for sset in z_scores:
+                for s in sset:               
+                    if not vars(sset)[self.demo] in self.z_stats:
+                        self.z_stats[vars(sset)[self.demo]] = Sample([], parent=s)
+                    
+                    # only consider the imposter scores that come from same races
+                    if vars(s)[self.demo] == vars(sset)[self.demo]:
+                        self.z_stats[vars(sset)[self.demo]].data.append(s.data)            
 
-        # Now computing the statistics in place
+            # Compute mean and std for each race
+            for key in self.z_stats:
+                data = self.z_stats[key].data
+                ## Selecting the top scores
+                if self.top_norm:
+                    # Sorting in ascending order
+                    data = -np.sort(-data)
+                    proportion = int(np.floor(len(data) * self.top_norm_score_fraction))
+                    data = data[0:proportion]
+    
+                self.z_stats[key].mu = np.mean(self.z_stats[key].data)  
+                self.z_stats[key].std = np.std(self.z_stats[key].data) 
 
-        for key in self.z_stats:
-            data = self.z_stats[key].data
+                self.z_stats[key].data = [] 
 
-            # Selecting the top scores
-            if self.top_norm:
-                # Sorting in ascending order
-                data = -np.sort(-data)
-                proportion = int(
-                    np.floor(len(data) * self.top_norm_score_fraction)
-                )
-                data = data[0:proportion]
+        else: # self.tech == None; subject based normalization (original version in gitlab)
+                
+            # TODO: THIS IS SUPER INNEFICIENT, BUT
+            # IT'S THE MOST READABLE SOLUTION
 
-            self.z_stats[key].mu = np.mean(self.z_stats[key].data)
-            self.z_stats[key].std = np.std(self.z_stats[key].data)
-            # self._z_stats[key].std = legacy_std(
-            #    self._z_stats[key].mu, self._z_stats[key].data
-            # )
-            self.z_stats[key].data = []
+            # Stacking scores by biometric reference
+            self.z_stats = dict()
+            for sset in z_scores:
+                for s in sset:
+                    if s.reference_id not in self.z_stats:
+                        self.z_stats[s.reference_id] = Sample([], parent=s)
 
+                    self.z_stats[s.reference_id].data.append(s.data)
+
+            # Now computing the statistics in place 
+
+            for key in self.z_stats:
+                data = self.z_stats[key].data
+
+                # Selecting the top scores
+                if self.top_norm:
+                    # Sorting in ascending order
+                    data = -np.sort(-data)
+                    proportion = int(
+                        np.floor(len(data) * self.top_norm_score_fraction)
+                    )
+                    data = data[0:proportion]
+
+                self.z_stats[key].mu = np.mean(self.z_stats[key].data)
+                self.z_stats[key].std = np.std(self.z_stats[key].data)
+                # self._z_stats[key].std = legacy_std(
+                #    self._z_stats[key].mu, self._z_stats[key].data
+                # )
+                self.z_stats[key].data = []
         return self
 
     def transform(self, X):
@@ -261,12 +326,28 @@ class ZNormScores(TransformerMixin, BaseEstimator):
             return []
 
         def _transform_samples(X):
+            # X_reference_id: probe's reference_id; no_normed_score.reference_id = gallery's reference_id
+            
             scores = []
             for no_normed_score in X:
-                score = (
-                    no_normed_score.data
-                    - self.z_stats[no_normed_score.reference_id].mu
-                ) / self.z_stats[no_normed_score.reference_id].std
+    
+                if self.tech == "subject_demo":
+
+                    score = (
+                        no_normed_score.data - self.z_stats[no_normed_score.reference_id][vars(X)[self.demo]].mu
+                    ) / self.z_stats[no_normed_score.reference_id][vars(X)[self.demo]].std
+                
+                elif self.tech == "demo":
+                 
+                    score = (
+                        no_normed_score.data - self.z_stats[vars(X)[self.demo]].mu
+                    ) / self.z_stats[vars(X)[self.demo]].std
+
+                else: 
+                    score = (
+                        no_normed_score.data
+                        - self.z_stats[no_normed_score.reference_id].mu
+                    ) / self.z_stats[no_normed_score.reference_id].std
 
                 z_score = Sample(score, parent=no_normed_score)
                 scores.append(z_score)
@@ -315,39 +396,103 @@ class TNormScores(TransformerMixin, BaseEstimator):
         self.top_norm = top_norm
         self.top_norm_score_fraction = top_norm_score_fraction
 
-    def fit(self, t_scores, y=None):
+        # Basic Parameters
+        self.tech = None # "demo": demographic-based normalization, None: subject-based normalization (default version), "subject_demo": subject-demographic-based normalization
+        self.demo = "race" # the demographics that we rely on, should be changed according to datasets
 
-        # TODO: THIS IS SUPER INNEFICIENT, BUT
-        # IT'S THE MOST READABLE SOLUTION
-        # Stacking scores by biometric reference
-        self.t_stats = dict()
+    def fit(self, t_scores, y=None):    
+   
+        if self.tech == "subject_demo":
+            
+            # re-organize the zscores into subject by race format
+            self.t_stats = defaultdict(lambda: defaultdict(list))
+            
+            for sset in t_scores:
+                for s in sset:       
+                      
+                    if not vars(s)[self.demo] in self.t_stats[sset.reference_id]:
+                        self.t_stats[sset.reference_id][vars(s)[self.demo]] = Sample([], parent=s)
+                    
+        
+                    self.t_stats[sset.reference_id][vars(s)[self.demo]].data.append(s.data)
+            
+            # Computing the mean and std for each race of each subject
+            for key in self.t_stats:
+                for demo in self.t_stats[key].keys():
+                    data = self.t_stats[key][demo].data
+                    ## Selecting the top scores
+                    if self.top_norm:
+                        # Sorting in ascending order
+                        data = -np.sort(-data)
+                        proportion = int(np.floor(len(data) * self.top_norm_score_fraction))
+                        data = data[0:proportion]
 
-        for sset in t_scores:
+                   
+                    self.t_stats[key][demo].mu = np.mean(self.t_stats[key][demo].data)
+                    self.t_stats[key][demo].std = np.std(self.t_stats[key][demo].data)
 
-            self.t_stats[sset.reference_id] = Sample(
-                [s.data for s in sset], parent=sset
-            )
+                    self.t_stats[key][demo].data = [] 
+        
+        elif self.tech == "demo":
+            self.t_stats = dict()
+            for sset in t_scores:
+                for s in sset:               
+                    if not vars(s)[self.demo] in self.t_stats:
+                        self.t_stats[vars(s)[self.demo]] = Sample([], parent=s)
+                    
+                    # only consider the imposter scores that come from same races
+                    if vars(s)[self.demo] == vars(sset)[self.demo]:
+                        self.t_stats[vars(s)[self.demo]].data.append(s.data)            
 
-        # Now computing the statistics in place
-        for key in self.t_stats:
-            data = self.t_stats[key].data
+            # Compute mean and std for each race
+            for key in self.t_stats:
+                data = self.t_stats[key].data
+                ## Selecting the top scores
+                if self.top_norm:
+                    # Sorting in ascending order
+                    data = -np.sort(-data)
+                    proportion = int(np.floor(len(data) * self.top_norm_score_fraction))
+                    data = data[0:proportion]
+    
+                self.t_stats[key].mu = np.mean(self.t_stats[key].data)  
+                self.t_stats[key].std = np.std(self.t_stats[key].data) 
 
-            # Selecting the top scores
-            if self.top_norm:
-                # Sorting in ascending order
-                data = -np.sort(-data)
-                proportion = int(
-                    np.floor(len(data) * self.top_norm_score_fraction)
+                self.t_stats[key].data = [] 
+
+        # subject-based method (original version in gitlab)
+        else: # self.tech == None
+                
+            # TODO: THIS IS SUPER INNEFICIENT, BUT
+            # IT'S THE MOST READABLE SOLUTION
+
+            # Stacking scores by biometric reference
+            self.t_stats = dict()  
+            for sset in t_scores:
+
+                self.t_stats[sset.reference_id] = Sample(
+                    [s.data for s in sset], parent=sset
                 )
-                data = data[0:proportion]
 
-            self.t_stats[key].mu = np.mean(self.t_stats[key].data)
-            self.t_stats[key].std = np.std(self.t_stats[key].data)
-            # self._z_stats[key].std = legacy_std(
-            #    self._z_stats[key].mu, self._z_stats[key].data
-            # )
-            self.t_stats[key].data = []
+            # Now computing the statistics in place
+            for key in self.t_stats:
+                data = self.t_stats[key].data
 
+                # Selecting the top scores
+                if self.top_norm:
+                    # Sorting in ascending order
+                    data = -np.sort(-data)
+                    proportion = int(
+                        np.floor(len(data) * self.top_norm_score_fraction)
+                    )
+                    data = data[0:proportion]
+
+                self.t_stats[key].mu = np.mean(self.t_stats[key].data)
+                self.t_stats[key].std = np.std(self.t_stats[key].data)
+                # self._z_stats[key].std = legacy_std(
+                #    self._z_stats[key].mu, self._z_stats[key].data
+                # )
+                self.t_stats[key].data = []
+                
         return self
 
     def transform(self, X):
@@ -356,10 +501,25 @@ class TNormScores(TransformerMixin, BaseEstimator):
             # Nothing to be transformed
             return []
 
-        def _transform_samples(X, stats):
+        def _transform_samples(X):
+            """I removed the parameter stats here to make code consistent with ZNorm"""
+            # X_reference_id: probe's reference_id; no_normed_score.reference_id = gallery's reference_id
             scores = []
             for no_normed_score in X:
-                score = (no_normed_score.data - stats.mu) / stats.std
+                
+                if self.tech == "subject_demo":
+                    score = (
+                        no_normed_score.data - self.t_stats[X.reference_id][vars(no_normed_score)[self.demo]].mu
+                    ) / self.t_stats[X.reference_id][vars(no_normed_score)[self.demo]].std
+                
+                elif self.tech == "demo":
+                    score = (
+                        no_normed_score.data - self.t_stats[vars(no_normed_score)[self.demo]].mu
+                    ) / self.t_stats[vars(no_normed_score)[self.demo]].std
+
+                else: 
+                    # score = (no_normed_score.data - stats.mu) / stats.std
+                    score = (no_normed_score.data - self.t_stats[X.reference_id].mu) / self.t_stats[X.reference_id].std
 
                 t_score = Sample(score, parent=no_normed_score)
                 scores.append(t_score)
@@ -372,11 +532,11 @@ class TNormScores(TransformerMixin, BaseEstimator):
 
             for probe_scores in X:
 
-                stats = self.t_stats[probe_scores.reference_id]
+                # stats = self.t_stats[probe_scores.reference_id]
 
                 t_normed_scores.append(
                     SampleSet(
-                        _transform_samples(probe_scores, stats),
+                        _transform_samples(probe_scores),#, stats),
                         parent=probe_scores,
                     )
                 )
