@@ -345,7 +345,10 @@ def execute_pipeline_score_norm(
         )
         # we cannot checkpoint "features" because sample.keys are not unique.
         post_processor = wrap(
-            ["checkpoint"], post_processor, model_path=score_stats_path, force=force
+            ["checkpoint"],
+            post_processor,
+            model_path=score_stats_path,
+            force=force,
         )
 
     pipeline = PipelineScoreNorm(pipeline, post_processor)
