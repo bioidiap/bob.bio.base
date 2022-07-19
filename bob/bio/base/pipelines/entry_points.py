@@ -337,15 +337,18 @@ def execute_pipeline_score_norm(
         )
 
     if checkpoint and not is_biopipeline_checkpointed(post_processor):
-        model_path = os.path.join(
+        score_stats_path = os.path.join(
             checkpoint_dir,
             f"{score_normalization_type}-scores",
             "norm",
-            "stats.pkl",
+            "stats",
         )
         # we cannot checkpoint "features" because sample.keys are not unique.
         post_processor = wrap(
-            ["checkpoint"], post_processor, model_path=model_path, force=force
+            ["checkpoint"],
+            post_processor,
+            model_path=score_stats_path,
+            force=force,
         )
 
     pipeline = PipelineScoreNorm(pipeline, post_processor)
@@ -354,6 +357,10 @@ def execute_pipeline_score_norm(
 
     # treferences = database.treferences(proportion=ztnorm_cohort_proportion)
     for group in groups:
+
+        # Changing the score normalization stats file name as a function of the group
+        if checkpoint and not is_biopipeline_checkpointed(post_processor):
+            post_processor.model_path = f"{score_stats_path}_{group}.pkl"
 
         if score_normalization_type == "znorm":
             score_normalization_samples = database.zprobes(group=group)
