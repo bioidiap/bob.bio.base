@@ -518,6 +518,26 @@ def test_database_full_failure():
         _run_with_failure(False, sporadic_fail=False)
 
 
+def test_pipeline_simple_passthrough():
+    """Ensure that PipelineSimple accepts a passthrough Estimator."""
+    passthrough = make_pipeline(None)
+    pipeline = PipelineSimple(passthrough, Distance())
+    assert isinstance(pipeline, PipelineSimple)
+
+    pipeline_with_passthrough = make_pipeline("passthrough")
+    pipeline = PipelineSimple(pipeline_with_passthrough, Distance())
+    assert isinstance(pipeline, PipelineSimple)
+    db = DummyDatabase()
+    scores = pipeline(
+        db.background_model_samples(), db.references(), db.probes()
+    )
+    assert len(scores) == 10
+    for sample_scores in scores:
+        assert len(sample_scores) == 10
+        for score in sample_scores:
+            assert isinstance(score.data, float)
+
+
 def _create_test_config(path):
     with open(path, "w") as f:
         f.write(
