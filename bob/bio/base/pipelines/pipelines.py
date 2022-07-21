@@ -198,12 +198,12 @@ def check_valid_pipeline(pipeline_simple):
     """
 
     # CHECKING THE TRANSFORMER
-    # Checking if it's a Scikit Pipeline or a estimator
+    # Checking if it's a Scikit Pipeline or an estimator
     if isinstance(pipeline_simple.transformer, Pipeline):
 
         # Checking if all steps are wrapped as samples, if not, we should wrap them
         for p in pipeline_simple.transformer:
-            if not is_instance_nested(p, "estimator", SampleWrapper):
+            if not is_instance_nested(p, "estimator", SampleWrapper) and type(p) is not str and p is not None:
                 wrap(["sample"], p)
 
     # In this case it can be a simple estimator. AND
