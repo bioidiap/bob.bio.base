@@ -1,11 +1,13 @@
 # isort: skip_file
-from .pipelines import PipelineSimple  # noqa: F401
+from .pipelines import PipelineSimple, PipelineTrain  # noqa: F401
 from .score_writers import FourColumnsScoreWriter, CSVScoreWriter
 from .wrappers import (  # noqa: F401
     BioAlgCheckpointWrapper,
     BioAlgDaskWrapper,
     checkpoint_pipeline_simple,
     dask_bio_pipeline,
+    checkpoint_pipeline_train,
+    dask_bio_pipeline_train,
     is_biopipeline_checkpointed,
     get_bio_alg_tags,
 )
@@ -26,6 +28,7 @@ from .score_post_processor import (  # noqa: F401
 from .entry_points import (  # noqa: F401
     execute_pipeline_simple,
     execute_pipeline_score_norm,
+    execute_pipeline_train,
 )
 
 
@@ -50,6 +53,7 @@ def __appropriate__(*args):
 
 __appropriate__(
     PipelineSimple,
+    PipelineTrain,
     FourColumnsScoreWriter,
     CSVScoreWriter,
     BioAlgCheckpointWrapper,

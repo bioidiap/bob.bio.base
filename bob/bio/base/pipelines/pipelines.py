@@ -10,11 +10,13 @@ for bob.bio experiments
 
 import logging
 
+from typing import List
+
 from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
 
 from bob.bio.base.pipelines.abstract_classes import BioAlgorithm
-from bob.pipelines import SampleWrapper, is_instance_nested, wrap
+from bob.pipelines import Sample, SampleWrapper, is_instance_nested, wrap
 
 from .score_writers import FourColumnsScoreWriter
 
@@ -232,3 +234,30 @@ def check_valid_pipeline(pipeline_simple):
         )
 
     return True
+
+
+class PipelineTrain:
+    """Executes only the train part of the pipeline."""
+
+    def __init__(
+        self,
+        transformer: BaseEstimator,
+        biometric_algorithm: None = None,  # Ignored
+        score_writer: None = None,  # Ignored
+    ) -> None:
+        self.transformer = transformer
+
+    def __call__(
+        self,
+        background_model_samples: List[Sample],
+    ):
+        logger.info(" >> PipelineSimple: Training background model")
+
+        # background_model_samples is a list of Samples
+
+        # We might have algorithms that has no data for training
+        if len(background_model_samples) > 0:
+            self.transformer.fit(background_model_samples)
+        else:
+            raise ValueError("There's no data to train background model.")
+        return self.transformer

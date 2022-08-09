@@ -348,3 +348,68 @@ def is_biopipeline_checkpointed(pipeline):
     return is_instance_nested(
         pipeline, "biometric_algorithm", BioAlgCheckpointWrapper
     )
+
+
+def dask_bio_pipeline_train(pipeline, npartitions=None, partition_size=None):
+    """
+    Given a :any:`bob.bio.base.pipelines.PipelineTrain`, wraps it to be executed with dask.
+
+    Parameters
+    ----------
+
+    pipeline: :any:`bob.bio.base.pipelines.PipelineTrain`
+       pipeline to be dasked
+
+    npartitions: int
+       Number of partitions for the initial `dask.bag`
+
+    partition_size: int
+       Size of the partition for the initial `dask.bag`
+    """
+    dask_wrapper_kw = {}
+    if partition_size is None:
+        dask_wrapper_kw["npartitions"] = npartitions
+    else:
+        dask_wrapper_kw["partition_size"] = partition_size
+
+    pipeline.transformer = bob.pipelines.wrap(
+        ["dask"], pipeline.transformer, **dask_wrapper_kw
+    )
+
+    return pipeline
+
+
+def checkpoint_pipeline_train(pipeline, base_dir, hash_fn=None, force=False):
+    """
+    Given a :any:`bob.bio.base.pipelines.PipelineTrain`, wraps it to be checkpointed.
+
+    Parameters
+    ----------
+
+    pipeline: :any:`bob.bio.base.pipelines.PipelineTrain`
+       pipeline to be checkpointed
+
+    base_dir: str
+       Path to store transformed input data and possibly biometric references and scores
+
+    hash_fn
+       Pointer to a hash function. This hash function will map
+       `sample.key` to a hash code and this hash code will be the
+       relative directory where a single `sample` will be checkpointed.
+       This is useful when is desireable file directories with more than
+       a certain number of files.
+
+    force: bool
+        If set to True, it will overwrite the existing files.
+    """
+
+    pipeline.transformer = bob.pipelines.wrap(
+        ["checkpoint"],
+        pipeline.transformer,
+        features_dir=base_dir,
+        model_path=base_dir,
+        hash_fn=hash_fn,
+        force=force,
+    )
+
+    return pipeline

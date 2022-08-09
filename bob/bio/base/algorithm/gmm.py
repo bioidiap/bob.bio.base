@@ -117,7 +117,7 @@ class GMM(GMMMachine, BioAlgorithm):
         update_means
             Decides wether the means of the Gaussians are updated while training.
         update_variances
-            Decides wether the variancess of the Gaussians are updated while training.
+            Decides wether the variances of the Gaussians are updated while training.
         enroll_iterations
             Number of iterations for the MAP GMM used for enrollment.
         enroll_update_weights
@@ -125,7 +125,7 @@ class GMM(GMMMachine, BioAlgorithm):
         enroll_update_means
             Decides wether the means of the Gaussians are updated while enrolling.
         enroll_update_variances
-            Decides wether the variancess of the Gaussians are updated while enrolling.
+            Decides wether the variances of the Gaussians are updated while enrolling.
         enroll_relevance_factor
             For enrollment: MAP relevance factor as described in Reynolds paper.
             If None, will not apply Reynolds adaptation.
@@ -246,7 +246,7 @@ class GMM(GMMMachine, BioAlgorithm):
         X = check_data_dim(X, expected_ndim=2)
 
         logger.debug(
-            f"Creating UBM machine with {self.n_gaussians} gaussians and {len(X)} samples"
+            f"Training UBM machine with {self.n_gaussians} gaussians and {len(X)} samples"
         )
 
         super().fit(X)

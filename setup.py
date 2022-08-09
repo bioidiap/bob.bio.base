@@ -107,6 +107,7 @@ setup(
             "simple = bob.bio.base.script.pipeline_simple:pipeline_simple",
             "score-norm = bob.bio.base.script.pipeline_score_norm:pipeline_score_norm",
             "transform = bob.bio.base.script.pipeline_transform:pipeline_transform",
+            "train = bob.bio.base.script.pipeline_train:pipeline_train",
         ],
         # Vulnerability analysis commands
         "bob.vuln.cli": [
