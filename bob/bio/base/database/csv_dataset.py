@@ -8,6 +8,8 @@ import itertools
 import logging
 import os
 
+from typing import List, Union
+
 import numpy as np
 
 import bob.io.base
@@ -458,22 +460,26 @@ class CSVDataset(Database):
             is_sparse=self.is_sparse,
         )
 
-    def all_samples(self, groups=None):
+    def all_samples(
+        self, groups: Union[List[str], str, None] = None
+    ) -> List[bob.pipelines.Sample]:
         """
-        Reads and returns all the samples in `groups`.
+        Reads and returns all the samples in ``groups``.
 
         Parameters
         ----------
-        groups: list or None
-            Groups to consider ('train', 'dev', and/or 'eval'). If `None` is
-            given, returns the samples from all groups.
+        groups:
+            Groups to consider ('train', 'dev', and/or 'eval'). If ``None`` is
+            given, returns the samples from all existing groups.
 
         Returns
         -------
-        samples: list
+        samples:
             List of :class:`bob.pipelines.Sample` objects.
         """
-        valid_groups = ["train"]
+        valid_groups = []
+        if self.train_csv:
+            valid_groups.append("train")
         if self.dev_enroll_csv and self.dev_probe_csv:
             valid_groups.append("dev")
         if self.eval_enroll_csv and self.eval_probe_csv:
