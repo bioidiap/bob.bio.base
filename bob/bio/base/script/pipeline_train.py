@@ -40,8 +40,7 @@ $ bob bio pipeline train -vv my_experiment.py
 
 my_experiment.py must contain the following elements:
 
-   >>> transformer = ... # A scikit-learn pipeline wrapped with bob.pipelines' SampleWrapper\n
-   >>> pipeline = PipelineTrain(transformer)\n
+   >>> pipeline = ... # A scikit-learn pipeline wrapped with bob.pipelines' SampleWrapper\n
    >>> database = .... # Biometric Database (class that implements the methods: `background_model_samples`, `references` and `probes`)"
 \b"""
 
@@ -57,7 +56,7 @@ my_experiment.py must contain the following elements:
     "-p",
     required=True,
     entry_point_group="bob.bio.pipeline",
-    help="The simplest pipeline possible composed of a scikit-learn Pipeline and a BioAlgorithm",
+    help="A PipelineSimple or an sklearn.pipeline",
     cls=ResourceOption,
 )
 @click.option(
@@ -147,13 +146,13 @@ my_experiment.py must contain the following elements:
 @click.option(
     "--split-training",
     is_flag=True,
-    help="EXPERIMENTAL. Splits the training set in partitions and trains the pipeline in multiple steps.",
+    help="Splits the training set in partitions and trains the pipeline in multiple steps.",
     cls=ResourceOption,
 )
 @click.option(
     "--n-splits",
     default=3,
-    help="EXPERIMENTAL. Number of partitions to split the training set in. "
+    help="Number of partitions to split the training set in. "
     "Each partition will be trained in a separate step.",
     cls=ResourceOption,
 )
@@ -176,34 +175,19 @@ def pipeline_train(
 ):
     """Runs the training part of a biometrics pipeline.
 
-    Such pipeline consists only of one component, contrary to the ``simple`` pipeline.
-    The component is a scikit-learn `Pipeline`,
-    where a sequence of transformations of the input data
-    is defined.
+    This pipeline consists only of one component, contrary to the ``simple`` pipeline.
+    This component is a scikit-learn ``Pipeline``, where a sequence of transformations
+    of the input data is defined.
 
-    Using Dask
-    ----------
+    The pipeline is trained on the database and the resulting model is saved in the
+    output directory.
 
-    This pipeline is intended to work with Dask to split the load of work between
-    processes on a machine or workers on a distributed grid system. By default, the
-    local machine is used in single-threaded mode. However, by specifying the
-    `--dask-client` option, you specify a Dask Client.
-
-    When using multiple workers, a few things have to be considered:
-    - The number of partitions in the data.
-    - The number of workers to process the data.
-
-    Ideally, (and this is the default behavior) you want to split all the data between
-    many available workers, and all the workers work at the same time on all the data.
-    But the number of workers may be limited, or one partition of data may be filling
-    the memory of one worker. Moreover, having many small tasks (by splitting the data
-    into many partitions) is not recommended as the scheduler will then spend more time
-    organizing and communicating with the workers.
-
-    To solve speed or memory issues, options are available to split the data
-    differently (`--dask-n-partitions` or `--dask-partition-size`). If you encounter
-    memory issues on a worker, try augmenting the number of partitions, and if your
-    scheduler is not keeping up, try reducing that number.
+    It is possible to split the training data in multiple partitions that will be
+    used to train the pipeline in multiple steps, helping with big datasets that would
+    not fit in memory if trained all at once. Passing the ``--split-training`` option
+    will split the training data in ``--n-splits`` partitions and train the pipeline
+    sequentially with each partition. The pipeline must support "continuous learning",
+    (a call to ``fit`` on an already trained pipeline should continue the training).
     """
 
     from bob.bio.base.pipelines import execute_pipeline_train
@@ -213,10 +197,8 @@ def pipeline_train(
 
     checkpoint = not memory
 
-    logger.debug("Executing PipelineSimple with:")
+    logger.debug("Executing pipeline training with:")
     logger.debug(f"pipeline: {pipeline}")
-    logger.debug(f"  transformer: {pipeline.transformer}")
-    logger.debug(f"  biometric_algorithm: {pipeline.biometric_algorithm}")
     logger.debug(f"database: {database}")
 
     execute_pipeline_train(
@@ -232,6 +214,7 @@ def pipeline_train(
         force=force,
         split_training=split_training,
         n_splits=n_splits,
+        **kwargs,
     )
 
     logger.info(f"Experiment finished ! ({output=})")

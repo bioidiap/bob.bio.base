@@ -484,18 +484,22 @@ def execute_pipeline_score_norm(
 def execute_pipeline_train(
     pipeline: Union[PipelineSimple, Pipeline],
     database: Database,
-    dask_client: dask.distributed.Client,
-    output: str,
-    checkpoint: bool,
-    dask_n_partitions: Optional[int],
-    dask_partition_size: Optional[int],
-    dask_n_workers: Optional[int],
+    dask_client: Optional[dask.distributed.Client] = None,
+    output: str = "./results",
+    checkpoint: bool = True,
+    dask_n_partitions: Optional[int] = None,
+    dask_partition_size: Optional[int] = None,
+    dask_n_workers: Optional[int] = None,
     checkpoint_dir: Optional[str] = None,
     force: bool = False,
     split_training: bool = False,
     n_splits: int = 3,
+    **kwargs,
 ):
-    """Executes only the training par of a pipeline.
+    """Executes only the training part of a pipeline.
+
+    When running from a script, use this function instead of the click command in
+    ``bob.bio.base.script.pipeline_train``.
 
     Parameters
     ----------
@@ -504,41 +508,46 @@ def execute_pipeline_train(
         A constructed ``PipelineSimple`` object (the ``transformer`` will be extracted
         for training), or an ``sklearn.Pipeline``.
 
-    database: Instance of :py:class:`bob.bio.base.pipelines.abstract_class.Database`
+    database:
         A database interface instance
 
-    dask_client: instance of :py:class:`dask.distributed.Client` or ``None``
+    dask_client:
         A Dask client instance used to run the experiment in parallel on multiple
         machines, or locally.
         Basic configs can be found in ``bob.pipelines.config.distributed``.
 
-    dask_n_partitions: int or None
+    dask_n_partitions:
         Specifies a number of partitions to split the data into.
 
-    dask_partition_size: int or None
+    dask_partition_size:
         Specifies a data partition size when using dask. Ignored when dask_n_partitions
         is set.
 
-    dask_n_workers: int or None
+    dask_n_workers:
         Sets the starting number of Dask workers. Does not prevent Dask from requesting
         more or releasing workers depending on load.
 
-    output: str
+    output:
         Path where the scores will be saved.
 
-    checkpoint: bool
+    checkpoint:
         Whether checkpoint files will be created for every step of the pipelines.
 
-    checkpoint_dir: str
+    checkpoint_dir:
         If `checkpoint` is set, this path will be used to save the checkpoints.
         If `None`, the content of `output` will be used.
 
-    force: bool
+    force:
         If set, it will force generate all the checkpoints of an experiment. This option doesn't work if `--memory` is set
 
-    split_training: bool
+    split_training:
         If set, the background model will be trained on multiple partitions of the data.
+
+    n_splits:
+        Number of splits to use when splitting the data.
     """
+
+    logger.debug(f"Unused arguments: {kwargs=}")
     if not os.path.exists(output):
         os.makedirs(output, exist_ok=True)
 
@@ -605,7 +614,7 @@ def execute_pipeline_train(
 
     logger.info("Running the pipeline training")
     if split_training:
-        start_step = 0
+        start_step = -1
         # Look at step files, and assess if we can load the last one
         for step_file in glob.glob(
             os.path.join(output, "train_pipeline_step_*.pkl")
@@ -613,15 +622,15 @@ def execute_pipeline_train(
             to_rem = os.path.join(output, "train_pipeline_step_")
             file_step = int(step_file.replace(to_rem, "").replace(".pkl", ""))
             start_step = max(start_step, file_step)
-        if start_step > 0:
+        if start_step > -1:
             logger.debug("Found pipeline training step. Loading it.")
             last_step_file = os.path.join(
                 output, f"train_pipeline_step_{start_step}.pkl"
             )
             with open(last_step_file, "rb") as start_file:
                 pipeline = pickle.load(start_file)
-            start_step += 1  # Loaded step is i -> training starts a i+1
-        logger.info(f"Starting from step {start_step}")
+        start_step += 1  # Loaded step is i -> training starts a i+1
+        logger.info(f"Starting from training step {start_step}")
 
         random.seed(0)
         random.shuffle(background_model_samples)

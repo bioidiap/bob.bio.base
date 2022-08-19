@@ -64,6 +64,7 @@ test:
     - bob bio pipeline simple --help
     - bob bio pipeline score-norm --help
     - bob bio pipeline transform --help
+    - bob bio pipeline train --help
     - pytest --verbose --cov {{ name }} --cov-report term-missing --cov-report html:{{ project_dir }}/sphinx/coverage --cov-report xml:{{ project_dir }}/coverage.xml --pyargs {{ name }}
     - sphinx-build -aEW {{ project_dir }}/doc {{ project_dir }}/sphinx
     - sphinx-build -aEb doctest {{ project_dir }}/doc sphinx
