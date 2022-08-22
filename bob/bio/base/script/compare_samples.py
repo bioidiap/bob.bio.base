@@ -7,15 +7,18 @@
 
 import functools
 
+from typing import List
+
 import click
+import dask.distributed
 
 from tabulate import tabulate
 
 import bob.io.base
 
-from bob.bio.base.pipelines import dask_bio_pipeline
+from bob.bio.base.pipelines import PipelineSimple, dask_bio_pipeline
 from bob.extension.scripts.click_helper import ResourceOption, verbosity_option
-from bob.pipelines import DelayedSample, SampleSet
+from bob.pipelines import DelayedSample, Sample, SampleSet
 
 EPILOG = """\n
 
@@ -56,7 +59,12 @@ EPILOG = """\n
     help="Dask client for the execution of the pipeline.",
 )
 @verbosity_option()
-def compare_samples(samples, pipeline, dask_client, verbose):
+def compare_samples(
+    samples: List[Sample],
+    pipeline: PipelineSimple,
+    dask_client: dask.distributed.Client,
+    verbose: int,
+):
     """Compare several samples in a All vs All fashion."""
     if len(samples) == 1:
         raise ValueError(
@@ -75,8 +83,11 @@ def compare_samples(samples, pipeline, dask_client, verbose):
         pipeline = dask_bio_pipeline(pipeline)
 
     table = [[s for s in samples]]
-    biometric_references = pipeline.create_biometric_reference(sample_sets)
-    scores = pipeline.compute_scores(sample_sets, biometric_references)
+    enroll_templates = pipeline.enroll_templates(sample_sets)
+    probe_templates = pipeline.probe_templates(sample_sets)
+    scores = pipeline.compute_scores(
+        probe_templates, enroll_templates, score_all_vs_all=True
+    )
     if dask_client is not None:
         scores = scores.compute(scheduler=dask_client)
     for sset in scores:

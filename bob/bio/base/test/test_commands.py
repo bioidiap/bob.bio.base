@@ -11,7 +11,7 @@ from click.testing import CliRunner
 from bob.extension.scripts.click_helper import assert_click_runner_result
 
 from ..score import scores
-from ..script import commands, sort, vuln_commands
+from ..script import commands, compare_samples, sort, vuln_commands
 
 
 def test_metrics():
@@ -724,6 +724,29 @@ def test_evaluate_vuln():
                 "evaluate_vuln.pdf",
                 dev_file,
                 eval_file,
+            ],
+        )
+        assert_click_runner_result(result)
+
+
+def test_compare_samples():
+    sample_1_path = pkg_resources.resource_filename(
+        "bob.bio.base.test", "data/dummy_samples_1.hdf5"
+    )
+    sample_2_path = pkg_resources.resource_filename(
+        "bob.bio.base.test", "data/dummy_samples_2.hdf5"
+    )
+    runner = CliRunner()
+    from bob.bio.base.test.dummy.pipeline import pipeline
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            compare_samples.compare_samples,
+            [
+                "--pipeline",
+                pipeline,
+                sample_1_path,
+                sample_2_path,
             ],
         )
         assert_click_runner_result(result)
