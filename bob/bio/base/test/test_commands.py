@@ -731,17 +731,20 @@ def test_evaluate_vuln():
 
 def test_compare_samples():
     sample_1_path = pkg_resources.resource_filename(
-        "bob.bio.base.test", "data/TODO1.csv"
+        "bob.bio.base.test", "data/dummy_samples_1.hdf5"
     )
     sample_2_path = pkg_resources.resource_filename(
-        "bob.bio.base.test", "data/TODO2.csv"
+        "bob.bio.base.test", "data/dummy_samples_2.hdf5"
     )
     runner = CliRunner()
+    from bob.bio.base.test.dummy.pipeline import pipeline
+
     with runner.isolated_filesystem():
         result = runner.invoke(
             compare_samples.compare_samples,
             [
-                "dummy",  # TODO find a dummy pipeline name
+                "--pipeline",
+                pipeline,
                 sample_1_path,
                 sample_2_path,
             ],

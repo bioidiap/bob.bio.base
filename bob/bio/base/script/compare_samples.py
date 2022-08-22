@@ -85,7 +85,9 @@ def compare_samples(
     table = [[s for s in samples]]
     enroll_templates = pipeline.enroll_templates(sample_sets)
     probe_templates = pipeline.probe_templates(sample_sets)
-    scores = pipeline.compute_scores(probe_templates, enroll_templates)
+    scores = pipeline.compute_scores(
+        probe_templates, enroll_templates, score_all_vs_all=True
+    )
     if dask_client is not None:
         scores = scores.compute(scheduler=dask_client)
     for sset in scores:
