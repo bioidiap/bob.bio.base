@@ -17,7 +17,7 @@ from bob.bio.base.transformers import (
 from bob.pipelines import CheckpointWrapper, Sample, SampleWrapper
 
 
-class FakePreprocesor(Preprocessor):
+class FakePreprocessor(Preprocessor):
     def __call__(self, data, annotations=None):
         return data + annotations
 
@@ -82,7 +82,7 @@ def assert_checkpoints(transformed_sample, dir_name):
 
 def test_preprocessor():
 
-    preprocessor = FakePreprocesor()
+    preprocessor = FakePreprocessor()
     preprocessor_transformer = PreprocessorTransformer(preprocessor)
 
     # Testing sample

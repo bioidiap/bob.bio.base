@@ -40,7 +40,7 @@ requirements:
     - {{ pin_compatible('click') }}
     - {{ pin_compatible('click-plugins') }}
     - {{ pin_compatible('dask') }}
-    - {{ pin_compatible('numpy') }}
+    - {{ pin_compatible('numpy', max_pin='x.x') }}
     - {{ pin_compatible('pandas') }}
     - {{ pin_compatible('scipy') }}
     - {{ pin_compatible('tabulate') }}
@@ -64,7 +64,8 @@ test:
     - bob bio pipeline simple --help
     - bob bio pipeline score-norm --help
     - bob bio pipeline transform --help
-    - pytest --verbose --cov {{ name }} --cov-report term-missing --cov-report html:{{ project_dir }}/sphinx/coverage --cov-report xml:{{ project_dir }}/coverage.xml --pyargs {{ name }}
+    - bob bio pipeline train --help
+    - pytest --verbose --cov {{ name }} --cov-report term-missing --cov-report html:{{ project_dir }}/sphinx/coverage --cov-report xml:{{ project_dir }}/coverage.xml --junitxml={{ project_dir }}/test_results.xml --pyargs {{ name }}
     - sphinx-build -aEW {{ project_dir }}/doc {{ project_dir }}/sphinx
     - sphinx-build -aEb doctest {{ project_dir }}/doc sphinx
     - conda inspect linkages -p $PREFIX {{ name }}  # [not win]

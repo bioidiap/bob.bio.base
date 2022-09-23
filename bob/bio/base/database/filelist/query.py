@@ -3,6 +3,7 @@
 import logging
 import os
 
+from bob.bio.base.database.legacy import check_parameters_for_validity
 from bob.bio.base.utils.annotations import read_annotation_file
 
 from .. import BioFile, ZTBioDatabase
@@ -267,7 +268,7 @@ class FileListBioDatabase(ZTBioDatabase):
                         group, self.protocol, **self.z_probe_options
                     )
                 else:
-                    logger.warn(
+                    logger.warning(
                         "ZT score files are requested, but no such files are defined in group %s for protocol %s",
                         group,
                         self.protocol,
@@ -390,7 +391,7 @@ class FileListBioDatabase(ZTBioDatabase):
           ``True`` if the all file lists for ZT score normalization exist, otherwise ``False``.
         """
         protocol = protocol or self.protocol
-        groups = self.check_parameters_for_validity(
+        groups = check_parameters_for_validity(
             groups, "group", self.groups(protocol, add_world=False)
         )
 
@@ -492,7 +493,7 @@ class FileListBioDatabase(ZTBioDatabase):
           The client id for the given model id, if found.
         """
         protocol = self.protocol
-        groups = self.check_parameters_for_validity(
+        groups = check_parameters_for_validity(
             group,
             "group",
             self.groups(protocol),
@@ -534,7 +535,7 @@ class FileListBioDatabase(ZTBioDatabase):
           The client id for the given model id of a T-Norm model, if found.
         """
         protocol = self.protocol
-        groups = self.check_parameters_for_validity(
+        groups = check_parameters_for_validity(
             group, "group", self.groups(protocol, add_world=False)
         )
 
@@ -584,7 +585,7 @@ class FileListBioDatabase(ZTBioDatabase):
         """
 
         protocol = protocol or self.protocol
-        groups = self.check_parameters_for_validity(
+        groups = check_parameters_for_validity(
             groups,
             "group",
             self.groups(protocol),
@@ -613,7 +614,7 @@ class FileListBioDatabase(ZTBioDatabase):
         """
 
         protocol = protocol or self.protocol
-        groups = self.check_parameters_for_validity(
+        groups = check_parameters_for_validity(
             groups, "group", self.groups(protocol, add_world=False)
         )
 
@@ -639,7 +640,7 @@ class FileListBioDatabase(ZTBioDatabase):
         """
 
         protocol = protocol or self.protocol
-        groups = self.check_parameters_for_validity(
+        groups = check_parameters_for_validity(
             groups, "group", self.groups(protocol, add_world=False)
         )
 
@@ -675,7 +676,7 @@ class FileListBioDatabase(ZTBioDatabase):
           A list containing all the model ids which have the given properties.
         """
         protocol = protocol or self.protocol
-        groups = self.check_parameters_for_validity(
+        groups = check_parameters_for_validity(
             groups, "group", self.groups(protocol=protocol)
         )
 
@@ -700,7 +701,7 @@ class FileListBioDatabase(ZTBioDatabase):
           A list containing all the T-Norm model ids belonging to the given group.
         """
         protocol = protocol or self.protocol
-        groups = self.check_parameters_for_validity(
+        groups = check_parameters_for_validity(
             groups, "group", self.groups(protocol, add_world=False)
         )
 
@@ -759,16 +760,16 @@ class FileListBioDatabase(ZTBioDatabase):
                 "To be able to use the 'classes' keyword, please use the 'for_scores.lst' list file."
             )
 
-        purposes = self.check_parameters_for_validity(
+        purposes = check_parameters_for_validity(
             purposes, "purpose", ("enroll", "probe")
         )
-        groups = self.check_parameters_for_validity(
+        groups = check_parameters_for_validity(
             groups,
             "group",
             self.groups(protocol),
             default_parameters=self.groups(protocol, add_subworld=False),
         )
-        classes = self.check_parameters_for_validity(
+        classes = check_parameters_for_validity(
             classes, "class", ("client", "impostor")
         )
 
@@ -902,7 +903,7 @@ class FileListBioDatabase(ZTBioDatabase):
           A list of :py:class:`BioFile` objects considering all the filtering criteria.
         """
         protocol = protocol or self.protocol
-        groups = self.check_parameters_for_validity(
+        groups = check_parameters_for_validity(
             groups, "group", self.groups(protocol, add_world=False)
         )
 
@@ -943,7 +944,7 @@ class FileListBioDatabase(ZTBioDatabase):
         """
 
         protocol = protocol or self.protocol
-        groups = self.check_parameters_for_validity(
+        groups = check_parameters_for_validity(
             groups, "group", self.groups(protocol, add_world=False)
         )
 
