@@ -27,7 +27,7 @@ from bob.bio.base.pipelines import (
 from bob.bio.base.script.pipeline_simple import (
     pipeline_simple as pipeline_simple_cli,
 )
-from bob.bio.base.test.test_transformers import FakeExtractor, FakePreprocesor
+from bob.bio.base.test.test_transformers import FakeExtractor, FakePreprocessor
 from bob.bio.base.wrappers import wrap_bob_legacy
 from bob.extension.scripts.click_helper import assert_click_runner_result
 from bob.pipelines import DelayedSample, Sample, SampleSet
@@ -191,7 +191,7 @@ class DistanceWithTags(Distance):
 def _make_transformer(dir_name):
     pipeline = make_pipeline(
         wrap_bob_legacy(
-            FakePreprocesor(),
+            FakePreprocessor(),
             dir_name,
             transform_extra_arguments=(("annotations", "annotations"),),
         ),

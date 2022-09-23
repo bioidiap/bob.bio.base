@@ -8,7 +8,6 @@ import click
 import numpy
 
 from bob.extension.scripts.click_helper import verbosity_option
-from bob.io.base import create_directories_safe
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +97,7 @@ def write_scores_to_file(
         If 5-colum format, else 4-column
     """
     logger.debug(f"Creating result directories ('{filename}').")
-    create_directories_safe(os.path.dirname(filename))
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
     s_subjects = ["x%d" % i for i in range(n_subjects)]
 
     logger.debug("Writing scores to files.")

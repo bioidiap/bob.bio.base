@@ -344,7 +344,7 @@ def is_biopipeline_checkpointed(pipeline):
 
     """
 
-    # We have to check if biomtric_algorithm is checkpointed
+    # We have to check if biometric_algorithm is checkpointed
     return is_instance_nested(
         pipeline, "biometric_algorithm", BioAlgCheckpointWrapper
     )

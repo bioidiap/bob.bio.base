@@ -26,6 +26,7 @@ from .score_post_processor import (  # noqa: F401
 from .entry_points import (  # noqa: F401
     execute_pipeline_simple,
     execute_pipeline_score_norm,
+    execute_pipeline_train,
 )
 
 

@@ -1,22 +1,35 @@
+import glob
 import logging
 import os
+import pickle
+import random
+
+from typing import Optional, Union
 
 import dask.bag
 
 from dask.delayed import Delayed
+from sklearn.pipeline import Pipeline
 
 from bob.bio.base.pipelines import (
     BioAlgDaskWrapper,
     CSVScoreWriter,
+    Database,
     FourColumnsScoreWriter,
     PipelineScoreNorm,
+    PipelineSimple,
     TNormScores,
     ZNormScores,
     checkpoint_pipeline_simple,
     dask_bio_pipeline,
     is_biopipeline_checkpointed,
 )
-from bob.pipelines import estimator_requires_fit, is_instance_nested, wrap
+from bob.pipelines import (
+    DaskWrapper,
+    estimator_requires_fit,
+    is_instance_nested,
+    wrap,
+)
 from bob.pipelines.distributed import dask_get_partition_size
 from bob.pipelines.distributed.sge import SGEMultipleQueuesCluster
 
@@ -137,7 +150,7 @@ def execute_pipeline_simple(
             os.path.join(output, "./tmp")
         )
 
-    # Checkpoint if it's already checkpointed
+    # Checkpoint if it's not already checkpointed
     if checkpoint and not is_biopipeline_checkpointed(pipeline):
         hash_fn = database.hash_fn if hasattr(database, "hash_fn") else None
         pipeline = checkpoint_pipeline_simple(
@@ -190,11 +203,11 @@ def execute_pipeline_simple(
                 )
             elif dask_n_partitions is not None or dask_n_workers is not None:
                 # Divide each Set in a user-defined number of partitions
-                logger.debug("Splitting data with fixed number of partitions.")
-                pipeline = dask_bio_pipeline(
-                    pipeline,
-                    npartitions=dask_n_partitions or dask_n_workers,
+                n_partitions = dask_n_partitions or dask_n_workers
+                logger.debug(
+                    f"Splitting data with fixed number of partitions: {n_partitions}."
                 )
+                pipeline = dask_bio_pipeline(pipeline, npartitions=n_partitions)
             else:
                 # Split in max_jobs partitions or revert to the default behavior of
                 # dask.Bag from_sequence: partition_size = 100
@@ -466,3 +479,182 @@ def execute_pipeline_score_norm(
         )
         _ = compute_scores(zt_normed_scores, dask_client)
         """
+
+
+def execute_pipeline_train(
+    pipeline: Union[PipelineSimple, Pipeline],
+    database: Database,
+    dask_client: Optional[dask.distributed.Client] = None,
+    output: str = "./results",
+    checkpoint: bool = True,
+    dask_n_partitions: Optional[int] = None,
+    dask_partition_size: Optional[int] = None,
+    dask_n_workers: Optional[int] = None,
+    checkpoint_dir: Optional[str] = None,
+    force: bool = False,
+    split_training: bool = False,
+    n_splits: int = 3,
+    **kwargs,
+):
+    """Executes only the training part of a pipeline.
+
+    When running from a script, use this function instead of the click command in
+    ``bob.bio.base.script.pipeline_train``.
+
+    Parameters
+    ----------
+
+    pipeline:
+        A constructed ``PipelineSimple`` object (the ``transformer`` will be extracted
+        for training), or an ``sklearn.Pipeline``.
+
+    database:
+        A database interface instance
+
+    dask_client:
+        A Dask client instance used to run the experiment in parallel on multiple
+        machines, or locally.
+        Basic configs can be found in ``bob.pipelines.config.distributed``.
+
+    dask_n_partitions:
+        Specifies a number of partitions to split the data into.
+
+    dask_partition_size:
+        Specifies a data partition size when using dask. Ignored when dask_n_partitions
+        is set.
+
+    dask_n_workers:
+        Sets the starting number of Dask workers. Does not prevent Dask from requesting
+        more or releasing workers depending on load.
+
+    output:
+        Path where the scores will be saved.
+
+    checkpoint:
+        Whether checkpoint files will be created for every step of the pipelines.
+
+    checkpoint_dir:
+        If `checkpoint` is set, this path will be used to save the checkpoints.
+        If `None`, the content of `output` will be used.
+
+    force:
+        If set, it will force generate all the checkpoints of an experiment. This option doesn't work if `--memory` is set
+
+    split_training:
+        If set, the background model will be trained on multiple partitions of the data.
+
+    n_splits:
+        Number of splits to use when splitting the data.
+    """
+
+    logger.debug(f"Unused arguments: {kwargs=}")
+    if not os.path.exists(output):
+        os.makedirs(output, exist_ok=True)
+
+    # Setting the `checkpoint_dir`
+    if checkpoint_dir is None:
+        checkpoint_dir = output
+    else:
+        os.makedirs(checkpoint_dir, exist_ok=True)
+
+    if isinstance(pipeline, PipelineSimple):
+        pipeline = pipeline.transformer
+
+    # Checkpoint (only features, not the model)
+    if checkpoint:
+        hash_fn = database.hash_fn if hasattr(database, "hash_fn") else None
+        wrap(
+            ["checkpoint"],
+            pipeline,
+            features_dir=checkpoint_dir,
+            model_path=None,
+            hash_fn=hash_fn,
+            force=force,
+        )
+
+    if not estimator_requires_fit(pipeline):
+        raise ValueError(
+            "Estimator does not require fitting. No training necessary."
+        )
+
+    background_model_samples = database.background_model_samples()
+
+    if dask_client is not None:
+        # Scaling up
+        if dask_n_workers is not None and not isinstance(dask_client, str):
+            dask_client.cluster.scale(dask_n_workers)
+
+        if dask_partition_size is not None:
+            logger.debug(
+                f"Splitting data with fixed size partitions: {dask_partition_size}."
+            )
+            pipeline = wrap(
+                ["dask"], pipeline, partition_size=dask_partition_size
+            )
+        elif dask_n_partitions is not None or dask_n_workers is not None:
+            # Divide each Set in a user-defined number of partitions
+            n_partitions = dask_n_partitions or dask_n_workers
+            logger.debug(
+                f"Splitting data with fixed number of partitions: {n_partitions}."
+            )
+            pipeline = wrap(["dask"], pipeline, npartitions=n_partitions)
+        else:
+            # Split in max_jobs partitions or revert to the default behavior of
+            # dask.Bag from_sequence: partition_size = 100
+            n_jobs = None
+            if not isinstance(dask_client, str) and isinstance(
+                dask_client.cluster, SGEMultipleQueuesCluster
+            ):
+                logger.debug(
+                    "Splitting data according to the number of available workers."
+                )
+                n_jobs = dask_client.cluster.sge_job_spec["default"]["max_jobs"]
+                logger.debug(f"{n_jobs} partitions will be created.")
+            pipeline = wrap(["dask"], pipeline, npartitions=n_jobs)
+
+    logger.info("Running the pipeline training")
+    if split_training:
+        start_step = -1
+        # Look at step files, and assess if we can load the last one
+        for step_file in glob.glob(
+            os.path.join(output, "train_pipeline_step_*.pkl")
+        ):
+            to_rem = os.path.join(output, "train_pipeline_step_")
+            file_step = int(step_file.replace(to_rem, "").replace(".pkl", ""))
+            start_step = max(start_step, file_step)
+        if start_step > -1:
+            logger.debug("Found pipeline training step. Loading it.")
+            last_step_file = os.path.join(
+                output, f"train_pipeline_step_{start_step}.pkl"
+            )
+            with open(last_step_file, "rb") as start_file:
+                pipeline = pickle.load(start_file)
+        start_step += 1  # Loaded step is i -> training starts a i+1
+        logger.info(f"Starting from training step {start_step}")
+
+        random.seed(0)
+        random.shuffle(background_model_samples)
+
+        for partition_i in range(start_step, n_splits):
+            logger.info(
+                f"Training with partition {partition_i} ({partition_i+1}/{n_splits})"
+            )
+            start = len(background_model_samples) // n_splits * partition_i
+            end = len(background_model_samples) // n_splits * (partition_i + 1)
+            _ = pipeline.fit(background_model_samples[start:end])
+            step_path = os.path.join(
+                output, f"train_pipeline_step_{partition_i}.pkl"
+            )
+            with open(step_path, "wb") as f:
+                pickle.dump(pipeline, f)
+    else:
+        _ = pipeline.fit(background_model_samples)
+
+    # Save each fitted transformer
+    for transformer_name, transformer in pipeline.steps:
+        if transformer._get_tags()["requires_fit"]:
+            if isinstance(transformer, DaskWrapper):
+                transformer = transformer.estimator
+            step_path = os.path.join(output, f"{transformer_name}.pkl")
+            with open(step_path, "wb") as f:
+                pickle.dump(transformer, f)
