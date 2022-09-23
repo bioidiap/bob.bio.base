@@ -40,7 +40,7 @@ requirements:
     - {{ pin_compatible('click') }}
     - {{ pin_compatible('click-plugins') }}
     - {{ pin_compatible('dask') }}
-    - {{ pin_compatible('numpy') }}
+    - {{ pin_compatible('numpy', max_pin='x.x') }}
     - {{ pin_compatible('pandas') }}
     - {{ pin_compatible('scipy') }}
     - {{ pin_compatible('tabulate') }}
