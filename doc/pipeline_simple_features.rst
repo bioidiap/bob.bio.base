@@ -47,15 +47,15 @@ Using a database interface
 
 You may list the currently available databases (and pipelines) using the following command::
 
-  $ bob bio pipeline simple --help
+  bob bio pipeline simple --help
 
 You can use such a dataset with the following command (example with the AT&T dataset)::
 
-$ bob bio pipeline simple atnt <pipeline_name>
+  bob bio pipeline simple atnt <pipeline_name>
 
 For more exotic datasets, you can simply pass your custom database file (defining a ``database`` object) to the PipelineSimple::
 
-$ bob bio pipeline simple my_database.py <pipeline_name>
+  bob bio pipeline simple my_database.py <pipeline_name>
 
 The ``database`` object defined in ``my_database.py`` is an instance of either:
 
@@ -314,7 +314,7 @@ The :py:class:`bob.pipelines.CheckpointWrapper` class is available in the :py:mo
 The ``--checkpoint`` option is a command-line option that automatically wraps every steps of the pipeline with checkpointing.
 If set, the ``--checkpoint-dir`` sets the path for such a checkpoints::
 
-$ bob bio pipeline simple <database> <pipeline> --checkpoint --output <output_dir> --checkpoint-dir <checkpoint_dir>
+  bob bio pipeline simple <database> <pipeline> --checkpoint --output <output_dir> --checkpoint-dir <checkpoint_dir>
 
 When doing so, the output of each Transformer of the pipeline will be saved to the disk in the ``<checkpoint_dir>`` folder specified with the ``--checkpoint-dir`` option.
 Output scores will be saved on ``<output_dir>``.
@@ -349,7 +349,7 @@ To run an experiment with Dask, a :py:class:`bob.pipelines.DaskWrapper` class is
 
 You can easily benefit from Dask by using the ``--dask-client`` option like so::
 
-$ bob bio pipeline simple <database> <pipeline> --dask-client <client-config>
+  bob bio pipeline simple <database> <pipeline> --dask-client <client-config>
 
 where ``<client-config>`` is your own dask client configuration file, or a resource from ``bob.pipelines.distributed``:
 
@@ -367,7 +367,7 @@ where ``<client-config>`` is your own dask client configuration file, or a resou
 
   **For Idiap users:** If you need to run the PipelineSimple in the SGE. Don't forget to do::
 
-  $ SETSHELL grid
+    SETSHELL grid
 
   Also, since the grid nodes are not allowed to create additional jobs on the grid, you cannot run the main dask client on a job (``qsub -- bob bio pipeline simple -l sge_...`` will not work).
 
@@ -428,7 +428,7 @@ By default, PipelineSimple will use the CSV format ScoreWriter.
 To indicate to a pipeline to use the four-columns ScoreWriter instead
 of the default CSV ScoreWriter, you can pass the ``--write-column-scores`` option like so::
 
-  $ bob bio pipeline simple --write-column-scores <database> <pipeline> --output <output_dir>
+  bob bio pipeline simple --write-column-scores <database> <pipeline> --output <output_dir>
 
 
 CSV Score Writer
@@ -548,7 +548,7 @@ For example, to generate a CMC curve from development and evaluation datasets:
 
 .. code-block:: sh
 
-  $ bob bio cmc -v --eval --output 'my_cmc.pdf' dev-1.csv eval-1.csv dev-2.csv eval-2.csv
+  bob bio cmc -v --eval --output 'my_cmc.pdf' dev-1.csv eval-1.csv dev-2.csv eval-2.csv
 
 where ``my_cmc.pdf`` will contain CMC curves for the two experiments represented
 by their respective *dev* and *eval* scores-file.
@@ -573,7 +573,7 @@ plots for a list of experiments. It generates two ``metrics`` outputs with EER,
 HTER, minDCF criteria, along with ``roc``, ``det``, ``epc``, and ``hist`` plots
 for each experiment. For example::
 
-  $ bob bio evaluate -v --eval --log 'my_metrics.txt' --output 'my_plots.pdf' {sys1,sys2}/scores-{dev,eval}.csv
+  bob bio evaluate -v --eval --log 'my_metrics.txt' --output 'my_plots.pdf' {sys1,sys2}/scores-{dev,eval}.csv
 
 will output metrics and plots for the two experiments (dev and eval pairs) in
 ``my_metrics.txt`` and ``my_plots.pdf``, respectively.
@@ -660,13 +660,13 @@ like the example below:
 
 Then saving this to a file called `my_beautiful_transformer.py` and passing it as an argument `bob bio pipelines transform` command::
 
-  $ bob bio pipelines transform my_database my_beautiful_transformer.py
+  bob bio pipelines transform my_database my_beautiful_transformer.py
 
 
 
 .. note::
 
-   It is possible to leverage from Dask by setting the option `--dask-client` the same way it is done with the `bob bio pipeline simple` command
+  It is possible to leverage from Dask by setting the option `--dask-client` the same way it is done with the `bob bio pipeline simple` command
 
 
 If you are skilled on scikit learn, it is possible to leverage from `FunctionTransformer` function and make the above `Transformer` definition
@@ -706,8 +706,8 @@ or if you want to checkpoint only one part of a pipeline (e.g., you need to save
     transformer = wrap(["checkpoint"], transformer,
                       features_dir=MY_DIR,
                       extension=MY_EXTENSION,
-                      save_func=SAVE_FUNCTION_YOU_WANT_TO_USE),
-                    )
+                      save_func=SAVE_FUNCTION_YOU_WANT_TO_USE,
+    )
 
 
 .. warning::
@@ -715,4 +715,4 @@ or if you want to checkpoint only one part of a pipeline (e.g., you need to save
     The order of the transformation matter. For instance, for face recognition experiments to get features
     properly extracted, you should run the command as::
 
-    $ bob bio pipelines transform my_database my_beautiful_transformer.py
+      bob bio pipelines transform my_database my_beautiful_transformer.py
