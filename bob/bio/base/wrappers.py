@@ -3,7 +3,7 @@
 
 import os
 
-import bob.pipelines as mario
+import bob.pipelines
 
 from bob.bio.base.extractor import Extractor
 from bob.bio.base.preprocessor import Preprocessor
@@ -73,7 +73,7 @@ def wrap_bob_legacy(
         )
 
     if dask_it:
-        transformer = mario.wrap(["dask"], transformer)
+        transformer = bob.pipelines.wrap(["dask"], transformer)
 
     return transformer
 
@@ -102,7 +102,7 @@ def wrap_sample_preprocessor(
     """
 
     transformer = PreprocessorTransformer(preprocessor)
-    return mario.wrap(
+    return bob.pipelines.wrap(
         ["sample"],
         transformer,
         transform_extra_arguments=transform_extra_arguments,
@@ -147,7 +147,7 @@ def wrap_checkpoint_preprocessor(
     """
 
     transformer = PreprocessorTransformer(preprocessor)
-    return mario.wrap(
+    return bob.pipelines.wrap(
         ["sample", "checkpoint"],
         transformer,
         load_func=load_func or preprocessor.read_data,
@@ -216,7 +216,7 @@ def wrap_sample_extractor(
         extractor, transform_extra_arguments, fit_extra_arguments
     )
 
-    return mario.wrap(
+    return bob.pipelines.wrap(
         ["sample"],
         transformer,
         transform_extra_arguments=transform_extra_arguments,
@@ -291,7 +291,7 @@ def wrap_checkpoint_extractor(
         extractor, transform_extra_arguments, fit_extra_arguments
     )
 
-    return mario.wrap(
+    return bob.pipelines.wrap(
         ["sample", "checkpoint"],
         transformer,
         load_func=load_func or extractor.read_feature,
