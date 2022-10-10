@@ -84,6 +84,7 @@ Users Guide
 
    biometrics_intro
    pipeline_simple_intro
+   database_interface
    pipeline_simple_features
    pipeline_score_norm
    annotators
