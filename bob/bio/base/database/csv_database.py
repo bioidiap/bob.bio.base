@@ -202,6 +202,11 @@ class CSVDatabase(FileListDatabase, Database):
 
         return names
 
+    def protocols(self):
+        return list_dir(
+            self.dataset_protocols_path, ".", folders=True, files=False
+        )
+
     # cached methods should be based on protocol as well
     @functools.lru_cache(maxsize=None)
     def _background_model_samples(self, protocol):
@@ -246,7 +251,7 @@ class CSVDatabase(FileListDatabase, Database):
 
     # cached methods should be based on protocol as well
     @functools.lru_cache(maxsize=None)
-    def _references(self, protocol, group):
+    def _references(self, protocol, group):  # TODO: protocol
         return self._sample_sets(group, "for_enrolling")
 
     def references(self, group="dev"):
@@ -259,7 +264,7 @@ class CSVDatabase(FileListDatabase, Database):
 
     # cached methods should be based on protocol as well
     @functools.lru_cache(maxsize=None)
-    def _probes(self, protocol, group):
+    def _probes(self, protocol, group):  # TODO: protocol
         sample_sets = self._sample_sets(group, "for_probing")
 
         # if there are no probes
@@ -288,7 +293,7 @@ class CSVDatabase(FileListDatabase, Database):
 
         return sample_sets
 
-    def probes(self, group):
+    def probes(self, group="dev"):
         return self._probes(self.protocol, group)
 
     def samples(self, groups=None):

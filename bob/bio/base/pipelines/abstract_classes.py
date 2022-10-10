@@ -372,7 +372,7 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def probes(self, group):
+    def probes(self, group="dev"):
         """Returns probes to score biometric references
 
 
