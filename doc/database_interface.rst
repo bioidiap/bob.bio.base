@@ -48,12 +48,12 @@ for enrollment and scoring (except train that has just one pool of samples in th
 case).
 
 - The ``for_enrolling.csv`` files define the creation of samples for enrollment
-    purposes. Those samples will create the enrolled references.
+  purposes. Those samples will create the enrolled references.
 - The ``for_probing.csv`` files dictate to create samples for probes that will be
-    compared against the enrolled references.
+  compared against the enrolled references.
 - The optional ``for_matching.csv`` files contains the list of comparisons that will
-    be made between samples in ``for_enrolling.csv`` and ``for_probing.csv``. If this
-    file is not present, all the probes will be compared against all the references.
+  be made between samples in ``for_enrolling.csv`` and ``for_probing.csv``. If this
+  file is not present, all the probes will be compared against all the references.
 
 File format
 ===========
