@@ -32,39 +32,43 @@ The :py:class:`CSVDatabase` class will expect a series of CSV files indicating h
 create samples to feed to each sub-pipeline. They need to follow a specific file
 structure.
 
-Structure
-=========
+Protocol definition files
+=========================
 
 The database for biometric experiments needs a slightly more complex structure as `the
 default from bob.pipelines <bob.pipelines.csv_database>`_.
 On top of the *protocol* and *group* classification, we must add a *purpose* "layer"
-(for enrollment or scoring).
+(e.g. to differentiate between enrollment and scoring).
 Each sub-pipeline will take a different list of samples, like an *enrollment* set of
 samples and a *probe* set, for each group in each protocol.
 
-To do so, the structure of CSV files is as follow:
+To do so, the structure of CSV files is as follow::
 
-.. code-block::
+  <dataset_protocol_path>/<protocol>/<group>/<purpose>.csv
 
-    database_name
-     |
-     +- default_protocol
-         |
-         +- train
-         |   |
-         |   +- for_background_model.csv
-         |
-         +- dev
-         |   |
-         |   +- for_enrolling.csv
-         |   +- for_probing.csv
-         |   +- for_matching.csv
-         |
-         +- eval
-             |
-             +- for_enrolling.csv
-             +- for_probing.csv
-             +- for_matching.csv
+Here is an example with names:
+
+.. code-block:: text
+
+  database_name
+   |
+   +- default_protocol
+       |
+       +- train
+       |   |
+       |   +- for_background_model.csv
+       |
+       +- dev
+       |   |
+       |   +- for_enrolling.csv
+       |   +- for_probing.csv
+       |   +- for_matching.csv
+       |
+       +- eval
+           |
+           +- for_enrolling.csv
+           +- for_probing.csv
+           +- for_matching.csv
 
 In this database definition of ``database_name`` we have one protocol
 ``default_protocol``, three groups ``train``, ``dev``, and ``eval`` which contain
@@ -79,19 +83,61 @@ has just one pool of samples in this case).
   be made between samples in ``for_enrolling.csv`` and ``for_probing.csv``. If this
   file is not present, all the probes will be compared against all the references.
 
-File format
-===========
+Tar archive
+-----------
 
-All files should be in plain text and follow the CSV format with a header. Here is an
-example of the head of ``for_enrolling.csv`` file:
+To save space, the databases are usually compressed in a tar archive. Those are
+natively supported by bob and can be passed as ``dataset_protocol_path`` to the
+:any:`CSVDatabase` directly:
+
+.. code-block:: python
+
+  db = CSVDatabase(name="atnt", dataset_protocol_path="~/db/atnt_protocols.tar.gz")
+
+If you want to create such an archive while making the database definition file, you
+can use the python tar module as follow (with CSV files already created):
+
+.. code-block:: python
+
+  import tarfile
+  with tarfile.open("your_definition_archive.tar.gz", "w:gz") as tar:
+    tar.add("path/to/your_csv_structure", arcname="your_db_name")
+
+Or with the following bash command::
+
+  tar -cvzf "your_definition_archive.tar.gz" "path/to/your_csv_structure/your_db_name"
+
+To ensure compatibility with bob, make the first level folder name the same as the
+database ``name`` parameter.
+
+Existing databases definitions
+------------------------------
+
+For known databases, we provide definition files on
+`our server <https://www.idiap.ch/software/bob/data/bob>`_. If they are correctly
+configured in the package you are using, bob will download them automatically when
+instantiating the :class:`CSVDatabase`.
+
+The downloaded database definition files will be stored in the ``bob_data``
+configuration.
+
+The default location of ``bob_data`` is ``~/bob_data/`` but this can be changed with::
+
+  bob config set bob_data "/your/custom/path/to/bob_data"
+
+Format of definition files
+--------------------------
+
+All protocol definition files should be in plain text and follow the CSV format with a
+header. Here is an example of the head of ``for_enrolling.csv`` file:
 
 .. code-block:: text
 
-    path,template_id,metadata1,metadata2
-    dev/u01/s01.png,u01s01,male,29
-    dev/u01/s02.png,u01s02,male,29
-    dev/u02/s01.png,u02s01,female,32
-    [...]
+  path,template_id,metadata1,metadata2
+  dev/u01/s01.png,u01s01,male,29
+  dev/u01/s02.png,u01s02,male,29
+  dev/u02/s01.png,u02s01,female,32
+  [...]
 
 Note that the paths should be relative to the ``original_directory``, passed to the
 :py:class:`CSVDatabase`. This allows to easily change the install location of a dataset
