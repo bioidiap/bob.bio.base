@@ -4,7 +4,9 @@ import itertools
 import os
 
 from collections import defaultdict
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Iterable, Optional, TextIO
+
+import sklearn.pipeline
 
 from sklearn.base import BaseEstimator, TransformerMixin
 
@@ -150,15 +152,37 @@ class CSVDatabase(FileListDatabase, Database):
     def __init__(
         self,
         *,
-        name,
-        protocol,
-        dataset_protocols_path,
-        transformer=None,
-        annotation_type=None,
-        fixed_positions=None,
+        name: str,
+        protocol: str,
+        dataset_protocols_path: str,
+        transformer: Optional[sklearn.pipeline.Pipeline] = None,
+        annotation_type: Optional[str] = None,
+        fixed_positions: Optional[dict[str, tuple[float, float]]] = None,
         memory_demanding=False,
         **kwargs,
     ):
+        """
+        Parameters
+        ----------
+        name
+            The name of the database.
+        protocol
+            Name of the protocol folder to use in the CSV definition structure.
+        dataset_protocol_path
+            Path to the CSV files structure (see :ref:`bob.bio.base.database_interface`
+            for more info).
+        transformer
+            An sklearn pipeline or equivalent transformer that handles some light
+            preprocessing of the samples (This will always run locally).
+        annotation_type
+            A string describing the annotations passed to the annotation loading
+            function
+        fixed_positions
+            TODO Why is it here? What does it do exactly?
+        memory_demanding
+            Flag that indicates that experiments using this should not run on low-mem
+            workers.
+        """
         super().__init__(
             name=name,
             protocol=protocol,
@@ -174,14 +198,14 @@ class CSVDatabase(FileListDatabase, Database):
         else:
             self.score_all_vs_all = False
 
-    def list_file(self, group, name):
+    def list_file(self, group: str, name: str) -> TextIO:
         list_file = search_file(
             self.dataset_protocols_path,
             os.path.join(self.protocol, group, name + ".csv"),
         )
         return list_file
 
-    def get_reader(self, group, name):
+    def get_reader(self, group: str, name: str) -> Iterable:
         key = (self.protocol, group, name)
         if key not in self.readers:
             list_file = self.list_file(group, name)
@@ -227,10 +251,9 @@ class CSVDatabase(FileListDatabase, Database):
         reader = self.get_reader(group, name)
         if reader is None:
             return []
-        samples = list(reader)
         # create Sample_sets from samples given their unique enroll_template_id/probe_template_id
         samples_grouped_by_template_id = itertools.groupby(
-            samples, lambda x: x.template_id
+            reader, lambda x: x.template_id
         )
         sample_sets = []
         for (

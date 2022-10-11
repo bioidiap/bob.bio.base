@@ -6,6 +6,7 @@ import logging
 import os
 
 from abc import ABCMeta, abstractmethod
+from typing import Any, Callable, Optional, Union
 
 import numpy as np
 
@@ -17,42 +18,44 @@ from bob.pipelines.wrappers import _frmt
 logger = logging.getLogger(__name__)
 
 
-def reduce_scores(scores, axis, fn="max"):
+def reduce_scores(
+    scores: np.ndarray,
+    axis: int,
+    fn: Union[str, Callable[[np.ndarray, int], np.ndarray]] = "max",
+):
     """
     Reduce scores using a function.
 
     Parameters:
     -----------
-    scores: numpy.ndarray
+    scores
         Scores to reduce.
 
-    fn: function
+    fn
         Function to use for reduction. You can also provide a string like
         ``max`` to use the corresponding function from numpy. Some possible
         values are: ``max``, ``min``, ``mean``, ``median``, ``sum``.
 
     Returns:
     --------
-    numpy.ndarray
-        Reduced scores.
+    Reduced scores.
     """
     if isinstance(fn, str):
         fn = getattr(np, fn)
     return fn(scores, axis=axis)
 
 
-def _data_valid(data):
+def _data_valid(data: Any) -> bool:
     """Check if data is valid.
 
     Parameters:
     -----------
-    data: object
+    data
         Data to check.
 
     Returns:
     --------
-    bool
-        True if data is valid, False otherwise.
+    True if data is valid, False otherwise.
     """
     if data is None:
         return False
@@ -99,7 +102,14 @@ class BioAlgorithm(BaseEstimator, metaclass=ABCMeta):
     """
 
     def __init__(
-        self, probes_score_fusion="max", enrolls_score_fusion="max", **kwargs
+        self,
+        probes_score_fusion: Union[
+            str, Callable[[list[np.ndarray], int], np.ndarray]
+        ] = "max",
+        enrolls_score_fusion: Union[
+            str, Callable[[list[np.ndarray], int], np.ndarray]
+        ] = "max",
+        **kwargs,
     ) -> None:
         super().__init__(**kwargs)
         self.probes_score_fusion = probes_score_fusion
@@ -112,64 +122,70 @@ class BioAlgorithm(BaseEstimator, metaclass=ABCMeta):
         return reduce_scores(scores, axis, self.enrolls_score_fusion)
 
     @abstractmethod
-    def create_templates(self, list_of_feature_sets, enroll):
+    def create_templates(
+        self, list_of_feature_sets: list[Any], enroll: bool
+    ) -> list[Sample]:
         """Creates enroll or probe templates from multiple sets of features.
 
         The enroll template format can be different from the probe templates.
 
         Parameters
         ----------
-        list_of_feature_sets : list
+        list_of_feature_sets
             A list of list of features with the shape of Nx?xD. N templates
             should be computed. Note that you cannot call
             np.array(list_of_feature_sets) because the number of features per
             set can be different depending on the database.
-        enroll : bool
+        enroll
             If True, the features are for enrollment. If False, the features are
             for probe.
 
         Returns
         -------
-        templates : list
+        templates
             A list of templates which has the same length as
             ``list_of_feature_sets``.
         """
         pass
 
     @abstractmethod
-    def compare(self, enroll_templates, probe_templates):
+    def compare(
+        self, enroll_templates: list[Sample], probe_templates: list[Sample]
+    ) -> np.ndarray:
         """Computes the similarity score between all enrollment and probe templates.
 
         Parameters
         ----------
-        enroll_templates : list
+        enroll_templates
             A list (length N) of enrollment templates.
 
-        probe_templates : list
+        probe_templates
             A list (length M) of probe templates.
 
         Returns
         -------
-        scores : numpy.ndarray
+        scores
             A matrix of shape (N, M) containing the similarity scores.
         """
         pass
 
-    def create_templates_from_samplesets(self, list_of_samplesets, enroll):
+    def create_templates_from_samplesets(
+        self, list_of_samplesets: list[SampleSet], enroll: bool
+    ) -> list[Sample]:
         """Creates enroll or probe templates from multiple SampleSets.
 
         Parameters
         ----------
-        list_of_samplesets : list
+        list_of_samplesets
             A list (length N) of SampleSets.
 
-        enroll : bool
+        enroll
             If True, the SampleSets are for enrollment. If False, the SampleSets
             are for probe.
 
         Returns
         -------
-        templates : list
+        templates
             A list of Samples which has the same length as ``list_of_samplesets``.
             Each Sample contains a template.
         """
@@ -211,26 +227,29 @@ class BioAlgorithm(BaseEstimator, metaclass=ABCMeta):
         return templates
 
     def score_sample_templates(
-        self, probe_samples, enroll_samples, score_all_vs_all
-    ):
+        self,
+        probe_samples: list[Sample],
+        enroll_samples: list[Sample],
+        score_all_vs_all: bool,
+    ) -> list[SampleSet]:
         """Computes the similarity score between all probe and enroll templates.
 
         Parameters
         ----------
-        probe_samples : list
+        probe_samples
             A list (length N) of Samples containing probe templates.
 
-        enroll_samples : list
+        enroll_samples
             A list (length M) of Samples containing enroll templates.
 
-        score_all_vs_all : bool
+        score_all_vs_all
             If True, the similarity scores between all probe and enroll templates
             are computed. If False, the similarity scores between the probes and
             their associated enroll templates are computed.
 
         Returns
         -------
-        score_samplesets : list
+        score_samplesets
             A list of N SampleSets each containing a list of M score Samples if score_all_vs_all
             is True. Otherwise, a list of N SampleSets each containing a list of <=M score Samples
             depending on the database.
@@ -312,14 +331,35 @@ class Database(metaclass=ABCMeta):
 
     def __init__(
         self,
-        name=None,
-        protocol=None,
-        score_all_vs_all=False,
-        annotation_type=None,
-        fixed_positions=None,
-        memory_demanding=False,
+        name: Optional[str] = None,
+        protocol: Optional[str] = None,
+        score_all_vs_all: bool = False,
+        annotation_type: Optional[str] = None,
+        fixed_positions: Optional[str] = None,
+        memory_demanding: bool = False,
         **kwargs,
     ):
+        """
+        Parameters
+        ----------
+        name
+            Name of the database. TODO is it used?
+        protocol
+            Name of the database protocol to use.
+        score_all_vs_all
+            Wether to allow scoring of all the probes against all the references, or to
+            provide a list ``references`` provided with each probes to indicate against
+            which references it needs to be compared.
+        annotation_type
+            The type of annotation passed to the annotation loading function.
+        fixed_positions
+            The constant eyes positions passed to the annotation loading function.
+            TODO why keep this face-related name here? Which one is it, too (position
+            when annotations are missing, or ending position in the result image)?
+        memory_demanding
+            Flag to indicate that this should not be loaded locally.
+            TODO Where is it used?
+        """
         super().__init__(**kwargs)
         for attr, value in (("name", name), ("protocol", protocol)):
             if not hasattr(self, attr):
@@ -329,7 +369,7 @@ class Database(metaclass=ABCMeta):
         self.fixed_positions = fixed_positions
         self.memory_demanding = memory_demanding
 
-    def __str__(self):
+    def __str__(self) -> str:
         args = ", ".join(
             [
                 "{}={}".format(k, v)
@@ -340,82 +380,82 @@ class Database(metaclass=ABCMeta):
         return f"{self.__class__.__name__}({args})"
 
     @abstractmethod
-    def background_model_samples(self):
-        """Returns :any:`bob.pipelines.Sample`'s to train a background model
+    def background_model_samples(self) -> list[Sample]:
+        """Returns :any:`Sample`'s to train a background model
 
 
         Returns
         -------
-        samples : list
+        samples
             List of samples for background model training.
 
         """
         pass
 
     @abstractmethod
-    def references(self, group="dev"):
+    def references(self, group: str = "dev") -> list[SampleSet]:
         """Returns references to enroll biometric references
 
 
         Parameters
         ----------
-        group : :py:class:`str`, optional
+        group
             Limits samples to this group
 
 
         Returns
         -------
-        references : list
+        references
             List of samples for the creation of biometric references.
 
         """
         pass
 
     @abstractmethod
-    def probes(self, group="dev"):
-        """Returns probes to score biometric references
+    def probes(self, group: str = "dev") -> list[SampleSet]:
+        """Returns probes to score against enrolled biometric references
 
 
         Parameters
         ----------
-        group : str
+        group
             Limits samples to this group
 
 
         Returns
         -------
-        probes : list
+        probes
             List of samples for the creation of biometric probes.
 
         """
         pass
 
     @abstractmethod
-    def all_samples(self, groups=None):
+    def all_samples(self, groups: Optional[str] = None) -> list[Sample]:
         """Returns all the samples of the dataset
 
         Parameters
         ----------
-        groups: list or `None`
+        groups
             List of groups to consider (like 'dev' or 'eval'). If `None`, will
             return samples from all the groups.
 
         Returns
         -------
-        samples: list
+        samples
             List of all the samples of the dataset.
         """
         pass
 
     @abstractmethod
-    def groups(self):
+    def groups(self) -> list[str]:
         pass
 
     @abstractmethod
-    def protocols(self):
+    def protocols(self) -> list[str]:
         pass
 
-    def template_ids(self, group):
+    def template_ids(self, group: str) -> list[Any]:
         return [s.template_id for s in self.references(group=group)]
 
 

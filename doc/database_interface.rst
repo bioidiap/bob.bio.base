@@ -105,7 +105,7 @@ can use the python tar module as follow (with CSV files already created):
 
 Or with the following bash command::
 
-  tar -cvzf "your_definition_archive.tar.gz" "path/to/your_csv_structure/your_db_name"
+  tar -cvzf your_definition_archive.tar.gz -C path/to/your_csv_structure your_db_name
 
 To ensure compatibility with bob, make the first level folder name the same as the
 database ``name`` parameter.
