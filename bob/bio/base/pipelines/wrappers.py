@@ -2,12 +2,15 @@ import functools
 import logging
 import os
 
+from typing import Any, Callable, Optional
+
 import dask
 import h5py
 import numpy as np
 
 import bob.pipelines
 
+from bob.bio.base.pipelines import PipelineSimple
 from bob.pipelines import DelayedSample, Sample, is_instance_nested
 from bob.pipelines.wrappers import BaseWrapper, _frmt, get_bob_tags
 
@@ -54,28 +57,31 @@ class BioAlgCheckpointWrapper(BioAlgorithmBaseWrapper):
 
     Parameters
     ----------
-    biometric_algorithm: :any:`bob.bio.base.pipelines.BioAlgorithm`
-       An implemented :any:`bob.bio.base.pipelines.BioAlgorithm`
+    biometric_algorithm
+        An implemented :any:`BioAlgorithm`
 
-    base_dir: str
-       Path to store biometric references and scores
+    base_dir
+        Path to store biometric references and scores
 
-    extension: str
-       Default extension of the enrolled references files.
-       If None, will use the ``bob_checkpoint_extension`` tag in the estimator, or
-       default to ``.h5``.
+    extension
+        Default extension of the enrolled references files.
+        If None, will use the ``bob_checkpoint_extension`` tag in the estimator, or
+        default to ``.h5``.
 
-    save_func : callable
-       Pointer to a customized function that saves an enrolled reference to the disk.
-       If None, will use the ``bob_enrolled_save_fn`` tag in the estimator, or default
-       to h5py.
+    save_func
+        Pointer to a customized function that saves an enrolled reference to the disk.
+        If None, will use the ``bob_enrolled_save_fn`` tag in the estimator, or default
+        to h5py.
 
-    load_func: callable
-       Pointer to a customized function that loads an enrolled reference from disk.
-       If None, will use the ``bob_enrolled_load_fn`` tag in the estimator, or default
-       to h5py.
+    load_func
+        Pointer to a customized function that loads an enrolled reference from disk.
+        If None, will use the ``bob_enrolled_load_fn`` tag in the estimator, or default
+        to h5py.
 
-    force: bool
+    group
+        group of the data (?) TODO document
+
+    force
         If True, will recompute scores and biometric references no matter if a file
         exists
 
@@ -98,14 +104,14 @@ class BioAlgCheckpointWrapper(BioAlgorithmBaseWrapper):
 
     def __init__(
         self,
-        biometric_algorithm,
-        base_dir,
-        extension=None,
-        save_func=None,
-        load_func=None,
-        group=None,
-        force=False,
-        hash_fn=None,
+        biometric_algorithm: BioAlgorithm,
+        base_dir: str,
+        extension: Optional[str] = None,
+        save_func: Optional[Callable[[str, Any], None]] = None,
+        load_func: Optional[Callable[[str], Any]] = None,
+        group: Optional[str] = None,
+        force: bool = False,
+        hash_fn: Optional[Callable[[str], str]] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -233,21 +239,25 @@ def _delayed_samples_to_samples(delayed_samples):
     return [Sample(sample.data, parent=sample) for sample in delayed_samples]
 
 
-def dask_bio_pipeline(pipeline, npartitions=None, partition_size=None):
+def dask_bio_pipeline(
+    pipeline: PipelineSimple,
+    npartitions: Optional[int] = None,
+    partition_size: Optional[int] = None,
+):
     """
-    Given a :any:`bob.bio.base.pipelines.PipelineSimple`, wraps :any:`bob.bio.base.pipelines.PipelineSimple` and
-    :any:`bob.bio.base.pipelines.BioAlgorithm` to be executed with dask
+    Given a :any:`PipelineSimple`, wraps their :attr:`transformer` and
+    :attr:`biometric_algorithm` to be executed with dask.
 
     Parameters
     ----------
 
-    pipeline: :any:`bob.bio.base.pipelines.PipelineSimple`
+    pipeline
        pipeline to be dasked
 
-    npartitions: int
+    npartitions
        Number of partitions for the initial `dask.bag`
 
-    partition_size: int
+    partition_size
        Size of the partition for the initial `dask.bag`
     """
     dask_wrapper_kw = {}
@@ -279,22 +289,26 @@ def dask_bio_pipeline(pipeline, npartitions=None, partition_size=None):
 
 
 def checkpoint_pipeline_simple(
-    pipeline, base_dir, biometric_algorithm_dir=None, hash_fn=None, force=False
+    pipeline: PipelineSimple,
+    base_dir: str,
+    biometric_algorithm_dir: Optional[str] = None,
+    hash_fn: Optional[Callable[[str], str]] = None,
+    force: bool = False,
 ):
     """
-    Given a :any:`bob.bio.base.pipelines.PipelineSimple`, wraps :any:`bob.bio.base.pipelines.PipelineSimple` and
-    :any:`bob.bio.base.pipelines.BioAlgorithm` to be checkpointed
+    Given a :any:`PipelineSimple`, wraps their :attr:`transformer` and
+    :attr:`biometric_algorithm` to be checkpointed.
 
     Parameters
     ----------
 
-    pipeline: :any:`bob.bio.base.pipelines.PipelineSimple`
+    pipeline
        pipeline to be checkpointed
 
-    base_dir: str
+    base_dir
        Path to store transformed input data and possibly biometric references and scores
 
-    biometric_algorithm_dir: str
+    biometric_algorithm_dir
        If set, it will checkpoint the biometric references and scores to this path.
        If not, `base_dir` will be used.
        This is useful when it's suitable to have the transformed data path, and biometric references and scores
@@ -306,6 +320,8 @@ def checkpoint_pipeline_simple(
        relative directory where a single `sample` will be checkpointed.
        This is useful when is desireable file directories with more than
        a certain number of files.
+    force
+       Overwrite existing checkpoint files.
     """
 
     bio_ref_scores_dir = (
@@ -331,16 +347,15 @@ def checkpoint_pipeline_simple(
     return pipeline
 
 
-def is_biopipeline_checkpointed(pipeline):
+def is_biopipeline_checkpointed(pipeline: PipelineSimple) -> bool:
     """
-    Check if :any:`bob.bio.base.pipelines.PipelineSimple` is checkpointed
-
+    Check if :any:`PipelineSimple` is checkpointed
 
     Parameters
     ----------
 
-    pipeline: :any:`bob.bio.base.pipelines.PipelineSimple`
-       pipeline to be checkpointed
+    pipeline
+       pipeline to check if checkpointed by a :any:`BioAlgCheckpointWrapper`.
 
     """
 

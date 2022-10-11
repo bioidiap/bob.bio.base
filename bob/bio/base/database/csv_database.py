@@ -4,6 +4,7 @@ import itertools
 import os
 
 from collections import defaultdict
+from typing import Any, Callable, Optional
 
 from sklearn.base import BaseEstimator, TransformerMixin
 
@@ -12,6 +13,7 @@ from bob.extension.download import list_dir, search_file
 from bob.pipelines import (
     DelayedSample,
     FileListDatabase,
+    Sample,
     SampleSet,
     check_parameters_for_validity,
 )
@@ -376,32 +378,45 @@ class FileSampleLoader(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    data_loader : :obj:`callable`
+    data_loader
         A callable to load the sample, given the full path to the file.
-
-    dataset_original_directory : str
-        Path of where data is stored
-
-    extension : str
-        Default file extension
+    dataset_original_directory
+        Path of where the raw data files are stored. This will be prepended to the
+        ``path`` attribute of the samples.
+    extension
+        File extension of the raw data files. This will be appended to the ``path``
+        attribute of the samples.
     """
 
     def __init__(
         self,
-        data_loader,
-        dataset_original_directory="",
-        extension="",
+        data_loader: Callable[[str], Any],
+        dataset_original_directory: str = "",
+        extension: str = "",
         **kwargs,
     ):
-        super().__init__(
-            **kwargs,
-        )
+        super().__init__(**kwargs)
         self.data_loader = data_loader
         self.dataset_original_directory = dataset_original_directory
         self.extension = extension
 
-    def transform(self, samples):
-        """Transform samples to delayed samples with data givent their path."""
+    def transform(self, samples: list[Sample]) -> list[DelayedSample]:
+        """Prepares the data into :class:`~bob.pipelines.DelayedSample` objects.
+
+        Transforms :class:`~bob.pipelines.Sample` objects with a ``path`` attribute to
+        :class:`~bob.pipelines.DelayedSample` with data ready to be loaded (lazily) by
+        :attr:`data_loader`.
+
+        When needed (access to the :class:`DelayedSample`\\ 's :attr:`data` attribute),
+        :attr:`data_loader` will be called with the path (extended with
+        :attr:`original_directory` and :attr:`extension`) as argument.
+
+        Parameters
+        ----------
+        samples
+            :class:`~bob.pipelines.Sample` objects with their ``path`` attribute
+            containing a path to a file to load.
+        """
         output = []
         for sample in samples:
             path = getattr(sample, "path")
@@ -420,42 +435,51 @@ class FileSampleLoader(BaseEstimator, TransformerMixin):
             output.append(delayed_sample)
         return output
 
-    def fit(self, X, y=None):
-        return self
-
     def _more_tags(self):
         return {"requires_fit": False}
 
 
 class AnnotationsLoader(TransformerMixin, BaseEstimator):
-    """
-    Metadata loader that loads annotations using the function
-    :any:`read_annotation_file`
+    """Prepares annotations to be loaded from a path in ``delayed_attributes``.
+
+    Metadata loader that loads samples' annotations using
+    :py:func:`~bob.bio.base.utils.annotations.read_annotation_file`. This assumes that
+    the annotation files follows the same folder structure and naming as the raw data
+    files. Although, the base location and the extension can vary from those and is
+    specified by :attr:`annotation_directory` and :attr:`annotation_extension`.
 
     Parameters
     ----------
-    annotation_directory : str
-        Path where the annotations are store
+    annotation_directory
+        Path where the annotations are stored.
 
     annotation_extension : str
-        Extension of the annotations
+        Extension of the annotations.
 
     annotation_type : str
-        Annotations type
+        Annotations type passed to
+        :func:`~bob.bio.base.utils.annotations.read_annotation_file`.
 
     """
 
     def __init__(
         self,
-        annotation_directory=None,
-        annotation_extension=".json",
-        annotation_type="json",
+        annotation_directory: Optional[str] = None,
+        annotation_extension: str = ".json",
+        annotation_type: str = "json",
     ):
         self.annotation_directory = annotation_directory
         self.annotation_extension = annotation_extension
         self.annotation_type = annotation_type
 
-    def transform(self, X):
+    def transform(self, X: list[DelayedSample]) -> list[DelayedSample]:
+        """Edits the samples to lazily load annotations files.
+
+        Parameters
+        ----------
+        X
+            The samples to augment.
+        """
         if self.annotation_directory is None:
             return None
 
@@ -481,9 +505,6 @@ class AnnotationsLoader(TransformerMixin, BaseEstimator):
             )
 
         return annotated_samples
-
-    def fit(self, X, y=None):
-        return self
 
     def _more_tags(self):
         return {"requires_fit": False}

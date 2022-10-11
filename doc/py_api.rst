@@ -22,7 +22,7 @@ Database implementations
 
 .. autosummary::
 
-..  bob.bio.base.database.CSVDatabase
+ bob.bio.base.database.CSVDatabase
 
 Biometric Algorithm
 ~~~~~~~~~~~~~~~~~~~
@@ -108,6 +108,7 @@ Miscellaneous functions
   bob.bio.base.score_fusion_strategy
   bob.bio.base.selected_elements
   bob.bio.base.selected_indices
+  bob.bio.base.utils.annotations.read_annotation_file
 
 
 
@@ -173,6 +174,7 @@ Details
 .. automodule:: bob.bio.base.utils
 .. automodule:: bob.bio.base.utils.resources
 .. automodule:: bob.bio.base.utils.io
+.. automodule:: bob.bio.base.utils.annotations
 
 
 
