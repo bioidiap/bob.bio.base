@@ -6,6 +6,8 @@
 
 import os
 
+from typing import Any
+
 import numpy as np
 import pytest
 
@@ -24,7 +26,7 @@ from bob.bio.base.database import (
 )
 from bob.bio.base.pipelines.pipelines import PipelineSimple
 from bob.bio.base.test.dummy.database import database as ATNT_DATABASE
-from bob.pipelines import DelayedSample, SampleSet, wrap
+from bob.pipelines import DelayedSample, Sample, SampleSet, wrap
 
 legacy_example_dir = os.path.realpath(
     bob.io.base.test_utils.datafile(".", __name__, "data/")
@@ -43,28 +45,40 @@ atnt_protocol_path = os.path.realpath(
 )
 
 
-def check_all_true(list_of_something, something):
-    """
-    Assert if list of `Something` contains `Something`
-    """
-    return np.alltrue([isinstance(s, something) for s in list_of_something])
+def check_all_instances_of(objects: list[Any], type: Any) -> bool:
+    """Checks that all elements of ``objects`` are instances of ``type``."""
+    return all(isinstance(s, type) for s in objects)
 
 
-def test_csv_file_list_dev_only():
+def test_csv_file_list_dev_only_no_metadata():
 
+    db_name = "example_csv_filelist"
     dataset = CSVDatabase(
-        name="example_csv_filelist",
-        dataset_protocols_path=example_dir,
+        name=db_name,
+        dataset_protocols_path=os.path.join(
+            example_dir, db_name
+        ),  # TODO check that this is the correct behavior
         protocol="protocol_only_dev",
     )
     assert len(dataset.background_model_samples()) == 8
-    assert check_all_true(dataset.background_model_samples(), DelayedSample)
+    assert check_all_instances_of(
+        dataset.background_model_samples(), Sample
+    )  # TODO why not delayed??
 
     assert len(dataset.references()) == 2
-    assert check_all_true(dataset.references(), SampleSet)
+    assert check_all_instances_of(dataset.references(), SampleSet)
+    assert all(len(r) == 4 for r in dataset.references())
+    assert check_all_instances_of(
+        [r for rs in dataset.references() for r in rs], Sample
+    )
 
-    assert len(dataset.probes()) == 10
-    assert check_all_true(dataset.probes(), SampleSet)
+    assert len(dataset.probes()) == 2
+    assert check_all_instances_of(dataset.probes(), SampleSet)
+    assert len(dataset.probes()[0]) == 4
+    assert len(dataset.probes()[1]) == 6
+    assert check_all_instances_of(
+        [r for rs in dataset.probes() for r in rs], Sample
+    )
 
 
 def test_csv_file_list_dev_only_metadata():
@@ -76,7 +90,9 @@ def test_csv_file_list_dev_only_metadata():
     )
     assert len(dataset.background_model_samples()) == 8
 
-    assert check_all_true(dataset.background_model_samples(), DelayedSample)
+    assert check_all_instances_of(
+        dataset.background_model_samples(), DelayedSample
+    )
     assert np.alltrue(
         ["metadata_1" in s.__dict__ for s in dataset.background_model_samples()]
     )
@@ -85,7 +101,7 @@ def test_csv_file_list_dev_only_metadata():
     )
 
     assert len(dataset.references()) == 2
-    assert check_all_true(dataset.references(), SampleSet)
+    assert check_all_instances_of(dataset.references(), SampleSet)
     assert np.alltrue(
         ["metadata_1" in s.__dict__ for s in dataset.references()]
     )
@@ -94,7 +110,7 @@ def test_csv_file_list_dev_only_metadata():
     )
 
     assert len(dataset.probes()) == 10
-    assert check_all_true(dataset.probes(), SampleSet)
+    assert check_all_instances_of(dataset.probes(), SampleSet)
     assert np.alltrue(["metadata_1" in s.__dict__ for s in dataset.probes()])
     assert np.alltrue(["metadata_2" in s.__dict__ for s in dataset.probes()])
     assert np.alltrue(["references" in s.__dict__ for s in dataset.probes()])
@@ -128,22 +144,28 @@ def test_csv_file_list_dev_eval():
             ),
         )
         assert len(dataset.background_model_samples()) == 8
-        assert check_all_true(dataset.background_model_samples(), DelayedSample)
+        assert check_all_instances_of(
+            dataset.background_model_samples(), DelayedSample
+        )
 
         assert len(dataset.references()) == 2
-        assert check_all_true(dataset.references(), SampleSet)
+        assert check_all_instances_of(dataset.references(), SampleSet)
 
         assert len(dataset.probes()) == 8
-        assert check_all_true(dataset.references(), SampleSet)
+        assert check_all_instances_of(dataset.references(), SampleSet)
 
         assert len(dataset.references(group="eval")) == 6
-        assert check_all_true(dataset.references(group="eval"), SampleSet)
+        assert check_all_instances_of(
+            dataset.references(group="eval"), SampleSet
+        )
 
         assert len(dataset.probes(group="eval")) == 13
-        assert check_all_true(dataset.probes(group="eval"), SampleSet)
+        assert check_all_instances_of(dataset.probes(group="eval"), SampleSet)
 
         assert len(dataset.all_samples(groups=None)) == 47
-        assert check_all_true(dataset.all_samples(groups=None), DelayedSample)
+        assert check_all_instances_of(
+            dataset.all_samples(groups=None), DelayedSample
+        )
 
         # Check the annotations
         for s in dataset.all_samples(groups=None):
@@ -186,24 +208,28 @@ def test_csv_file_list_dev_eval_score_norm():
         )
 
         assert len(znorm_dataset.background_model_samples()) == 8
-        assert check_all_true(
+        assert check_all_instances_of(
             znorm_dataset.background_model_samples(), DelayedSample
         )
 
         assert len(znorm_dataset.references()) == 2
-        assert check_all_true(znorm_dataset.references(), SampleSet)
+        assert check_all_instances_of(znorm_dataset.references(), SampleSet)
 
         assert len(znorm_dataset.probes()) == 8
-        assert check_all_true(znorm_dataset.references(), SampleSet)
+        assert check_all_instances_of(znorm_dataset.references(), SampleSet)
 
         assert len(znorm_dataset.references(group="eval")) == 6
-        assert check_all_true(znorm_dataset.references(group="eval"), SampleSet)
+        assert check_all_instances_of(
+            znorm_dataset.references(group="eval"), SampleSet
+        )
 
         assert len(znorm_dataset.probes(group="eval")) == 13
-        assert check_all_true(znorm_dataset.probes(group="eval"), SampleSet)
+        assert check_all_instances_of(
+            znorm_dataset.probes(group="eval"), SampleSet
+        )
 
         assert len(znorm_dataset.all_samples(groups=None)) == 47
-        assert check_all_true(
+        assert check_all_instances_of(
             znorm_dataset.all_samples(groups=None), DelayedSample
         )
 
@@ -254,10 +280,12 @@ def test_csv_file_list_dev_eval_sparse():
     )
 
     assert len(dataset.background_model_samples()) == 8
-    assert check_all_true(dataset.background_model_samples(), DelayedSample)
+    assert check_all_instances_of(
+        dataset.background_model_samples(), DelayedSample
+    )
 
     assert len(dataset.references()) == 2
-    assert check_all_true(dataset.references(), SampleSet)
+    assert check_all_instances_of(dataset.references(), SampleSet)
 
     probes = dataset.probes()
     assert len(probes) == 8
@@ -265,14 +293,14 @@ def test_csv_file_list_dev_eval_sparse():
     # here, 1 comparisons comparison per probe
     for p in probes:
         assert len(p.references) == 1
-    assert check_all_true(dataset.references(), SampleSet)
+    assert check_all_instances_of(dataset.references(), SampleSet)
 
     assert len(dataset.references(group="eval")) == 6
-    assert check_all_true(dataset.references(group="eval"), SampleSet)
+    assert check_all_instances_of(dataset.references(group="eval"), SampleSet)
 
     probes = dataset.probes(group="eval")
     assert len(probes) == 13
-    assert check_all_true(probes, SampleSet)
+    assert check_all_instances_of(probes, SampleSet)
     # Here, 1 comparison per probe, EXPECT THE FIRST ONE
     for i, p in enumerate(probes):
         if i == 0:
@@ -281,7 +309,9 @@ def test_csv_file_list_dev_eval_sparse():
             assert len(p.references) == 1
 
     assert len(dataset.all_samples(groups=None)) == 48
-    assert check_all_true(dataset.all_samples(groups=None), DelayedSample)
+    assert check_all_instances_of(
+        dataset.all_samples(groups=None), DelayedSample
+    )
 
     # Check the annotations
     for s in dataset.all_samples(groups=None):
