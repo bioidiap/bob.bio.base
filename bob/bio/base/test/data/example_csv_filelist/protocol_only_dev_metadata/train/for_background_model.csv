@@ -1,4 +1,4 @@
-PATH,TEMPLATE_ID,METADATA_1,METADATA_2
+path,subject_id,metadata_1,metadata_2
 data/model11_session1_sample1,1,M,10
 data/model11_session1_sample2,1,M,10
 data/model11_session1_sample3,1,M,10
