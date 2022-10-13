@@ -11,6 +11,7 @@ import logging
 import os
 
 from functools import partial
+from typing import Union
 
 import dask.dataframe
 import numpy as np
@@ -72,7 +73,7 @@ class PipelineScoreNorm:
     def __init__(
         self,
         pipeline_simple: PipelineSimple,
-        post_processor: sklearn.pipeline.Pipeline | BaseEstimator,
+        post_processor: Union[sklearn.pipeline.Pipeline, BaseEstimator],
     ):
 
         self.pipeline_simple = pipeline_simple
