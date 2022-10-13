@@ -344,12 +344,11 @@ class CSVDatabase(FileListDatabase, Database):
             # references is dict where key is probe_template_id and value is a
             # list of enroll_template_ids
             references = defaultdict(list)
-            with open(matching_file) as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    references[row["probe_template_id"]].append(
-                        row["enroll_template_id"]
-                    )
+            reader = csv.DictReader(matching_file)
+            for row in reader:
+                references[row["probe_template_id"]].append(
+                    row["enroll_template_id"]
+                )
 
             for sample_set in sample_sets:
                 sample_set.references = references[sample_set.template_id]
