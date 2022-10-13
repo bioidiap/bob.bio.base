@@ -14,6 +14,7 @@ from functools import partial
 
 import dask.dataframe
 import numpy as np
+import sklearn.pipeline
 
 from scipy.optimize import curve_fit
 from scipy.special import expit
@@ -58,11 +59,10 @@ class PipelineScoreNorm:
 
     Parameters
     ----------
-    pipeline_simple: :any:`PipelineSimple`
-        An instance :any:`PipelineSimple` to the wrapped with score
-        normalization
+    pipeline_simple
+        An instance of :class:`PipelineSimple` to be wrapped with score normalization.
 
-    post_processor: :py:class`sklearn.pipeline.Pipeline` or a `sklearn.base.BaseEstimator`
+    post_processor
         Transformer that will post process the scores
 
     score_writer
@@ -72,7 +72,7 @@ class PipelineScoreNorm:
     def __init__(
         self,
         pipeline_simple: PipelineSimple,
-        post_processor,
+        post_processor: sklearn.pipeline.Pipeline | BaseEstimator,
     ):
 
         self.pipeline_simple = pipeline_simple

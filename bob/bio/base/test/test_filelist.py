@@ -45,9 +45,18 @@ atnt_protocol_path = os.path.realpath(
 )
 
 
-def check_all_instances_of(objects: list[Any], type: Any) -> bool:
-    """Checks that all elements of ``objects`` are instances of ``type``."""
-    return all(isinstance(s, type) for s in objects)
+def all_sample(objects: list[Any]) -> bool:
+    """Checks that all elements of ``objects`` are valid :class:`Sample` instances."""
+    return all(isinstance(o, Sample) for o in objects)
+
+
+def all_sample_set(objects: list[Any]) -> bool:
+    """Checks that all elements of ``objects`` are :class:`SampleSet` instances.
+
+    Also checks that all samples in these samplesets are :class:`Sample` instances.
+    """
+
+    return all(isinstance(o, SampleSet) and all_sample(o) for o in objects)
 
 
 def test_csv_file_list_dev_no_metadata():
@@ -62,22 +71,16 @@ def test_csv_file_list_dev_no_metadata():
         protocol="protocol_only_dev",
     )
     assert len(dataset.background_model_samples()) == 8
-    assert check_all_instances_of(dataset.background_model_samples(), Sample)
+    assert all_sample(dataset.background_model_samples())
 
     assert len(dataset.references()) == 2
-    assert check_all_instances_of(dataset.references(), SampleSet)
+    assert all_sample_set(dataset.references())
     assert all(len(r) == 4 for r in dataset.references())
-    assert check_all_instances_of(
-        [r for rs in dataset.references() for r in rs], Sample
-    )
 
     assert len(dataset.probes()) == 2
-    assert check_all_instances_of(dataset.probes(), SampleSet)
+    assert all_sample_set(dataset.probes())
     assert len(dataset.probes()[0]) == 4
     assert len(dataset.probes()[1]) == 6
-    assert check_all_instances_of(
-        [r for rs in dataset.probes() for r in rs], Sample
-    )
 
 
 def test_csv_file_list_dev_metadata():
@@ -91,7 +94,7 @@ def test_csv_file_list_dev_metadata():
     )
     assert len(dataset.background_model_samples()) == 8
 
-    assert check_all_instances_of(dataset.background_model_samples(), Sample)
+    assert all_sample(dataset.background_model_samples())
     assert all(
         hasattr(s, "metadata_1") for s in dataset.background_model_samples()
     )
@@ -100,22 +103,20 @@ def test_csv_file_list_dev_metadata():
     )
 
     assert len(dataset.references()) == 2
-    assert check_all_instances_of(dataset.references(), SampleSet)
+    assert all_sample_set(dataset.references())
     assert all(len(r) == 4 for r in dataset.references())
-    assert all(
-        hasattr(s, "metadata_1") for ss in dataset.references() for s in ss
-    )
-    assert all(
-        hasattr(s, "metadata_2") for ss in dataset.references() for s in ss
-    )
+    flat_references = (s for ss in dataset.references() for s in ss)
+    assert all(hasattr(s, "metadata_1") for s in flat_references)
+    assert all(hasattr(s, "metadata_2") for s in flat_references)
 
     assert len(dataset.probes()) == 2
-    assert check_all_instances_of(dataset.probes(), SampleSet)
+    assert all_sample_set(dataset.probes())
+    assert all(hasattr(s, "references") for s in dataset.probes())
     assert len(dataset.probes()[0]) == 4
     assert len(dataset.probes()[1]) == 6
-    assert all(hasattr(s, "metadata_1") for ss in dataset.probes() for s in ss)
-    assert all(hasattr(s, "metadata_2") for ss in dataset.probes() for s in ss)
-    assert all(hasattr(s, "references") for s in dataset.probes())
+    flat_probes = (s for ss in dataset.probes() for s in ss)
+    assert all(hasattr(s, "metadata_1") for s in flat_probes)
+    assert all(hasattr(s, "metadata_2") for s in flat_probes)
 
 
 def test_csv_file_list_dev_eval_all_vs_all():
@@ -135,8 +136,8 @@ def test_csv_file_list_dev_eval_all_vs_all():
             transformer=make_pipeline(
                 FileSampleLoader(
                     data_loader=bob.io.base.load,
-                    dataset_original_directory="",
-                    extension="",
+                    dataset_original_directory="non-existent",
+                    extension=".nothing",
                 ),
                 AnnotationsLoader(
                     annotation_directory=annotation_directory,
@@ -146,26 +147,36 @@ def test_csv_file_list_dev_eval_all_vs_all():
             ),
         )
         assert len(dataset.background_model_samples()) == 8
-        assert check_all_instances_of(
-            dataset.background_model_samples(), Sample
-        )
+        assert all_sample(dataset.background_model_samples())
 
         assert len(dataset.references()) == 2
-        assert check_all_instances_of(dataset.references(), SampleSet)
+        assert all_sample_set(dataset.references())
+        assert len(dataset.references()[0]) == 4
+        assert len(dataset.references()[1]) == 4
 
-        assert len(dataset.probes()) == 8
-        assert check_all_instances_of(dataset.references(), SampleSet)
+        assert len(dataset.probes()) == 2
+        assert all_sample_set(dataset.probes())
+        assert len(dataset.probes()[0]) == 4
+        assert len(dataset.probes()[1]) == 4
 
-        assert len(dataset.references(group="eval")) == 6
-        assert check_all_instances_of(
-            dataset.references(group="eval"), SampleSet
+        eval_references = dataset.references(group="eval")
+        assert len(eval_references) == 6
+        assert all_sample_set(eval_references)
+        assert all(
+            len(eval_references[i]) == n
+            for i, n in enumerate((2, 2, 3, 1, 1, 1))
         )
 
-        assert len(dataset.probes(group="eval")) == 13
-        assert check_all_instances_of(dataset.probes(group="eval"), SampleSet)
+        eval_probes = dataset.probes(group="eval")
+        assert len(eval_probes) == 8
+        assert all_sample_set(eval_probes)
+        assert all(
+            len(eval_probes[i]) == n
+            for i, n in enumerate((2, 2, 3, 1, 1, 2, 1, 1))
+        )
 
-        assert len(dataset.all_samples(groups=None)) == 47
-        assert check_all_instances_of(dataset.all_samples(groups=None), Sample)
+        assert len(dataset.all_samples(groups=None)) == 63
+        assert all_sample(dataset.all_samples(groups=None))
 
         # Check the annotations
         for s in dataset.all_samples(groups=None):
@@ -197,8 +208,8 @@ def test_csv_file_list_dev_eval_score_norm():
             transformer=make_pipeline(
                 FileSampleLoader(
                     data_loader=bob.io.base.load,
-                    dataset_original_directory="",
-                    extension="",
+                    dataset_original_directory="non-existent",
+                    extension=".nothing",
                 ),
                 AnnotationsLoader(
                     annotation_directory=annotation_directory,
@@ -209,30 +220,26 @@ def test_csv_file_list_dev_eval_score_norm():
         )
 
         assert len(znorm_dataset.background_model_samples()) == 8
-        assert check_all_instances_of(
-            znorm_dataset.background_model_samples(), Sample
-        )
+        assert all_sample(znorm_dataset.background_model_samples())
 
         assert len(znorm_dataset.references()) == 2
-        assert check_all_instances_of(znorm_dataset.references(), SampleSet)
+        assert sum(len(s) for s in znorm_dataset.references()) == 8
+        assert all_sample_set(znorm_dataset.references())
 
-        assert len(znorm_dataset.probes()) == 8
-        assert check_all_instances_of(znorm_dataset.references(), SampleSet)
+        assert len(znorm_dataset.probes()) == 2
+        assert sum(len(s) for s in znorm_dataset.probes()) == 8
+        assert all_sample_set(znorm_dataset.references())
 
         assert len(znorm_dataset.references(group="eval")) == 6
-        assert check_all_instances_of(
-            znorm_dataset.references(group="eval"), SampleSet
-        )
+        assert sum(len(s) for s in znorm_dataset.references(group="eval")) == 10
+        assert all_sample_set(znorm_dataset.references(group="eval"))
 
-        assert len(znorm_dataset.probes(group="eval")) == 13
-        assert check_all_instances_of(
-            znorm_dataset.probes(group="eval"), SampleSet
-        )
+        assert len(znorm_dataset.probes(group="eval")) == 8
+        assert sum(len(s) for s in znorm_dataset.probes(group="eval")) == 13
+        assert all_sample_set(znorm_dataset.probes(group="eval"))
 
-        assert len(znorm_dataset.all_samples(groups=None)) == 47
-        assert check_all_instances_of(
-            znorm_dataset.all_samples(groups=None), Sample
-        )
+        assert len(znorm_dataset.all_samples(groups=None)) == 63
+        assert all_sample(znorm_dataset.all_samples(groups=None))
 
         # Check the annotations
         for s in znorm_dataset.all_samples(groups=None):
@@ -241,13 +248,16 @@ def test_csv_file_list_dev_eval_score_norm():
         assert len(znorm_dataset.template_ids(group="dev")) == 2
         assert len(znorm_dataset.template_ids(group="eval")) == 6
         assert len(znorm_dataset.groups()) == 3
+        assert set(znorm_dataset.groups()) == set(("train", "dev", "eval"))
 
         # Checking ZT-Norm stuff
         assert len(znorm_dataset.treferences()) == 2
-        assert len(znorm_dataset.zprobes()) == 8
+        assert len(znorm_dataset.zprobes()) == 2
+        assert sum(len(s) for s in znorm_dataset.zprobes()) == 8
 
         assert len(znorm_dataset.treferences(proportion=0.5)) == 1
-        assert len(znorm_dataset.zprobes(proportion=0.5)) == 4
+        assert len(znorm_dataset.zprobes(proportion=0.5)) == 1
+        assert sum(len(s) for s in znorm_dataset.zprobes(proportion=0.5)) == 4
 
     db_name = "example_csv_filelist"
     run(os.path.join(example_dir, db_name))
@@ -280,29 +290,30 @@ def test_csv_file_list_dev_eval_sparse():
                 annotation_type="json",
             ),
         ),
-        is_sparse=True,
     )
 
     assert len(dataset.background_model_samples()) == 8
-    assert check_all_instances_of(dataset.background_model_samples(), Sample)
+    assert all_sample(dataset.background_model_samples())
 
     assert len(dataset.references()) == 2
-    assert check_all_instances_of(dataset.references(), SampleSet)
+    assert all_sample_set(dataset.references())
 
     probes = dataset.probes()
-    assert len(probes) == 8
+    assert len(probes) == 2
+    assert sum(len(s) for s in probes) == 8
 
-    # here, 1 comparisons comparison per probe
+    # Here, 1 comparison per probe
     for p in probes:
         assert len(p.references) == 1
-    assert check_all_instances_of(dataset.references(), SampleSet)
+    assert all_sample_set(dataset.references())
 
     assert len(dataset.references(group="eval")) == 6
-    assert check_all_instances_of(dataset.references(group="eval"), SampleSet)
+    assert all_sample_set(dataset.references(group="eval"))
 
     probes = dataset.probes(group="eval")
-    assert len(probes) == 13
-    assert check_all_instances_of(probes, SampleSet)
+    assert len(probes) == 8
+    assert sum(len(s) for s in probes) == 14
+    assert all_sample_set(probes)
     # Here, 1 comparison per probe, EXPECT THE FIRST ONE
     for i, p in enumerate(probes):
         if i == 0:
@@ -311,7 +322,7 @@ def test_csv_file_list_dev_eval_sparse():
             assert len(p.references) == 1
 
     assert len(dataset.all_samples(groups=None)) == 48
-    assert check_all_instances_of(dataset.all_samples(groups=None), Sample)
+    assert all_sample(dataset.all_samples(groups=None))
 
     # Check the annotations
     for s in dataset.all_samples(groups=None):
@@ -325,14 +336,20 @@ def test_csv_file_list_dev_eval_sparse():
 
 def test_csv_file_list_atnt():
 
+    db_name = "atnt"
+    db_dir = os.path.join(atnt_protocol_path, db_name)
     dataset = CSVDatabase(
-        name="atnt",
-        dataset_protocols_path=atnt_protocol_path,
+        name=db_name,
+        dataset_protocols_path=db_dir,
         protocol="idiap_protocol",
     )
     assert len(dataset.background_model_samples()) == 200
     assert len(dataset.references()) == 20
+    assert sum(len(s) for s in dataset.references()) == 100
+    assert all(len(s) == 5 for s in dataset.references())
     assert len(dataset.probes()) == 100
+    assert sum(len(s) for s in dataset.probes()) == 100
+    assert all(len(s) == 1 for s in dataset.probes())
     assert len(dataset.all_samples(groups=["train"])) == 200
     assert len(dataset.all_samples(groups=["dev"])) == 200
     assert len(dataset.all_samples(groups=None)) == 400
@@ -363,9 +380,11 @@ def run_experiment(dataset):
 
 def test_atnt_experiment():
 
+    db_name = "atnt"
+    db_dir = os.path.join(atnt_protocol_path, db_name)
     dataset = CSVDatabase(
-        name="atnt",
-        dataset_protocols_path=atnt_protocol_path,
+        name=db_name,
+        dataset_protocols_path=db_dir,
         protocol="idiap_protocol",
         transformer=FileSampleLoader(
             data_loader=data_loader,
