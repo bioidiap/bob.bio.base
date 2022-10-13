@@ -1,6 +1,5 @@
 import csv
 import functools
-import itertools
 import os
 
 from collections import defaultdict
@@ -291,14 +290,14 @@ class CSVDatabase(FileListDatabase, Database):
         if reader is None:
             return []
         # create Sample_sets from samples given their unique enroll_template_id/probe_template_id
-        samples_grouped_by_template_id = itertools.groupby(
-            reader, lambda x: x.template_id
-        )
+        samples_grouped_by_template_id = defaultdict(list)
+        for sample in reader:
+            samples_grouped_by_template_id[sample.template_id].append(sample)
         sample_sets = []
         for (
             template_id,
             samples_for_template_id,
-        ) in samples_grouped_by_template_id:
+        ) in samples_grouped_by_template_id.items():
             # since all samples inside one sampleset have the same subject_id,
             # we add that as well.
             samples = list(samples_for_template_id)
