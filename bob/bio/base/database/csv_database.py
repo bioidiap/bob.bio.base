@@ -29,23 +29,48 @@ def _sample_sets_to_samples(sample_sets):
     )
 
 
-def validate_bio_samples(samples):
-    """Validates Samples or SampleSets for backwards compatibility reasons."""
-    for sample in samples:
+def _add_key(samples: list[Sample]) -> list[Sample]:
+    """Adds a ``key`` attribute to all samples if ``key`` is not present
 
+    Will use ``path`` to create a unique ``key``.
+    Note that this won't create unique keys if you have multiple times the same path in
+    different samples. This will be problematic, as key are expected to be unique.
+    """
+
+    out = []
+    for sample in samples:
+        if isinstance(sample, SampleSet):
+            out.append(SampleSet(samples=_add_key(sample), parent=sample))
+            continue
+        if not hasattr(sample, "key"):
+            if hasattr(sample, "path"):
+                sample.key = sample.path
+            else:
+                raise ValueError(
+                    f"Sample has no 'key' and no 'path' to infer it. {sample=}"
+                )
+        out.append(sample)
+    return out
+
+
+def validate_bio_samples(samples):
+    """Validates Samples or SampleSets for backwards compatibility reasons.
+
+    This will add a ``key`` attribute (if not already present) to each sample, copied
+    from the path.
+    """
+
+    for sample in samples:
         if isinstance(sample, SampleSet):
             validate_bio_samples(sample.samples)
-
             if not hasattr(sample, "template_id"):
                 raise ValueError(
                     f"SampleSet must have a template_id attribute, got {sample}"
                 )
-
             if not hasattr(sample, "subject_id"):
                 raise ValueError(
                     f"SampleSet must have a subject_id attribute, got {sample}"
                 )
-
             continue
 
         if not hasattr(sample, "key"):
@@ -106,8 +131,8 @@ class CSVDatabase(FileListDatabase, Database):
         subject1_audio2.wav,1,subject1_audio2_channel1
         subject1_audio2.wav,1,subject1_audio2_channel2
 
-    The ``key`` column will be used to checkpoint the each sample into a unique
-    file.
+    The ``key`` column will be used to checkpoint each sample into a unique file and
+    must therefore be unique across the whole dataset.
 
     The ``for_enrolling.csv`` file should contain the following columns::
 
@@ -133,18 +158,29 @@ class CSVDatabase(FileListDatabase, Database):
         subject6_image3.png,6,template_8
         subject6_image4.png,6,template_8
 
-    By default, each enroll_template_id will be compared against each
-    probe_template_id to produce one score. If you want to specify exact
+    Subject identity (``subject_id``) is a unique identifier for one identity (one
+    person).
+    Template Identity (``template_id``) is an identifier used to group samples when
+    they need to be enrolled or scored together.
+    :class:`~bob.bio.base.pipelines.BioAlgorithm` will process
+    these template.
+
+
+    By default, each enroll ``template_id`` will be compared against each
+    probe ``template_id`` to produce one score per pair. If you want to specify exact
     comparisons (sparse scoring), you can add the ``for_matching.csv`` with the
     following columns::
 
         enroll_template_id,probe_template_id
         template_1,template_5
         template_2,template_6
+        template_3,template_5
         template_3,template_7
+        template_4,template_5
         template_4,template_8
 
-    ``for_znorm.csv`` and ``for_tnorm.csv`` files are optional.
+    ``for_znorm.csv`` and ``for_tnorm.csv`` files are optional and are used for score
+    normalization. See :class:`~bob.bio.base.pipelines.PipelineScoreNorm`.
     ``for_znorm.csv`` has the same format as ``for_probing.csv`` and
     ``for_tnorm.csv`` has the same format as ``for_enrolling.csv``.
     """
@@ -183,6 +219,9 @@ class CSVDatabase(FileListDatabase, Database):
             Flag that indicates that experiments using this should not run on low-mem
             workers.
         """
+        transformer = sklearn.pipeline.make_pipeline(
+            sklearn.pipeline.FunctionTransformer(_add_key), transformer
+        )
         super().__init__(
             name=name,
             protocol=protocol,
@@ -199,6 +238,7 @@ class CSVDatabase(FileListDatabase, Database):
             self.score_all_vs_all = False
 
     def list_file(self, group: str, name: str) -> TextIO:
+        """Returns a definition file containing one sample per row."""
         list_file = search_file(
             self.dataset_protocols_path,
             os.path.join(self.protocol, group, name + ".csv"),
@@ -206,6 +246,7 @@ class CSVDatabase(FileListDatabase, Database):
         return list_file
 
     def get_reader(self, group: str, name: str) -> Iterable:
+        """Returns an :any:`Iterable` containing :class:`Sample` or :class:`SampleSet` objects."""
         key = (self.protocol, group, name)
         if key not in self.readers:
             list_file = self.list_file(group, name)
@@ -219,14 +260,12 @@ class CSVDatabase(FileListDatabase, Database):
         return reader
 
     def groups(self):
-        names = list_dir(
+        return list_dir(
             self.dataset_protocols_path,
             self.protocol,
             folders=True,
             files=False,
         )
-
-        return names
 
     def protocols(self):
         return list_dir(
@@ -371,7 +410,7 @@ class CSVDatabase(FileListDatabase, Database):
 
         return sample_sets
 
-    def zprobes(self, group, proportion=1.0):
+    def zprobes(self, group="dev", proportion=1.0):
         sample_sets = self._zprobes(self.protocol, group)
         if not sample_sets:
             return sample_sets
@@ -394,10 +433,16 @@ class CSVDatabase(FileListDatabase, Database):
 
 
 class FileSampleLoader(BaseEstimator, TransformerMixin):
-    """Loads file-based samples.
-    Given the ``sample.path`` attribute and ``dataset_original_directory`` and the
-    ``extension``, this transformer will load the samples from the file.
+    """Loads file-based samples into :class:`~bob.pipelines.DelayedSample` objects.
+
+    Given the :attr:`sample.path` attribute,``dataset_original_directory`` and an
+    ``extension``, this transformer will load lazily the samples from the file.
     The ``data_loader`` is used to load the data.
+
+    The resulting :class:`~bob.pipelines.DelayedSample` objects will call
+    ``data_loader`` when their :attr:`data` is accessed.
+
+    This transformer will not access the data files.
 
     Parameters
     ----------
