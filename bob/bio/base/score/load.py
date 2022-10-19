@@ -737,7 +737,7 @@ def split_csv_vuln(filename):
     split_scores = {"licit_neg": [], "licit_pos": [], "spoof": []}
     for row in _iterate_csv_score_file(filename):
         if not row["probe_attack_type"]:  # licit
-            if row["probe_reference_id"] == row["bio_ref_reference_id"]:
+            if row["probe_template_id"] == row["bio_ref_template_id"]:
                 split_scores["licit_pos"].append(row["score"])
             else:
                 split_scores["licit_neg"].append(row["score"])

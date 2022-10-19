@@ -11,11 +11,12 @@ from sklearn.pipeline import make_pipeline
 
 import bob.io.base
 
-from bob.bio.base.database import CSVDataset, CSVToSampleLoaderBiometrics
 from bob.extension.download import get_file
 
+from . import CSVDatabase, FileSampleLoader
 
-class AtntBioDatabase(CSVDataset):
+
+class AtntBioDatabase(CSVDatabase):
     """
     The AT&T (aka ORL) database of faces
     (http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html). This
@@ -33,8 +34,8 @@ class AtntBioDatabase(CSVDataset):
     ):
 
         # Downloading model if not exists
-        dataset_protocol_path = pkg_resources.resource_filename(
-            "bob.bio.base", "test/data"
+        dataset_protocols_path = pkg_resources.resource_filename(
+            "bob.bio.base", "test/data/atnt"
         )
         if dataset_original_directory is None:
             path = get_file(
@@ -48,10 +49,10 @@ class AtntBioDatabase(CSVDataset):
 
         super().__init__(
             name="atnt",
-            dataset_protocol_path=dataset_protocol_path,
+            dataset_protocols_path=dataset_protocols_path,
             protocol=protocol,
-            csv_to_sample_loader=make_pipeline(
-                CSVToSampleLoaderBiometrics(
+            transformer=make_pipeline(
+                FileSampleLoader(
                     data_loader=bob.io.base.load,
                     dataset_original_directory=dataset_original_directory,
                     extension=".pgm",
@@ -59,7 +60,7 @@ class AtntBioDatabase(CSVDataset):
             ),
             **kwargs,
         )
-        # just expost original_directory for backward compatibility of tests
+        # just expose original_directory for backward compatibility of tests
         self.original_directory = dataset_original_directory
         self.original_extension = ".pgm"
 
@@ -85,11 +86,11 @@ class AtntBioDatabase(CSVDataset):
             samples += self.probes()
 
         if model_ids:
-            samples = [s for s in samples if s.reference_id in model_ids]
+            samples = [s for s in samples if s.template_id in model_ids]
 
         # create the old attributes
         for s in samples:
-            s.client_id = s.reference_id
+            s.client_id = s.template_id
             s.path = s.id = s.key
 
         return samples

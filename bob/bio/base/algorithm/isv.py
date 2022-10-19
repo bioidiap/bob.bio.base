@@ -44,7 +44,7 @@ class ISV(ISVMachine, BioAlgorithm):
     def _more_tags(self):
         return {
             "bob_fit_supports_dask_bag": True,
-            "bob_fit_extra_input": [("y", "reference_id_int")],
+            "bob_fit_extra_input": [("y", "subject_id_int")],
             "bob_enrolled_save_fn": self.custom_enrolled_save_fn,
             "bob_enrolled_load_fn": self.custom_enrolled_load_fn,
             "bob_checkpoint_features": False,

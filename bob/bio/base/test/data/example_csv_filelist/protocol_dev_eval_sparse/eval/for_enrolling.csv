@@ -1,0 +1,11 @@
+path,subject_id,template_id
+data/model5_session1_sample1,5,5
+data/model5_session1_sample2,5,5
+data/model5_session1_sample3,5,6
+data/model5_session2_sample1,5,6
+data/model6_session1_sample1,6,7
+data/model6_session1_sample2,6,7
+data/model6_session1_sample3,6,7
+data/model6_session2_sample1,6,8
+data/model6_session2_sample1,6,9
+data/model6_session2_sample1,6,10
