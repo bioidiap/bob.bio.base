@@ -240,7 +240,7 @@ class CSVDatabase(FileListDatabase, Database):
         """Returns a definition file containing one sample per row."""
         list_file = search_file(
             self.dataset_protocols_path,
-            os.path.join(self.protocol, group, name + ".csv"),
+            os.path.join("/" + self.protocol, group, name + ".csv"),
         )
         return list_file
 

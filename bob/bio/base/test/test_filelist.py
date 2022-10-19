@@ -37,11 +37,16 @@ legacy2_example_dir = os.path.realpath(
 )
 
 
-example_dir = os.path.realpath(
-    bob.io.base.test_utils.datafile(".", __name__, "data/")
+example_protocol_path = os.path.realpath(
+    bob.io.base.test_utils.datafile(".", __name__, "data/example_csv_filelist")
+)
+example_protocol_archive = os.path.realpath(
+    bob.io.base.test_utils.datafile(
+        ".", __name__, "data/example_csv_filelist.tar.gz"
+    )
 )
 atnt_protocol_path = os.path.realpath(
-    bob.io.base.test_utils.datafile(".", __name__, "data/")
+    bob.io.base.test_utils.datafile(".", __name__, "data/atnt")
 )
 
 
@@ -61,13 +66,9 @@ def all_sample_set(objects: list[Any]) -> bool:
 
 def test_csv_file_list_dev_no_metadata():
 
-    db_name = "example_csv_filelist"
-    db_dir = os.path.join(
-        example_dir, db_name
-    )  # TODO check that this is the correct behavior
     dataset = CSVDatabase(
-        name=db_name,
-        dataset_protocols_path=db_dir,
+        name="example_csv_filelist",
+        dataset_protocols_path=example_protocol_path,
         protocol="protocol_only_dev",
     )
     assert len(dataset.background_model_samples()) == 8
@@ -85,11 +86,9 @@ def test_csv_file_list_dev_no_metadata():
 
 def test_csv_file_list_dev_metadata():
 
-    db_name = "example_csv_filelist"
-    db_dir = os.path.join(example_dir, db_name)
     dataset = CSVDatabase(
-        name=db_name,
-        dataset_protocols_path=db_dir,
+        name="example_csv_filelist",
+        dataset_protocols_path=example_protocol_path,
         protocol="protocol_only_dev_metadata",
     )
     assert len(dataset.background_model_samples()) == 8
@@ -187,9 +186,8 @@ def test_csv_file_list_dev_eval_all_vs_all():
 
         assert len(dataset.groups()) == 3
 
-    db_name = "example_csv_filelist"
-    run(os.path.join(example_dir, db_name))
-    run(os.path.join(example_dir, f"{db_name}.tar.gz"))
+    run(example_protocol_path)
+    run(example_protocol_archive)
 
 
 def test_csv_file_list_dev_eval_score_norm():
@@ -259,9 +257,8 @@ def test_csv_file_list_dev_eval_score_norm():
         assert len(znorm_dataset.zprobes(proportion=0.5)) == 1
         assert sum(len(s) for s in znorm_dataset.zprobes(proportion=0.5)) == 4
 
-    db_name = "example_csv_filelist"
-    run(os.path.join(example_dir, db_name))
-    run(os.path.join(example_dir, f"{db_name}.tar.gz"))
+    run(example_protocol_path)
+    run(example_protocol_archive)
 
 
 def test_csv_file_list_dev_eval_sparse():
@@ -272,11 +269,9 @@ def test_csv_file_list_dev_eval_sparse():
         )
     )
 
-    db_name = "example_csv_filelist"
-    db_dir = os.path.join(example_dir, db_name)
     dataset = CSVDatabase(
-        name=db_name,
-        dataset_protocols_path=db_dir,
+        name="example_csv_filelist",
+        dataset_protocols_path=example_protocol_path,
         protocol="protocol_dev_eval_sparse",
         transformer=make_pipeline(
             FileSampleLoader(
@@ -336,11 +331,9 @@ def test_csv_file_list_dev_eval_sparse():
 
 def test_csv_file_list_atnt():
 
-    db_name = "atnt"
-    db_dir = os.path.join(atnt_protocol_path, db_name)
     dataset = CSVDatabase(
-        name=db_name,
-        dataset_protocols_path=db_dir,
+        name="atnt",
+        dataset_protocols_path=atnt_protocol_path,
         protocol="idiap_protocol",
     )
     assert len(dataset.background_model_samples()) == 200
@@ -380,11 +373,9 @@ def run_experiment(dataset):
 
 def test_atnt_experiment():
 
-    db_name = "atnt"
-    db_dir = os.path.join(atnt_protocol_path, db_name)
     dataset = CSVDatabase(
-        name=db_name,
-        dataset_protocols_path=db_dir,
+        name="atnt",
+        dataset_protocols_path=atnt_protocol_path,
         protocol="idiap_protocol",
         transformer=FileSampleLoader(
             data_loader=data_loader,

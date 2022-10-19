@@ -60,7 +60,7 @@ class AtntBioDatabase(CSVDatabase):
             ),
             **kwargs,
         )
-        # just expost original_directory for backward compatibility of tests
+        # just expose original_directory for backward compatibility of tests
         self.original_directory = dataset_original_directory
         self.original_extension = ".pgm"
 
