@@ -76,6 +76,7 @@ test:
     - coverage {{ coverage }}
     - sphinx {{ sphinx }}
     - sphinx_rtd_theme {{ sphinx_rtd_theme }}
+    - sphinx-autodoc-typehints {{ sphinx_autodoc_typehints }}
     - matplotlib {{ matplotlib }}
 
 about:

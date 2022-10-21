@@ -10,8 +10,6 @@ logger = logging.getLogger("bob.bio.base")
 
 import bob.io.base
 
-from bob.bio.base import database
-
 
 def filter_missing_files(
     file_names, split_by_client=False, allow_missing_files=True
@@ -86,7 +84,6 @@ def read_original_data(biofile, directory, extension):
     object
         Whatver ``biofile.load`` returns; usually a :py:class:`numpy.ndarray`
     """
-    assert isinstance(biofile, database.BioFile)
     return biofile.load(directory, extension)
 
 

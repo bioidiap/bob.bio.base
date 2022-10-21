@@ -6,6 +6,8 @@
 
 import os
 
+from typing import Any
+
 import numpy as np
 import pytest
 
@@ -17,17 +19,14 @@ import bob.io.base.test_utils
 
 from bob.bio.base.algorithm import Distance
 from bob.bio.base.database import (
-    CSVDataset,
-    CSVDatasetCrossValidation,
-    CSVDatasetZTNorm,
-    CSVToSampleLoaderBiometrics,
+    AnnotationsLoader,
+    CSVDatabase,
     FileListBioDatabase,
-    LSTToSampleLoader,
+    FileSampleLoader,
 )
 from bob.bio.base.pipelines.pipelines import PipelineSimple
 from bob.bio.base.test.dummy.database import database as ATNT_DATABASE
-from bob.pipelines import DelayedSample, SampleSet, wrap
-from bob.pipelines.sample_loaders import AnnotationsLoader
+from bob.pipelines import Sample, SampleSet, wrap
 
 legacy_example_dir = os.path.realpath(
     bob.io.base.test_utils.datafile(".", __name__, "data/")
@@ -38,81 +37,88 @@ legacy2_example_dir = os.path.realpath(
 )
 
 
-example_dir = os.path.realpath(
-    bob.io.base.test_utils.datafile(".", __name__, "data/")
+example_protocol_path = os.path.realpath(
+    bob.io.base.test_utils.datafile(".", __name__, "data/example_csv_filelist")
+)
+example_protocol_archive = os.path.realpath(
+    bob.io.base.test_utils.datafile(
+        ".", __name__, "data/example_csv_filelist.tar.gz"
+    )
 )
 atnt_protocol_path = os.path.realpath(
-    bob.io.base.test_utils.datafile(".", __name__, "data/")
-)
-
-atnt_protocol_path_cross_validation = os.path.join(
-    os.path.realpath(
-        bob.io.base.test_utils.datafile(
-            ".", __name__, "data/atnt/cross_validation"
-        )
-    ),
-    "metadata.csv",
+    bob.io.base.test_utils.datafile(".", __name__, "data/atnt")
 )
 
 
-def check_all_true(list_of_something, something):
+def all_sample(objects: list[Any]) -> bool:
+    """Checks that all elements of ``objects`` are valid :class:`Sample` instances."""
+    return all(isinstance(o, Sample) for o in objects)
+
+
+def all_sample_set(objects: list[Any]) -> bool:
+    """Checks that all elements of ``objects`` are :class:`SampleSet` instances.
+
+    Also checks that all samples in these samplesets are :class:`Sample` instances.
     """
-    Assert if list of `Something` contains `Something`
-    """
-    return np.alltrue([isinstance(s, something) for s in list_of_something])
+
+    return all(isinstance(o, SampleSet) and all_sample(o) for o in objects)
 
 
-def test_csv_file_list_dev_only():
+def test_csv_file_list_dev_no_metadata():
 
-    dataset = CSVDataset(
+    dataset = CSVDatabase(
         name="example_csv_filelist",
-        dataset_protocol_path=example_dir,
+        dataset_protocols_path=example_protocol_path,
         protocol="protocol_only_dev",
     )
     assert len(dataset.background_model_samples()) == 8
-    assert check_all_true(dataset.background_model_samples(), DelayedSample)
+    assert all_sample(dataset.background_model_samples())
 
     assert len(dataset.references()) == 2
-    assert check_all_true(dataset.references(), SampleSet)
+    assert all_sample_set(dataset.references())
+    assert all(len(r) == 4 for r in dataset.references())
 
-    assert len(dataset.probes()) == 10
-    assert check_all_true(dataset.probes(), SampleSet)
+    assert len(dataset.probes()) == 2
+    assert all_sample_set(dataset.probes())
+    assert len(dataset.probes()[0]) == 4
+    assert len(dataset.probes()[1]) == 6
 
 
-def test_csv_file_list_dev_only_metadata():
+def test_csv_file_list_dev_metadata():
 
-    dataset = CSVDataset(
+    dataset = CSVDatabase(
         name="example_csv_filelist",
-        dataset_protocol_path=example_dir,
+        dataset_protocols_path=example_protocol_path,
         protocol="protocol_only_dev_metadata",
     )
     assert len(dataset.background_model_samples()) == 8
 
-    assert check_all_true(dataset.background_model_samples(), DelayedSample)
-    assert np.alltrue(
-        ["metadata_1" in s.__dict__ for s in dataset.background_model_samples()]
+    assert all_sample(dataset.background_model_samples())
+    assert all(
+        hasattr(s, "metadata_1") for s in dataset.background_model_samples()
     )
-    assert np.alltrue(
-        ["metadata_2" in s.__dict__ for s in dataset.background_model_samples()]
+    assert all(
+        hasattr(s, "metadata_2") for s in dataset.background_model_samples()
     )
 
     assert len(dataset.references()) == 2
-    assert check_all_true(dataset.references(), SampleSet)
-    assert np.alltrue(
-        ["metadata_1" in s.__dict__ for s in dataset.references()]
-    )
-    assert np.alltrue(
-        ["metadata_2" in s.__dict__ for s in dataset.references()]
-    )
+    assert all_sample_set(dataset.references())
+    assert all(len(r) == 4 for r in dataset.references())
+    flat_references = (s for ss in dataset.references() for s in ss)
+    assert all(hasattr(s, "metadata_1") for s in flat_references)
+    assert all(hasattr(s, "metadata_2") for s in flat_references)
 
-    assert len(dataset.probes()) == 10
-    assert check_all_true(dataset.probes(), SampleSet)
-    assert np.alltrue(["metadata_1" in s.__dict__ for s in dataset.probes()])
-    assert np.alltrue(["metadata_2" in s.__dict__ for s in dataset.probes()])
-    assert np.alltrue(["references" in s.__dict__ for s in dataset.probes()])
+    assert len(dataset.probes()) == 2
+    assert all_sample_set(dataset.probes())
+    assert all(hasattr(s, "references") for s in dataset.probes())
+    assert len(dataset.probes()[0]) == 4
+    assert len(dataset.probes()[1]) == 6
+    flat_probes = (s for ss in dataset.probes() for s in ss)
+    assert all(hasattr(s, "metadata_1") for s in flat_probes)
+    assert all(hasattr(s, "metadata_2") for s in flat_probes)
 
 
-def test_csv_file_list_dev_eval():
+def test_csv_file_list_dev_eval_all_vs_all():
 
     annotation_directory = os.path.realpath(
         bob.io.base.test_utils.datafile(
@@ -122,15 +128,15 @@ def test_csv_file_list_dev_eval():
 
     def run(filename):
 
-        dataset = CSVDataset(
+        dataset = CSVDatabase(
             name="example_csv_filelist",
-            dataset_protocol_path=filename,
+            dataset_protocols_path=filename,
             protocol="protocol_dev_eval",
-            csv_to_sample_loader=make_pipeline(
-                CSVToSampleLoaderBiometrics(
+            transformer=make_pipeline(
+                FileSampleLoader(
                     data_loader=bob.io.base.load,
-                    dataset_original_directory="",
-                    extension="",
+                    dataset_original_directory="non-existent",
+                    extension=".nothing",
                 ),
                 AnnotationsLoader(
                     annotation_directory=annotation_directory,
@@ -140,34 +146,48 @@ def test_csv_file_list_dev_eval():
             ),
         )
         assert len(dataset.background_model_samples()) == 8
-        assert check_all_true(dataset.background_model_samples(), DelayedSample)
+        assert all_sample(dataset.background_model_samples())
 
         assert len(dataset.references()) == 2
-        assert check_all_true(dataset.references(), SampleSet)
+        assert all_sample_set(dataset.references())
+        assert len(dataset.references()[0]) == 4
+        assert len(dataset.references()[1]) == 4
 
-        assert len(dataset.probes()) == 8
-        assert check_all_true(dataset.references(), SampleSet)
+        assert len(dataset.probes()) == 2
+        assert all_sample_set(dataset.probes())
+        assert len(dataset.probes()[0]) == 4
+        assert len(dataset.probes()[1]) == 4
 
-        assert len(dataset.references(group="eval")) == 6
-        assert check_all_true(dataset.references(group="eval"), SampleSet)
+        eval_references = dataset.references(group="eval")
+        assert len(eval_references) == 6
+        assert all_sample_set(eval_references)
+        assert all(
+            len(eval_references[i]) == n
+            for i, n in enumerate((2, 2, 3, 1, 1, 1))
+        )
 
-        assert len(dataset.probes(group="eval")) == 13
-        assert check_all_true(dataset.probes(group="eval"), SampleSet)
+        eval_probes = dataset.probes(group="eval")
+        assert len(eval_probes) == 8
+        assert all_sample_set(eval_probes)
+        assert all(
+            len(eval_probes[i]) == n
+            for i, n in enumerate((2, 2, 3, 1, 1, 2, 1, 1))
+        )
 
-        assert len(dataset.all_samples(groups=None)) == 47
-        assert check_all_true(dataset.all_samples(groups=None), DelayedSample)
+        assert len(dataset.all_samples(groups=None)) == 63
+        assert all_sample(dataset.all_samples(groups=None))
 
         # Check the annotations
         for s in dataset.all_samples(groups=None):
             assert isinstance(s.annotations, dict)
 
-        assert len(dataset.reference_ids(group="dev")) == 2
-        assert len(dataset.reference_ids(group="eval")) == 6
+        assert len(dataset.template_ids(group="dev")) == 2
+        assert len(dataset.template_ids(group="eval")) == 6
 
         assert len(dataset.groups()) == 3
 
-    run(example_dir)
-    run(os.path.join(example_dir, "example_csv_filelist.tar.gz"))
+    run(example_protocol_path)
+    run(example_protocol_archive)
 
 
 def test_csv_file_list_dev_eval_score_norm():
@@ -179,15 +199,15 @@ def test_csv_file_list_dev_eval_score_norm():
     )
 
     def run(filename):
-        znorm_dataset = CSVDatasetZTNorm(
+        znorm_dataset = CSVDatabase(
             name="example_csv_filelist",
-            dataset_protocol_path=filename,
+            dataset_protocols_path=filename,
             protocol="protocol_dev_eval",
-            csv_to_sample_loader=make_pipeline(
-                CSVToSampleLoaderBiometrics(
+            transformer=make_pipeline(
+                FileSampleLoader(
                     data_loader=bob.io.base.load,
-                    dataset_original_directory="",
-                    extension="",
+                    dataset_original_directory="non-existent",
+                    extension=".nothing",
                 ),
                 AnnotationsLoader(
                     annotation_directory=annotation_directory,
@@ -198,44 +218,47 @@ def test_csv_file_list_dev_eval_score_norm():
         )
 
         assert len(znorm_dataset.background_model_samples()) == 8
-        assert check_all_true(
-            znorm_dataset.background_model_samples(), DelayedSample
-        )
+        assert all_sample(znorm_dataset.background_model_samples())
 
         assert len(znorm_dataset.references()) == 2
-        assert check_all_true(znorm_dataset.references(), SampleSet)
+        assert sum(len(s) for s in znorm_dataset.references()) == 8
+        assert all_sample_set(znorm_dataset.references())
 
-        assert len(znorm_dataset.probes()) == 8
-        assert check_all_true(znorm_dataset.references(), SampleSet)
+        assert len(znorm_dataset.probes()) == 2
+        assert sum(len(s) for s in znorm_dataset.probes()) == 8
+        assert all_sample_set(znorm_dataset.references())
 
         assert len(znorm_dataset.references(group="eval")) == 6
-        assert check_all_true(znorm_dataset.references(group="eval"), SampleSet)
+        assert sum(len(s) for s in znorm_dataset.references(group="eval")) == 10
+        assert all_sample_set(znorm_dataset.references(group="eval"))
 
-        assert len(znorm_dataset.probes(group="eval")) == 13
-        assert check_all_true(znorm_dataset.probes(group="eval"), SampleSet)
+        assert len(znorm_dataset.probes(group="eval")) == 8
+        assert sum(len(s) for s in znorm_dataset.probes(group="eval")) == 13
+        assert all_sample_set(znorm_dataset.probes(group="eval"))
 
-        assert len(znorm_dataset.all_samples(groups=None)) == 47
-        assert check_all_true(
-            znorm_dataset.all_samples(groups=None), DelayedSample
-        )
+        assert len(znorm_dataset.all_samples(groups=None)) == 63
+        assert all_sample(znorm_dataset.all_samples(groups=None))
 
         # Check the annotations
         for s in znorm_dataset.all_samples(groups=None):
             assert isinstance(s.annotations, dict)
 
-        assert len(znorm_dataset.reference_ids(group="dev")) == 2
-        assert len(znorm_dataset.reference_ids(group="eval")) == 6
+        assert len(znorm_dataset.template_ids(group="dev")) == 2
+        assert len(znorm_dataset.template_ids(group="eval")) == 6
         assert len(znorm_dataset.groups()) == 3
+        assert set(znorm_dataset.groups()) == set(("train", "dev", "eval"))
 
         # Checking ZT-Norm stuff
         assert len(znorm_dataset.treferences()) == 2
-        assert len(znorm_dataset.zprobes()) == 8
+        assert len(znorm_dataset.zprobes()) == 2
+        assert sum(len(s) for s in znorm_dataset.zprobes()) == 8
 
         assert len(znorm_dataset.treferences(proportion=0.5)) == 1
-        assert len(znorm_dataset.zprobes(proportion=0.5)) == 4
+        assert len(znorm_dataset.zprobes(proportion=0.5)) == 1
+        assert sum(len(s) for s in znorm_dataset.zprobes(proportion=0.5)) == 4
 
-    run(example_dir)
-    run(os.path.join(example_dir, "example_csv_filelist.tar.gz"))
+    run(example_protocol_path)
+    run(example_protocol_archive)
 
 
 def test_csv_file_list_dev_eval_sparse():
@@ -246,15 +269,15 @@ def test_csv_file_list_dev_eval_sparse():
         )
     )
 
-    dataset = CSVDataset(
+    dataset = CSVDatabase(
         name="example_csv_filelist",
-        dataset_protocol_path=example_dir,
+        dataset_protocols_path=example_protocol_path,
         protocol="protocol_dev_eval_sparse",
-        csv_to_sample_loader=make_pipeline(
-            CSVToSampleLoaderBiometrics(
+        transformer=make_pipeline(
+            FileSampleLoader(
                 data_loader=bob.io.base.load,
-                dataset_original_directory="",
-                extension="",
+                dataset_original_directory="non-existent",
+                extension=".nothing",
             ),
             AnnotationsLoader(
                 annotation_directory=annotation_directory,
@@ -262,29 +285,30 @@ def test_csv_file_list_dev_eval_sparse():
                 annotation_type="json",
             ),
         ),
-        is_sparse=True,
     )
 
     assert len(dataset.background_model_samples()) == 8
-    assert check_all_true(dataset.background_model_samples(), DelayedSample)
+    assert all_sample(dataset.background_model_samples())
 
     assert len(dataset.references()) == 2
-    assert check_all_true(dataset.references(), SampleSet)
+    assert all_sample_set(dataset.references())
 
     probes = dataset.probes()
-    assert len(probes) == 8
+    assert len(probes) == 2
+    assert sum(len(s) for s in probes) == 8
 
-    # here, 1 comparisons comparison per probe
+    # Here, 1 comparison per probe
     for p in probes:
         assert len(p.references) == 1
-    assert check_all_true(dataset.references(), SampleSet)
+    assert all_sample_set(dataset.references())
 
     assert len(dataset.references(group="eval")) == 6
-    assert check_all_true(dataset.references(group="eval"), SampleSet)
+    assert all_sample_set(dataset.references(group="eval"))
 
     probes = dataset.probes(group="eval")
-    assert len(probes) == 13
-    assert check_all_true(probes, SampleSet)
+    assert len(probes) == 8
+    assert sum(len(s) for s in probes) == 14
+    assert all_sample_set(probes)
     # Here, 1 comparison per probe, EXPECT THE FIRST ONE
     for i, p in enumerate(probes):
         if i == 0:
@@ -293,126 +317,32 @@ def test_csv_file_list_dev_eval_sparse():
             assert len(p.references) == 1
 
     assert len(dataset.all_samples(groups=None)) == 48
-    assert check_all_true(dataset.all_samples(groups=None), DelayedSample)
+    assert all_sample(dataset.all_samples(groups=None))
 
     # Check the annotations
     for s in dataset.all_samples(groups=None):
         assert isinstance(s.annotations, dict)
 
-    assert len(dataset.reference_ids(group="dev")) == 2
-    assert len(dataset.reference_ids(group="eval")) == 6
+    assert len(dataset.template_ids(group="dev")) == 2
+    assert len(dataset.template_ids(group="eval")) == 6
 
     assert len(dataset.groups()) == 3
-
-
-def test_lst_file_list_dev_eval():
-
-    dataset = CSVDataset(
-        name="example_filelist",
-        dataset_protocol_path=legacy_example_dir,
-        protocol="",
-        csv_to_sample_loader=LSTToSampleLoader(
-            data_loader=bob.io.base.load,
-            dataset_original_directory="",
-            extension="",
-        ),
-    )
-
-    assert len(dataset.background_model_samples()) == 8
-
-    assert check_all_true(dataset.background_model_samples(), DelayedSample)
-
-    assert len(dataset.references()) == 2
-    assert check_all_true(dataset.references(), SampleSet)
-
-    assert len(dataset.probes()) == 10
-    assert check_all_true(dataset.references(), SampleSet)
-
-    assert len(dataset.references(group="eval")) == 2
-    assert check_all_true(dataset.references(group="eval"), SampleSet)
-
-    assert len(dataset.probes(group="eval")) == 8
-    assert check_all_true(dataset.probes(group="eval"), SampleSet)
-
-    assert len(dataset.all_samples(groups=None)) == 42
-    assert check_all_true(dataset.all_samples(groups=None), DelayedSample)
-
-    assert len(dataset.reference_ids(group="dev")) == 2
-    assert len(dataset.reference_ids(group="eval")) == 2
-
-    assert len(dataset.groups()) == 3
-
-
-def test_lst_file_list_dev_eval_sparse():
-
-    dataset = CSVDataset(
-        name="example_filelist",
-        dataset_protocol_path=legacy_example_dir,
-        protocol="",
-        csv_to_sample_loader=LSTToSampleLoader(
-            data_loader=bob.io.base.load,
-            dataset_original_directory="",
-            extension="",
-        ),
-        is_sparse=True,
-    )
-
-    assert len(dataset.background_model_samples()) == 8
-
-    assert check_all_true(dataset.background_model_samples(), DelayedSample)
-
-    assert len(dataset.references()) == 2
-    assert check_all_true(dataset.references(), SampleSet)
-
-    assert len(dataset.probes()) == 8
-    assert check_all_true(dataset.references(), SampleSet)
-
-    assert len(dataset.references(group="eval")) == 2
-    assert check_all_true(dataset.references(group="eval"), SampleSet)
-
-    assert len(dataset.probes(group="eval")) == 8
-    assert check_all_true(dataset.probes(group="eval"), SampleSet)
-
-    assert len(dataset.all_samples(groups=None)) == 44
-    assert check_all_true(dataset.all_samples(groups=None), DelayedSample)
-
-    assert len(dataset.reference_ids(group="dev")) == 2
-    assert len(dataset.reference_ids(group="eval")) == 2
-
-    assert len(dataset.groups()) == 3
-
-
-def test_lst_file_list_dev_sparse_filelist2():
-
-    dataset = CSVDataset(
-        name="example_filelist2",
-        dataset_protocol_path=legacy2_example_dir,
-        protocol="",
-        csv_to_sample_loader=LSTToSampleLoader(
-            data_loader=bob.io.base.load,
-            dataset_original_directory="",
-            extension="",
-        ),
-        is_sparse=True,
-    )
-
-    assert len(dataset.references()) == 3
-    assert check_all_true(dataset.references(), SampleSet)
-
-    assert len(dataset.probes()) == 9
-    assert check_all_true(dataset.references(), SampleSet)
 
 
 def test_csv_file_list_atnt():
 
-    dataset = CSVDataset(
+    dataset = CSVDatabase(
         name="atnt",
-        dataset_protocol_path=atnt_protocol_path,
+        dataset_protocols_path=atnt_protocol_path,
         protocol="idiap_protocol",
     )
     assert len(dataset.background_model_samples()) == 200
     assert len(dataset.references()) == 20
+    assert sum(len(s) for s in dataset.references()) == 100
+    assert all(len(s) == 5 for s in dataset.references())
     assert len(dataset.probes()) == 100
+    assert sum(len(s) for s in dataset.probes()) == 100
+    assert all(len(s) == 1 for s in dataset.probes())
     assert len(dataset.all_samples(groups=["train"])) == 200
     assert len(dataset.all_samples(groups=["dev"])) == 200
     assert len(dataset.all_samples(groups=None)) == 400
@@ -420,25 +350,6 @@ def test_csv_file_list_atnt():
 
 def data_loader(path):
     return bob.io.base.load(path)
-
-
-def test_csv_cross_validation_atnt():
-
-    dataset = CSVDatasetCrossValidation(
-        name="test",
-        csv_file_name=atnt_protocol_path_cross_validation,
-        random_state=0,
-        test_size=0.8,
-        csv_to_sample_loader=CSVToSampleLoaderBiometrics(
-            data_loader=data_loader,
-            dataset_original_directory=ATNT_DATABASE.original_directory,
-            extension=".pgm",
-        ),
-    )
-    assert len(dataset.background_model_samples()) == 80
-    assert len(dataset.references("dev")) == 32
-    assert len(dataset.probes("dev")) == 288
-    assert len(dataset.all_samples(groups=None)) == 400
 
 
 def run_experiment(dataset):
@@ -462,11 +373,11 @@ def run_experiment(dataset):
 
 def test_atnt_experiment():
 
-    dataset = CSVDataset(
+    dataset = CSVDatabase(
         name="atnt",
-        dataset_protocol_path=atnt_protocol_path,
+        dataset_protocols_path=atnt_protocol_path,
         protocol="idiap_protocol",
-        csv_to_sample_loader=CSVToSampleLoaderBiometrics(
+        transformer=FileSampleLoader(
             data_loader=data_loader,
             dataset_original_directory=ATNT_DATABASE.original_directory,
             extension=".pgm",
@@ -475,38 +386,7 @@ def test_atnt_experiment():
 
     scores = run_experiment(dataset)
     assert len(scores) == 100
-    assert np.alltrue([len(s) == 20] for s in scores)
-
-
-def test_atnt_experiment_cross_validation():
-
-    samples_per_identity = 10
-    total_identities = 40
-    samples_for_enrollment = 1
-
-    def run_cross_validation_experiment(test_size=0.9):
-        dataset = CSVDatasetCrossValidation(
-            name="atnt",
-            csv_file_name=atnt_protocol_path_cross_validation,
-            random_state=0,
-            test_size=test_size,
-            csv_to_sample_loader=CSVToSampleLoaderBiometrics(
-                data_loader=data_loader,
-                dataset_original_directory=ATNT_DATABASE.original_directory,
-                extension=".pgm",
-            ),
-        )
-
-        scores = run_experiment(dataset)
-        assert len(scores) == int(
-            total_identities
-            * test_size
-            * (samples_per_identity - samples_for_enrollment)
-        )
-
-    run_cross_validation_experiment(test_size=0.9)
-    run_cross_validation_experiment(test_size=0.8)
-    run_cross_validation_experiment(test_size=0.5)
+    assert all(len(s) == 20 for s in scores)
 
 
 ####

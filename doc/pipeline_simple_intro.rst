@@ -190,13 +190,13 @@ Constructing the pipeline
 As stated before, a pipeline is a series of Transformers and a BiometricAlgorithm chained together.
 In PipelineSimple, 3 sub-pipelines are defined: a training pipeline, an enrollment pipeline, and a scoring pipeline.
 
-.. figure:: img/vanilla_biometrics_pipeline.png
+.. figure:: img/biometrics_sub_pipelines.png
   :figwidth: 95%
   :align: center
   :alt: Data for training is passed to the Transformers *fit* method. Data for evaluation is going through the Transformers before being passed to the BiometricAlgorithm *enroll* or *score* methods.
 
   Example of a pipeline showing the sub-pipelines. The data of *references* is used for enrollment and the data of *probes* is used for scoring.
-  Each subject's data goes through the Transformer (or series of Transformers) before being given to :py:meth:`BiometricAlgorithm.enroll` or :py:meth:`BiometricAlgorithm.score`.
+  Each subject's data goes through the Transformer (or series of Transformers) before being given to :py:meth:`BiometricAlgorithm.create_templates` and then to :py:meth:`BiometricAlgorithm.compare`.
 
 Here is the creation of the pipeline combining the Transformer and the BioAlgorithm that we implemented earlier:
 
