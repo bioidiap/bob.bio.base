@@ -6,7 +6,7 @@ import csv
 import os
 import uuid
 
-from bob.pipelines import DelayedSample
+from bob.pipelines import DelayedSample, SampleSet
 from bob.pipelines.sample import SAMPLE_DATA_ATTRS
 
 from .abstract_classes import ScoreWriter
@@ -21,7 +21,7 @@ class FourColumnsScoreWriter(ScoreWriter):
     def __init__(self, path, extension=".txt", **kwargs):
         super().__init__(path, extension, **kwargs)
 
-    def write(self, probe_sampleset):
+    def write(self, probe_sampleset: list[SampleSet]):
         """
         Write scores and returns a :py:class:`bob.pipelines.DelayedSample`
         containing the instruction to open the score file
@@ -42,7 +42,7 @@ class FourColumnsScoreWriter(ScoreWriter):
                         "{0} {1} {2} {3}\n".format(
                             biometric_reference.subject_id,
                             probe.subject_id,
-                            probe.key,
+                            probe.template_id,
                             biometric_reference.data,
                         )
                         for biometric_reference in probe
@@ -84,7 +84,7 @@ class CSVScoreWriter(ScoreWriter):
         super().__init__(path, **kwargs)
         self.exclude_list = exclude_list
 
-    def write(self, probe_sampleset):
+    def write(self, probe_sampleset: list[SampleSet]):
         """
         Write scores and returns a :py:class:`bob.pipelines.DelayedSample` containing
         the instruction to open the score file
@@ -96,7 +96,11 @@ class CSVScoreWriter(ScoreWriter):
             probe_dict = dict(
                 (k, f"probe_{k}")
                 for k in probe_sampleset.__dict__.keys()
-                if not (k in self.exclude_list or k.startswith("_"))
+                if not (
+                    k in self.exclude_list
+                    or k.startswith("_")
+                    or k == "template_id"
+                )
             )
 
             bioref_dict = dict(
@@ -105,12 +109,12 @@ class CSVScoreWriter(ScoreWriter):
                 if not (k in self.exclude_list or k.startswith("_"))
             )
 
-            header = (
-                ["probe_key"]
-                + [probe_dict[k] for k in probe_dict]
-                + [bioref_dict[k] for k in bioref_dict]
-                + ["score"]
-            )
+            header = [
+                "probe_template_id",
+                *probe_dict.values(),
+                *bioref_dict.values(),
+                "score",
+            ]
             return header, probe_dict, bioref_dict
 
         os.makedirs(self.path, exist_ok=True)
@@ -126,8 +130,8 @@ class CSVScoreWriter(ScoreWriter):
                 if i == 0:
                     csv_writer.writerow(header)
 
-                probe_row = [str(probe.key)] + [
-                    str(getattr(probe, k)) for k in probe_dict.keys()
+                probe_row = [str(probe.template_id)] + [
+                    str(getattr(probe, k)) for k in probe_dict
                 ]
 
                 # Iterating over the biometric references
