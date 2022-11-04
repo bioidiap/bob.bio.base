@@ -27,10 +27,10 @@ from bob.bio.base.pipelines import (
 from bob.bio.base.script.pipeline_simple import (
     pipeline_simple as pipeline_simple_cli,
 )
-from bob.bio.base.test.test_transformers import FakeExtractor, FakePreprocessor
 from bob.bio.base.wrappers import wrap_bob_legacy
 from bob.extension.scripts.click_helper import assert_click_runner_result
 from bob.pipelines import DelayedSample, Sample, SampleSet
+from tests.test_transformers import FakeExtractor, FakePreprocessor
 
 
 class DummyDatabase:
@@ -542,7 +542,7 @@ def _create_test_config(path):
     with open(path, "w") as f:
         f.write(
             """
-from bob.bio.base.test.test_pipeline_simple import DummyDatabase, _make_transformer
+tests.test_pipeline_simple import DummyDatabase, _make_transformer
 from bob.bio.base.pipelines import PipelineSimple
 from bob.bio.base.algorithm import Distance
 

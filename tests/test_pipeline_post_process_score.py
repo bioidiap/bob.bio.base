@@ -28,11 +28,8 @@ from bob.bio.base.pipelines import (
 from bob.bio.base.script.pipeline_score_norm import (
     pipeline_score_norm as pipeline_score_norm_cli,
 )
-from bob.bio.base.test.test_pipeline_simple import (
-    DummyDatabase,
-    _make_transformer,
-)
 from bob.pipelines import Sample, SampleSet
+from tests.test_pipeline_simple import DummyDatabase, _make_transformer
 
 
 def zt_norm_stubs(references, probes, t_references, z_probes):

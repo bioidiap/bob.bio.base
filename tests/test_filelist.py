@@ -25,8 +25,8 @@ from bob.bio.base.database import (
     FileSampleLoader,
 )
 from bob.bio.base.pipelines.pipelines import PipelineSimple
-from bob.bio.base.test.dummy.database import database as ATNT_DATABASE
 from bob.pipelines import Sample, SampleSet, wrap
+from tests.dummy.database import database as ATNT_DATABASE
 
 legacy_example_dir = os.path.realpath(
     bob.io.base.test_utils.datafile(".", __name__, "data/")
