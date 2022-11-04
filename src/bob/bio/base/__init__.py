@@ -8,7 +8,6 @@ from . import annotator  # noqa: F401
 from . import pipelines  # noqa: F401
 
 from . import script  # noqa: F401
-from . import test  # noqa: F401
 from . import score  # noqa: F401
 
 
