@@ -12,7 +12,7 @@ import tempfile
 import numpy
 import pkg_resources
 
-from .. import score
+from bob.bio.base import score
 
 
 def test_load_scores():

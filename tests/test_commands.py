@@ -8,10 +8,9 @@ import pkg_resources
 
 from click.testing import CliRunner
 
+from bob.bio.base.score import scores
+from bob.bio.base.script import commands, compare_samples, sort, vuln_commands
 from bob.extension.scripts.click_helper import assert_click_runner_result
-
-from ..score import scores
-from ..script import commands, compare_samples, sort, vuln_commands
 
 
 def test_metrics():

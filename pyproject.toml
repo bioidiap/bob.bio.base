@@ -105,7 +105,7 @@
     compare-samples   = "bob.bio.base.script.compare_samples:compare_samples"
 
 [project.entry-points."bob.bio.base.bob.bio.annotator"]
-    dummy             = "bob.bio.base.test.dummy.annotator:annotator"
+    dummy             = "tests.dummy.annotator:annotator"
 
 [project.entry-points."bob.bio.base.bob.bio.pipeline.cli"]
     simple         = "bob.bio.base.script.pipeline_simple:pipeline_simple"
