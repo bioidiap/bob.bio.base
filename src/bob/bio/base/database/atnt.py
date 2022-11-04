@@ -35,7 +35,7 @@ class AtntBioDatabase(CSVDatabase):
 
         # Downloading model if not exists
         dataset_protocols_path = pkg_resources.resource_filename(
-            "bob.bio.base", "test/data/atnt"
+            "tests", "data/atnt"
         )
         if dataset_original_directory is None:
             path = get_file(
