@@ -38,9 +38,7 @@ def test_distance_algorithm():
     # compare model with probe
     enroll = utils.random_training_set(5, 5, 0.0, 255.0, seed=21)
     probe = bob.io.base.load(
-        pkg_resources.resource_filename(
-            "bob.bio.base.test", "data/lda_projected.hdf5"
-        )
+        pkg_resources.resource_filename(__name__, "data/lda_projected.hdf5")
     )
     models = cosine.create_templates([enroll], enroll=True)
     probes = cosine.create_templates([probe], enroll=False)

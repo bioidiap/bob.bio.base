@@ -24,7 +24,7 @@ def test_load_scores():
 
     for variant in cols:
         normal_score_file = pkg_resources.resource_filename(
-            "bob.bio.base.test", "data/dev-%s.txt" % variant
+            __name__, "data/dev-%s.txt" % variant
         )
         normal_scores = list(load_functions[variant](normal_score_file))
 
@@ -33,7 +33,7 @@ def test_load_scores():
 
         # read the compressed score file
         compressed_score_file = pkg_resources.resource_filename(
-            "bob.bio.base.test", "data/dev-%s.tar.gz" % variant
+            __name__, "data/dev-%s.tar.gz" % variant
         )
         compressed_scores = list(load_functions[variant](compressed_score_file))
 
@@ -67,7 +67,7 @@ def test_load_scores():
 def test_split_vuln_scores():
     """Tests that vulnerability score files are loaded correctly"""
     score_file = pkg_resources.resource_filename(
-        "bob.bio.base.test", "data/vuln/scores-dev.csv"
+        __name__, "data/vuln/scores-dev.csv"
     )
     split_scores = score.split_csv_vuln(score_file)
     assert all(
@@ -92,7 +92,7 @@ def test_split_scores():
     for variant in cols:
         # read score file in normal way
         normal_score_file = pkg_resources.resource_filename(
-            "bob.bio.base.test", "data/dev-%s.txt" % variant
+            __name__, "data/dev-%s.txt" % variant
         )
         negatives, positives = split_functions[variant](normal_score_file)
 
@@ -101,7 +101,7 @@ def test_split_scores():
 
         # read the compressed score file
         compressed_score_file = pkg_resources.resource_filename(
-            "bob.bio.base.test", "data/dev-%s.tar.gz" % variant
+            __name__, "data/dev-%s.tar.gz" % variant
         )
         negatives, positives = split_functions[variant](compressed_score_file)
 
@@ -130,10 +130,10 @@ def test_load_score():
 
     for variant in cols:
         compressed_score_file = pkg_resources.resource_filename(
-            "bob.bio.base.test", "data/dev-%s.tar.gz" % variant
+            __name__, "data/dev-%s.tar.gz" % variant
         )
         normal_score_file = pkg_resources.resource_filename(
-            "bob.bio.base.test", "data/dev-%s.txt" % variant
+            __name__, "data/dev-%s.txt" % variant
         )
         normal_scores = score.load_score(normal_score_file, cols[variant])
 
@@ -142,7 +142,7 @@ def test_load_score():
 
         # read the compressed score file
         compressed_score_file = pkg_resources.resource_filename(
-            "bob.bio.base.test", "data/dev-%s.tar.gz" % variant
+            __name__, "data/dev-%s.tar.gz" % variant
         )
         compressed_scores = score.load_score(
             compressed_score_file, cols[variant]
@@ -168,7 +168,7 @@ def test_dump_score():
     for variant in cols:
         # read score file
         normal_score_file = pkg_resources.resource_filename(
-            "bob.bio.base.test", "data/dev-%s.txt" % variant
+            __name__, "data/dev-%s.txt" % variant
         )
         normal_scores = score.load_score(normal_score_file, cols[variant])
 
