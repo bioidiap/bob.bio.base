@@ -542,7 +542,7 @@ def _create_test_config(path):
     with open(path, "w") as f:
         f.write(
             """
-tests.test_pipeline_simple import DummyDatabase, _make_transformer
+from tests.test_pipeline_simple import DummyDatabase, _make_transformer
 from bob.bio.base.pipelines import PipelineSimple
 from bob.bio.base.algorithm import Distance
 

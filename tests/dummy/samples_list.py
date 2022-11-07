@@ -2,7 +2,7 @@ import os
 
 import bob.io.base
 
-from bob.bio.base.test.dummy.database import database
+from tests.dummy.database import database
 
 # Creates a list of unique str
 samples = [s.key for s in database.background_model_samples()]

@@ -76,7 +76,7 @@ def _create_test_config_pipeline_simple(path):
     with open(path, "w") as f:
         f.write(
             """
-from bob.bio.base.test.test_pipeline_train import DummyDatabase, _make_transformer
+from tests.test_pipeline_train import DummyDatabase, _make_transformer
 from bob.bio.base.pipelines import PipelineSimple
 from bob.bio.base.algorithm import Distance
 
@@ -99,7 +99,7 @@ def _create_test_config_pipeline_sklearn(path):
     with open(path, "w") as f:
         f.write(
             """
-from bob.bio.base.test.test_pipeline_train import DummyDatabase, _make_transformer
+from tests.test_pipeline_train import DummyDatabase, _make_transformer
 
 database = DummyDatabase()
 
