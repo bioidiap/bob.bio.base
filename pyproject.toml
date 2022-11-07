@@ -73,21 +73,21 @@
 [project.scripts]
     "resources.py"      = "bob.bio.base.script.resources:resources"
 
-[project.entry-points."bob.bio.base.bob.bio.config"]
+[project.entry-points."bob.bio.config"]
     dummy             = "tests.dummy.config"  # for test purposes only
     dummy2            = "tests.dummy.config2"  # for test purposes only
     dummy_samples     = "tests.dummy.samples_list"  # for test purposes only
     atnt              = "bob.bio.base.config.database.atnt"
 
-[project.entry-points."bob.bio.base.bob.bio.database"]
+[project.entry-points."bob.bio.database"]
     atnt              = "bob.bio.base.config.database.atnt:database"
     dummy             = "tests.dummy.database:database"  # for test purposes only
 
-[project.entry-points."bob.bio.base.bob.cli"]
+[project.entry-points."bob.cli"]
     bio               = "bob.bio.base.script.bio:bio"
     vulnerability     = "bob.bio.base.script.vulnerability:vulnerability"
 
-[project.entry-points."bob.bio.base.bob.bio.cli"]
+[project.entry-points."bob.bio.cli"]
     annotate          = "bob.bio.base.script.annotate:annotate"
     annotate-samples  = "bob.bio.base.script.annotate:annotate_samples"
     metrics           = "bob.bio.base.script.commands:metrics"
@@ -104,16 +104,16 @@
     pipeline          = "bob.bio.base.script.pipeline:pipeline"
     compare-samples   = "bob.bio.base.script.compare_samples:compare_samples"
 
-[project.entry-points."bob.bio.base.bob.bio.annotator"]
+[project.entry-points."bob.bio.annotator"]
     dummy             = "tests.dummy.annotator:annotator"
 
-[project.entry-points."bob.bio.base.bob.bio.pipeline.cli"]
+[project.entry-points."bob.bio.pipeline.cli"]
     simple         = "bob.bio.base.script.pipeline_simple:pipeline_simple"
     score-norm     = "bob.bio.base.script.pipeline_score_norm:pipeline_score_norm"
     transform      = "bob.bio.base.script.pipeline_transform:pipeline_transform"
     train          = "bob.bio.base.script.pipeline_train:pipeline_train"
 
-[project.entry-points."bob.bio.base.bob.vuln.cli"]
+[project.entry-points."bob.vuln.cli"]
     metrics           = "bob.bio.base.script.vuln_commands:metrics"
     hist              = "bob.bio.base.script.vuln_commands:hist"
     det               = "bob.bio.base.script.vuln_commands:det"
