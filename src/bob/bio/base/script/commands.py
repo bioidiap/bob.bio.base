@@ -2,9 +2,10 @@
 
 import click
 
+from exposed.click import verbosity_option
+
 import bob.measure.script.figure as measure_figure
 
-from bob.extension.scripts.click_helper import verbosity_option
 from bob.measure.script import common_options
 
 from ..score import load

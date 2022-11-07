@@ -12,12 +12,12 @@ from typing import List
 import click
 import dask.distributed
 
+from exposed.click import ResourceOption, verbosity_option
 from tabulate import tabulate
 
 import bob.io.base
 
 from bob.bio.base.pipelines import PipelineSimple, dask_bio_pipeline
-from bob.extension.scripts.click_helper import ResourceOption, verbosity_option
 from bob.pipelines import DelayedSample, Sample, SampleSet
 
 EPILOG = """\n

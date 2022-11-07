@@ -9,11 +9,8 @@ import logging
 
 import click
 
-from bob.extension.scripts.click_helper import (
-    ConfigCommand,
-    ResourceOption,
-    verbosity_option,
-)
+from exposed.click import ConfigCommand, ResourceOption, verbosity_option
+
 from bob.pipelines.distributed import VALID_DASK_CLIENT_STRINGS
 
 logger = logging.getLogger(__name__)
