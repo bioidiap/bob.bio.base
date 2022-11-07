@@ -7,6 +7,7 @@ import random
 from typing import Optional, Union
 
 import dask.bag
+import dask.distributed
 
 from dask.delayed import Delayed
 from sklearn.pipeline import Pipeline
