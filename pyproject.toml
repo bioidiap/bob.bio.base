@@ -33,6 +33,7 @@
         "click",
         "click-plugins",
         "dask",
+        "exposed",
         "numpy",
         "pandas",
         "scipy",
