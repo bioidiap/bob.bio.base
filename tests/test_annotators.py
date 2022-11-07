@@ -3,11 +3,11 @@ import shutil
 import tempfile
 
 from click.testing import CliRunner
+from exposed.click import assert_click_runner_result
 
 from bob.bio.base.annotator import Callable, FailSafe
 from bob.bio.base.script.annotate import annotate, annotate_samples
 from bob.bio.base.utils.annotations import read_annotation_file
-from bob.extension.scripts.click_helper import assert_click_runner_result
 
 
 def test_annotate():
