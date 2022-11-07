@@ -52,6 +52,7 @@
         "sphinx",
         "sphinx_rtd_theme",
         "sphinx-autodoc-typehints",
+        "auto-intersphinx",
         "sphinxcontrib-programoutput",
         "matplotlib",
         "dask-ml",
