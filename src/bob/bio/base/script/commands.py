@@ -1,4 +1,5 @@
 """ Click commands for ``bob.bio.base`` """
+import logging
 
 import click
 
@@ -10,6 +11,8 @@ from bob.measure.script import common_options
 
 from ..score import load
 from . import figure as bio_figure
+
+logger = logging.getLogger(__name__)
 
 SCORE_FORMAT = (
     "Files must be 4- or 5- columns format, see "
@@ -144,7 +147,7 @@ def multi_metrics(ctx, scores, evaluation, protocols_number, **kwargs):
 @common_options.style_option()
 @common_options.linestyles_option()
 @common_options.figsize_option()
-@verbosity_option()
+@verbosity_option(logger=logger)
 @click.pass_context
 def cmc(ctx, scores, evaluation, **kwargs):
     """Plot CMC (cumulative match characteristic curve).
@@ -189,7 +192,7 @@ def cmc(ctx, scores, evaluation, **kwargs):
 @common_options.linestyles_option()
 @common_options.figsize_option()
 @common_options.min_far_option()
-@verbosity_option()
+@verbosity_option(logger=logger)
 @click.pass_context
 def dir(ctx, scores, evaluation, **kwargs):
     """Plots the Detection & Identification Rate curve over the FAR.

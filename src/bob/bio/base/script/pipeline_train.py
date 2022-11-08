@@ -153,7 +153,7 @@ my_experiment.py must contain the following elements:
     "Each partition will be trained in a separate step.",
     cls=ResourceOption,
 )
-@verbosity_option(cls=ResourceOption)
+@verbosity_option(cls=ResourceOption, logger=logger)
 def pipeline_train(
     pipeline,
     database,

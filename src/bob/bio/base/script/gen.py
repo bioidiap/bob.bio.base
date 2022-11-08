@@ -286,7 +286,7 @@ You can observe the distributions histograms in a pdf file with:
 )
 @click.option("--csv/--legacy", default=True, show_default=True)
 @click.option("--five-col/--four-col", default=False, show_default=True)
-@verbosity_option()
+@verbosity_option(logger=logger)
 def gen(
     outdir,
     mean_match,

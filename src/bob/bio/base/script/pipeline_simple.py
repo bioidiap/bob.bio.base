@@ -159,7 +159,7 @@ my_experiment.py must contain the following elements:
     help="If set, it will not use Dask to run the experiment.",
     cls=ResourceOption,
 )
-@verbosity_option(cls=ResourceOption)
+@verbosity_option(cls=ResourceOption, logger=logger)
 def pipeline_simple(
     pipeline,
     database,

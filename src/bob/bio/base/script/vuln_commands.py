@@ -66,7 +66,7 @@ def vuln_plot_options(
         @common_options.style_option()
         @common_options.linestyles_option()
         @common_options.alpha_option()
-        @common_options.verbosity_option()
+        @common_options.verbosity_option(logger=logger)
         @click.pass_context
         @functools.wraps(func)
         def wrapper(*args, **kwds):
@@ -164,7 +164,7 @@ def write_scores_to_file(neg_licit, pos_licit, spoof, filename):
 @click.option("-mg", "--mean-gen", default=7, type=FLOAT, show_default=True)
 @click.option("-mz", "--mean-zei", default=3, type=FLOAT, show_default=True)
 @click.option("-mp", "--mean-pa", default=5, type=FLOAT, show_default=True)
-@common_options.verbosity_option()
+@common_options.verbosity_option(logger=logger)
 def gen(outdir, mean_gen, mean_zei, mean_pa, **kwargs):
     """Generate random scores.
     Generates random scores for three types of verification attempts:

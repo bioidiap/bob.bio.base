@@ -89,7 +89,7 @@ Examples:
     "times for different groups. [Default: All groups]",
 )
 @annotate_common_options
-@verbosity_option(cls=ResourceOption)
+@verbosity_option(cls=ResourceOption, logger=logger)
 def annotate(database, groups, annotator, output_dir, dask_client, **kwargs):
     """Annotates a database.
 
@@ -175,7 +175,7 @@ You have to define ``samples``, ``reader``, and ``make_key`` in python files
     "path to a sample's file from the dataset's root directory.",
 )
 @annotate_common_options
-@verbosity_option(cls=ResourceOption)
+@verbosity_option(cls=ResourceOption, logger=logger)
 def annotate_samples(
     samples, reader, make_key, annotator, output_dir, dask_client, **kwargs
 ):

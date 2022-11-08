@@ -150,7 +150,7 @@ Then, you can use above configuration file to run the command:\n
     type=click.INT,
     cls=ResourceOption,
 )
-@verbosity_option(cls=ResourceOption)
+@verbosity_option(cls=ResourceOption, logger=logger)
 def pipeline_transform(
     transformer,
     database,

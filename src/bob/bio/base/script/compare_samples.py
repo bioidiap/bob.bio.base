@@ -6,6 +6,7 @@
 """Executes biometric pipeline"""
 
 import functools
+import logging
 
 from typing import List
 
@@ -20,7 +21,10 @@ import bob.io.base
 from bob.bio.base.pipelines import PipelineSimple, dask_bio_pipeline
 from bob.pipelines import DelayedSample, Sample, SampleSet
 
+logger = logging.getLogger(__name__)
+
 EPILOG = """\n
+
 
 
  Command line examples\n
@@ -58,7 +62,7 @@ EPILOG = """\n
     entry_point_group="dask.client",
     help="Dask client for the execution of the pipeline.",
 )
-@verbosity_option()
+@verbosity_option(logger=logger)
 def compare_samples(
     samples: List[Sample],
     pipeline: PipelineSimple,

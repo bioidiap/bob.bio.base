@@ -25,7 +25,7 @@ Examples:
     type=click.Path(exists=True, file_okay=True, dir_okay=False, writable=True),
     nargs=-1,
 )
-@verbosity_option()
+@verbosity_option(logger=logger)
 def sort(score_paths, **kwargs):
     """Sorts score files based on their score values
 

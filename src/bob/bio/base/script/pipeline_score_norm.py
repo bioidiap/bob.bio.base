@@ -150,7 +150,7 @@ EPILOG = _SIMPLE_EPILOG.replace(
     help="If set, it will not use Dask to run the experiment.",
     cls=ResourceOption,
 )
-@verbosity_option(cls=ResourceOption)
+@verbosity_option(cls=ResourceOption, logger=logger)
 def pipeline_score_norm(
     pipeline,
     database,
