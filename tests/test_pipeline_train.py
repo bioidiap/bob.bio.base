@@ -9,7 +9,6 @@ import tempfile
 import pytest
 
 from click.testing import CliRunner
-from exposed.click import assert_click_runner_result
 from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
 
@@ -18,6 +17,7 @@ from bob.bio.base.script.pipeline_train import (
     pipeline_train as pipeline_train_cli,
 )
 from bob.bio.base.wrappers import wrap_bob_legacy
+from bob.io.base.test_utils import assert_click_runner_result
 from bob.pipelines import wrap
 from tests.test_pipeline_simple import DummyDatabase
 from tests.test_transformers import FakeExtractor, FakePreprocessor

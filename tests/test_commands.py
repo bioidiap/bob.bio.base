@@ -7,10 +7,10 @@ import numpy
 import pkg_resources
 
 from click.testing import CliRunner
-from exposed.click import assert_click_runner_result
 
 from bob.bio.base.score import scores
 from bob.bio.base.script import commands, compare_samples, sort, vuln_commands
+from bob.io.base.test_utils import assert_click_runner_result
 
 
 def test_metrics():
