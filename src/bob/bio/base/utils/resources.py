@@ -8,9 +8,8 @@ from __future__ import print_function
 import logging
 import os
 
+import exposed.config
 import pkg_resources
-
-import bob.extension.config
 
 logger = logging.getLogger("bob.bio.base")
 
@@ -51,7 +50,7 @@ def _collect_config(paths):
 
     """
 
-    return bob.extension.config.load(paths, entry_point_group="bob.bio.config")
+    return exposed.config.load(paths, entry_point_group="bob.bio.config")
 
 
 def read_config_file(filenames, keyword=None):
