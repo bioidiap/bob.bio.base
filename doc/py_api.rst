@@ -104,7 +104,6 @@ Miscellaneous functions
 
 .. autosummary::
 
-  bob.bio.base.get_config
   bob.bio.base.score_fusion_strategy
   bob.bio.base.selected_elements
   bob.bio.base.selected_indices
