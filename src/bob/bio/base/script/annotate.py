@@ -6,9 +6,13 @@ import logging
 
 import click
 
-from exposed.click import ConfigCommand, ResourceOption, verbosity_option
+from exposed.click import (
+    ConfigCommand,
+    ResourceOption,
+    log_parameters,
+    verbosity_option,
+)
 
-from bob.extension.scripts.click_helper import log_parameters
 from bob.pipelines import DelayedSample, ToDaskBag, wrap
 
 logger = logging.getLogger(__name__)

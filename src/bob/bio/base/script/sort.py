@@ -5,10 +5,9 @@ import logging
 import click
 import numpy
 
-from exposed.click import verbosity_option
+from exposed.click import log_parameters, verbosity_option
 
 from bob.bio.base.score.load import dump_score, load_score
-from bob.extension.scripts.click_helper import log_parameters
 
 logger = logging.getLogger(__name__)
 
