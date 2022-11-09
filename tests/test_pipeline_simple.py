@@ -28,7 +28,7 @@ from bob.bio.base.script.pipeline_simple import (
     pipeline_simple as pipeline_simple_cli,
 )
 from bob.bio.base.wrappers import wrap_bob_legacy
-from bob.io.base.test_utils import assert_click_runner_result
+from bob.io.base.testing_utils import assert_click_runner_result
 from bob.pipelines import DelayedSample, Sample, SampleSet
 from tests.test_transformers import FakeExtractor, FakePreprocessor
 

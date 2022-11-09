@@ -17,7 +17,7 @@ import numpy
 from click.testing import CliRunner
 
 from bob.bio.base.script.gen import gen, gen_score_distr
-from bob.io.base.test_utils import assert_click_runner_result
+from bob.io.base.testing_utils import assert_click_runner_result
 
 logger = logging.getLogger(__name__)
 logger.setLevel(

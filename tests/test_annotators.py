@@ -7,7 +7,7 @@ from click.testing import CliRunner
 from bob.bio.base.annotator import Callable, FailSafe
 from bob.bio.base.script.annotate import annotate, annotate_samples
 from bob.bio.base.utils.annotations import read_annotation_file
-from bob.io.base.test_utils import assert_click_runner_result
+from bob.io.base.testing_utils import assert_click_runner_result
 
 
 def test_annotate():
