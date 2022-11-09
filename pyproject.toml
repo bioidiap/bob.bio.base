@@ -1,6 +1,133 @@
 [build-system]
-    requires = ["setuptools", "wheel", "bob.extension"]
+    requires = ["setuptools>=61.0.0", "wheel"]
     build-backend = "setuptools.build_meta"
+
+[project]
+    name = "bob.bio.base"
+    version = "7.1.1b0"
+    requires-python = ">=3.9"
+    description = "Tools for running biometric recognition experiments"
+    dynamic = ["readme"]
+    license = {text = "BSD 3-Clause License"}
+    authors = [
+    {name = "Manuel Gunther"},
+    {email = "siebenkopf@googlemail.com"},
+    ]
+    keywords = ["bob", "biometric recognition", "evaluation"]
+
+    classifiers=[
+        "Framework :: Bob",
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: BSD License",
+        "Natural Language :: English",
+        "Programming Language :: Python",
+        "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    ]
+    dependencies = [
+        "bob.extension > 5.0.1",
+        "bob.io.base",
+        "bob.learn.em",
+        "bob.measure",
+        "bob.pipelines",
+        "click",
+        "click-plugins",
+        "dask",
+        "exposed",
+        "numpy",
+        "pandas",
+        "scipy",
+        "setuptools",
+        "tabulate",
+    ]
+
+[project.urls]
+    documentation = "https://www.idiap.ch/software/bob/docs/bob/bob.bio.base/stable/"
+    homepage = "https://pypi.org/project/bob.bio.base/"
+    repository = "https://gitlab.idiap.ch/bob/bob.bio.base"
+    changelog = "https://gitlab.idiap.ch/bob/bob.bio.base/-/releases"
+
+[project.optional-dependencies]
+    qa = ["pre-commit"]
+    doc = [
+        "sphinx",
+        "sphinx_rtd_theme",
+        "sphinx-autodoc-typehints",
+        "auto-intersphinx",
+        "sphinxcontrib-programoutput",
+        "matplotlib",
+        "dask-ml",
+        ]
+    test = [
+        "pytest",
+        "pytest-cov",
+        "coverage",
+        "dask-ml",
+        "matplotlib",
+        ]
+
+[tool.setuptools]
+    zip-safe = false
+    package-dir = {"" = "src"}
+
+[tool.setuptools.dynamic]
+    readme = {file = "README.rst"}
+[project.scripts]
+    "resources.py"      = "bob.bio.base.script.resources:resources"
+
+[project.entry-points."bob.bio.config"]
+    dummy             = "tests.dummy.config"  # for test purposes only
+    dummy2            = "tests.dummy.config2"  # for test purposes only
+    dummy_samples     = "tests.dummy.samples_list"  # for test purposes only
+    atnt              = "bob.bio.base.config.database.atnt"
+
+[project.entry-points."bob.bio.database"]
+    atnt              = "bob.bio.base.config.database.atnt:database"
+    dummy             = "tests.dummy.database:database"  # for test purposes only
+
+[project.entry-points."bob.cli"]
+    bio               = "bob.bio.base.script.bio:bio"
+    vulnerability     = "bob.bio.base.script.vulnerability:vulnerability"
+
+[project.entry-points."bob.bio.cli"]
+    annotate          = "bob.bio.base.script.annotate:annotate"
+    annotate-samples  = "bob.bio.base.script.annotate:annotate_samples"
+    metrics           = "bob.bio.base.script.commands:metrics"
+    multi-metrics     = "bob.bio.base.script.commands:multi_metrics"
+    roc               = "bob.bio.base.script.commands:roc"
+    det               = "bob.bio.base.script.commands:det"
+    epc               = "bob.bio.base.script.commands:epc"
+    hist              = "bob.bio.base.script.commands:hist"
+    cmc               = "bob.bio.base.script.commands:cmc"
+    dir               = "bob.bio.base.script.commands:dir"
+    gen               = "bob.bio.base.script.gen:gen"
+    evaluate          = "bob.bio.base.script.commands:evaluate"
+    sort              = "bob.bio.base.script.sort:sort"
+    pipeline          = "bob.bio.base.script.pipeline:pipeline"
+    compare-samples   = "bob.bio.base.script.compare_samples:compare_samples"
+
+[project.entry-points."bob.bio.annotator"]
+    dummy             = "tests.dummy.annotator:annotator"
+
+[project.entry-points."bob.bio.pipeline.cli"]
+    simple         = "bob.bio.base.script.pipeline_simple:pipeline_simple"
+    score-norm     = "bob.bio.base.script.pipeline_score_norm:pipeline_score_norm"
+    transform      = "bob.bio.base.script.pipeline_transform:pipeline_transform"
+    train          = "bob.bio.base.script.pipeline_train:pipeline_train"
+
+[project.entry-points."bob.vuln.cli"]
+    metrics           = "bob.bio.base.script.vuln_commands:metrics"
+    hist              = "bob.bio.base.script.vuln_commands:hist"
+    det               = "bob.bio.base.script.vuln_commands:det"
+    roc               = "bob.bio.base.script.vuln_commands:roc"
+    epc               = "bob.bio.base.script.vuln_commands:epc"
+    epsc              = "bob.bio.base.script.vuln_commands:epsc"
+    gen               = "bob.bio.base.script.vuln_commands:gen"
+    fmr_iapmr         = "bob.bio.base.script.vuln_commands:fmr_iapmr"
+    evaluate          = "bob.bio.base.script.vuln_commands:evaluate"
+
+[tool.distutils.bdist_wheel]
+    universal = true
 
 [tool.isort]
     profile = "black"
@@ -15,3 +142,10 @@
     markers = [
         "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     ]
+    addopts = [
+    "--import-mode=append",
+    "--cov-report=term-missing",
+    "--cov=bob.bio.base",
+    ]
+    junit_logging = "all"
+    junit_log_passing_tests = false

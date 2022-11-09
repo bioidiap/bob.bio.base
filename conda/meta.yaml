@@ -1,21 +1,20 @@
-{% set name = 'bob.bio.base' %}
-{% set project_dir = environ.get('RECIPE_DIR') + '/..' %}
+{% set data = load_file_data(RECIPE_DIR + '/../pyproject.toml') %}
+{% set name = data['project']['name'] %}
 
 package:
   name: {{ name }}
-  version: {{ environ.get('BOB_PACKAGE_VERSION', '0.0.1') }}
+  version: {{ data['project']['version'] }}
+
+source:
+  path: ..
 
 build:
-  entry_points:
+  noarch: python
   number: {{ environ.get('BOB_BUILD_NUMBER', 0) }}
   run_exports:
     - {{ pin_subpackage(name) }}
   script:
-    - cd {{ project_dir }}
-    {% if environ.get('BUILD_EGG') %}
-    - "{{ PYTHON }} setup.py sdist --formats=zip"
-    {% endif %}
-    - "{{ PYTHON }} -m pip install . -vv"
+    - "{{ PYTHON }} -m pip install {{ SRC_DIR }} -vv"
 
 requirements:
   host:
@@ -30,6 +29,7 @@ requirements:
     - click {{ click }}
     - click-plugins {{ click_plugins }}
     - dask {{ dask }}
+    - exposed
     - numpy {{ numpy }}
     - pandas {{ pandas }}
     - scipy {{ scipy }}
@@ -37,50 +37,29 @@ requirements:
   run:
     - python
     - setuptools
+    - bob.extension
+    - bob.io.base
+    - bob.learn.em
+    - bob.measure
+    - bob.pipelines
+    - exposed
     - {{ pin_compatible('click') }}
     - {{ pin_compatible('click-plugins') }}
     - {{ pin_compatible('dask') }}
-    - {{ pin_compatible('numpy', max_pin='x.x') }}
+    - {{ pin_compatible('numpy') }}
     - {{ pin_compatible('pandas') }}
     - {{ pin_compatible('scipy') }}
     - {{ pin_compatible('tabulate') }}
 
 test:
   imports:
-    - {{ name }}
+    - {{ name.replace('-','_') }}
   commands:
-    - bob bio --help
-    - bob bio annotate --help
-    - bob bio metrics --help
-    - bob bio roc --help
-    - bob bio det --help
-    - bob bio epc --help
-    - bob bio hist --help
-    - bob bio cmc --help
-    - bob bio dir --help
-    - bob bio gen --help
-    - bob bio evaluate --help
-    - bob bio sort --help
-    - bob bio pipeline simple --help
-    - bob bio pipeline score-norm --help
-    - bob bio pipeline transform --help
-    - bob bio pipeline train --help
-    - pytest --verbose --cov {{ name }} --cov-report term-missing --cov-report html:{{ project_dir }}/sphinx/coverage --cov-report xml:{{ project_dir }}/coverage.xml --junitxml={{ project_dir }}/test_results.xml --pyargs {{ name }}
-    - sphinx-build -aEW {{ project_dir }}/doc {{ project_dir }}/sphinx
-    - sphinx-build -aEb doctest {{ project_dir }}/doc sphinx
     - conda inspect linkages -p $PREFIX {{ name }}  # [not win]
     - conda inspect objects -p $PREFIX {{ name }}  # [osx]
-  requires:
-    - pytest {{ pytest }}
-    - pytest-cov {{ pytest_cov }}
-    - coverage {{ coverage }}
-    - sphinx {{ sphinx }}
-    - sphinx_rtd_theme {{ sphinx_rtd_theme }}
-    - sphinx-autodoc-typehints {{ sphinx_autodoc_typehints }}
-    - matplotlib {{ matplotlib }}
 
 about:
-  home: https://www.idiap.ch/software/bob/
-  license: BSD License
-  summary: Tools for running biometric recognition experiments
+  home: {{ data['project']['urls']['homepage'] }}
+  summary: {{ data['project']['description'] }}
+  license: {{ data['project']['license']['text'] }}
   license_family: BSD
