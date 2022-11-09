@@ -15,7 +15,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
 
 import bob.io.base
-import bob.io.base.test_utils
+import bob.io.base.testing_utils
 
 from bob.bio.base.algorithm import Distance
 from bob.bio.base.database import (
@@ -29,24 +29,26 @@ from bob.pipelines import Sample, SampleSet, wrap
 from tests.dummy.database import database as ATNT_DATABASE
 
 legacy_example_dir = os.path.realpath(
-    bob.io.base.test_utils.datafile(".", __name__, "data/")
+    bob.io.base.testing_utils.datafile(".", __name__, "data/")
 )
 
 legacy2_example_dir = os.path.realpath(
-    bob.io.base.test_utils.datafile(".", __name__, "data/")
+    bob.io.base.testing_utils.datafile(".", __name__, "data/")
 )
 
 
 example_protocol_path = os.path.realpath(
-    bob.io.base.test_utils.datafile(".", __name__, "data/example_csv_filelist")
+    bob.io.base.testing_utils.datafile(
+        ".", __name__, "data/example_csv_filelist"
+    )
 )
 example_protocol_archive = os.path.realpath(
-    bob.io.base.test_utils.datafile(
+    bob.io.base.testing_utils.datafile(
         ".", __name__, "data/example_csv_filelist.tar.gz"
     )
 )
 atnt_protocol_path = os.path.realpath(
-    bob.io.base.test_utils.datafile(".", __name__, "data/atnt")
+    bob.io.base.testing_utils.datafile(".", __name__, "data/atnt")
 )
 
 
@@ -121,7 +123,7 @@ def test_csv_file_list_dev_metadata():
 def test_csv_file_list_dev_eval_all_vs_all():
 
     annotation_directory = os.path.realpath(
-        bob.io.base.test_utils.datafile(
+        bob.io.base.testing_utils.datafile(
             ".", __name__, "data/example_csv_filelist/annotations"
         )
     )
@@ -193,7 +195,7 @@ def test_csv_file_list_dev_eval_all_vs_all():
 def test_csv_file_list_dev_eval_score_norm():
 
     annotation_directory = os.path.realpath(
-        bob.io.base.test_utils.datafile(
+        bob.io.base.testing_utils.datafile(
             ".", __name__, "data/example_csv_filelist/annotations"
         )
     )
@@ -264,7 +266,7 @@ def test_csv_file_list_dev_eval_score_norm():
 def test_csv_file_list_dev_eval_sparse():
 
     annotation_directory = os.path.realpath(
-        bob.io.base.test_utils.datafile(
+        bob.io.base.testing_utils.datafile(
             ".", __name__, "data/example_csv_filelist/annotations"
         )
     )

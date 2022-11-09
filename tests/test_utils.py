@@ -1,7 +1,7 @@
 import numpy
 
 import bob.bio.base
-import bob.io.base.test_utils
+import bob.io.base.testing_utils
 
 
 def test_resources():
