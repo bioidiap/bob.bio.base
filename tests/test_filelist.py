@@ -18,6 +18,7 @@ import bob.io.base
 import bob.io.base.testing_utils
 
 from bob.bio.base.algorithm import Distance
+from bob.bio.base.config.dummy.database import database as ATNT_DATABASE
 from bob.bio.base.database import (
     AnnotationsLoader,
     CSVDatabase,
@@ -26,7 +27,6 @@ from bob.bio.base.database import (
 )
 from bob.bio.base.pipelines.pipelines import PipelineSimple
 from bob.pipelines import Sample, SampleSet, wrap
-from tests.dummy.database import database as ATNT_DATABASE
 
 legacy_example_dir = os.path.realpath(
     bob.io.base.testing_utils.datafile(".", __name__, "data/")

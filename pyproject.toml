@@ -4,7 +4,7 @@
 
 [project]
     name = "bob.bio.base"
-    version = "7.1.1b0"
+    version = "7.1.1b1"
     requires-python = ">=3.9"
     description = "Tools for running biometric recognition experiments"
     dynamic = ["readme"]
@@ -76,14 +76,14 @@
     "resources.py"      = "bob.bio.base.script.resources:resources"
 
 [project.entry-points."bob.bio.config"]
-    dummy             = "tests.dummy.config"  # for test purposes only
-    dummy2            = "tests.dummy.config2"  # for test purposes only
-    dummy_samples     = "tests.dummy.samples_list"  # for test purposes only
+    dummy             = "bob.bio.base.config.dummy.config"  # for test purposes only
+    dummy2            = "bob.bio.base.config.dummy.config2"  # for test purposes only
+    dummy_samples     = "bob.bio.base.config.dummy.samples_list"  # for test purposes only
     atnt              = "bob.bio.base.config.database.atnt"
 
 [project.entry-points."bob.bio.database"]
     atnt              = "bob.bio.base.config.database.atnt:database"
-    dummy             = "tests.dummy.database:database"  # for test purposes only
+    dummy             = "bob.bio.base.config.dummy.database:database"  # for test purposes only
 
 [project.entry-points."bob.cli"]
     bio               = "bob.bio.base.script.bio:bio"
@@ -107,7 +107,7 @@
     compare-samples   = "bob.bio.base.script.compare_samples:compare_samples"
 
 [project.entry-points."bob.bio.annotator"]
-    dummy             = "tests.dummy.annotator:annotator"
+    dummy             = "bob.bio.base.config.dummy.annotator:annotator"
 
 [project.entry-points."bob.bio.pipeline.cli"]
     simple         = "bob.bio.base.script.pipeline_simple:pipeline_simple"

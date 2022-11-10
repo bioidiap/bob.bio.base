@@ -698,7 +698,7 @@ def test_compare_samples():
         __name__, "data/dummy_samples_2.hdf5"
     )
     runner = CliRunner()
-    from tests.dummy.pipeline import pipeline
+    from bob.bio.base.config.dummy.pipeline import pipeline
 
     with runner.isolated_filesystem():
         result = runner.invoke(
