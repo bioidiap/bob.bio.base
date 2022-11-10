@@ -10,8 +10,8 @@ Very simple tests for Implementations
 
 import bob.bio.base
 
+from bob.bio.base.config.dummy.database import database as dummy_database
 from bob.pipelines import DelayedSample
-from tests.dummy.database import database as dummy_database
 
 
 def test_all_samples():
