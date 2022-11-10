@@ -5,8 +5,6 @@ ATNT database implementation
 
 from pathlib import Path
 
-import pkg_resources
-
 from sklearn.pipeline import make_pipeline
 
 import bob.io.base
@@ -33,10 +31,15 @@ class AtntBioDatabase(CSVDatabase):
         **kwargs,
     ):
 
-        # Downloading model if not exists
-        dataset_protocols_path = pkg_resources.resource_filename(
-            "tests", "data/atnt"
+        # Download the protocol definition file
+        dataset_protocols_path = get_file(
+            "atnt_protocols.tar.gz",
+            [
+                "https://www.idiap.ch/software/bob/databases/latest/base/atnt-f529acef.tar.gz"
+            ],
+            file_hash="f529acef",
         )
+        # Download the raw data (or use a cached local version)
         if dataset_original_directory is None:
             path = get_file(
                 "atnt_faces.zip",
