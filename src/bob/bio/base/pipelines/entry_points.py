@@ -82,7 +82,7 @@ def execute_pipeline_simple(
     processing time on multiple workers. There is no recipe to make everything work on
     any system. So if you encounter some balancing error (a few of all the available
     workers actually working while the rest waits, or the scheduler being overloaded
-    trying to organise millions of tiny tasks), you can specify ``dask_n_partitions``
+    trying to organize millions of tiny tasks), you can specify ``dask_n_partitions``
     or ``dask_partition_size``.
     The first will try to split any set of data into a number of chunks (ideally, we
     would want one per worker), and the second creates similar-sized partitions in each
