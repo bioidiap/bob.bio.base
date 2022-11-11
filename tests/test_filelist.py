@@ -147,6 +147,8 @@ def test_csv_file_list_dev_eval_all_vs_all():
                 ),
             ),
         )
+
+        assert dataset.score_all_vs_all
         assert len(dataset.background_model_samples()) == 8
         assert all_sample(dataset.background_model_samples())
 
@@ -289,6 +291,7 @@ def test_csv_file_list_dev_eval_sparse():
         ),
     )
 
+    assert not dataset.score_all_vs_all
     assert len(dataset.background_model_samples()) == 8
     assert all_sample(dataset.background_model_samples())
 

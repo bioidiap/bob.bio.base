@@ -231,7 +231,7 @@ class CSVDatabase(FileListDatabase, Database):
             memory_demanding=memory_demanding,
             **kwargs,
         )
-        if self.list_file("dev", "for_matching.csv") is None:
+        if self.list_file("dev", "for_matching") is None:
             self.score_all_vs_all = True
         else:
             self.score_all_vs_all = False
