@@ -189,7 +189,7 @@ class CSVDatabase(FileListDatabase, Database):
         *,
         name: str,
         protocol: str,
-        dataset_protocols_path: str,
+        dataset_protocols_path: Optional[str] = None,
         transformer: Optional[sklearn.pipeline.Pipeline] = None,
         annotation_type: Optional[str] = None,
         fixed_positions: Optional[dict[str, tuple[float, float]]] = None,
@@ -266,9 +266,17 @@ class CSVDatabase(FileListDatabase, Database):
             files=False,
         )
 
-    def protocols(self):
+    def _instance_protocols(self) -> list[str]:
+        """Same as ``protocols`` but for CSVDatabase instances."""
         return list_dir(
             self.dataset_protocols_path, ".", folders=True, files=False
+        )
+
+    @classmethod
+    def protocols(cls) -> list[str]:
+        """Returns the list of protocols without an instance of CSVDataset."""
+        return list_dir(
+            cls.retrieve_dataset_protocols(), ".", folders=True, files=False
         )
 
     # cached methods should be based on protocol as well
