@@ -28,7 +28,6 @@
         "bob.extension > 5.0.1",
         "bob.io.base",
         "bob.learn.em",
-        "bob.bio.face",
         "bob.measure",
         "bob.pipelines",
         "click",
