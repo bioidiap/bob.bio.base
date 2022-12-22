@@ -237,7 +237,6 @@ auto_intersphinx_packages = [
     "numpy",
     "scikit-learn",
     "bob.extension",
-    "bob.bio.video",
     "bob.bio.spear",
     "bob.bio.vein",
     "bob.pipelines",
