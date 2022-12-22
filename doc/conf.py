@@ -236,11 +236,12 @@ auto_intersphinx_packages = [
     ("python", "3"),
     "numpy",
     "scikit-learn",
+    "bob.bio.face",
     "bob.extension",
+    "bob.bio.video",
     "bob.bio.spear",
     "bob.bio.vein",
     "bob.pipelines",
-    "bob.bio.face",
     "dask",
 ]
 auto_intersphinx_catalog = "catalog.json"
