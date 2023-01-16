@@ -25,7 +25,7 @@
   },
   "bob.bio.video": {
     "versions": {
-      "latest": "https://www.idiap.ch/software/bob/docs/bob/bob.bio.video/master"
+      "latest": "https://www.idiap.ch/software/bob/docs/bob/bob.bio.video/master/sphinx"
     },
     "sources": {}
   },
