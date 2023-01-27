@@ -339,17 +339,20 @@ def checkpoint_pipeline_simple(
     )
 
     if isinstance(pipeline.transformer, Pipeline):
-        for step, transformer in enumerate(pipeline.transformer.steps):
+        for step, (name, transformer) in enumerate(pipeline.transformer.steps):
             if not is_instance_nested(
                 transformer, "estimator", CheckpointWrapper
             ):
-                pipeline.transformer.steps[step] = bob.pipelines.wrap(
-                    ["checkpoint"],
-                    transformer,
-                    features_dir=base_dir,
-                    model_path=base_dir,
-                    hash_fn=hash_fn,
-                    force=force,
+                pipeline.transformer.steps[step] = (
+                    name,
+                    bob.pipelines.wrap(
+                        ["checkpoint"],
+                        transformer,
+                        features_dir=base_dir,
+                        model_path=base_dir,
+                        hash_fn=hash_fn,
+                        force=force,
+                    ),
                 )
     else:  # The pipeline.transformer is a lone transformer
         if not is_instance_nested(
