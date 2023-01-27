@@ -8,10 +8,17 @@ import dask
 import h5py
 import numpy as np
 
+from sklearn.pipeline import Pipeline
+
 import bob.pipelines
 
 from bob.bio.base.pipelines import PipelineSimple
-from bob.pipelines import DelayedSample, Sample, is_instance_nested
+from bob.pipelines import (
+    CheckpointWrapper,
+    DelayedSample,
+    Sample,
+    is_instance_nested,
+)
 from bob.pipelines.wrappers import BaseWrapper, _frmt, get_bob_tags
 
 from .abstract_classes import BioAlgorithm
@@ -299,6 +306,9 @@ def checkpoint_pipeline_simple(
     Given a :any:`PipelineSimple`, wraps their :attr:`transformer` and
     :attr:`biometric_algorithm` to be checkpointed.
 
+    If an estimator of the pipeline is already checkpointed, it will not be
+    wrapped again.
+
     Parameters
     ----------
 
@@ -328,14 +338,31 @@ def checkpoint_pipeline_simple(
         base_dir if biometric_algorithm_dir is None else biometric_algorithm_dir
     )
 
-    pipeline.transformer = bob.pipelines.wrap(
-        ["checkpoint"],
-        pipeline.transformer,
-        features_dir=base_dir,
-        model_path=base_dir,
-        hash_fn=hash_fn,
-        force=force,
-    )
+    if isinstance(pipeline.transformer, Pipeline):
+        for step, transformer in enumerate(pipeline.transformer.steps):
+            if not is_instance_nested(
+                transformer, "estimator", CheckpointWrapper
+            ):
+                pipeline.transformer.steps[step] = bob.pipelines.wrap(
+                    ["checkpoint"],
+                    transformer,
+                    features_dir=base_dir,
+                    model_path=base_dir,
+                    hash_fn=hash_fn,
+                    force=force,
+                )
+    else:  # The pipeline.transformer is a lone transformer
+        if not is_instance_nested(
+            pipeline.transformer, "estimator", CheckpointWrapper
+        ):
+            pipeline.transformer = bob.pipelines.wrap(
+                ["checkpoint"],
+                pipeline.transformer,
+                features_dir=base_dir,
+                model_path=base_dir,
+                hash_fn=hash_fn,
+                force=force,
+            )
 
     pipeline.biometric_algorithm = BioAlgCheckpointWrapper(
         pipeline.biometric_algorithm,
