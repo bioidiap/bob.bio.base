@@ -3,8 +3,8 @@
 import click
 import pkg_resources
 
+from clapp.click import AliasedGroup
 from click_plugins import with_plugins
-from exposed.click import AliasedGroup
 
 
 @with_plugins(pkg_resources.iter_entry_points("bob.bio.cli"))

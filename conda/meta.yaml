@@ -29,7 +29,7 @@ requirements:
     - click {{ click }}
     - click-plugins {{ click_plugins }}
     - dask {{ dask }}
-    - exposed
+    - clapp
     - numpy {{ numpy }}
     - pandas {{ pandas }}
     - scipy {{ scipy }}
@@ -42,7 +42,7 @@ requirements:
     - bob.learn.em
     - bob.measure
     - bob.pipelines
-    - exposed
+    - clapp
     - {{ pin_compatible('click') }}
     - {{ pin_compatible('click-plugins') }}
     - {{ pin_compatible('dask') }}

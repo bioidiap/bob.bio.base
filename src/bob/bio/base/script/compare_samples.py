@@ -13,7 +13,7 @@ from typing import List
 import click
 import dask.distributed
 
-from exposed.click import ResourceOption, verbosity_option
+from clapp.click import ResourceOption, verbosity_option
 from tabulate import tabulate
 
 import bob.io.base
