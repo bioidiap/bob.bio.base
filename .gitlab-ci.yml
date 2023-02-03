@@ -1,4 +1,4 @@
 include:
   - project: bob/dev-profile
-    ref: main
+    ref: links-to-software-group-packages
     file: gitlab/python.yml
