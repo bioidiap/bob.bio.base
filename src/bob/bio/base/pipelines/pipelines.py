@@ -200,7 +200,6 @@ def check_valid_pipeline(pipeline_simple):
     # CHECKING THE TRANSFORMER
     # Checking if it's a Scikit Pipeline or an estimator
     if isinstance(pipeline_simple.transformer, Pipeline):
-
         # Checking if all steps are wrapped as samples, if not, we should wrap them
         for p in pipeline_simple.transformer:
             if (

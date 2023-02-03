@@ -33,7 +33,6 @@ class FourColumnsScoreWriter(ScoreWriter):
             filename = os.path.join(self.path, str(uuid.uuid4()) + ".txt")
             with open(filename, "w") as f:
                 for probe in probe_sampleset:
-
                     # If it's delayed, load it
                     if isinstance(probe[0], DelayedSample):
                         probe.samples = probe.samples[0].data
@@ -125,7 +124,6 @@ class CSVScoreWriter(ScoreWriter):
             csv_writer = csv.writer(f)
             rows = []
             for i, probe in enumerate(probe_sampleset):
-
                 # Writing the header
                 if i == 0:
                     csv_writer.writerow(header)
@@ -156,7 +154,6 @@ class CSVScoreWriter(ScoreWriter):
             post_processed_scores = []
             os.makedirs(os.path.dirname(path), exist_ok=True)
             with open(path, "w") as f:
-
                 for i, score in enumerate(score_paths):
                     post_processed_scores.append(score)
 

@@ -30,7 +30,6 @@ class AtntBioDatabase(CSVDatabase):
         dataset_original_directory=None,
         **kwargs,
     ):
-
         # Download the protocol definition file
         dataset_protocols_path = get_file(
             "atnt_protocols.tar.gz",

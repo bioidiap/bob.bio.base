@@ -559,7 +559,6 @@ class AnnotationsLoader(TransformerMixin, BaseEstimator):
 
         annotated_samples = []
         for x in X:
-
             # we use .key here because .path might not be unique for all
             # samples. Also, the ``bob bio annotate-samples`` command dictates
             # how annotations are stored.

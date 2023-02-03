@@ -36,7 +36,7 @@ class Preprocessor(object):
         writes_data=True,
         read_original_data=None,
         min_preprocessed_file_size=1000,
-        **kwargs
+        **kwargs,
     ):
         # Each class needs to have a constructor taking
         # all the parameters that are required for the preprocessing as arguments

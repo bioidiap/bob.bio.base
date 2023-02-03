@@ -8,7 +8,6 @@ import bob.bio.base
 
 
 def resources(command_line_parameters=None):
-
     import argparse
 
     parser = argparse.ArgumentParser(

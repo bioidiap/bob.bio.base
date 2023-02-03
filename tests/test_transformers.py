@@ -81,7 +81,6 @@ def assert_checkpoints(transformed_sample, dir_name):
 
 
 def test_preprocessor():
-
     preprocessor = FakePreprocessor()
     preprocessor_transformer = PreprocessorTransformer(preprocessor)
 
@@ -114,7 +113,6 @@ def test_preprocessor():
 
 
 def test_extractor():
-
     extractor = FakeExtractor()
     extractor_transformer = ExtractorTransformer(extractor)
 
@@ -143,9 +141,7 @@ def test_extractor():
 
 
 def test_extractor_fittable():
-
     with tempfile.TemporaryDirectory() as dir_name:
-
         extractor_file = os.path.join(dir_name, "Extractor.hdf5")
         extractor = FakeExtractorFittable()
         extractor_transformer = ExtractorTransformer(
