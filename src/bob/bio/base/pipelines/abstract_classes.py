@@ -331,7 +331,6 @@ class Database(metaclass=ABCMeta):
 
     def __init__(
         self,
-        name: Optional[str] = None,
         protocol: Optional[str] = None,
         score_all_vs_all: bool = False,
         annotation_type: Optional[str] = None,
@@ -342,8 +341,6 @@ class Database(metaclass=ABCMeta):
         """
         Parameters
         ----------
-        name
-            Name of the database. TODO is it used?
         protocol
             Name of the database protocol to use.
         score_all_vs_all
@@ -356,14 +353,14 @@ class Database(metaclass=ABCMeta):
             The constant eyes positions passed to the annotation loading function.
             TODO why keep this face-related name here? Which one is it, too (position
             when annotations are missing, or ending position in the result image)?
+            --> move this when the FaceCrop annotator is correctly implemented.
         memory_demanding
             Flag to indicate that this should not be loaded locally.
             TODO Where is it used?
         """
         super().__init__(**kwargs)
-        for attr, value in (("name", name), ("protocol", protocol)):
-            if not hasattr(self, attr):
-                setattr(self, attr, value)
+        if not hasattr(self, protocol):
+            self.protocol = protocol
         self.score_all_vs_all = score_all_vs_all
         self.annotation_type = annotation_type
         self.fixed_positions = fixed_positions
@@ -381,7 +378,7 @@ class Database(metaclass=ABCMeta):
 
     @abstractmethod
     def background_model_samples(self) -> list[Sample]:
-        """Returns :any:`Sample`'s to train a background model
+        """Returns :any:`Sample`s to train a background model
 
 
         Returns
@@ -449,13 +446,16 @@ class Database(metaclass=ABCMeta):
 
     @abstractmethod
     def groups(self) -> list[str]:
+        """Returns all the possible groups for the current protocol."""
         pass
 
     @abstractmethod
     def protocols(self) -> list[str]:
+        """Returns all the possible protocols of the database."""
         pass
 
     def template_ids(self, group: str) -> list[Any]:
+        """Returns the ``template_id`` attribute of each reference."""
         return [s.template_id for s in self.references(group=group)]
 
 
