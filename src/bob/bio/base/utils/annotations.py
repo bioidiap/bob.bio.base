@@ -6,7 +6,7 @@ import json
 import logging
 import os
 
-from bob.extension.download import search_file
+from bob.bio.base.database.utils import search_and_open
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ def read_annotation_file(file_name, annotation_type):
 
     if ":" in file_name:
         base_path, tail = file_name.split(":", maxsplit=1)
-        f = search_file(base_path, [tail])
+        f = search_and_open(search_pattern=[tail], base_dir=base_path)
     else:
         if not os.path.exists(file_name):
             raise IOError("The annotation file '%s' was not found" % file_name)

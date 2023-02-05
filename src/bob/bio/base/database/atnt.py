@@ -9,7 +9,7 @@ from sklearn.pipeline import make_pipeline
 
 import bob.io.base
 
-from bob.extension.download import get_file
+from bob.bio.base.database.utils import download_file, md5_hash
 
 from . import CSVDatabase, FileSampleLoader
 
@@ -24,35 +24,36 @@ class AtntBioDatabase(CSVDatabase):
     define an 'eval' group.
     """
 
+    dataset_protocols_urls = [
+        "https://www.idiap.ch/software/bob/databases/latest/base/atnt-f529acef.tar.gz"
+    ]
+    dataset_protocols_category = "base"
+    dataset_protocols_checksum = "f529acef"
+
     def __init__(
         self,
         protocol="idiap_protocol",
         dataset_original_directory=None,
         **kwargs,
     ):
+        """Custom init to download the raw data files."""
 
-        # Download the protocol definition file
-        dataset_protocols_path = get_file(
-            "atnt_protocols.tar.gz",
-            [
-                "https://www.idiap.ch/software/bob/databases/latest/base/atnt-f529acef.tar.gz"
-            ],
-            file_hash="f529acef",
-        )
         # Download the raw data (or use a cached local version)
         if dataset_original_directory is None:
-            path = get_file(
-                "atnt_faces.zip",
-                ["http://www.idiap.ch/software/bob/data/bob/att_faces.zip"],
-                file_hash="6efb25cb0d40755e9492b9c012e3348d",
-                cache_subdir="datasets/atnt",
+            path = download_file(
+                urls=[
+                    "http://www.idiap.ch/software/bob/data/bob/att_faces.zip"
+                ],
+                destination_sub_directory="datasets/atnt",
+                destination_filename="atnt_faces.zip",
+                checksum="6efb25cb0d40755e9492b9c012e3348d",
+                checksum_fct=md5_hash,
                 extract=True,
             )
-            dataset_original_directory = str(Path(path).parent)
+            dataset_original_directory = Path(path).as_posix()
 
         super().__init__(
             name="atnt",
-            dataset_protocols_path=dataset_protocols_path,
             protocol=protocol,
             transformer=make_pipeline(
                 FileSampleLoader(

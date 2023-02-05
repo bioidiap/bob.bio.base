@@ -359,7 +359,7 @@ class Database(metaclass=ABCMeta):
             TODO Where is it used?
         """
         super().__init__(**kwargs)
-        if not hasattr(self, protocol):
+        if not hasattr(self, "protocol"):
             self.protocol = protocol
         self.score_all_vs_all = score_all_vs_all
         self.annotation_type = annotation_type

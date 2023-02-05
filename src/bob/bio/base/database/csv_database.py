@@ -1,8 +1,10 @@
 import csv
 import functools
+import logging
 import os
 
 from collections import defaultdict
+from pathlib import Path
 from typing import Any, Callable, Iterable, Optional, TextIO
 
 import sklearn.pipeline
@@ -10,7 +12,6 @@ import sklearn.pipeline
 from sklearn.base import BaseEstimator, TransformerMixin
 
 from bob.bio.base.pipelines.abstract_classes import Database
-from bob.extension.download import list_dir, search_file
 from bob.pipelines import (
     DelayedSample,
     FileListDatabase,
@@ -18,8 +19,11 @@ from bob.pipelines import (
     SampleSet,
     check_parameters_for_validity,
 )
+from bob.pipelines.dataset import open_definition_file
 
 from ..utils.annotations import read_annotation_file
+
+logger = logging.getLogger(__name__)
 
 
 def _sample_sets_to_samples(sample_sets):
@@ -202,7 +206,7 @@ class CSVDatabase(FileListDatabase, Database):
         name
             The name of the database.
         protocol
-            Name of the protocol folder to use in the CSV definition structure.
+            Name of the protocol folder in the CSV definition structure.
         dataset_protocol_path
             Path to the CSV files structure (see :ref:`bob.bio.base.database_interface`
             for more info).
@@ -214,15 +218,18 @@ class CSVDatabase(FileListDatabase, Database):
             function
         fixed_positions
             TODO Why is it here? What does it do exactly?
+            --> move it when the FaceCrop annotator is implemented correctly.
         memory_demanding
             Flag that indicates that experiments using this should not run on low-mem
             workers.
         """
+        if not hasattr(self, "name"):
+            self.name = name
         transformer = sklearn.pipeline.make_pipeline(
             sklearn.pipeline.FunctionTransformer(_add_key), transformer
         )
         super().__init__(
-            name=name,
+            name=name,  # For FileListDatabase
             protocol=protocol,
             dataset_protocols_path=dataset_protocols_path,
             transformer=transformer,
@@ -237,12 +244,23 @@ class CSVDatabase(FileListDatabase, Database):
             self.score_all_vs_all = False
 
     def list_file(self, group: str, name: str) -> TextIO:
-        """Returns a definition file containing one sample per row."""
-        list_file = search_file(
-            self.dataset_protocols_path,
-            os.path.join("/" + self.protocol, group, name + ".csv"),
-        )
-        return list_file
+        """Returns a definition file containing one sample per row.
+
+        Overloads ``bob.pipelines`` list_file as the group is a dir.
+        """
+
+        try:
+            list_file = open_definition_file(
+                search_pattern=Path(group) / (name + ".csv"),
+                database_name=self.name,
+                protocol=self.protocol,
+                database_filename=self.dataset_protocols_path.name,
+                base_dir=self.dataset_protocols_path.parent,
+                subdir=".",
+            )
+            return list_file
+        except FileNotFoundError:
+            return None
 
     def get_reader(self, group: str, name: str) -> Iterable:
         """Returns an :any:`Iterable` containing :class:`Sample` or :class:`SampleSet` objects."""
@@ -257,27 +275,6 @@ class CSVDatabase(FileListDatabase, Database):
 
         reader = self.readers[key]
         return reader
-
-    def groups(self):
-        return list_dir(
-            self.dataset_protocols_path,
-            self.protocol,
-            folders=True,
-            files=False,
-        )
-
-    def _instance_protocols(self) -> list[str]:
-        """Same as ``protocols`` but for CSVDatabase instances."""
-        return list_dir(
-            self.dataset_protocols_path, ".", folders=True, files=False
-        )
-
-    @classmethod
-    def protocols(cls) -> list[str]:
-        """Returns the list of protocols without an instance of CSVDataset."""
-        return list_dir(
-            cls.retrieve_dataset_protocols(), ".", folders=True, files=False
-        )
 
     # cached methods should be based on protocol as well
     @functools.lru_cache(maxsize=None)
