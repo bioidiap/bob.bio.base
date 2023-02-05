@@ -24,10 +24,11 @@ class AtntBioDatabase(CSVDatabase):
     define an 'eval' group.
     """
 
+    category = "base"
     dataset_protocols_urls = [
-        "https://www.idiap.ch/software/bob/databases/latest/base/atnt-f529acef.tar.gz"
+        "https://www.idiap.ch/software/bob/databases/latest/base/atnt-f529acef.tar.gz",
+        "http://www.idiap.ch/software/bob/databases/latest/base/atnt-f529acef.tar.gz",
     ]
-    dataset_protocols_category = "base"
     dataset_protocols_checksum = "f529acef"
 
     def __init__(
