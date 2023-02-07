@@ -145,8 +145,8 @@ def write_scores_to_file(neg_licit, pos_licit, spoof, filename):
         # Write the header
         csv_writer.writerow(
             [
-                "bio_ref_template_id",
-                "probe_template_id",
+                "bio_ref_subject_id",
+                "probe_subject_id",
                 "probe_key",
                 "probe_attack_type",
                 "score",
@@ -196,8 +196,8 @@ def gen(outdir, mean_gen, mean_zei, mean_pa, **kwargs):
     biometric system against zero-effort impostor and presentation attacks.
 
     The CSV score files must contain an `attack-type` column, in addition to the
-    "regular" biometric scores columns (`bio_ref_template_id`,
-    `probe_template_id`, and `score`).
+    "regular" biometric scores columns (`bio_ref_subject_id`,
+    `probe_subject_id`, and `score`).
 
     Examples:
 
@@ -223,8 +223,8 @@ def metrics(ctx, scores, evaluation, **kwargs):
     * [eval scores]
 
     The CSV score files must contain an `attack-type` column, in addition to the
-    "regular" biometric scores columns (`bio_ref_template_id`,
-    `probe_template_id`, and `score`).
+    "regular" biometric scores columns (`bio_ref_subject_id`,
+    `probe_subject_id`, and `score`).
 
     Examples:
 
@@ -258,8 +258,8 @@ def roc(ctx, scores, evaluation, real_data, **kwargs):
     * [eval scores]
 
     The CSV score files must contain an `attack-type` column, in addition to the
-    "regular" biometric scores columns (`bio_ref_template_id`,
-    `probe_template_id`, and `score`).
+    "regular" biometric scores columns (`bio_ref_subject_id`,
+    `probe_subject_id`, and `score`).
 
     See :ref:`bob.bio.base.vulnerability` in the documentation for a guide on
     vulnerability analysis.
@@ -296,8 +296,8 @@ def det(ctx, scores, evaluation, real_data, **kwargs):
     * eval scores
 
     The CSV score files must contain an `attack-type` column, in addition to the
-    "regular" biometric scores columns (`bio_ref_template_id`,
-    `probe_template_id`, and `score`).
+    "regular" biometric scores columns (`bio_ref_subject_id`,
+    `probe_subject_id`, and `score`).
 
     See :ref:`bob.bio.base.vulnerability` in the documentation for a guide on
     vulnerability analysis.
@@ -336,8 +336,8 @@ def epc(ctx, scores, **kwargs):
     * eval scores
 
     The CSV score files must contain an `attack-type` column, in addition to the
-    "regular" biometric scores columns (`bio_ref_template_id`,
-    `probe_template_id`, and `score`).
+    "regular" biometric scores columns (`bio_ref_subject_id`,
+    `probe_subject_id`, and `score`).
 
     See :ref:`bob.bio.base.vulnerability` in the documentation for a guide on
     vulnerability analysis.
@@ -429,8 +429,8 @@ def epsc(ctx, scores, criteria, var_param, three_d, sampling, **kwargs):
     When evaluation scores are provided, you must use the ``--eval`` option.
 
     The CSV score files must contain an `attack-type` column, in addition to the
-    "regular" biometric scores columns (`bio_ref_template_id`,
-    `probe_template_id`, and `score`).
+    "regular" biometric scores columns (`bio_ref_subject_id`,
+    `probe_subject_id`, and `score`).
 
     See :ref:`bob.bio.base.vulnerability` in the documentation for a guide on
     vulnerability analysis.
@@ -474,8 +474,8 @@ def hist(ctx, scores, evaluation, **kwargs):
     * [eval scores]
 
     The CSV score files must contain an `attack-type` column, in addition to the
-    "regular" biometric scores columns (`bio_ref_template_id`,
-    `probe_template_id`, and `score`).
+    "regular" biometric scores columns (`bio_ref_subject_id`,
+    `probe_subject_id`, and `score`).
 
     Examples:
 
@@ -496,7 +496,7 @@ def fmr_iapmr(ctx, scores, **kwargs):
 @common_options.evaluate_command(
     common_options.EVALUATE_HELP.format(
         score_format=(
-            "Files must be in CSV format, with the `bio_ref_template_id`, "
+            "Files must be in CSV format, with the `bio_ref_subject_id`, "
             "`probe_references_id`, `score`, and `attack_type` columns."
         ),
         command="bob vuln evaluate",
