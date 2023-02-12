@@ -14,7 +14,7 @@ from typing import IO, Any, Callable, TextIO, Union
 
 import requests
 
-from exposed.rc import UserDefaults
+from clapp.rc import UserDefaults
 
 logger = logging.getLogger(__name__)
 

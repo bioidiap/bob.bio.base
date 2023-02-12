@@ -3,7 +3,7 @@ import logging
 
 import click
 
-from exposed.click import verbosity_option
+from clapp.click import verbosity_option
 
 import bob.measure.script.figure as measure_figure
 

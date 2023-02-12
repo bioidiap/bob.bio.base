@@ -7,7 +7,7 @@ import logging
 
 import click
 
-from exposed.click import ConfigCommand, ResourceOption, verbosity_option
+from clapp.click import ConfigCommand, ResourceOption, verbosity_option
 
 from bob.pipelines import is_pipeline_wrapped
 from bob.pipelines.distributed import (
