@@ -378,7 +378,7 @@ class Database(metaclass=ABCMeta):
 
     @abstractmethod
     def background_model_samples(self) -> list[Sample]:
-        """Returns :any:`Sample`s to train a background model
+        """Returns :any:`Sample`\ s to train a background model
 
 
         Returns
@@ -386,7 +386,7 @@ class Database(metaclass=ABCMeta):
         samples
             List of samples for background model training.
 
-        """
+        """  # noqa: W605
         pass
 
     @abstractmethod
