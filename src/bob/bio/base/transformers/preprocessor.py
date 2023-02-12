@@ -20,7 +20,6 @@ class PreprocessorTransformer(TransformerMixin, BaseEstimator):
         instance,
         **kwargs,
     ):
-
         if not isinstance(instance, Preprocessor):
             raise ValueError(
                 "`instance` should be an instance of `bob.bio.base.preprocessor.Preprocessor`"

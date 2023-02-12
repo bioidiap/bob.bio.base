@@ -167,7 +167,6 @@ class BioAlgCheckpointWrapper(BioAlgorithmBaseWrapper):
         )
 
         if self.force or not os.path.exists(path):
-
             enrolled_sample = (
                 self.biometric_algorithm.create_templates_from_samplesets(
                     [sampleset], enroll=True

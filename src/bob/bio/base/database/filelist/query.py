@@ -118,10 +118,11 @@ class FileListBioDatabase(ZTBioDatabase):
         # if both probe_filename and scores_filename is given, what kind of list should be used?
         keep_read_lists_in_memory=True,
         # if set to True (the RECOMMENDED default) lists are read only once and stored in memory.
-        **kwargs
+        **kwargs,
     ):
         """Initializes the database with the file lists from the given base directory,
-        and the given sub-directories and file names (which default to useful values if not given)."""
+        and the given sub-directories and file names (which default to useful values if not given).
+        """
 
         super(FileListBioDatabase, self).__init__(
             name=name,
@@ -131,7 +132,7 @@ class FileListBioDatabase(ZTBioDatabase):
             annotation_directory=annotation_directory,
             annotation_extension=annotation_extension,
             annotation_type=annotation_type,
-            **kwargs
+            **kwargs,
         )
         # extra args for pretty printing
         self._kwargs.update(
@@ -714,7 +715,7 @@ class FileListBioDatabase(ZTBioDatabase):
         purposes=None,
         model_ids=None,
         classes=None,
-        **kwargs
+        **kwargs,
     ):
         """Returns a set of :py:class:`bob.bio.base.database.BioFile` objects for the specific query by the user.
 

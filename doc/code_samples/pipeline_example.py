@@ -11,6 +11,7 @@ from bob.pipelines import wrap
 # Transformers #
 pca = PCA(n_components=0.95)
 
+
 # the images are in shape of Nx112x92, we want to flatten to Nx10304 them so we can train a PCA on them.
 def flatten(images):
     images = check_array(images, allow_nd=True)
@@ -25,6 +26,7 @@ transformer = make_pipeline(flatten_transformer, pca)
 
 # All transformers must be sample transformers
 transformer = wrap(["sample"], transformer)
+
 
 # Implementation of the BioAlgorithm #
 # A generic implementation is available in:

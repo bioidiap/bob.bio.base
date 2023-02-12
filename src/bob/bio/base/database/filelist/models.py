@@ -54,7 +54,6 @@ class FileListFile(object):
     """
 
     def __init__(self, file_name, client_id, model_id=None, claimed_id=None):
-
         # super(FileListFile, self).__init__(client_id=client_id, path=file_name, file_id=file_name)
         super(FileListFile, self).__init__()
         self.client_id = client_id

@@ -8,8 +8,8 @@ import os
 
 import click
 
+from clapp.click import verbosity_option
 from click.types import FLOAT
-from exposed.click import verbosity_option
 from numpy import random
 
 from bob.bio.base.score.load import split_csv_vuln
