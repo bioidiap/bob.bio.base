@@ -86,7 +86,6 @@ def read_annotation_file(file_name, annotation_type):
     annotations = {}
 
     try:
-
         if str(annotation_type) == "eyecenter":
             # only the eye positions are written, all are in the first row
             line = f.readline()

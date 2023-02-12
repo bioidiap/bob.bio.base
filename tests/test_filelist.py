@@ -67,7 +67,6 @@ def all_sample_set(objects: list[Any]) -> bool:
 
 
 def test_csv_file_list_dev_no_metadata():
-
     dataset = CSVDatabase(
         name="example_csv_filelist",
         dataset_protocols_path=example_protocol_path,
@@ -87,7 +86,6 @@ def test_csv_file_list_dev_no_metadata():
 
 
 def test_csv_file_list_dev_metadata():
-
     dataset = CSVDatabase(
         name="example_csv_filelist",
         dataset_protocols_path=example_protocol_path,
@@ -121,7 +119,6 @@ def test_csv_file_list_dev_metadata():
 
 
 def test_csv_file_list_dev_eval_all_vs_all():
-
     annotation_directory = os.path.realpath(
         bob.io.base.testing_utils.datafile(
             ".", __name__, "data/example_csv_filelist/annotations"
@@ -129,7 +126,6 @@ def test_csv_file_list_dev_eval_all_vs_all():
     )
 
     def run(filename):
-
         dataset = CSVDatabase(
             name="example_csv_filelist",
             dataset_protocols_path=filename,
@@ -195,7 +191,6 @@ def test_csv_file_list_dev_eval_all_vs_all():
 
 
 def test_csv_file_list_dev_eval_score_norm():
-
     annotation_directory = os.path.realpath(
         bob.io.base.testing_utils.datafile(
             ".", __name__, "data/example_csv_filelist/annotations"
@@ -266,7 +261,6 @@ def test_csv_file_list_dev_eval_score_norm():
 
 
 def test_csv_file_list_dev_eval_sparse():
-
     annotation_directory = os.path.realpath(
         bob.io.base.testing_utils.datafile(
             ".", __name__, "data/example_csv_filelist/annotations"
@@ -335,7 +329,6 @@ def test_csv_file_list_dev_eval_sparse():
 
 
 def test_csv_file_list_atnt():
-
     dataset = CSVDatabase(
         name="atnt",
         dataset_protocols_path=atnt_protocol_path,
@@ -377,7 +370,6 @@ def run_experiment(dataset):
 
 
 def test_atnt_experiment():
-
     dataset = CSVDatabase(
         name="atnt",
         dataset_protocols_path=atnt_protocol_path,
@@ -492,7 +484,6 @@ def test_query():
 
 
 def test_query_protocol():
-
     db = FileListBioDatabase(
         legacy_example_dir,
         "test",
@@ -726,7 +717,6 @@ def test_noztnorm():
 
 
 def test_query_dense():
-
     db = FileListBioDatabase(
         os.path.join(legacy_example_dir, "example_filelist"),
         "test",
@@ -744,7 +734,6 @@ def test_query_dense():
 
 
 def test_annotation():
-
     db = FileListBioDatabase(
         os.path.join(legacy_example_dir, "example_filelist"),
         "test",

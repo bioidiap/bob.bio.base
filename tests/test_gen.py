@@ -48,7 +48,6 @@ def gen_case(
 
     runner = CliRunner()
     with runner.isolated_filesystem():
-
         temp_path = "./gen_test_temp_dir/"
 
         logger.info("Calling 'gen' with a specific amount of scores.")

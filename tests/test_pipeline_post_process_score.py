@@ -70,7 +70,6 @@ def zt_norm_stubs(references, probes, t_references, z_probes):
                 std.reshape(norm_base_scores.shape[0], 1), (1, scores.shape[1])
             )
         else:
-
             std = np.sqrt(
                 np.sum(
                     (
@@ -351,11 +350,9 @@ def test_norm_mechanics():
 
 
 def test_znorm_on_memory():
-
     with tempfile.TemporaryDirectory() as dir_name:
 
         def run_pipeline(with_dask, score_writer=None):
-
             database = DummyDatabase(one_d=False)
 
             transformer = _make_transformer(dir_name)
@@ -435,7 +432,6 @@ def test_znorm_on_memory():
                 # s_scores = s_scores.compute(scheduler="single-threaded")
 
             if isinstance(score_writer, CSVScoreWriter):
-
                 assert (
                     len(
                         open(

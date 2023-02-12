@@ -39,7 +39,7 @@ def rank_option(**kwargs):
             help="Provide rank for the command",
             callback=callback,
             show_default=True,
-            **kwargs
+            **kwargs,
         )(func)
 
     return custom_rank_option

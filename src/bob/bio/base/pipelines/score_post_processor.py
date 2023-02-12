@@ -75,7 +75,6 @@ class PipelineScoreNorm:
         pipeline_simple: PipelineSimple,
         post_processor: Union[sklearn.pipeline.Pipeline, BaseEstimator],
     ):
-
         self.pipeline_simple = pipeline_simple
         self.post_processor = post_processor
 
@@ -129,7 +128,6 @@ class PipelineScoreNorm:
             "biometric_algorithm",
             bob.bio.base.pipelines.BioAlgCheckpointWrapper,
         ):
-
             if is_instance_nested(
                 self,
                 "biometric_algorithm",
@@ -219,7 +217,6 @@ class ZNormScores(TransformerMixin, BaseEstimator):
         self.top_norm_score_fraction = top_norm_score_fraction
 
     def fit(self, z_scores, y=None):
-
         # TODO: THIS IS SUPER INNEFICIENT, BUT
         # IT'S THE MOST READABLE SOLUTION
 
@@ -256,7 +253,6 @@ class ZNormScores(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-
         if len(X) <= 0:
             # Nothing to be transformed
             return []
@@ -274,11 +270,9 @@ class ZNormScores(TransformerMixin, BaseEstimator):
             return scores
 
         if isinstance(X[0], SampleSet):
-
             z_normed_scores = []
             # Transforming either Samples or SampleSets
             for probe_scores in X:
-
                 z_normed_scores.append(
                     SampleSet(
                         _transform_samples(probe_scores), parent=probe_scores
@@ -317,14 +311,12 @@ class TNormScores(TransformerMixin, BaseEstimator):
         self.top_norm_score_fraction = top_norm_score_fraction
 
     def fit(self, t_scores, y=None):
-
         # TODO: THIS IS SUPER INNEFICIENT, BUT
         # IT'S THE MOST READABLE SOLUTION
         # Stacking scores by biometric reference
         self.t_stats = dict()
 
         for sset in t_scores:
-
             self.t_stats[sset.template_id] = Sample(
                 [s.data for s in sset], parent=sset
             )
@@ -352,7 +344,6 @@ class TNormScores(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-
         if len(X) <= 0:
             # Nothing to be transformed
             return []
@@ -367,12 +358,10 @@ class TNormScores(TransformerMixin, BaseEstimator):
             return scores
 
         if isinstance(X[0], SampleSet):
-
             t_normed_scores = []
             # Transforming either Samples or SampleSets
 
             for probe_scores in X:
-
                 stats = self.t_stats[probe_scores.template_id]
 
                 t_normed_scores.append(
@@ -719,7 +708,6 @@ class CategoricalCalibration(TransformerMixin, BaseEstimator):
             return expit(X * regressor.coef_ + regressor.intercept_).ravel()
 
         for value in self.field_values:
-
             # Filtering genunines and impostors per group
             impostors_per_group = (
                 impostors[

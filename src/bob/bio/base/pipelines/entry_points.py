@@ -165,7 +165,6 @@ def execute_pipeline_simple(
         background_model_samples = []
 
     for group in groups:
-
         score_file_name = os.path.join(
             output,
             f"scores-{group}" + (".csv" if write_metadata_scores else ""),
@@ -371,7 +370,6 @@ def execute_pipeline_score_norm(
 
     # treferences = database.treferences(proportion=ztnorm_cohort_proportion)
     for group in groups:
-
         # Changing the score normalization stats file name as a function of the group
         if checkpoint and not is_biopipeline_checkpointed(post_processor):
             post_processor.model_path = f"{score_stats_path}_{group}.pkl"
@@ -427,7 +425,10 @@ def execute_pipeline_score_norm(
             else False
         )
 
-        (raw_scores, score_normed_scores,) = pipeline(
+        (
+            raw_scores,
+            score_normed_scores,
+        ) = pipeline(
             background_model_samples,
             biometric_references,
             probes,

@@ -204,7 +204,6 @@ def pipeline_transform(
             "The pipeline is already dasked, hence, we are not dasking it again."
         )
     else:
-
         if not isinstance(dask_client, str):
             dask_partition_size = (
                 dask_get_partition_size(

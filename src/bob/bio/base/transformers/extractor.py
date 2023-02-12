@@ -26,7 +26,6 @@ class ExtractorTransformer(TransformerMixin, BaseEstimator):
         model_path=None,
         **kwargs,
     ):
-
         if not isinstance(instance, Extractor):
             raise ValueError(
                 "`instance` should be an instance of `bob.bio.base.extractor.Extractor`"

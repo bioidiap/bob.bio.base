@@ -54,7 +54,8 @@ def filter_none(data, split_by_client=False):
 def check_file(filename, force, expected_file_size=1):
     """Checks if the file with the given ``filename`` exists and has size greater or equal to ``expected_file_size``.
     If the file is to small, **or** if the ``force`` option is set to ``True``, the file is removed.
-    This function returns ``True`` is the file exists (and has not been removed), otherwise ``False``"""
+    This function returns ``True`` is the file exists (and has not been removed), otherwise ``False``
+    """
     if os.path.exists(filename):
         if force or os.path.getsize(filename) < expected_file_size:
             logger.debug("  .. Removing old file '%s'.", filename)
@@ -98,7 +99,8 @@ def load(file):
 def save(data, file, compression=0):
     """Saves the data to file using HDF5. The given file might be an HDF5 file open for writing, or a string.
     If the given data contains a ``save`` method, this method is called with the given HDF5 file.
-    Otherwise the data is written to the HDF5 file using the given compression."""
+    Otherwise the data is written to the HDF5 file using the given compression.
+    """
     f = file if isinstance(file, h5py.File) else h5py.File(file, "w")
     if hasattr(data, "save"):
         data.save(f)
