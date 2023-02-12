@@ -11,7 +11,6 @@ from bob.io.base.testing_utils import assert_click_runner_result
 
 
 def test_annotate():
-
     try:
         tmp_dir = tempfile.mkdtemp(prefix="bobtest_")
         runner = CliRunner()
@@ -34,7 +33,6 @@ def test_annotate():
 
 
 def test_annotate_samples():
-
     try:
         tmp_dir = tempfile.mkdtemp(prefix="bobtest_")
         runner = CliRunner()

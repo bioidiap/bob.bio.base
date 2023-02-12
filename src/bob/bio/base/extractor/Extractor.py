@@ -44,7 +44,7 @@ class Extractor(object):
         split_training_data_by_client=False,  # enable, if your extractor needs the training files sorted by client
         min_extractor_file_size=1000,
         min_feature_file_size=1000,
-        **kwargs  # the parameters of the extractor, to be written in the __str__() method
+        **kwargs,  # the parameters of the extractor, to be written in the __str__() method
     ):
         # Each class needs to have a constructor taking
         # all the parameters that are required for the feature extraction as arguments

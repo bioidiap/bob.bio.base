@@ -21,6 +21,7 @@ requirements:
     - python {{ python }}
     - setuptools {{ setuptools }}
     - pip {{ pip }}
+    - clapp
     - bob.extension >5.0.1
     - bob.io.base
     - bob.learn.em
@@ -29,7 +30,6 @@ requirements:
     - click {{ click }}
     - click-plugins {{ click_plugins }}
     - dask {{ dask }}
-    - exposed
     - numpy {{ numpy }}
     - pandas {{ pandas }}
     - scipy {{ scipy }}
@@ -37,12 +37,12 @@ requirements:
   run:
     - python
     - setuptools
+    - clapp
     - bob.extension
     - bob.io.base
     - bob.learn.em
     - bob.measure
     - bob.pipelines
-    - exposed
     - {{ pin_compatible('click') }}
     - {{ pin_compatible('click-plugins') }}
     - {{ pin_compatible('dask') }}

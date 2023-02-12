@@ -128,7 +128,6 @@ def test_pipeline_click_cli(
 ):
     runner = CliRunner()
     with runner.isolated_filesystem():
-
         if pipeline_simple:
             _create_test_config_pipeline_simple("config.py")
         else:

@@ -37,7 +37,8 @@ def score_fusion_strategy(strategy_name="average"):
 
 def selected_indices(total_number_of_indices, desired_number_of_indices=None):
     """Returns a list of indices that will contain exactly the number of desired indices (or the number of total items in the list, if this is smaller).
-    These indices are selected such that they are evenly spread over the whole sequence."""
+    These indices are selected such that they are evenly spread over the whole sequence.
+    """
     if (
         desired_number_of_indices is None
         or desired_number_of_indices >= total_number_of_indices
@@ -51,7 +52,8 @@ def selected_indices(total_number_of_indices, desired_number_of_indices=None):
 
 def selected_elements(list_of_elements, desired_number_of_elements=None):
     """Returns a list of elements that are sub-selected from the given list (or the list itself, if its length is smaller).
-    These elements are selected such that they are evenly spread over the whole list."""
+    These elements are selected such that they are evenly spread over the whole list.
+    """
     total_number_of_elements = len(list_of_elements)
     if (
         desired_number_of_elements is None

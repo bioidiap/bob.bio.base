@@ -78,12 +78,12 @@ def is_library_available(library):
             try:
                 importlib.import_module(library)
 
-                return function(*args, **kwargs)
             except ImportError as e:
                 # unittest.SkipTest is compatible with both nose and pytest
                 raise unittest.SkipTest(
                     f"Skipping test since `{library}` is not available: %s" % e
                 )
+            return function(*args, **kwargs)
 
         return wrapper
 

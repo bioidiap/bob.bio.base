@@ -86,15 +86,14 @@ class BioDatabase(LegacyFileDatabase, metaclass=abc.ABCMeta):
         protocol="Default",
         training_depends_on_protocol=False,
         models_depend_on_protocol=False,
-        **kwargs
+        **kwargs,
     ):
-
         assert isinstance(name, str)
 
         super(BioDatabase, self).__init__(
             original_directory=original_directory,
             original_extension=original_extension,
-            **kwargs
+            **kwargs,
         )
 
         self.name = name
@@ -245,7 +244,8 @@ class BioDatabase(LegacyFileDatabase, metaclass=abc.ABCMeta):
         """Defines if, for the current protocol, the database uses several probe files to generate a score.
         Returns True if the given protocol specifies file sets for probes, instead of a single probe file.
         In this default implementation, False is returned, throughout.
-        If you need different behavior, please overload this function in your derived class."""
+        If you need different behavior, please overload this function in your derived class.
+        """
         return False
 
     def arrange_by_client(self, files):
@@ -354,7 +354,7 @@ class BioDatabase(LegacyFileDatabase, metaclass=abc.ABCMeta):
         protocol=None,
         purposes=None,
         model_ids=None,
-        **kwargs
+        **kwargs,
     ):
         """This function returns a list of :py:class:`bob.bio.base.database.BioFile` objects or the list
         of objects which inherit from this class. Returned files fulfill the given restrictions.
@@ -546,7 +546,7 @@ class BioDatabase(LegacyFileDatabase, metaclass=abc.ABCMeta):
                     groups=group,
                     model_ids=(model_id,),
                     purposes="enroll",
-                    **self.all_files_options
+                    **self.all_files_options,
                 )
             )
         else:
@@ -555,7 +555,7 @@ class BioDatabase(LegacyFileDatabase, metaclass=abc.ABCMeta):
                     protocol=self.protocol,
                     groups=group,
                     purposes="enroll",
-                    **self.all_files_options
+                    **self.all_files_options,
                 )
             )
 
@@ -585,14 +585,14 @@ class BioDatabase(LegacyFileDatabase, metaclass=abc.ABCMeta):
                 groups=group,
                 model_ids=(model_id,),
                 purposes="probe",
-                **self.all_files_options
+                **self.all_files_options,
             )
         else:
             files = self.objects(
                 protocol=self.protocol,
                 groups=group,
                 purposes="probe",
-                **self.all_files_options
+                **self.all_files_options,
             )
         return self.sort(files)
 
@@ -602,7 +602,7 @@ class BioDatabase(LegacyFileDatabase, metaclass=abc.ABCMeta):
         protocol=None,
         purposes=None,
         model_ids=None,
-        **kwargs
+        **kwargs,
     ):
         """This function returns lists of FileSet objects, which fulfill the given restrictions.
 
@@ -650,21 +650,22 @@ class BioDatabase(LegacyFileDatabase, metaclass=abc.ABCMeta):
         **Returns:**
 
         files : [:py:class:`bob.bio.base.database.BioFileSet`] or something similar
-          The list of file sets used to probe the model with the given model id."""
+          The list of file sets used to probe the model with the given model id.
+        """
         if model_id is not None:
             file_sets = self.object_sets(
                 protocol=self.protocol,
                 groups=group,
                 model_ids=(model_id,),
                 purposes="probe",
-                **self.all_files_options
+                **self.all_files_options,
             )
         else:
             file_sets = self.object_sets(
                 protocol=self.protocol,
                 groups=group,
                 purposes="probe",
-                **self.all_files_options
+                **self.all_files_options,
             )
         return self.sort(file_sets)
 
@@ -672,7 +673,8 @@ class BioDatabase(LegacyFileDatabase, metaclass=abc.ABCMeta):
         """Return the client id associated with the given model id.
         In this base class implementation, it is assumed that only one model is enrolled for each client and, thus, client id and model id are identical.
         All key word arguments are ignored.
-        Please override this function in derived class implementations to change this behavior."""
+        Please override this function in derived class implementations to change this behavior.
+        """
         return model_id
 
 

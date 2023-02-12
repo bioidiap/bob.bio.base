@@ -79,7 +79,6 @@ class DummyDatabase:
         ]
 
     def _create_random_sample_set(self, n_sample_set=10, n_samples=2, seed=10):
-
         # Just generate random samples
         np.random.seed(seed)
         sample_set = [
@@ -205,7 +204,6 @@ def _make_transformer(dir_name):
 
 
 def test_on_memory():
-
     with tempfile.TemporaryDirectory() as dir_name:
 
         def run_pipeline(with_dask, score_all_vs_all):
@@ -253,7 +251,6 @@ def test_on_memory():
 
 
 def test_checkpoint_bioalg_as_transformer():
-
     with tempfile.TemporaryDirectory() as dir_name:
 
         def run_pipeline(
@@ -372,7 +369,6 @@ def test_checkpoint_bioalg_as_transformer():
 
 
 def test_checkpoint_bioalg_with_tags():
-
     with tempfile.TemporaryDirectory() as dir_name:
 
         def run_pipeline(
@@ -477,9 +473,7 @@ def test_checkpoint_bioalg_with_tags():
 
 
 def _run_with_failure(score_all_vs_all, sporadic_fail):
-
     with tempfile.TemporaryDirectory() as dir_name:
-
         database = DummyDatabase(
             some_fta=sporadic_fail, all_fta=not sporadic_fail
         )
@@ -566,7 +560,6 @@ def _test_pipeline_click_cli(
 ):
     runner = CliRunner()
     with runner.isolated_filesystem():
-
         _create_test_config("config.py")
         result = runner.invoke(
             cli,
