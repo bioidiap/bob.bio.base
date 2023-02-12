@@ -94,7 +94,7 @@ Examples:
 )
 @annotate_common_options
 @verbosity_option(logger=logger, expose_value=False)
-def annotate(database, groups, annotator, output_dir, dask_client):
+def annotate(database, groups, annotator, output_dir, dask_client, **kwargs):
     """Annotates a database.
 
     The annotations are written in text file (json) format which can be read
@@ -181,7 +181,7 @@ You have to define ``samples``, ``reader``, and ``make_key`` in python files
 @annotate_common_options
 @verbosity_option(logger=logger, expose_value=False)
 def annotate_samples(
-    samples, reader, make_key, annotator, output_dir, dask_client
+    samples, reader, make_key, annotator, output_dir, dask_client, **kwargs
 ):
     """Annotates a list of samples.
 
