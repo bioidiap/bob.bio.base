@@ -31,7 +31,7 @@
   },
   "bob.bio.vein": {
     "versions": {
-      "latest": "https://www.idiap.ch/software/bob/docs/bob/bob.bio.vein/master"
+      "latest": "https://www.idiap.ch/software/bob/docs/bob/bob.bio.vein/master/sphinx"
     },
     "sources": {}
   }
