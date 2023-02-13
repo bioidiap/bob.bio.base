@@ -1,4 +1,4 @@
-bio_ref_template_id,probe_template_id,probe_key,probe_attack_type,score
+bio_ref_subject_id,probe_subject_id,probe_key,probe_attack_type,score
 x,y,0,,2.1294496
 x,y,0,,4.714923
 x,y,0,,2.4602451
