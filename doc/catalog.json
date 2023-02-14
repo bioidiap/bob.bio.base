@@ -19,7 +19,7 @@
   },
   "bob.bio.spear": {
     "versions": {
-      "latest": "https://www.idiap.ch/software/bob/docs/bob/bob.bio.spear/master"
+      "latest": "https://www.idiap.ch/software/bob/docs/bob/bob.bio.spear/master/sphinx"
     },
     "sources": {}
   },
