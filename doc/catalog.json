@@ -1,37 +1,7 @@
 {
-  "bob.bio.face": {
-    "versions": {
-      "latest": "https://www.idiap.ch/software/bob/docs/bob/bob.bio.face/master/sphinx"
-    },
-    "sources": {}
-  },
-  "bob.pipelines": {
-    "versions": {
-      "latest": "https://www.idiap.ch/software/bob/docs/bob/bob.pipelines/master/sphinx"
-    },
-    "sources": {}
-  },
   "bob.extension": {
     "versions": {
       "latest": "https://www.idiap.ch/software/bob/docs/bob/bob.extension/master"
-    },
-    "sources": {}
-  },
-  "bob.bio.spear": {
-    "versions": {
-      "latest": "https://www.idiap.ch/software/bob/docs/bob/bob.bio.spear/master/sphinx"
-    },
-    "sources": {}
-  },
-  "bob.bio.video": {
-    "versions": {
-      "latest": "https://www.idiap.ch/software/bob/docs/bob/bob.bio.video/master/sphinx"
-    },
-    "sources": {}
-  },
-  "bob.bio.vein": {
-    "versions": {
-      "latest": "https://www.idiap.ch/software/bob/docs/bob/bob.bio.vein/master/sphinx"
     },
     "sources": {}
   }
