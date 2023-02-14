@@ -347,8 +347,8 @@ def checkpoint_pipeline_simple(
                     bob.pipelines.wrap(
                         ["checkpoint"],
                         transformer,
-                        features_dir=base_dir,
-                        model_path=base_dir,
+                        features_dir=os.path.join(base_dir, name),
+                        model_path=os.path.join(base_dir, name),
                         hash_fn=hash_fn,
                         force=force,
                     ),
