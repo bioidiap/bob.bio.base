@@ -56,6 +56,10 @@
         "sphinxcontrib-programoutput",
         "matplotlib",
         "dask-ml",
+        "bob.bio.face",
+        "bob.bio.vein",
+        "bob.bio.spear",
+        "bob.bio.video",
         ]
     test = [
         "pytest",
