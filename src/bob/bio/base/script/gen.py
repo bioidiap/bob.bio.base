@@ -7,7 +7,7 @@ import os
 import click
 import numpy
 
-from clapp.click import verbosity_option
+from clapper.click import verbosity_option
 
 logger = logging.getLogger(__name__)
 

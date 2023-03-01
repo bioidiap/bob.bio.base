@@ -8,7 +8,7 @@ import os
 
 import click
 
-from clapp.click import verbosity_option
+from clapper.click import verbosity_option
 from click.types import FLOAT
 from numpy import random
 

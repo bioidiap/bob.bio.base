@@ -9,7 +9,7 @@ import logging
 
 import click
 
-from clapp.click import ConfigCommand, ResourceOption, verbosity_option
+from clapper.click import ConfigCommand, ResourceOption, verbosity_option
 
 from bob.pipelines.distributed import VALID_DASK_CLIENT_STRINGS
 
