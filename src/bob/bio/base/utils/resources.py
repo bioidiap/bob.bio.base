@@ -8,7 +8,7 @@ from __future__ import print_function
 import logging
 import os
 
-import clapp.config
+import clapper.config
 import pkg_resources
 
 logger = logging.getLogger("bob.bio.base")
@@ -50,7 +50,7 @@ def _collect_config(paths):
 
     """
 
-    return clapp.config.load(paths, entry_point_group="bob.bio.config")
+    return clapper.config.load(paths, entry_point_group="bob.bio.config")
 
 
 def read_config_file(filenames, keyword=None):
