@@ -32,7 +32,7 @@
         "click",
         "click-plugins",
         "dask",
-        "clapp",
+        "clapper",
         "numpy",
         "pandas",
         "scipy",

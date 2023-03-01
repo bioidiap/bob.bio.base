@@ -3,7 +3,7 @@
 import click
 import pkg_resources
 
-from clapp.click import AliasedGroup
+from clapper.click import AliasedGroup
 from click_plugins import with_plugins
 
 

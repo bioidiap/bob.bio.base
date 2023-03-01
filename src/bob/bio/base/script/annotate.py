@@ -6,7 +6,7 @@ import logging
 
 import click
 
-from clapp.click import (
+from clapper.click import (
     ConfigCommand,
     ResourceOption,
     log_parameters,
