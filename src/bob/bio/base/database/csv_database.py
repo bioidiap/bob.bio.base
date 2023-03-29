@@ -195,6 +195,7 @@ class CSVDatabase(FileListDatabase, Database):
         protocol: str,
         dataset_protocols_path: Optional[str] = None,
         transformer: Optional[sklearn.pipeline.Pipeline] = None,
+        templates_metadata: Optional[list] = None,
         annotation_type: Optional[str] = None,
         fixed_positions: Optional[dict[str, tuple[float, float]]] = None,
         memory_demanding=False,
@@ -213,6 +214,10 @@ class CSVDatabase(FileListDatabase, Database):
         transformer
             An sklearn pipeline or equivalent transformer that handles some light
             preprocessing of the samples (This will always run locally).
+        templates_metadata
+            Metadata that originate from the samples and must be present in the
+            templates (SampleSet) e.g. ``["gender", "age"]``. This should be metadata
+            that is common to all the samples in a template.
         annotation_type
             A string describing the annotations passed to the annotation loading
             function
@@ -242,6 +247,10 @@ class CSVDatabase(FileListDatabase, Database):
             self.score_all_vs_all = True
         else:
             self.score_all_vs_all = False
+
+        self.templates_metadata = []
+        if templates_metadata is not None:
+            self.templates_metadata = templates_metadata
 
     def list_file(self, group: str, name: str) -> TextIO:
         """Returns a definition file containing one sample per row.
@@ -307,11 +316,16 @@ class CSVDatabase(FileListDatabase, Database):
             # we add that as well.
             samples = list(samples_for_template_id)
             subject_id = samples[0].subject_id
+            metadata = {
+                m: getattr(samples[0], m) for m in self.templates_metadata
+            }
             sample_sets.append(
                 SampleSet(
                     samples,
                     template_id=template_id,
                     subject_id=subject_id,
+                    key=f"template_{template_id}",
+                    **metadata,
                 )
             )
         validate_bio_samples(sample_sets)
