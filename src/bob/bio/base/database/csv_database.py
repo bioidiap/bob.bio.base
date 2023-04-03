@@ -195,7 +195,7 @@ class CSVDatabase(FileListDatabase, Database):
         protocol: str,
         dataset_protocols_path: Optional[str] = None,
         transformer: Optional[sklearn.pipeline.Pipeline] = None,
-        templates_metadata: Optional[list] = None,
+        templates_metadata: Optional[list[str]] = None,
         annotation_type: Optional[str] = None,
         fixed_positions: Optional[dict[str, tuple[float, float]]] = None,
         memory_demanding=False,
