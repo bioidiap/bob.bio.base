@@ -86,7 +86,7 @@ class BioAlgCheckpointWrapper(BioAlgorithmBaseWrapper):
         to h5py.
 
     group
-        group of the data (?) TODO document
+        group of the data, used to save different group's checkpoints in different dirs.
 
     force
         If True, will recompute scores and biometric references no matter if a file
@@ -155,15 +155,18 @@ class BioAlgCheckpointWrapper(BioAlgorithmBaseWrapper):
         Enroll a sample set with checkpointing
         """
 
+        # If sampleset has a key use it, otherwise use the first sample's key
+        model_key = getattr(sampleset, "key", sampleset.samples[0].key)
+
         # Amending `models` directory
         hash_dir_name = (
-            self.hash_fn(str(sampleset.key)) if self.hash_fn is not None else ""
+            self.hash_fn(str(model_key)) if self.hash_fn is not None else ""
         )
 
         path = os.path.join(
             self.biometric_reference_dir,
             hash_dir_name,
-            str(sampleset.key) + self.extension,
+            str(model_key) + self.extension,
         )
 
         if self.force or not os.path.exists(path):
