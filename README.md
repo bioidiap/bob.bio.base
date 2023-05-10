@@ -17,7 +17,7 @@ provides installation and usage instructions.
 If you run biometric recognition experiments using the bob.bio framework,
 please cite at least one of the following in your scientific publication:
 
-``` text
+``` bibtext
 @inbook{guenther2016face,
   chapter = {Face Recognition in Challenging Environments: An Experimental and Reproducible Research Survey},
   author = {G\"unther, Manuel and El Shafey, Laurent and Marcel, S\'ebastien},
@@ -46,7 +46,7 @@ please cite at least one of the following in your scientific publication:
 ## Installation
 
 Complete Bob's
-[installation instructions](https://www.idiap.ch/sofware/bob/install). Then, to
+[installation instructions](https://www.idiap.ch/software/bob/install). Then, to
 install this package, run:
 
 ``` sh
@@ -56,4 +56,4 @@ conda install bob.bio.base
 ## Contact
 
 For questions or reporting issues to this software package, contact our
-development [mailing list](www.idiap.ch/software/bob/discuss).
+development [mailing list](https://www.idiap.ch/software/bob/discuss).
