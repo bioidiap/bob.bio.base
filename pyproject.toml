@@ -74,7 +74,7 @@
     package-dir = {"" = "src"}
 
 [tool.setuptools.dynamic]
-    readme = {file = "README.rst"}
+    readme = {file = "README.md"}
 [project.scripts]
     "resources.py"      = "bob.bio.base.script.resources:resources"
 
