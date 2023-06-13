@@ -75,8 +75,6 @@
 
 [tool.setuptools.dynamic]
     readme = {file = "README.md", content-type = "text/markdown"}
-[project.scripts]
-    "resources.py"      = "bob.bio.base.script.resources:resources"
 
 [project.entry-points."bob.bio.config"]
     dummy             = "bob.bio.base.config.dummy.config"  # for test purposes only
@@ -93,6 +91,7 @@
     vulnerability     = "bob.bio.base.script.vulnerability:vulnerability"
 
 [project.entry-points."bob.bio.cli"]
+    resources         = "bob.bio.base.script.resources:resources"
     annotate          = "bob.bio.base.script.annotate:annotate"
     annotate-samples  = "bob.bio.base.script.annotate:annotate_samples"
     metrics           = "bob.bio.base.script.commands:metrics"
