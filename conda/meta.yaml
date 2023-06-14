@@ -21,12 +21,12 @@ requirements:
     - python {{ python }}
     - setuptools {{ setuptools }}
     - pip {{ pip }}
-    - clapper
-    - bob.extension >5.0.1
+    - bob
     - bob.io.base
     - bob.learn.em
     - bob.measure
     - bob.pipelines
+    - clapper {{ clapper }}
     - click {{ click }}
     - click-plugins {{ click_plugins }}
     - dask {{ dask }}
@@ -37,12 +37,12 @@ requirements:
   run:
     - python
     - setuptools
-    - clapper
-    - bob.extension
+    - bob
     - bob.io.base
     - bob.learn.em
     - bob.measure
     - bob.pipelines
+    - {{ pin_compatible('clapper') }}
     - {{ pin_compatible('click') }}
     - {{ pin_compatible('click-plugins') }}
     - {{ pin_compatible('dask') }}

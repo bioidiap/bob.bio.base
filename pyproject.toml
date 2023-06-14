@@ -24,15 +24,15 @@
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ]
     dependencies = [
-        "bob.extension > 5.0.1",
+        "bob",
         "bob.io.base",
         "bob.learn.em",
         "bob.measure",
         "bob.pipelines",
+        "clapper",
         "click",
         "click-plugins",
         "dask",
-        "clapper",
         "numpy",
         "pandas",
         "scipy",
