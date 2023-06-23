@@ -1,8 +1,0 @@
-python
-scikit-learn
-bob.bio.face
-bob.bio.video
-bob.bio.spear
-bob.bio.vein
-bob.pipelines
-dask

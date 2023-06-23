@@ -234,13 +234,9 @@ autodoc_default_options = {
 
 auto_intersphinx_packages = [
     ("python", "3"),
+    "clapper",
     "numpy",
     "scikit-learn",
-    "bob.bio.face",
-    "bob.extension",
-    "bob.bio.video",
-    "bob.bio.spear",
-    "bob.bio.vein",
     "bob.pipelines",
     "dask",
 ]

@@ -1,8 +1,0 @@
-{
-  "bob.extension": {
-    "versions": {
-      "latest": "https://www.idiap.ch/software/bob/docs/bob/bob.extension/master"
-    },
-    "sources": {}
-  }
-}

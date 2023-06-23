@@ -1,2 +1,1 @@
-py:class bob.bio.video.preprocessor.Video
 py:exc ValueError

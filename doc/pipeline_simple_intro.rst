@@ -242,7 +242,7 @@ files. To do so for e.g. the MOBIO database (no need for ATNT database), run the
 .. note::
     Since the original files of the ATNT database is included in this package, you can skip the step above.
 
-For more information, see :ref:`bob.extension.rc`.
+For more information, see :ref:`clapper.rc`.
 
 Find below a complete file containing a Transformer, a Biometric Algorithm, and the construction of the pipeline:
 
@@ -301,7 +301,7 @@ relevant pacakge or using the following code snippet:
             continue
         print(entry_point)
 
-See :ref:`bob.extension.framework` for more information.
+.. See :ref:`bob.extension.framework` for more information.
 
 .. note::
 
