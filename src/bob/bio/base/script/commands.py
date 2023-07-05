@@ -69,7 +69,12 @@ def rank_option(**kwargs):
 )
 def metrics(ctx, scores, evaluation, score_column, **kwargs):
     if "criterion" in ctx.meta and ctx.meta["criterion"] == "rr":
-        process = bio_figure.Metrics(ctx, scores, evaluation, load.cmc)
+        process = bio_figure.Metrics(
+            ctx,
+            scores,
+            evaluation,
+            functools.partial(load.cmc, csv_score_column=score_column),
+        )
     else:
         process = bio_figure.Metrics(
             ctx,
@@ -85,8 +90,22 @@ def metrics(ctx, scores, evaluation, score_column, **kwargs):
         score_format=SCORE_FORMAT, command="bob bio roc"
     )
 )
-def roc(ctx, scores, evaluation, **kwargs):
-    process = bio_figure.Roc(ctx, scores, evaluation, load.split)
+@click.option(
+    "--score-column",
+    default="score",
+    show_default=True,
+    help=(
+        "Selects the CSV column to consider as scores. This is ignored for "
+        "non-CSV files. The column must contain numerical values."
+    ),
+)
+def roc(ctx, scores, evaluation, score_column, **kwargs):
+    process = bio_figure.Roc(
+        ctx,
+        scores,
+        evaluation,
+        functools.partial(load.split, csv_score_column=score_column),
+    )
     process.run()
 
 
@@ -95,8 +114,22 @@ def roc(ctx, scores, evaluation, **kwargs):
         score_format=SCORE_FORMAT, command="bob bio det"
     )
 )
-def det(ctx, scores, evaluation, **kwargs):
-    process = bio_figure.Det(ctx, scores, evaluation, load.split)
+@click.option(
+    "--score-column",
+    default="score",
+    show_default=True,
+    help=(
+        "Selects the CSV column to consider as scores. This is ignored for "
+        "non-CSV files. The column must contain numerical values."
+    ),
+)
+def det(ctx, scores, evaluation, score_column, **kwargs):
+    process = bio_figure.Det(
+        ctx,
+        scores,
+        evaluation,
+        functools.partial(load.split, csv_score_column=score_column),
+    )
     process.run()
 
 
@@ -105,8 +138,22 @@ def det(ctx, scores, evaluation, **kwargs):
         score_format=SCORE_FORMAT, command="bob bio epc"
     )
 )
-def epc(ctx, scores, **kwargs):
-    process = measure_figure.Epc(ctx, scores, True, load.split)
+@click.option(
+    "--score-column",
+    default="score",
+    show_default=True,
+    help=(
+        "Selects the CSV column to consider as scores. This is ignored for "
+        "non-CSV files. The column must contain numerical values."
+    ),
+)
+def epc(ctx, scores, score_column, **kwargs):
+    process = measure_figure.Epc(
+        ctx,
+        scores,
+        True,
+        functools.partial(load.split, csv_score_column=score_column),
+    )
     process.run()
 
 
@@ -115,8 +162,22 @@ def epc(ctx, scores, **kwargs):
         score_format=SCORE_FORMAT, command="bob bio hist"
     )
 )
-def hist(ctx, scores, evaluation, **kwargs):
-    process = bio_figure.Hist(ctx, scores, evaluation, load.split)
+@click.option(
+    "--score-column",
+    default="score",
+    show_default=True,
+    help=(
+        "Selects the CSV column to consider as scores. This is ignored for "
+        "non-CSV files. The column must contain numerical values."
+    ),
+)
+def hist(ctx, scores, evaluation, score_column, **kwargs):
+    process = bio_figure.Hist(
+        ctx,
+        scores,
+        evaluation,
+        functools.partial(load.split, csv_score_column=score_column),
+    )
     process.run()
 
 
@@ -126,8 +187,23 @@ def hist(ctx, scores, evaluation, **kwargs):
     ),
     criteria=CRITERIA,
 )
+@click.option(
+    "--score-column",
+    default="score",
+    show_default=True,
+    help=(
+        "NOT YET IMPLEMENTED. "
+        "Selects the CSV column to consider as scores. This is ignored for "
+        "non-CSV files. The column must contain numerical values."
+    ),
+)
 @common_options.cost_option()
-def evaluate(ctx, scores, evaluation, **kwargs):
+def evaluate(ctx, scores, evaluation, score_column, **kwargs):
+    if score_column != "score":
+        raise NotImplementedError(
+            "'evaluate' does not yet support files with scores in columns "
+            "other than 'score'."
+        )
     common_options.evaluate_flow(
         ctx, scores, evaluation, metrics, roc, det, epc, hist, **kwargs
     )
@@ -142,9 +218,25 @@ def evaluate(ctx, scores, evaluation, **kwargs):
     ),
     criteria=CRITERIA,
 )
-def multi_metrics(ctx, scores, evaluation, protocols_number, **kwargs):
+@click.option(
+    "--score-column",
+    default="score",
+    show_default=True,
+    help=(
+        "Selects the CSV column to consider as scores. This is ignored for "
+        "non-CSV files. The column must contain numerical values."
+    ),
+)
+def multi_metrics(
+    ctx, scores, evaluation, protocols_number, score_column, **kwargs
+):
     ctx.meta["min_arg"] = protocols_number * (2 if evaluation else 1)
-    process = bio_figure.MultiMetrics(ctx, scores, evaluation, load.split)
+    process = bio_figure.MultiMetrics(
+        ctx,
+        scores,
+        evaluation,
+        functools.partial(load.split, csv_score_column=score_column),
+    )
     process.run()
 
 
