@@ -169,7 +169,7 @@ def get_split_dataframe(filename):
     return impostors, genuines
 
 
-def split_csv_scores(filename):
+def split_csv_scores(filename, score_column: str = "score"):
     """Loads a score set that was written with :any:`bob.bio.base.pipelines.CSVScoreWriter`
 
     Parameters
@@ -177,6 +177,8 @@ def split_csv_scores(filename):
 
       filename (:py:class:`str`, ``file-like``): The file object that will be
         opened with :py:func:`open_file` containing the scores.
+
+      score_column: The CSV column that contains the score values.
 
     Returns
     -------
@@ -196,8 +198,8 @@ def split_csv_scores(filename):
     impostors = df[df.probe_subject_id != df.bio_ref_subject_id]
 
     return (
-        impostors["score"].to_dask_array().compute(),
-        genuines["score"].to_dask_array().compute(),
+        impostors[score_column].to_dask_array().compute(),
+        genuines[score_column].to_dask_array().compute(),
     )
 
 
@@ -358,7 +360,7 @@ def scores(filename, ncolumns=None):
     return _iterate_score_file(filename)
 
 
-def split(filename, ncolumns=None, sort=False):
+def split(filename, ncolumns=None, sort=False, csv_score_column: str = "score"):
     """Loads the scores from the given score file and splits them into positives
     and negatives.
     Depending on the score file format, it calls see
@@ -376,6 +378,8 @@ def split(filename, ncolumns=None, sort=False):
         estimated automatically
     sort : :obj:`bool`, optional
         If ``True``, will return sorted negatives and positives
+    csv_score_column :
+        When loading a CSV file, specifies the column that holds scores.
 
     Returns
     -------
@@ -388,7 +392,7 @@ def split(filename, ncolumns=None, sort=False):
         the ``real_id`` are identical (see :py:func:`four_column`)
     """
     if iscsv(filename):
-        neg, pos = split_csv_scores(filename)
+        neg, pos = split_csv_scores(filename, score_column=csv_score_column)
     else:
         ncolumns = _estimate_score_file_format(filename, ncolumns)
         if ncolumns == 4:
@@ -404,7 +408,7 @@ def split(filename, ncolumns=None, sort=False):
     return neg, pos
 
 
-def cmc(filename, ncolumns=None):
+def cmc(filename, ncolumns=None, csv_score_column: str = "score"):
     """cmc(filename, ncolumns=None) -> list
 
     Loads scores to compute CMC curves.
@@ -421,6 +425,9 @@ def cmc(filename, ncolumns=None):
       ncolumns: (:py:class:`int`, Optional): If specified to be ``4`` or ``5``,
         the score file will be assumed to be in the given format.  If not
         specified, the score file format will be estimated automatically
+
+      csv_score_column: When loading a CSV file, specifies the column that holds
+        scores.
 
     Returns:
 
@@ -462,7 +469,7 @@ def load_score(filename, ncolumns=None, minimal=False, **kwargs):
 
     Returns:
 
-      array: An array which contains not only the actual scores but also the
+      array: An array which contains not only the actual ``score`` but also the
       ``claimed_id``, ``real_id``, ``test_label`` and ``['model_label']``
 
     """
@@ -536,15 +543,15 @@ def load_files(filenames, func_load):
     return res
 
 
-def get_negatives_positives(score_lines):
+def get_negatives_positives(score_lines, score_column: str = "score"):
     """Take the output of load_score and return negatives and positives.  This
     function aims to replace split_four_column and split_five_column but takes a
     different input. It's up to you to use which one.
     """
 
     pos_mask = score_lines["claimed_id"] == score_lines["real_id"]
-    positives = score_lines["score"][pos_mask]
-    negatives = score_lines["score"][numpy.logical_not(pos_mask)]
+    positives = score_lines[score_column][pos_mask]
+    negatives = score_lines[score_column][numpy.logical_not(pos_mask)]
     return (negatives, positives)
 
 
@@ -552,17 +559,19 @@ def get_negatives_positives_from_file(filename, **kwargs):
     """Loads the scores first efficiently and then calls
     get_negatives_positives"""
     score_lines = load_score(filename, minimal=True, **kwargs)
-    return get_negatives_positives(score_lines)
+    return get_negatives_positives(score_lines, score_column="score")
 
 
-def get_negatives_positives_all(score_lines_list):
+def get_negatives_positives_all(score_lines_list, score_column: str = "score"):
     """Take a list of outputs of load_score and return stacked negatives and
     positives.
     """
 
     negatives, positives = [], []
     for score_lines in score_lines_list:
-        neg_pos = get_negatives_positives(score_lines)
+        neg_pos = get_negatives_positives(
+            score_lines, score_column=score_column
+        )
         negatives.append(neg_pos[0])
         positives.append(neg_pos[1])
     negatives = numpy.vstack(negatives).T
@@ -570,11 +579,11 @@ def get_negatives_positives_all(score_lines_list):
     return (negatives, positives)
 
 
-def get_all_scores(score_lines_list):
+def get_all_scores(score_lines_list, score_column: str = "score"):
     """Take a list of outputs of load_score and return stacked scores"""
 
     return numpy.vstack(
-        [score_lines["score"] for score_lines in score_lines_list]
+        [score_lines[score_column] for score_lines in score_lines_list]
     ).T
 
 
@@ -614,18 +623,20 @@ def _estimate_score_file_format(filename, ncolumns=None):
     return ncolumns
 
 
-def _iterate_score_file(filename):
+def _iterate_score_file(filename, csv_score_column: str = "score"):
     """Opens the score file for reading and yields the score file line by line in a tuple/list.
 
     The last element of the line (which is the score) will be transformed to float, the other elements will be str
     """
     if iscsv(filename):
-        for row in _iterate_csv_score_file(filename):
+        for row in _iterate_csv_score_file(
+            filename, score_column=csv_score_column
+        ):
             yield [
                 row["bio_ref_subject_id"],
                 row["probe_subject_id"],
                 row["probe_key"],
-                row["score"],
+                row[csv_score_column],
             ]
     else:
         opened = open_file(filename, "rb")
@@ -640,16 +651,16 @@ def _iterate_score_file(filename):
             yield splits
 
 
-def _iterate_csv_score_file(filename):
+def _iterate_csv_score_file(filename, score_column: str = "score"):
     """Opens a CSV score file for reading and yields each line in a dict.
 
-    The `score` field of the line will be cast to float, the other elements will
-    be str.
+    The ``score_column`` field of the line will be cast to float, the other
+    elements will be str.
     """
     opened = open_file(filename)
     reader = csv.DictReader(opened)
     for row in reader:
-        row["score"] = float(row["score"])
+        row[score_column] = float(row[score_column])
         yield row
 
 
@@ -712,13 +723,13 @@ def _split_cmc_scores(
     ]
 
 
-def split_csv_vuln(filename):
+def split_csv_vuln(filename, score_column: str = "score"):
     """Loads vulnerability scores from a CSV score file.
 
     Returns the scores split between positive and negative as well as licit
     and presentation attack (spoof).
 
-    The CSV must contain a `probe_attack_type` column with each field either
+    The CSV must contain a ``probe_attack_type`` column with each field either
     containing a str defining the attack type (spoof), or empty (licit).
 
     Parameters
@@ -735,14 +746,14 @@ def split_csv_vuln(filename):
     """
     logger.debug(f"Loading CSV score file: '{filename}'")
     split_scores = {"licit_neg": [], "licit_pos": [], "spoof": []}
-    for row in _iterate_csv_score_file(filename):
+    for row in _iterate_csv_score_file(filename, score_column=score_column):
         if not row["probe_attack_type"]:  # licit
             if row["probe_subject_id"] == row["bio_ref_subject_id"]:
-                split_scores["licit_pos"].append(row["score"])
+                split_scores["licit_pos"].append(row[score_column])
             else:
-                split_scores["licit_neg"].append(row["score"])
+                split_scores["licit_neg"].append(row[score_column])
         else:
-            split_scores["spoof"].append(row["score"])
+            split_scores["spoof"].append(row[score_column])
     logger.debug(
         f"Found {len(split_scores['licit_neg'])} negative (ZEI), "
         f"{len(split_scores['licit_pos'])} positive (licit), and "
