@@ -1,4 +1,5 @@
 """ Click commands for ``bob.bio.base`` """
+import functools
 import logging
 
 import click
@@ -57,11 +58,25 @@ def rank_option(**kwargs):
     criteria=CRITERIA,
 )
 @common_options.cost_option()
-def metrics(ctx, scores, evaluation, **kwargs):
+@click.option(
+    "--score-column",
+    default="score",
+    show_default=True,
+    help=(
+        "Selects the CSV column to consider as scores. This is ignored for "
+        "non-CSV files. The column must contain numerical values."
+    ),
+)
+def metrics(ctx, scores, evaluation, score_column, **kwargs):
     if "criterion" in ctx.meta and ctx.meta["criterion"] == "rr":
         process = bio_figure.Metrics(ctx, scores, evaluation, load.cmc)
     else:
-        process = bio_figure.Metrics(ctx, scores, evaluation, load.split)
+        process = bio_figure.Metrics(
+            ctx,
+            scores,
+            evaluation,
+            functools.partial(load.split, csv_score_column=score_column),
+        )
     process.run()
 
 
