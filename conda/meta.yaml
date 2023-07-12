@@ -55,6 +55,22 @@ test:
   imports:
     - {{ name.replace('-','_') }}
   commands:
+    - bob bio --help
+    - bob bio annotate --help
+    - bob bio metrics --help
+    - bob bio roc --help
+    - bob bio det --help
+    - bob bio epc --help
+    - bob bio hist --help
+    - bob bio cmc --help
+    - bob bio dir --help
+    - bob bio gen --help
+    - bob bio evaluate --help
+    - bob bio sort --help
+    - bob bio pipeline simple --help
+    - bob bio pipeline score-norm --help
+    - bob bio pipeline transform --help
+    - bob bio pipeline train --help
     - conda inspect linkages -p $PREFIX {{ name }}  # [not win]
     - conda inspect objects -p $PREFIX {{ name }}  # [osx]
 
