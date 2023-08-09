@@ -541,11 +541,20 @@ def download_file(
     local_file = destination_directory / destination_filename
     needs_download = True
 
-    if not force and local_file.is_file():
-        logger.info(
-            f"File {local_file} already exists, skipping download ({force=})."
-        )
-        needs_download = False
+    if force or not local_file.is_file():
+        if not force:
+            logger.info(f"File {local_file} is not present. Needs download.")
+        needs_download = True
+    elif local_file.is_file():
+        file_ok = verify_file(local_file, checksum, hash_fct=checksum_fct)
+        if not file_ok:
+            logger.info(
+                f"File {local_file} does not checksum to '{checksum=}'."
+            )
+            needs_download = True
+        elif not force and checksum is not None and file_ok:
+            logger.info(f"File {local_file} already exists, skipping download.")
+            needs_download = False
 
     if needs_download:
         if isinstance(urls, str):
@@ -586,18 +595,18 @@ def download_file(
         with local_file.open("wb") as f:
             f.write(response.content)
 
-    if checksum is not None:
-        if not verify_file(local_file, checksum, hash_fct=checksum_fct):
-            if not needs_download:
+        if checksum is not None:
+            if not verify_file(local_file, checksum, hash_fct=checksum_fct):
+                if not needs_download:
+                    raise ValueError(
+                        f"The local file hash does not correspond to '{checksum}' "
+                        f"and {force=} prevents overwriting."
+                    )
                 raise ValueError(
-                    f"The local file hash does not correspond to '{checksum}' "
-                    f"and {force=} prevents overwriting."
+                    "The downloaded file hash ('"
+                    f"{compute_crc(local_file, hash_fct=checksum_fct)}') does not "
+                    f"correspond to '{checksum}'."
                 )
-            raise ValueError(
-                "The downloaded file hash ('"
-                f"{compute_crc(local_file, hash_fct=checksum_fct)}') does not "
-                f"correspond to '{checksum}'."
-            )
 
     if extract:
         local_file = extract_archive(local_file)
